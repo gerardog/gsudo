@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace gsudo
@@ -12,8 +9,7 @@ namespace gsudo
     class ProcessHost
     {
         private NamedPipeServerStream pipe;
-        public static readonly Encoding MyEncoding = System.Text.UTF8Encoding.UTF8;
-
+        
         public ProcessHost(NamedPipeServerStream pipe)
         {
             this.pipe = pipe;
@@ -24,7 +20,7 @@ namespace gsudo
             var buffer = new byte[1024];
             var length = await pipe.ReadAsync(buffer, 0, 1024);
 
-            var requestString = MyEncoding.GetString(buffer, 0, length);
+            var requestString = Settings.Encoding.GetString(buffer, 0, length);
             try
             {
 
@@ -56,14 +52,34 @@ namespace gsudo
                 var t2 = process.StandardError.ConsumeOutput((s) => WriteToPipe(s));
                 var t3 = new StreamReader(pipe).ConsumeOutput((s) => ReadFromPipe(s, process));
 
-                while (!process.WaitForExit(10) && pipe.IsConnected) Thread.Sleep(0);
+                while (!process.WaitForExit(50) && pipe.IsConnected)
+                {
+                    await Task.Delay(50);
+                    try
+                    {
+                        await pipe.WriteAsync("\0");
+                    } 
+                    catch (IOException)
+                    {
+                        break;
+                    }
+                }
+
+                if (process.HasExited && pipe.IsConnected)
+                {
+                    await pipe.WriteAsync($"{Settings.EXITCODE_TOKEN}{process.ExitCode}{Settings.EXITCODE_TOKEN}");
+                }
+                else
+                {
+                    process.Kill();
+                }
+
                 if (pipe.IsConnected)
                 {
                     pipe.WaitForPipeDrain();
                     pipe.Close();
                 }
-                if (!process.HasExited)
-                    process.Kill();
+
             }
             catch (Exception ex)
             {
@@ -77,13 +93,17 @@ namespace gsudo
 
         private static Task ReadFromPipe(string s, Process process)
         {
-            Console.WriteLine("Incoming: " + s);
+            if (s == "\0") // session keep alive
+                return Task.CompletedTask;
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine(s);
             return process.StandardInput.WriteAsync(s);
         }
 
         private Task WriteToPipe(string s)
         {
-            Console.WriteLine("Process: " + s);
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine(s);
             return pipe.WriteAsync(s);
         }
     }

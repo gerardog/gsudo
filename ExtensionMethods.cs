@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -62,7 +63,7 @@ namespace gsudo
 
         public static async Task WriteAsync(this Stream stream, string text)
         {
-            await stream.WriteAsync(ProcessHost.MyEncoding.GetBytes(text));
+            await stream.WriteAsync(Settings.Encoding.GetBytes(text));
             await stream.FlushAsync();
         }
 

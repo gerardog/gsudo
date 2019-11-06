@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO.Pipes;
 using System.Security.AccessControl;
 using System.Security.Principal;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace gsudo
@@ -15,44 +14,45 @@ namespace gsudo
         public async Task Start(string pipeName, string secret)
         {
             var ps = new PipeSecurity();
+
             ps.AddAccessRule(new PipeAccessRule(
-                new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null),
-                PipeAccessRights.ReadWrite,
+                WindowsIdentity.GetCurrent().User,
+                PipeAccessRights.ReadWrite | PipeAccessRights.CreateNewInstance,
                 AccessControlType.Allow));
 
             using (NamedPipeServerStream pipe = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 10,
-                PipeTransmissionMode.Message, 
-                /*PipeOptions.CurrentUserOnly &*/ PipeOptions.Asynchronous,1024,1024, ps) )
+                PipeTransmissionMode.Message, PipeOptions.Asynchronous, Settings.BufferSize, Settings.BufferSize, ps))
             {
-                //var ps = pipe.GetAccessControl();
+                Console.WriteLine("Listener ready.");
 
-                //ps.AddAccessRule(new PipeAccessRule(
-                //    new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null),
-                //    PipeAccessRights.ReadWrite,
-                //    AccessControlType.Allow));
-                //pipe.SetAccessControl(ps);
-
-                await pipe.WaitForConnectionAsync();//.TimeoutAfter(TimeSpan.FromMinutes(1));
+                await pipe.WaitForConnectionAsync().TimeoutAfter(Settings.ServerTimeout);
 
                 if (pipe.IsConnected)
                 {
-                    CreateListener(pipeName, secret); // Add new listener, as current one is busy;
+                    Console.WriteLine("Incomming Connection");
+                    if (Settings.SharedService) CreateListener(pipeName, secret); // Add new listener, as this one is busy;
                     await new ProcessHost(pipe).Start(secret);
+                    if (Settings.SharedService) CreateListener(pipeName, secret); // Add a new listener to allow listening in a new timespan.
                 }
-                CreateListener(pipeName, secret); // Add new listener.
+                Console.WriteLine("Listener Closed.");
             }
         }
 
         public static void CreateListener(string pipeName, string secret)
         {
             var instance = new NamedPipeListener();
-            var t =Task.Run(() => instance.Start(pipeName, secret));
+            // Task.Factory.StartNew(..., TaskCreationOptions.LongRunning);
+            var t = Task.Run(() => instance.Start(pipeName, secret));
             Instances.Add(t);
         }
 
         public static async Task WaitAll()
         {
+            int count=Instances.Count;
             await Task.WhenAll(Instances.ToArray());
+
+            if (count != Instances.Count)
+                await WaitAll();
         }
     }
 }
