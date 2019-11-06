@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Security.Principal;
 using System.Threading.Tasks;
 
@@ -9,15 +10,17 @@ namespace gsudo
     {
         async static Task Main(string[] args)
         {
-            if (args.Length == 0) args = new string[] { Environment.GetEnvironmentVariable("COMSPEC") };
+            if (args.Length == 0) args = new string[] { Environment.GetEnvironmentVariable("COMSPEC") , "/k" };
             if (args.Length > 1 && args[0] == "service")
             {
                 // service mode
-                var pipeName = args[1];
-                var secret = args[2];
+                var secret = args[1];
                 Console.WriteLine("Starting Service");
                 Console.WriteLine($"Using secret {secret}");
-                NamedPipeListener.CreateListener(pipeName, secret);
+                 
+                Environment.SetEnvironmentVariable("PROMPT", "$P# ");
+
+                NamedPipeListener.CreateListener(secret);
                 await NamedPipeListener.WaitAll();
                 Console.WriteLine("Service Stopped");
             }
@@ -28,6 +31,8 @@ namespace gsudo
                 var exeName = args[0];
                 var process = new Process();
                 process.StartInfo = new ProcessStartInfo(exeName);
+                process.StartInfo.Arguments = GetArgumentsString(args, 1);
+                process.StartInfo.UseShellExecute = false;
                 process.Start();
                 process.WaitForExit();
                 Environment.Exit(process.ExitCode);
@@ -36,11 +41,11 @@ namespace gsudo
             {
                 var secret = Environment.GetEnvironmentVariable("gsudoSecret") ?? Environment.GetEnvironmentVariable("gsudoSecret", EnvironmentVariableTarget.User) ?? Guid.NewGuid().ToString(); ;
                 Console.WriteLine($"Using secret {secret}");
+                Environment.SetEnvironmentVariable("gsudoSecret", secret, EnvironmentVariableTarget.User);
 
-                var pipeName = "MyPipe";
                 try
                 {
-                    await new ProcessClient(pipeName).Start(args[0], secret);
+                    await new ProcessClient().Start(args[0], GetArgumentsString(args, 1), secret);
                     return;
                 }
                 catch (System.IO.IOException) { }
@@ -50,27 +55,30 @@ namespace gsudo
                     Console.WriteLine(ex);
                 }
                 Console.WriteLine("Elevating process...");
-                Environment.SetEnvironmentVariable("gsudoSecret", secret, EnvironmentVariableTarget.User);
                 // Start elevated service instance
                 var process = new Process();
                 var exeName = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
-                process.StartInfo = new ProcessStartInfo(exeName, $"service {pipeName} {secret}");
+                process.StartInfo = new ProcessStartInfo(exeName, $"service {secret}");
                 process.StartInfo.UseShellExecute = true;
                 process.StartInfo.Verb = "runas";
-#if DEBUG
+#if !DEBUG
                 process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
 #endif
                 process.Start();
-                await Task.Delay(1500);
                 Console.WriteLine("Elevated instance created.");
-                //   Thread.Sleep(2500);
+                await Task.Delay(200);
+                await new ProcessClient().Start(args[0], GetArgumentsString(args, 1), secret, 5000);
+//                Console.WriteLine("Connecting...");
 
-                Console.WriteLine("Connecting...");
-
-                await new ProcessClient(pipeName).Start(args[0], secret);
             }
         }
 
+        private static string GetArgumentsString(string[] args, int v)
+        {
+            if (args == null) return null;
+            if (args.Length <= v) return string.Empty;
+            return string.Join(" ", args.Skip(v).ToArray());
+        }
 
         private static bool IsAdministrator()
         {

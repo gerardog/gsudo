@@ -34,12 +34,9 @@ namespace gsudo
                 }
 
                 var process = new Process();
-
-                if (request.Parameters != null && request.Parameters.Length > 0)
-                    process.StartInfo = new ProcessStartInfo(request.FileName, string.Join(" ", request.Parameters));
-                else
-                    process.StartInfo = new ProcessStartInfo(request.FileName);
-
+                process.StartInfo = new ProcessStartInfo(request.FileName);
+                process.StartInfo.Arguments = request.Arguments;
+                process.StartInfo.WorkingDirectory = request.StartFolder;
                 process.StartInfo.CreateNoWindow = true;
                 process.StartInfo.UseShellExecute = false;
                 process.StartInfo.RedirectStandardOutput = true;

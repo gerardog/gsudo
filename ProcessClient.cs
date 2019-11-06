@@ -7,21 +7,18 @@ namespace gsudo
 {
     class ProcessClient
     {
-        string _pipeName;
-        public ProcessClient(string pipeName)
+        public async Task Start(string exeName, string arguments, string secret, int timeoutMilliseconds = 100)
         {
-            _pipeName = pipeName;
-        }
-
-        public async Task Start(string exeName, string secret)
-        {
-            var pipe = new NamedPipeClientStream(".", _pipeName, PipeDirection.InOut, PipeOptions.Asynchronous, System.Security.Principal.TokenImpersonationLevel.Impersonation, System.IO.HandleInheritability.None);
-            pipe.Connect(100);
+            var pipe = new NamedPipeClientStream(".", Settings.PipeName, PipeDirection.InOut, PipeOptions.Asynchronous, System.Security.Principal.TokenImpersonationLevel.Impersonation, System.IO.HandleInheritability.None);
+            pipe.Connect(timeoutMilliseconds);
+            Console.WriteLine("Connected.");
 
             var payload = Newtonsoft.Json.JsonConvert.SerializeObject(new RequestStartInfo()
             {
                 FileName = exeName,
-                Secret = secret
+                Arguments = arguments,
+                Secret = secret,
+                StartFolder = Environment.CurrentDirectory
             });
             await pipe.WriteAsync(Settings.Encoding.GetBytes(payload), 0, payload.Length);
 
@@ -30,7 +27,6 @@ namespace gsudo
 
             while (pipe.IsConnected && !Task.Factory.CancellationToken.IsCancellationRequested)
             {
-                await Task.Delay(50);//Thread.Sleep(1);
                 try
                 {
                     await pipe.WriteAsync("\0");
@@ -39,6 +35,7 @@ namespace gsudo
                 {
                     break;
                 }
+                await Task.Delay(50);//Thread.Sleep(1);
             }
 
             pipe.Close();
