@@ -15,18 +15,18 @@ namespace gsudo
             {
                 // service mode
                 var secret = args[1];
-                Console.WriteLine("Starting Service");
-                Console.WriteLine($"Using secret {secret}");
-                 
+                Settings.Logger.Log("Starting Service.", LogLevel.Info);
+                Settings.Logger.Log($"Using secret {secret}", LogLevel.Debug);
+ 
                 Environment.SetEnvironmentVariable("PROMPT", "$P# ");
 
                 NamedPipeListener.CreateListener(secret);
                 await NamedPipeListener.WaitAll();
-                Console.WriteLine("Service Stopped");
+                Settings.Logger.Log("Service Stopped", LogLevel.Info);
             }
-            else if (IsAdministrator()) // && false)
+            else if (IsAdministrator() && false)
             {
-                Console.WriteLine("You are already admin. Running in-process");
+                Settings.Logger.Log("You are already admin. Running in-process", LogLevel.Debug);
                 // No need to escalate. Run in-process
                 var exeName = args[0];
                 var process = new Process();
@@ -40,7 +40,7 @@ namespace gsudo
             else // IsAdministrator() == false
             {
                 var secret = Environment.GetEnvironmentVariable("gsudoSecret") ?? Environment.GetEnvironmentVariable("gsudoSecret", EnvironmentVariableTarget.User) ?? Guid.NewGuid().ToString(); ;
-                Console.WriteLine($"Using secret {secret}");
+                Settings.Logger.Log($"Using secret {secret}", LogLevel.Debug);
                 Environment.SetEnvironmentVariable("gsudoSecret", secret, EnvironmentVariableTarget.User);
 
                 try
@@ -52,9 +52,10 @@ namespace gsudo
                 catch (TimeoutException) { }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex);
+                    Settings.Logger.Log(ex.ToString(), LogLevel.Error);
                 }
-                Console.WriteLine("Elevating process...");
+                Settings.Logger.Log("Elevating process...", LogLevel.Debug);
+
                 // Start elevated service instance
                 var process = new Process();
                 var exeName = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
@@ -65,7 +66,7 @@ namespace gsudo
                 process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
 #endif
                 process.Start();
-                Console.WriteLine("Elevated instance created.");
+                Settings.Logger.Log("Elevated instance started.", LogLevel.Debug);
                 await Task.Delay(200);
                 await new ProcessClient().Start(args[0], GetArgumentsString(args, 1), secret, 5000);
 //                Console.WriteLine("Connecting...");

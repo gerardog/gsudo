@@ -9,7 +9,8 @@ namespace gsudo
     class ProcessHost
     {
         private NamedPipeServerStream pipe;
-        
+        private string lastInboundMessage = null;
+
         public ProcessHost(NamedPipeServerStream pipe)
         {
             this.pipe = pipe;
@@ -18,12 +19,16 @@ namespace gsudo
         internal async Task Start(string secret)
         {
             var buffer = new byte[1024];
-            var length = await pipe.ReadAsync(buffer, 0, 1024);
+            var requestString = "";
+            while (!(requestString.Length > 0 && requestString[requestString.Length - 1] == '}'))
+            {
+                var length = await pipe.ReadAsync(buffer, 0, 1024);
+                requestString += Settings.Encoding.GetString(buffer, 0, length);
+            }
 
-            var requestString = Settings.Encoding.GetString(buffer, 0, length);
+            Settings.Logger.Log("Incoming Json: " + requestString, LogLevel.Debug);
             try
             {
-
                 var request = Newtonsoft.Json.JsonConvert.DeserializeObject<RequestStartInfo>(requestString);
                 if (request.Secret != secret)
                 {
@@ -47,9 +52,9 @@ namespace gsudo
 
                 var t1 = process.StandardOutput.ConsumeOutput((s) => WriteToPipe(s));
                 var t2 = process.StandardError.ConsumeOutput((s) => WriteToPipe(s));
-                var t3 = new StreamReader(pipe).ConsumeOutput((s) => ReadFromPipe(s, process));
+                var t3 = new StreamReader(pipe, Settings.Encoding).ConsumeOutput((s) => ReadFromPipe(s, process));
 
-                while (!process.WaitForExit(50) && pipe.IsConnected)
+                while (!process.WaitForExit(0) && pipe.IsConnected)
                 {
                     await Task.Delay(50);
                     try
@@ -64,7 +69,13 @@ namespace gsudo
 
                 if (process.HasExited && pipe.IsConnected)
                 {
-                    await pipe.WriteAsync($"{Settings.EXITCODE_TOKEN}{process.ExitCode}{Settings.EXITCODE_TOKEN}");
+                    // avoid cases
+//                    await process.StandardOutput.BaseStream.FlushAsync();
+//                    await process.StandardError.BaseStream.FlushAsync();
+//                    await pipe.FlushAsync();
+                    await Task.WhenAll(t1, t2);
+                    pipe.WaitForPipeDrain();
+                    await pipe.WriteAsync($"{Settings.TOKEN_EXITCODE}{process.ExitCode}{Settings.TOKEN_EXITCODE}");
                 }
                 else
                 {
@@ -80,28 +91,64 @@ namespace gsudo
             }
             catch (Exception ex)
             {
-                await pipe.WriteAsync("Server Error: " + ex.ToString());
-                await pipe.FlushAsync();
+                Settings.Logger.Log(ex.ToString(), LogLevel.Error);
+                await pipe.WriteAsync(Settings.TOKEN_ERROR + "Server Error: " + ex.ToString());
+                
+                pipe.Flush();
                 pipe.WaitForPipeDrain();
-                pipe.Close();
+                pipe.Disconnect();
                 return;
             }
         }
 
-        private static Task ReadFromPipe(string s, Process process)
+        private Task ReadFromPipe(string s, Process process)
         {
             if (s == "\0") // session keep alive
                 return Task.CompletedTask;
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine(s);
+            
+            if (lastInboundMessage == null)
+                lastInboundMessage = s;
+            else 
+                lastInboundMessage += s;
+
             return process.StandardInput.WriteAsync(s);
         }
 
-        private Task WriteToPipe(string s)
+        private async Task WriteToErrorPipe(string s)
         {
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine(s);
-            return pipe.WriteAsync(s);
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(Settings.TOKEN_ERROR + s);
+            await pipe.WriteAsync(s);
+            await pipe.FlushAsync();
+        }
+
+        private async Task WriteToPipe(string s)
+        {
+            if (!string.IsNullOrEmpty(lastInboundMessage)) // trick to avoid echoing the input command, as the client has already showed it.
+            {
+                int c = EqualCharsCount(s, lastInboundMessage);
+                if (c > 0)
+                {
+                    s = s.Substring(c);
+                    lastInboundMessage = lastInboundMessage.Substring(c);
+                }                               
+            }
+            if (string.IsNullOrEmpty(s)) return; // suppress chars n s;
+
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.Write(s);
+            await pipe.WriteAsync(s);
+            await pipe.FlushAsync();
+        }
+
+        private int EqualCharsCount(string s, string lastInboundMessage)
+        {
+            int i = 0;
+            for (; i < s.Length && i < lastInboundMessage.Length && s[i] == lastInboundMessage[i]; i++)
+            { }
+            return i;
         }
     }
 }

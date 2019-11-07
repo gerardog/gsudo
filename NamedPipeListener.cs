@@ -23,18 +23,19 @@ namespace gsudo
             using (NamedPipeServerStream pipe = new NamedPipeServerStream(Settings.PipeName, PipeDirection.InOut, 10,
                 PipeTransmissionMode.Message, PipeOptions.Asynchronous, Settings.BufferSize, Settings.BufferSize, ps))
             {
-                Console.WriteLine("Listener ready.");
+                Settings.Logger.Log("Listener ready.", LogLevel.Debug);
 
                 await pipe.WaitForConnectionAsync().TimeoutAfter(Settings.ServerTimeout);
 
                 if (pipe.IsConnected)
                 {
-                    Console.WriteLine("Incomming Connection");
+                    Settings.Logger.Log("Incoming Connection.", LogLevel.Info);
                     if (Settings.SharedService) CreateListener(secret); // Add new listener, as this one is busy;
                     await new ProcessHost(pipe).Start(secret);
                     if (Settings.SharedService) CreateListener(secret); // Add a new listener to allow listening in a new timespan.
                 }
-                Console.WriteLine("Listener Closed.");
+
+                Settings.Logger.Log("Listener Closed.", LogLevel.Debug);
             }
         }
 
