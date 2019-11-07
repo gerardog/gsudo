@@ -10,7 +10,8 @@ namespace gsudo
     {
         async static Task Main(string[] args)
         {
-            if (args.Length == 0) args = new string[] { Environment.GetEnvironmentVariable("COMSPEC") , "/k" };
+            args = new CommandInterceptor().AugmentCommand(args);
+
             if (args.Length > 1 && args[0] == "service")
             {
                 // service mode
@@ -62,7 +63,7 @@ namespace gsudo
                 process.StartInfo = new ProcessStartInfo(exeName, $"service {secret}");
                 process.StartInfo.UseShellExecute = true;
                 process.StartInfo.Verb = "runas";
-#if !DEBUG
+#if !DEBUG || true
                 process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
 #endif
                 process.Start();

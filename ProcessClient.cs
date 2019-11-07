@@ -16,14 +16,14 @@ namespace gsudo
                 pipe.Connect(timeoutMilliseconds);
                 Settings.Logger.Log("Connected.", LogLevel.Debug);
 
-                int cancelAttempts = 0; 
-                // no funca bien.
-                Console.CancelKeyPress += (sender, e) =>
-                {
-                    if (cancelAttempts++ <= 3) e.Cancel = true;
-                    var CtrlC_Command = Settings.Encoding.GetBytes("\x3");
-                    pipe.WriteAsync(CtrlC_Command, 0, CtrlC_Command.Length);
-                };            
+                //// doesnt works.
+                //int cancelAttempts = 0; 
+                //Console.CancelKeyPress += (sender, e) =>
+                //{
+                //    if (cancelAttempts++ <= 3) e.Cancel = true;
+                //    var CtrlC_Command = Settings.Encoding.GetBytes("\x3");
+                //    pipe.WriteAsync(CtrlC_Command, 0, CtrlC_Command.Length);
+                //};            
 
             var payload = Newtonsoft.Json.JsonConvert.SerializeObject(new RequestStartInfo()
                 {
@@ -54,7 +54,7 @@ namespace gsudo
             }
             if (ExitCode.HasValue)
             {
-                Settings.Logger.Log($"Elevated process exited with code {ExitCode}", LogLevel.Info);
+                Settings.Logger.Log($"Elevated process exited with code {ExitCode}", LogLevel.Debug);
 
                 Environment.Exit(ExitCode.Value);
             }
