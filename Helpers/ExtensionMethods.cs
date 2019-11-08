@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,7 +28,6 @@ namespace gsudo
             }
         }
 
-
         public static async Task<TResult> TimeoutAfter<TResult>(this Task<TResult> task, TimeSpan timeout)
         {
             using (var timeoutCancellationTokenSource = new CancellationTokenSource())
@@ -50,10 +50,15 @@ namespace gsudo
             char[] buffer = new char[256];
             int cch;
 
-            while ((cch = await reader.ReadAsync(buffer, 0, buffer.Length)) > 0)
+            try
             {
-                await callback(new string(buffer, 0, cch));
+                while (reader.BaseStream.CanRead)
+                {
+                    if ((cch = await reader.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                        await callback(new string(buffer, 0, cch));
+                }
             }
+            catch (ObjectDisposedException) { }
         }
 
         public static Task WriteAsync(this Stream stream, byte[] bytes)
@@ -63,8 +68,23 @@ namespace gsudo
 
         public static async Task WriteAsync(this Stream stream, string text)
         {
-            await stream.WriteAsync(Settings.Encoding.GetBytes(text));
-            await stream.FlushAsync();
+            try
+            {
+                await stream.WriteAsync(Settings.Encoding.GetBytes(text));
+                await stream.FlushAsync();
+            }
+            catch (ObjectDisposedException) { }
+        }
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool GetNamedPipeClientProcessId(IntPtr Pipe, out uint ClientProcessId);
+        public static int GetClientProcessId(this System.IO.Pipes.NamedPipeServerStream pipeServer)
+        {
+            UInt32 nProcID;
+            IntPtr hPipe = pipeServer.SafePipeHandle.DangerousGetHandle();
+            if (GetNamedPipeClientProcessId(hPipe, out nProcID))
+                return (int)nProcID;
+            return 0;
         }
 
     }

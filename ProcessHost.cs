@@ -1,4 +1,5 @@
-﻿using System;
+﻿using gsudo.Helpers;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
@@ -6,17 +7,19 @@ using System.Threading.Tasks;
 
 namespace gsudo
 {
+    // Regular Windows Console app host service. (not ConPTY).
+    // Assumes authentication succeded
     class ProcessHost
     {
         private NamedPipeServerStream pipe;
         private string lastInboundMessage = null;
-
+        private Process process;
         public ProcessHost(NamedPipeServerStream pipe)
         {
             this.pipe = pipe;
         }
 
-        internal async Task Start(string secret)
+        internal async Task Start()
         {
             var buffer = new byte[1024];
             var requestString = "";
@@ -27,18 +30,12 @@ namespace gsudo
             }
 
             Settings.Logger.Log("Incoming Json: " + requestString, LogLevel.Debug);
+            Environment.SetEnvironmentVariable("PROMPT", "$P# ");
+
             try
             {
                 var request = Newtonsoft.Json.JsonConvert.DeserializeObject<RequestStartInfo>(requestString);
-                if (request.Secret != secret)
-                {
-                    await pipe.WriteAsync("Invalid sudo secret\r\n");
-                    pipe.WaitForPipeDrain();
-                    pipe.Close();
-                    return;
-                }
-
-                var process = new Process();
+                process = new Process();
                 process.StartInfo = new ProcessStartInfo(request.FileName);
                 process.StartInfo.Arguments = request.Arguments;
                 process.StartInfo.WorkingDirectory = request.StartFolder;
@@ -52,14 +49,20 @@ namespace gsudo
 
                 var t1 = process.StandardOutput.ConsumeOutput((s) => WriteToPipe(s));
                 var t2 = process.StandardError.ConsumeOutput((s) => WriteToPipe(s));
-                var t3 = new StreamReader(pipe, Settings.Encoding).ConsumeOutput((s) => ReadFromPipe(s, process));
+                var t3 = Task.Run(async () =>
+                {
+                    using (var sr = new StreamReader(pipe, Settings.Encoding))
+                        await sr.ConsumeOutput((s) => ReadFromPipe(s, process));
+                });
 
+                int i = 0;
                 while (!process.WaitForExit(0) && pipe.IsConnected)
                 {
-                    await Task.Delay(50);
+                    await Task.Delay(10);
                     try
                     {
-                        await pipe.WriteAsync("\0");
+                        i = (i + 1) % 50;
+                        if (i==0) await pipe.WriteAsync("\0"); // Sending a KeepAlive is mandatory to detect if the pipe has disconnected.
                     } 
                     catch (IOException)
                     {
@@ -70,9 +73,6 @@ namespace gsudo
                 if (process.HasExited && pipe.IsConnected)
                 {
                     // avoid cases
-//                    await process.StandardOutput.BaseStream.FlushAsync();
-//                    await process.StandardError.BaseStream.FlushAsync();
-//                    await pipe.FlushAsync();
                     await Task.WhenAll(t1, t2);
                     pipe.WaitForPipeDrain();
                     await pipe.WriteAsync($"{Settings.TOKEN_EXITCODE}{process.ExitCode}{Settings.TOKEN_EXITCODE}");
@@ -113,6 +113,12 @@ namespace gsudo
             else 
                 lastInboundMessage += s;
 
+            if (s.StartsWith("caca"))
+            {
+                ProcessExtensions.SendCtrlC(process);
+                return Task.CompletedTask;
+            }
+            else
             return process.StandardInput.WriteAsync(s);
         }
 

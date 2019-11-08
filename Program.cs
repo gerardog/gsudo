@@ -1,4 +1,5 @@
-﻿using System;
+﻿using gsudo.Helpers;
+using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Security.Principal;
@@ -12,66 +13,74 @@ namespace gsudo
         {
             args = new CommandInterceptor().AugmentCommand(args);
 
-            if (args.Length > 1 && args[0] == "service")
+            try
             {
-                // service mode
-                var secret = args[1];
-                Settings.Logger.Log("Starting Service.", LogLevel.Info);
-                Settings.Logger.Log($"Using secret {secret}", LogLevel.Debug);
- 
-                Environment.SetEnvironmentVariable("PROMPT", "$P# ");
 
-                NamedPipeListener.CreateListener(secret);
-                await NamedPipeListener.WaitAll();
-                Settings.Logger.Log("Service Stopped", LogLevel.Info);
-            }
-            else if (IsAdministrator() && false)
-            {
-                Settings.Logger.Log("You are already admin. Running in-process", LogLevel.Debug);
-                // No need to escalate. Run in-process
-                var exeName = args[0];
-                var process = new Process();
-                process.StartInfo = new ProcessStartInfo(exeName);
-                process.StartInfo.Arguments = GetArgumentsString(args, 1);
-                process.StartInfo.UseShellExecute = false;
-                process.Start();
-                process.WaitForExit();
-                Environment.Exit(process.ExitCode);
-            }
-            else // IsAdministrator() == false
-            {
-                var secret = Environment.GetEnvironmentVariable("gsudoSecret") ?? Environment.GetEnvironmentVariable("gsudoSecret", EnvironmentVariableTarget.User) ?? Guid.NewGuid().ToString(); ;
-                Settings.Logger.Log($"Using secret {secret}", LogLevel.Debug);
-                Environment.SetEnvironmentVariable("gsudoSecret", secret, EnvironmentVariableTarget.User);
-
-                try
+                if (args.Length > 1 && args[0] == "service")
                 {
-                    await new ProcessClient().Start(args[0], GetArgumentsString(args, 1), secret);
-                    return;
-                }
-                catch (System.IO.IOException) { }
-                catch (TimeoutException) { }
-                catch (Exception ex)
-                {
-                    Settings.Logger.Log(ex.ToString(), LogLevel.Error);
-                }
-                Settings.Logger.Log("Elevating process...", LogLevel.Debug);
+                    // service mode
+                    var allowedPid = int.Parse(args[1]);
+                    Settings.Logger.Log("Starting Service.", LogLevel.Info);
+                    Settings.Logger.Log($"Access allowed only for ProcessID {allowedPid} and childs", LogLevel.Debug);
 
-                // Start elevated service instance
-                var process = new Process();
-                var exeName = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
-                process.StartInfo = new ProcessStartInfo(exeName, $"service {secret}");
-                process.StartInfo.UseShellExecute = true;
-                process.StartInfo.Verb = "runas";
-#if !DEBUG || true
+                    NamedPipeListener.CreateListener(allowedPid);
+                    await NamedPipeListener.WaitAll();
+                    Settings.Logger.Log("Service Stopped", LogLevel.Info);
+                }
+                else if (IsAdministrator()
+#if DEBUG
+                && false // for debugging, always elevate.
+#endif
+                )
+                {
+                    Settings.Logger.Log("You are already admin. Running in-process", LogLevel.Debug);
+                    // No need to escalate. Run in-process
+                    var exeName = args[0];
+                    var process = new Process();
+                    process.StartInfo = new ProcessStartInfo(exeName);
+                    process.StartInfo.Arguments = GetArgumentsString(args, 1);
+                    process.StartInfo.UseShellExecute = false;
+                    process.Start();
+                    process.WaitForExit();
+                    Environment.Exit(process.ExitCode);
+                }
+                else // IsAdministrator() == false, or build in Debug Mode
+                {
+                    Settings.Logger.Log($"Calling ProcessId is {Process.GetCurrentProcess().ParentProcessId()}", LogLevel.Debug);
+
+                    try
+                    {
+                        await new ProcessClient().Start(args[0], GetArgumentsString(args, 1), NamedPipeListener.GetPipeName());
+                        return;
+                    }
+                    catch (System.IO.IOException) { }
+                    catch (TimeoutException) { }
+                    catch (Exception ex)
+                    {
+                        Settings.Logger.Log(ex.ToString(), LogLevel.Error);
+                    }
+                    Settings.Logger.Log("Elevating process...", LogLevel.Debug);
+
+                    // Start elevated service instance
+                    var process = new Process();
+                    var currentProcess = System.Diagnostics.Process.GetCurrentProcess();
+                    var exeName = currentProcess.MainModule.FileName;
+                    var callingPid = currentProcess.ParentProcessId();
+                    process.StartInfo = new ProcessStartInfo(exeName, $"service {callingPid}");
+                    process.StartInfo.UseShellExecute = true;
+                    process.StartInfo.Verb = "runas";
+#if !DEBUG
                 process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
 #endif
-                process.Start();
-                Settings.Logger.Log("Elevated instance started.", LogLevel.Debug);
-                await Task.Delay(200);
-                await new ProcessClient().Start(args[0], GetArgumentsString(args, 1), secret, 5000);
-//                Console.WriteLine("Connecting...");
-
+                    process.Start();
+                    Settings.Logger.Log("Elevated instance started.", LogLevel.Debug);
+                    await Task.Delay(200);
+                    await new ProcessClient().Start(args[0], GetArgumentsString(args, 1), NamedPipeListener.GetPipeName(), 5000);
+                }
+            }
+            catch (Exception ex) 
+            {
+                Settings.Logger.Log(ex.ToString(), LogLevel.Error);
             }
         }
 
