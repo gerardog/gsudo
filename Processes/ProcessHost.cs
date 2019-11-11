@@ -19,6 +19,15 @@ namespace gsudo
             this.pipe = pipe;
         }
 
+        static ProcessHost()
+        {
+        /*    Console.CancelKeyPress += (object o, ConsoleCancelEventArgs e) =>
+            {
+                e.Cancel = true;
+            };
+            */
+        }
+
         internal async Task Start()
         {
             var buffer = new byte[1024];
@@ -34,7 +43,7 @@ namespace gsudo
 
             try
             {
-                var request = Newtonsoft.Json.JsonConvert.DeserializeObject<RequestStartInfo>(requestString);
+                var request = Newtonsoft.Json.JsonConvert.DeserializeObject<ElevationRequest>(requestString);
                 process = new Process();
                 process.StartInfo = new ProcessStartInfo(request.FileName);
                 process.StartInfo.Arguments = request.Arguments;
@@ -44,16 +53,11 @@ namespace gsudo
                 process.StartInfo.RedirectStandardOutput = true;
                 process.StartInfo.RedirectStandardError = true;
                 process.StartInfo.RedirectStandardInput = true;
-
-                process.Start();
+                process.Start();                
 
                 var t1 = process.StandardOutput.ConsumeOutput((s) => WriteToPipe(s));
                 var t2 = process.StandardError.ConsumeOutput((s) => WriteToPipe(s));
-                var t3 = Task.Run(async () =>
-                {
-                    using (var sr = new StreamReader(pipe, Settings.Encoding))
-                        await sr.ConsumeOutput((s) => ReadFromPipe(s, process));
-                });
+                var t3 = new StreamReader(pipe, Settings.Encoding).ConsumeOutput((s) => ReadFromPipe(s, process));
 
                 int i = 0;
                 while (!process.WaitForExit(0) && pipe.IsConnected)
@@ -79,15 +83,16 @@ namespace gsudo
                 }
                 else
                 {
+                    Settings.Logger.Log($"Killing process {process.Id} {process.ProcessName}", LogLevel.Debug);
+                    process.SendCtrlC(true);
                     process.Kill();
                 }
 
                 if (pipe.IsConnected)
                 {
                     pipe.WaitForPipeDrain();
-                    pipe.Close();
                 }
-
+                pipe.Close();
             }
             catch (Exception ex)
             {
@@ -96,15 +101,15 @@ namespace gsudo
                 
                 pipe.Flush();
                 pipe.WaitForPipeDrain();
-                pipe.Disconnect();
+                pipe.Close();
                 return;
             }
         }
 
-        private Task ReadFromPipe(string s, Process process)
+        private async Task ReadFromPipe(string s, Process process)
         {
             if (s == "\0") // session keep alive
-                return Task.CompletedTask;
+                return;
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine(s);
             
@@ -113,20 +118,23 @@ namespace gsudo
             else 
                 lastInboundMessage += s;
 
-            if (s.StartsWith("caca"))
+            if (s.StartsWith(Settings.TOKEN_SPECIALKEY))
             {
                 ProcessExtensions.SendCtrlC(process);
-                return Task.CompletedTask;
+                await Task.Delay(10);
+                pipe.WaitForPipeDrain();
+                await WriteToErrorPipe("^C\r\n");
+                lastInboundMessage = null;
             }
             else
-            return process.StandardInput.WriteAsync(s);
+                await process.StandardInput.WriteAsync(s);
         }
 
         private async Task WriteToErrorPipe(string s)
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(Settings.TOKEN_ERROR + s);
-            await pipe.WriteAsync(s);
+            Console.WriteLine(s);
+            await pipe.WriteAsync(Settings.TOKEN_ERROR + s);
             await pipe.FlushAsync();
         }
 

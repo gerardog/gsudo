@@ -33,7 +33,7 @@ namespace gsudo
 #endif
                 )
                 {
-                    Settings.Logger.Log("You are already admin. Running in-process", LogLevel.Debug);
+                    Settings.Logger.Log("Already elevated. Running in-process", LogLevel.Debug);
                     // No need to escalate. Run in-process
                     var exeName = args[0];
                     var process = new Process();

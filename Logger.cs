@@ -7,8 +7,9 @@ namespace gsudo
         All = 0,
         Debug = 1,
         Info = 2,
-        Error = 3,
-        None = 4
+        Warning = 3,
+        Error = 4,
+        None = 5,
     }
     class Logger
     {
@@ -26,6 +27,7 @@ namespace gsudo
         {
             if (level <= LogLevel.Debug) return ConsoleColor.DarkGray;
             if (level == LogLevel.Info) return ConsoleColor.Gray;
+            if (level == LogLevel.Warning) return ConsoleColor.Yellow;
             return ConsoleColor.Red;    
         }
     }

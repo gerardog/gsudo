@@ -1,6 +1,6 @@
 ﻿namespace gsudo
 {
-    class RequestStartInfo
+    class ElevationRequest
     {
         public string FileName { get; set; }
         public string Arguments { get; set; }

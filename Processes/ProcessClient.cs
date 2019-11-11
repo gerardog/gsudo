@@ -7,36 +7,23 @@ using System.Threading.Tasks;
 
 namespace gsudo
 {
-    // Regular Windows Console app Client. (not ConPTY)
+    // Regular Console app (WindowsPTY via .net) Client. (not ConPTY)
     class ProcessClient
     {
+        NamedPipeClientStream pipe;
         public static int? ExitCode { get; private set; }
 
         public async Task Start(string exeName, string arguments, string pipeName, int timeoutMilliseconds = 10)
+
         {
-            using (var pipe = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous, System.Security.Principal.TokenImpersonationLevel.Impersonation, System.IO.HandleInheritability.None))
+            using (pipe = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous, System.Security.Principal.TokenImpersonationLevel.Impersonation, System.IO.HandleInheritability.None))
             {
                 pipe.Connect(timeoutMilliseconds);
                 Settings.Logger.Log("Connected.", LogLevel.Debug);
 
-                //// doesn't works.
-                //int cancelAttempts = 0; 
-                Console.CancelKeyPress += (sender, e) =>
-                {
-                    e.Cancel = true;
+                Console.CancelKeyPress += CancelKeyPressHandler;   
                     
-                    if (++consecutiveCancelKeys > 1 || e.SpecialKey == ConsoleSpecialKey.ControlBreak)
-                        pipe.Close();
-                };
-
-                    //    if (cancelAttempts++ <= 3) e.Cancel = true;
-                    //    var CtrlC_Command = Settings.Encoding.GetBytes("\x3");
-                    //    pipe.WriteAsync(CtrlC_Command, 0, CtrlC_Command.Length);
-                    //};
-                    //                ProcessExtensions.SetConsoleCtrlHandler((key) => true);
-                    //Console.TreatControlCAsInput = true;
-
-                    var payload = Newtonsoft.Json.JsonConvert.SerializeObject(new RequestStartInfo()
+                var payload = Newtonsoft.Json.JsonConvert.SerializeObject(new ElevationRequest()
                 {
                     FileName = exeName,
                     Arguments = arguments,
@@ -70,12 +57,47 @@ namespace gsudo
 
                 Environment.Exit(ExitCode.Value);
             }
+
+            if (expectedClose)
+                Settings.Logger.Log($"Connection closed by the client.", LogLevel.Debug);
+            else
+                Settings.Logger.Log($"Connection from server lost.", LogLevel.Debug);
+        }
+
+        private void CancelKeyPressHandler(object sender, ConsoleCancelEventArgs e)
+        {
+            e.Cancel = true;
+
+            if (++consecutiveCancelKeys > 3 || e.SpecialKey == ConsoleSpecialKey.ControlBreak)
+            {
+                pipe.Close();
+                expectedClose = true;
+                return;
+            }
+
+            // restart console input.
+            var t1 = new StreamReader(Console.OpenStandardInput()).ConsumeOutput((s) => IncomingKey(s, pipe));
+
+            if (++consecutiveCancelKeys > 2)
+            {
+                Settings.Logger.Log("Press CTRL-C again to stop gsudo\r\n", LogLevel.Warning);
+                pipe.WriteAsync(Settings.TOKEN_SPECIALKEY).GetAwaiter().GetResult();
+            }
+            else
+            {
+                pipe.WriteAsync(Settings.TOKEN_SPECIALKEY).GetAwaiter().GetResult();
+            }
         }
 
         private static Task WriteToConsole(string s)
         {
             if (s == "\0") // session keep alive
                 return Task.CompletedTask;
+            if (s == "\f") // session keep alive
+            {
+                Console.Clear();
+                return Task.CompletedTask;
+            }
             if (s.StartsWith(Settings.TOKEN_EXITCODE, StringComparison.Ordinal))
             {
                 int i1 = s.IndexOf(Settings.TOKEN_EXITCODE, StringComparison.Ordinal) + Settings.TOKEN_EXITCODE.Length;
@@ -97,18 +119,12 @@ namespace gsudo
         }
 
         int consecutiveCancelKeys = 0;
+        private bool expectedClose;
+
         private async Task IncomingKey(string s, NamedPipeClientStream pipe )
         {
             consecutiveCancelKeys = 0;
-            // ctrl-c prototype:  
-            //if (s.Contains("\r"))
-            //{
-
-            //    Console.Write("\n");
-            //    s = s.Replace("\r", "\r\n");
-            //}
             await pipe.WriteAsync(s).ConfigureAwait(false);
-//            Console.WriteLine("Sent: " + s);
         }
     }
 }

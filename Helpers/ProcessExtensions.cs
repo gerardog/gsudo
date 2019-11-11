@@ -2,6 +2,7 @@
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -121,17 +122,23 @@ namespace gsudo.Helpers
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool GenerateConsoleCtrlEvent(CtrlTypes dwCtrlEvent, uint dwProcessGroupId);
 
-        public static void SendCtrlC(Process proc)
+        public static void SendCtrlC(this Process proc, bool sendSigBreak = false)
         {
-            //This does not require the console window to be visible.
-          //  if (AttachConsole((uint)proc.Id))
-            {
-                // Disable Ctrl-C handling for our program
-             //   SetConsoleCtrlHandler(null, true);
-                bool result = GenerateConsoleCtrlEvent(CtrlTypes.CTRL_C_EVENT, (uint) proc.Id);
-                Console.WriteLine($"ctrl c result {result}");
+            var signal = sendSigBreak ? "SIGBREAK" : "SIGINT";
 
-            }
+            Process p = new Process();
+            p.StartInfo.FileName = "cmd.exe";
+            p.StartInfo.Arguments = "/c \""  +
+                Path.Combine(
+                Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName),
+                "windows-kill.exe"
+                ) + 
+             $"\" -{signal} {proc.Id.ToString()}";
+            Console.WriteLine(p.StartInfo.Arguments);
+            p.StartInfo.UseShellExecute = true;
+            p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            p.Start();
+            p.WaitForExit();
         }
     }
 }

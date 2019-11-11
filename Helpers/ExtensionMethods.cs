@@ -23,7 +23,7 @@ namespace gsudo
                 }
                 else
                 {
-//                    throw new TimeoutException("The operation has timed out.");
+                    //                    throw new TimeoutException("The operation has timed out.");
                 }
             }
         }
@@ -47,23 +47,31 @@ namespace gsudo
 
         public async static Task ConsumeOutput(this StreamReader reader, Func<string, Task> callback)
         {
+
             char[] buffer = new char[256];
             int cch;
 
             try
             {
-                while (reader.BaseStream.CanRead)
+                while ((cch = await reader.ReadAsync(buffer, 0, buffer.Length)) > 0)
                 {
-                    if ((cch = await reader.ReadAsync(buffer, 0, buffer.Length)) > 0)
-                        await callback(new string(buffer, 0, cch));
+                    await callback(new string(buffer, 0, cch));
                 }
             }
             catch (ObjectDisposedException) { }
+            catch (IOException) { }
+            catch (Exception ex) { Settings.Logger.Log(ex.ToString(), LogLevel.Error); }
+            finally
+            {
+                reader.Dispose();
+                reader.BaseStream?.Dispose();
+
+            }
         }
 
-        public static Task WriteAsync(this Stream stream, byte[] bytes)
+        public static async Task WriteAsync(this Stream stream, byte[] bytes)
         {
-            return stream.WriteAsync(bytes, 0, bytes.Length);
+            await stream.WriteAsync(bytes, 0, bytes.Length);
         }
 
         public static async Task WriteAsync(this Stream stream, string text)
