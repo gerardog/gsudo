@@ -11,43 +11,8 @@ namespace gsudo
 {
     static class ExtensionMethods
     {
-        public static async Task TimeoutAfter(this Task task, TimeSpan timeout)
-        {
-            using (var timeoutCancellationTokenSource = new CancellationTokenSource())
-            {
-                var completedTask = await Task.WhenAny(task, Task.Delay(timeout, timeoutCancellationTokenSource.Token));
-                if (completedTask == task)
-                {
-                    timeoutCancellationTokenSource.Cancel();
-                    await task;  // Very important in order to propagate exceptions
-                }
-                else
-                {
-                    //                    throw new TimeoutException("The operation has timed out.");
-                }
-            }
-        }
-
-        public static async Task<TResult> TimeoutAfter<TResult>(this Task<TResult> task, TimeSpan timeout)
-        {
-            using (var timeoutCancellationTokenSource = new CancellationTokenSource())
-            {
-                var completedTask = await Task.WhenAny(task, Task.Delay(timeout, timeoutCancellationTokenSource.Token));
-                if (completedTask == task)
-                {
-                    timeoutCancellationTokenSource.Cancel();
-                    return await task;  // Very important in order to propagate exceptions
-                }
-                else
-                {
-                    throw new TimeoutException("The operation has timed out.");
-                }
-            }
-        }
-
         public async static Task ConsumeOutput(this StreamReader reader, Func<string, Task> callback)
         {
-
             char[] buffer = new char[256];
             int cch;
 
@@ -60,7 +25,7 @@ namespace gsudo
             }
             catch (ObjectDisposedException) { }
             catch (IOException) { }
-            catch (Exception ex) { Settings.Logger.Log(ex.ToString(), LogLevel.Error); }
+            catch (Exception ex) { Globals.Logger.Log(ex.ToString(), LogLevel.Error); }
             finally
             {
                 reader.Dispose();
@@ -69,19 +34,17 @@ namespace gsudo
             }
         }
 
-        public static async Task WriteAsync(this Stream stream, byte[] bytes)
-        {
-            await stream.WriteAsync(bytes, 0, bytes.Length);
-        }
-
         public static async Task WriteAsync(this Stream stream, string text)
         {
             try
             {
-                await stream.WriteAsync(Settings.Encoding.GetBytes(text));
+                var bytes = Globals.Encoding.GetBytes(text);
+                await stream.WriteAsync(bytes, 0, bytes.Length);
                 await stream.FlushAsync();
             }
             catch (ObjectDisposedException) { }
+            catch (IOException) { }
+            catch (Exception ex) { Globals.Logger.Log(ex.ToString(), LogLevel.Error); }
         }
 
         [DllImport("kernel32.dll", SetLastError = true)]

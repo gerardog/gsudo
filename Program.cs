@@ -20,12 +20,12 @@ namespace gsudo
                 {
                     // service mode
                     var allowedPid = int.Parse(args[1]);
-                    Settings.Logger.Log("Starting Service.", LogLevel.Info);
-                    Settings.Logger.Log($"Access allowed only for ProcessID {allowedPid} and childs", LogLevel.Debug);
+                    Globals.Logger.Log("Starting Service.", LogLevel.Info);
+                    Globals.Logger.Log($"Access allowed only for ProcessID {allowedPid} and childs", LogLevel.Debug);
 
                     NamedPipeListener.CreateListener(allowedPid);
                     await NamedPipeListener.WaitAll();
-                    Settings.Logger.Log("Service Stopped", LogLevel.Info);
+                    Globals.Logger.Log("Service Stopped", LogLevel.Info);
                 }
                 else if (IsAdministrator()
 #if DEBUG
@@ -33,7 +33,7 @@ namespace gsudo
 #endif
                 )
                 {
-                    Settings.Logger.Log("Already elevated. Running in-process", LogLevel.Debug);
+                    Globals.Logger.Log("Already elevated. Running in-process", LogLevel.Debug);
                     // No need to escalate. Run in-process
                     var exeName = args[0];
                     var process = new Process();
@@ -46,20 +46,20 @@ namespace gsudo
                 }
                 else // IsAdministrator() == false, or build in Debug Mode
                 {
-                    Settings.Logger.Log($"Calling ProcessId is {Process.GetCurrentProcess().ParentProcessId()}", LogLevel.Debug);
+                    Globals.Logger.Log($"Calling ProcessId is {Process.GetCurrentProcess().ParentProcessId()}", LogLevel.Debug);
 
                     try
                     {
-                        await new ProcessClient().Start(args[0], GetArgumentsString(args, 1), NamedPipeListener.GetPipeName());
+                        await new WinPtyClientProcess().Start   (args[0], GetArgumentsString(args, 1), NamedPipeListener.GetPipeName(), 200);
                         return;
                     }
                     catch (System.IO.IOException) { }
                     catch (TimeoutException) { }
                     catch (Exception ex)
                     {
-                        Settings.Logger.Log(ex.ToString(), LogLevel.Error);
+                        Globals.Logger.Log(ex.ToString(), LogLevel.Error);
                     }
-                    Settings.Logger.Log("Elevating process...", LogLevel.Debug);
+                    Globals.Logger.Log("Elevating process...", LogLevel.Debug);
 
                     // Start elevated service instance
                     var process = new Process();
@@ -70,17 +70,16 @@ namespace gsudo
                     process.StartInfo.UseShellExecute = true;
                     process.StartInfo.Verb = "runas";
 #if !DEBUG
-                process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                    process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
 #endif
                     process.Start();
-                    Settings.Logger.Log("Elevated instance started.", LogLevel.Debug);
-                    await Task.Delay(200);
-                    await new ProcessClient().Start(args[0], GetArgumentsString(args, 1), NamedPipeListener.GetPipeName(), 5000);
+                    Globals.Logger.Log("Elevated instance started.", LogLevel.Debug);
+                    await new WinPtyClientProcess().Start(args[0], GetArgumentsString(args, 1), NamedPipeListener.GetPipeName(), 5000);
                 }
             }
             catch (Exception ex) 
             {
-                Settings.Logger.Log(ex.ToString(), LogLevel.Error);
+                Globals.Logger.Log(ex.ToString(), LogLevel.Error);
             }
         }
 

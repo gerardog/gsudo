@@ -4,51 +4,70 @@ using System.Diagnostics;
 using System.IO.Pipes;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace gsudo
 {
     class NamedPipeListener
     {
-        public static List<Task> Instances = new List<Task>();
+        static int RunningInstances = 0;
+
+        static void TimerCallback(object o) => ServiceTimeout = true;
+        static Timer ShutdownTimer = new Timer(TimerCallback);
+        static void EnableTimer() => ShutdownTimer.Change((int)Globals.ServerTimeout.TotalMilliseconds, Timeout.Infinite);
+        static void DisableTimer() => ShutdownTimer.Change(Timeout.Infinite, Timeout.Infinite);
+
+        static bool ServiceTimeout = false;
 
         public async Task Start(int AllowedPid)
         {
-            var ps = new PipeSecurity();
-
-            ps.AddAccessRule(new PipeAccessRule(
-                WindowsIdentity.GetCurrent().User,
-                PipeAccessRights.ReadWrite | PipeAccessRights.CreateNewInstance,
-                AccessControlType.Allow));
-
-            var pipeName = GetPipeName(AllowedPid);
-            Settings.Logger.Log($"Using named pipe {pipeName}.", LogLevel.Debug);
-
-            using (NamedPipeServerStream pipe = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 10,
-                PipeTransmissionMode.Message, PipeOptions.Asynchronous, Settings.BufferSize, Settings.BufferSize, ps))
+            try
             {
-                Settings.Logger.Log("Listener ready.", LogLevel.Debug);
+                var ps = new PipeSecurity();
 
-                await pipe.WaitForConnectionAsync().TimeoutAfter(Settings.ServerTimeout);
+                ps.AddAccessRule(new PipeAccessRule(
+                    WindowsIdentity.GetCurrent().User,
+                    PipeAccessRights.ReadWrite | PipeAccessRights.CreateNewInstance,
+                    AccessControlType.Allow));
 
-                if (pipe.IsConnected)
+                var pipeName = GetPipeName(AllowedPid);
+                Globals.Logger.Log($"Using named pipe {pipeName}.", LogLevel.Debug);
+
+                using (NamedPipeServerStream pipe = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 20,
+                    PipeTransmissionMode.Message, PipeOptions.Asynchronous, Globals.BufferSize, Globals.BufferSize, ps))
                 {
-                    Settings.Logger.Log("Incoming Connection.", LogLevel.Info);
-                    if (Settings.SharedService) CreateListener(AllowedPid); // Add new listener, as this one is busy;
+                    Globals.Logger.Log("Listener ready.", LogLevel.Debug);
 
-                    if (!IsAuthorized(pipe.GetClientProcessId(), AllowedPid))
+                    await pipe.WaitForConnectionAsync();
+
+                    Interlocked.Increment(ref RunningInstances);
+                    if (pipe.IsConnected)
                     {
-                        await pipe.WriteAsync(Settings.TOKEN_ERROR + "Unauthorized.");
-                        pipe.WaitForPipeDrain();
-                        pipe.Close();
-                        return;
+                        DisableTimer();
+                        Globals.Logger.Log("Incoming Connection.", LogLevel.Info);
+                        if (Globals.SharedService) CreateListener(AllowedPid); // Add new listener, as this one is busy;
+
+                        if (!IsAuthorized(pipe.GetClientProcessId(), AllowedPid))
+                        {
+                            await pipe.WriteAsync(Globals.TOKEN_ERROR + "Unauthorized.");
+                            pipe.WaitForPipeDrain();
+                            pipe.Close();
+                            return;
+                        }
+
+                        await new WinPtyHostProcess(pipe).Start();
+
+                        if (RunningInstances == 0) EnableTimer();
                     }
 
-                    await new ProcessHost(pipe).Start();
-                    if (Settings.SharedService) CreateListener(AllowedPid); // Add a new listener to allow listening in a new timespan.
+                    Globals.Logger.Log("Listener Closed.", LogLevel.Debug);
                 }
-
-                Settings.Logger.Log("Listener Closed.", LogLevel.Debug);
+            }
+            finally
+            {
+                Interlocked.Decrement(ref RunningInstances);
+                if (RunningInstances == 0) EnableTimer();
             }
         }
 
@@ -59,7 +78,7 @@ namespace gsudo
             
             if (callingExe != allowedExe)
             {
-                Settings.Logger.Log($"Invalid Client. Rejecting Connection. \nAllowed: {allowedExe}\nActual:  {callingExe}", LogLevel.Error);
+                Globals.Logger.Log($"Invalid Client. Rejecting Connection. \nAllowed: {allowedExe}\nActual:  {callingExe}", LogLevel.Error);
                 return false;
             }
 
@@ -71,7 +90,7 @@ namespace gsudo
                 else
                     clientPid = ProcessExtensions.ParentProcessId(clientPid);
 
-            Settings.Logger.Log($"Invalid Client Credentials. Rejecting Connection. \nAllowed Pid: {allowedPid}\nActual Pid:  {clientPid}", LogLevel.Error);
+            Globals.Logger.Log($"Invalid Client Credentials. Rejecting Connection. \nAllowed Pid: {allowedPid}\nActual Pid:  {clientPid}", LogLevel.Error);
             return false;
         }
 
@@ -79,26 +98,22 @@ namespace gsudo
         {
             var instance = new NamedPipeListener();
             var t = Task.Run(() => instance.Start(parentPid));
-            Instances.Add(t);
         }
 
         public static async Task WaitAll()
         {
-            int count=Instances.Count;
-            await Task.WhenAll(Instances.ToArray());
-
-            if (count != Instances.Count)
-                await WaitAll();
+            while (!ServiceTimeout)
+                await Task.Delay(50);
         }
 
         public static string GetPipeName()
         {
-            return GetPipeName(System.Security.Principal.WindowsIdentity.GetCurrent().User.Value, Process.GetCurrentProcess().ParentProcessId());
+            return GetPipeName(WindowsIdentity.GetCurrent().User.Value, Process.GetCurrentProcess().ParentProcessId());
         }
 
         public static string GetPipeName(int AllowedProcessId)
         {
-            return GetPipeName(System.Security.Principal.WindowsIdentity.GetCurrent().User.Value, AllowedProcessId);
+            return GetPipeName(WindowsIdentity.GetCurrent().User.Value, AllowedProcessId);
         }
 
         public static string GetPipeName(string user, int processId)

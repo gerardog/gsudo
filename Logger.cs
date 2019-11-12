@@ -15,7 +15,7 @@ namespace gsudo
     {
         public void Log(string message, LogLevel level)
         {
-            if (level >= Settings.LogLevel)
+            if (level >= Globals.LogLevel)
             {
                 Console.ForegroundColor = GetColor(level);
                 Console.WriteLine($"{level.ToString()}: {message}");

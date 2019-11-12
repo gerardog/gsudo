@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net46</TargetFramework>
-    <SignAssembly>true</SignAssembly>
+    <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>StrongName.snk</AssemblyOriginatorKeyFile>
     <Authors>Gerardo Grignoli</Authors>
     <Description>gsudo is a Windows equivalent of linux Sudo</Description>
@@ -30,6 +30,10 @@
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <Exec Command="echo Killing running gsudo commands.&#xD;&#xA;%25windir%25\sysnative\tskill gsudo&#xD;&#xA;exit 0" />
+  </Target>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="rem powershell -Command &quot;(gc myFile.txt) -replace 'foo', 'bar' | Out-File -encoding ASCII myFile.txt&quot;&#xD;&#xA;cd ..\choco-package&#xD;&#xA;7z a gsudo.nupkg gsudo\*.*&#xD;&#xA;" />
   </Target>
 
 </Project>
