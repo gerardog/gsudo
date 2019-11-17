@@ -34,7 +34,7 @@
   </Target>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="rem powershell -Command &quot;(gc myFile.txt) -replace 'foo', 'bar' | Out-File -encoding ASCII myFile.txt&quot;&#xD;&#xA;cd ..\choco-package&#xD;&#xA;7z a gsudo.nupkg gsudo\*.*&#xD;&#xA;" />
+    <Exec Command="copy bin\*.* ..\choco-package\gsudo\tools\*.*&#xD;&#xA;cd ..\choco-package&#xD;&#xA;del gsudo.nupkg&#xD;&#xA;del gsudo.zip&#xD;&#xA;cd gsudo&#xD;&#xA;7z a ..\gsudo.zip *.*&#xD;&#xA;cd ..&#xD;&#xA;ren gsudo.zip gsudo.nupkg" />
   </Target>
 
 </Project>
