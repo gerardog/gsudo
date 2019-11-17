@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29215.179
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "gsudo", "gsudo.csproj", "{9EEBDA90-12DE-4780-B8B1-8BF86DFE71B3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "gsudo", "src\gsudo.csproj", "{9EEBDA90-12DE-4780-B8B1-8BF86DFE71B3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

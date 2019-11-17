@@ -12,6 +12,25 @@ namespace gsudo.Helpers
 {
     static class ProcessExtensions
     {
+        public static void SendCtrlC(this Process proc, bool sendSigBreak = false)
+        {
+            var signal = sendSigBreak ? "SIGBREAK" : "SIGINT";
+
+            Process p = new Process();
+            p.StartInfo.FileName = "cmd.exe";
+            p.StartInfo.Arguments = "/c \""  +
+                Path.Combine(
+                Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName),
+                "windows-kill.exe"
+                ) + 
+             $"\" -{signal} {proc.Id.ToString()}";
+            Console.WriteLine(p.StartInfo.Arguments);
+            p.StartInfo.UseShellExecute = true;
+            p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            p.Start();
+            p.WaitForExit();
+        }
+
         public static int ParentProcessId(this Process process)
         {
             return ParentProcessId(process.Id);
@@ -40,6 +59,9 @@ namespace gsudo.Helpers
             }
             return -1;
         }
+
+        #region Win32 api
+
         private const int ERROR_NO_MORE_FILES = 0x12;
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern SafeSnapshotHandle CreateToolhelp32Snapshot(SnapshotFlags flags, uint id);
@@ -96,49 +118,6 @@ namespace gsudo.Helpers
             private static extern bool CloseHandle(IntPtr handle);
         }
 
-        // send ctrl-c
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool AttachConsole(uint dwProcessId);
-
-        [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
-        static extern bool FreeConsole();
-
-        [DllImport("kernel32.dll")]
-        static extern bool SetConsoleCtrlHandler(ConsoleCtrlDelegate HandlerRoutine, bool Add);
-
-        delegate bool ConsoleCtrlDelegate(CtrlTypes CtrlType);
-
-        // Enumerated type for the control messages sent to the handler routine
-        enum CtrlTypes : uint
-        {
-            CTRL_C_EVENT = 0,
-            CTRL_BREAK_EVENT,
-            CTRL_CLOSE_EVENT,
-            CTRL_LOGOFF_EVENT = 5,
-            CTRL_SHUTDOWN_EVENT
-        }
-
-        [DllImport("kernel32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool GenerateConsoleCtrlEvent(CtrlTypes dwCtrlEvent, uint dwProcessGroupId);
-
-        public static void SendCtrlC(this Process proc, bool sendSigBreak = false)
-        {
-            var signal = sendSigBreak ? "SIGBREAK" : "SIGINT";
-
-            Process p = new Process();
-            p.StartInfo.FileName = "cmd.exe";
-            p.StartInfo.Arguments = "/c \""  +
-                Path.Combine(
-                Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName),
-                "windows-kill.exe"
-                ) + 
-             $"\" -{signal} {proc.Id.ToString()}";
-            Console.WriteLine(p.StartInfo.Arguments);
-            p.StartInfo.UseShellExecute = true;
-            p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            p.Start();
-            p.WaitForExit();
-        }
+        #endregion
     }
 }
