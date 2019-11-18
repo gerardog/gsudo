@@ -2,7 +2,7 @@
 <!-- Read this before creating packages: https://chocolatey.org/docs/create-packages -->
 <!-- Test your packages in a test environment: https://github.com/chocolatey/chocolatey-test-environment -->
 <!-- Do not remove this test for UTF-8: if “Ω” doesn’t appear as greek uppercase omega letter enclosed in quotation marks, you should use an editor that supports UTF-8, not this one. -->
-<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>
     <!-- == PACKAGE SPECIFIC SECTION == -->
     <!-- This section is about this package, although id and version have ties back to the software -->
@@ -12,7 +12,7 @@
     <!-- version should MATCH as closely as possible with the underlying software -->
     <!-- Is the version a prerelease of a version? https://docs.nuget.org/create/versioning#creating-prerelease-packages -->
     <!-- Note that unstable versions like 0.0.1 can be considered a released version, but it's possible that one can release a 0.0.1-beta before you release a 0.0.1 version. If the version number is final, that is considered a released version and not a prerelease. -->
-    <version>__REPLACE__</version>
+    <version>#VERSION#</version>
     <!--PackageSourceUrl - Where is this Chocolatey package located (think GitHub)? packageSourceUrl is highly recommended for the community feed-->
     <packageSourceUrl>http://github.com/gerardog/gsudo</packageSourceUrl>
     <!-- owners is a poor name for maintainers of the package. It sticks around by this name for compatibility reasons. It basically means you. -->
@@ -21,11 +21,11 @@
 
     <!-- == SOFTWARE SPECIFIC SECTION == -->
     <!-- This section is about the software itself -->
-    <title>gsudo (Install)</title>
+    <title>gsudo</title>
     <authors>Gerardo Grignoli</authors>
     <!-- projectUrl is required for the community feed -->
     <projectUrl>http://github.com/gerardog/gsudo</projectUrl>
-    <!--<iconUrl>http://cdn.rawgit.com/__REPLACE_YOUR_REPO__/master/icons/gsudo.png</iconUrl>-->
+    <!--<iconUrl>http://cdn.rawgit.com/gerardog/master/icons/gsudo.png</iconUrl>-->
     <!-- <copyright>Year Software Vendor</copyright> -->
     <!-- If there is a license Url available, it is is required for the community feed -->
     <!-- <licenseUrl>Software License Location __REMOVE_OR_FILL_OUT__</licenseUrl>
@@ -34,9 +34,9 @@
     <!--<docsUrl>At what url are the software docs located?</docsUrl>-->
     <!--<mailingListUrl></mailingListUrl>-->
     <!--<bugTrackerUrl></bugTrackerUrl>-->
-    <tags>gsudo portable SPACE_SEPARATED</tags>
+    <tags>gsudo portable sudo for windows</tags>
     <summary>__REPLACE__</summary>
-    <description>**gsudo** is a `sudo` for Windows that tries to bring a similar user-experience as *nix sudo.</description>
+    <description>__REPLACE__MarkDown_Okay </description>
     <!-- <releaseNotes>__REPLACE_OR_REMOVE__MarkDown_Okay</releaseNotes> -->
     <!-- =============================== -->      
 

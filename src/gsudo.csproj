@@ -10,7 +10,9 @@
     <DelaySign>false</DelaySign>
     <OutputPath>bin\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+    <Version>0.0.2</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -29,12 +31,27 @@
     <PackageReference Include="System.Security.Principal.Windows" Version="4.6.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="bin\windows-kill.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <Exec Command="echo Killing running gsudo commands.&#xD;&#xA;%25windir%25\sysnative\tskill gsudo&#xD;&#xA;exit 0" />
   </Target>
+    
+  <Target Name="PostBuildMacros">
+    <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
+      <Output TaskParameter="Assemblies" ItemName="Targets" />
+    </GetAssemblyIdentity>
+    <ItemGroup>
+      <VersionNumber Include="@(Targets->'%(Version)')" />
+    </ItemGroup>
+  </Target>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="copy bin\*.* ..\choco-package\gsudo\tools\*.*&#xD;&#xA;cd ..\choco-package&#xD;&#xA;del gsudo.nupkg&#xD;&#xA;del gsudo.zip&#xD;&#xA;cd gsudo&#xD;&#xA;7z a ..\gsudo.zip *.*&#xD;&#xA;cd ..&#xD;&#xA;ren gsudo.zip gsudo.nupkg" />
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" DependsOnTargets="PostBuildMacros">
+    <Exec Command="copy bin\*.* ..\choco-package\gsudo\tools\*.* /Y&#xD;&#xA;cd ..\choco-package\gsudo&#xD;&#xA;ECHO @(VersionNumber)&#xD;&#xA;powershell -Command &quot;(gc gsudo.nuspec.template) -replace '#VERSION#', '@(VersionNumber)' | Out-File -encoding UTF8 gsudo.nuspec&quot;&#xD;&#xA;cd ..&#xD;&#xA;choco pack gsudo\gsudo.nuspec&#xD;&#xA;" />
   </Target>
 
 </Project>
