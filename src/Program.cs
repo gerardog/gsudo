@@ -26,16 +26,12 @@ namespace gsudo
                     await NamedPipeListener.WaitAll();
                     Globals.Logger.Log("Service Stopped", LogLevel.Info);
                 }
-                else if (IsAdministrator()
-#if DEBUG
-                        && false // for debugging, always elevate.
-#endif
-                        )
+                else if (IsAdministrator())
                 {
                     if (args.Length == 0)
                     {
-                        Globals.Logger.Log("Already elevated. Nothing to do. Exiting...", LogLevel.Error);
-                        return;
+                        Globals.Logger.Log("Already elevated (and no parameters specified). Exiting...", LogLevel.Error);
+                        Environment.Exit(1);
                     }
                     
                     Globals.Logger.Log("Already elevated. Running in-process", LogLevel.Debug);

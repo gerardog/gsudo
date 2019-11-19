@@ -46,7 +46,6 @@ namespace gsudo
                     {
                         DisableTimer();
                         Globals.Logger.Log("Incoming Connection.", LogLevel.Info);
-                        if (Globals.SharedService) CreateListener(AllowedPid); // Add new listener, as this one is busy;
 
                         if (!IsAuthorized(pipe.GetClientProcessId(), AllowedPid))
                         {
@@ -62,6 +61,7 @@ namespace gsudo
                     }
 
                     Globals.Logger.Log("Listener Closed.", LogLevel.Debug);
+                    if (Globals.SharedService) CreateListener(AllowedPid); // Add new listener, as this one is busy;
                 }
             }
             finally
