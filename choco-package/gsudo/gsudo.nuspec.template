@@ -37,12 +37,24 @@
     <tags>gsudo portable sudo for windows</tags>
     <summary>gsudo is a `sudo` for Windows with a similar user-experience as *nix sudo.</summary>
     <description>
-gsudo allows to run commands with elevated permissions within the current console.
+`gsudo` allows to run commands with elevated permissions within the current console. 
+It is a `sudo` equivalent for Windows, with a similar user-experience as the original *nix sudo.
 
-gsudo is a `sudo` for Windows that tries to bring a similar user-experience as *nix sudo.
+Elevated commands are shown in the caller (non-elevated) console. This allows to run elevated commands without switching to another console.
 
-- Elevated commands are shown in the user-level console, as `*nix sudo` does, instead of opening the command in a new window.
-	
+### Usage 
+
+```gsudo [command] [arguments]```
+Executes the specified command, elevated, and returns.
+
+Examples
+
+```gsudo notepad c:\Windows\System32\drivers\etc\hosts```
+```gsudo cmd```
+
+
+[Source](https://github.com/gerardog/gsudo)
+
 	</description>
     <!-- <releaseNotes>__REPLACE_OR_REMOVE__MarkDown_Okay</releaseNotes> -->
     <!-- =============================== -->      

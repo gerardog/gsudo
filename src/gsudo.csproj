@@ -43,7 +43,7 @@
       <Output TaskParameter="Assemblies" ItemName="Targets" />
     </GetAssemblyIdentity>
     <ItemGroup>
-      <VersionNumber Include="@(Targets->'%(Version)')" />
+      <VersionNumber Include="$([System.Text.RegularExpressions.Regex]::Replace(&quot;%(Targets.Version)&quot;, &quot;^([^\.]+)\.([^\.]+)(.*)$&quot;, &quot;$1.$2&quot;))" />
     </ItemGroup>
   </Target>
 
