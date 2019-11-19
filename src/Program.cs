@@ -11,11 +11,8 @@ namespace gsudo
     {
         async static Task Main(string[] args)
         {
-            args = new CommandInterceptor().AugmentCommand(args);
-
             try
             {
-
                 if (args.Length > 1 && args[0] == "service")
                 {
                     // service mode
@@ -29,11 +26,18 @@ namespace gsudo
                 }
                 else if (IsAdministrator()
 #if DEBUG
-                && false // for debugging, always elevate.
+                        && false // for debugging, always elevate.
 #endif
-                )
+                        )
                 {
+                    if (args.Length == 0)
+                    {
+                        Globals.Logger.Log("Already elevated. Nothing to do. Exiting...", LogLevel.Error);
+                        return;
+                    }
+                    
                     Globals.Logger.Log("Already elevated. Running in-process", LogLevel.Debug);
+                    args = new CommandInterceptor().AugmentCommand(args);
                     // No need to escalate. Run in-process
                     var exeName = args[0];
                     var process = new Process();
@@ -46,11 +50,13 @@ namespace gsudo
                 }
                 else // IsAdministrator() == false, or build in Debug Mode
                 {
+                    args = new CommandInterceptor().AugmentCommand(args);
+
                     Globals.Logger.Log($"Calling ProcessId is {Process.GetCurrentProcess().ParentProcessId()}", LogLevel.Debug);
 
                     try
                     {
-                        await new WinPtyClientProcess().Start   (args[0], GetArgumentsString(args, 1), NamedPipeListener.GetPipeName(), 200);
+                        await new WinPtyClientProcess().Start(args[0], GetArgumentsString(args, 1), NamedPipeListener.GetPipeName(), 200);
                         return;
                     }
                     catch (System.IO.IOException) { }

@@ -31,10 +31,18 @@ namespace gsudo.Helpers
             p.WaitForExit();
         }
 
-        public static int ParentProcessId(this Process process)
+        public static int ParentProcessId(this Process process) // ExcludingShim
         {
-            return ParentProcessId(process.Id);
+            var parentId = ParentProcessId(process.Id);
+            var parent = Process.GetProcessById(parentId);
+
+            if (Path.GetFileName(parent.MainModule.FileName) == Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName)) // workaround for chocolatey shim.
+            {
+                return ParentProcessId(parentId);
+            }
+            return parentId;
         }
+
         public static int ParentProcessId(int Id)
         {
             PROCESSENTRY32 pe32 = new PROCESSENTRY32 { };

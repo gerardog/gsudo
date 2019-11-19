@@ -6,18 +6,21 @@
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>StrongName.snk</AssemblyOriginatorKeyFile>
     <Authors>Gerardo Grignoli</Authors>
-    <Description>gsudo is a Windows equivalent of linux Sudo</Description>
+    <Description>gsudo is a Windows equivalent of *nix Sudo</Description>
     <DelaySign>false</DelaySign>
     <OutputPath>bin\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
-    <Version>0.0.2</Version>
+    <Version>0.2.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="bin\**" />
     <Compile Remove="Commands\**" />
+    <EmbeddedResource Remove="bin\**" />
     <EmbeddedResource Remove="Commands\**" />
+    <None Remove="bin\**" />
     <None Remove="Commands\**" />
   </ItemGroup>
 
@@ -29,12 +32,6 @@
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
     <PackageReference Include="System.Security.Principal.Windows" Version="4.6.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="bin\windows-kill.exe">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
@@ -51,7 +48,7 @@
   </Target>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent" DependsOnTargets="PostBuildMacros">
-    <Exec Command="copy bin\*.* ..\choco-package\gsudo\tools\*.* /Y&#xD;&#xA;cd ..\choco-package\gsudo&#xD;&#xA;ECHO @(VersionNumber)&#xD;&#xA;powershell -Command &quot;(gc gsudo.nuspec.template) -replace '#VERSION#', '@(VersionNumber)' | Out-File -encoding UTF8 gsudo.nuspec&quot;&#xD;&#xA;cd ..&#xD;&#xA;choco pack gsudo\gsudo.nuspec&#xD;&#xA;" />
+    <Exec Command="copy bin\*.* ..\choco-package\gsudo\tools\*.* /Y&#xD;&#xA;cd ..\choco-package\gsudo&#xD;&#xA;powershell -NoProfile -Command &quot;(gc gsudo.nuspec.template) -replace '#VERSION#', '@(VersionNumber)' | Out-File -encoding UTF8 gsudo.nuspec&quot;&#xD;&#xA;cd ..&#xD;&#xA;choco pack gsudo\gsudo.nuspec&#xD;&#xA;" />
   </Target>
 
 </Project>

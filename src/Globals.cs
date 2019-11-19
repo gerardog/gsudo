@@ -8,7 +8,7 @@ namespace gsudo
         public static bool SharedService { get; set; } = true;
         public static TimeSpan ServerTimeout { get; set; } = TimeSpan.FromSeconds(300);
         public static int BufferSize { get; set; } = 1024;
-        public static LogLevel LogLevel { get; set; } = LogLevel.Debug;
+        public static LogLevel LogLevel { get; set; } = LogLevel.Info;
 
         public static readonly Encoding Encoding = System.Text.UnicodeEncoding.UTF8;
         internal const string TOKEN_EXITCODE = "<GSUDO-EXITCODE>";

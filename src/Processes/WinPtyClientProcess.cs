@@ -55,13 +55,13 @@ namespace gsudo
 
                     if (ExitCode.HasValue)
                     {
-                        Globals.Logger.Log($"Elevated process exited with code {ExitCode}", LogLevel.Debug);
+                        Globals.Logger.Log($"Elevated process exited with code {ExitCode}", LogLevel.Info);
                         Environment.Exit(ExitCode.Value);
                     }
                     else if (expectedClose)
                         Globals.Logger.Log($"Connection closed by the client.", LogLevel.Debug);
                     else
-                        Globals.Logger.Log($"Connection from server lost.", LogLevel.Debug);
+                        Globals.Logger.Log($"Connection from server lost.", LogLevel.Warning);
                 }
                 finally
                 {
