@@ -30,7 +30,6 @@ namespace gsudo
             }
 
             Globals.Logger.Log("Incoming Json: " + requestString, LogLevel.Debug);
-            Environment.SetEnvironmentVariable("PROMPT", "$P# ");
 
             try
             {

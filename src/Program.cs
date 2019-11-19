@@ -11,6 +11,8 @@ namespace gsudo
     {
         async static Task Main(string[] args)
         {
+            Environment.SetEnvironmentVariable("PROMPT", "$P# ");
+
             try
             {
                 if (args.Length > 1 && args[0] == "service")
