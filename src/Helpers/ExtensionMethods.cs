@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -58,5 +59,14 @@ namespace gsudo
             return 0;
         }
 
+        public static bool NotIn(this string toSearch, params string[] list)
+        {
+            return !In(toSearch, list);
+        }
+
+        public static bool In(this string toSearch, params string[] list)
+        {
+            return list.Contains(toSearch, StringComparer.OrdinalIgnoreCase);
+        }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using gsudo.Helpers;
+using gsudo.Processes;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO.Pipes;
@@ -55,7 +56,22 @@ namespace gsudo
                             return;
                         }
 
-                        await new WinPtyHostProcess(pipe).Start();
+                        var buffer = new byte[1024];
+                        var requestString = "";
+                        while (!(requestString.Length > 0 && requestString[requestString.Length - 1] == '}'))
+                        {
+                            var length = await pipe.ReadAsync(buffer, 0, 1024);
+                            requestString += Globals.Encoding.GetString(buffer, 0, length);
+                        }
+
+                        Globals.Logger.Log("Incoming Json: " + requestString, LogLevel.Debug);
+
+                        var request = Newtonsoft.Json.JsonConvert.DeserializeObject<ElevationRequest>(requestString);
+
+                        if (request.ElevateOnly)
+                            await new WinPtyElevateOnlyProcess(pipe).Start(request);
+                        else
+                            await new WinPtyHostProcess(pipe).Start(request);
 
                         if (RunningInstances == 0) EnableTimer();
                     }

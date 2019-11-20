@@ -1,5 +1,8 @@
-﻿using gsudo.Helpers;
+﻿using CommandLine;
+using gsudo.Commands;
+using gsudo.Helpers;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Security.Principal;
@@ -12,99 +15,90 @@ namespace gsudo
         async static Task Main(string[] args)
         {
             Environment.SetEnvironmentVariable("PROMPT", "$P# ");
+            ICommand cmd = null;
 
-            try
+            Stack<string> stack = new Stack<string>(args.Reverse());
+
+            while (stack.Any())
             {
-                if (args.Length > 1 && args[0] == "service")
+                var arg = stack.Peek();
+                if (arg.In("-v", "--version"))
                 {
-                    // service mode
-                    var allowedPid = int.Parse(args[1]);
-                    Globals.Logger.Log("Starting Service.", LogLevel.Info);
-                    Globals.Logger.Log($"Access allowed only for ProcessID {allowedPid} and childs", LogLevel.Debug);
-
-                    NamedPipeListener.CreateListener(allowedPid);
-                    await NamedPipeListener.WaitAll();
-                    Globals.Logger.Log("Service Stopped", LogLevel.Info);
+                    new HelpCommand().ShowVersion();
+                    return;
                 }
-                else if (IsAdministrator())
+                else if (arg.In("-h", "--help", "help"))
                 {
-                    if (args.Length == 0)
-                    {
-                        Globals.Logger.Log("Already elevated (and no parameters specified). Exiting...", LogLevel.Error);
-                        Environment.Exit(1);
-                    }
-                    
-                    Globals.Logger.Log("Already elevated. Running in-process", LogLevel.Debug);
-                    args = new CommandInterceptor().AugmentCommand(args);
-                    // No need to escalate. Run in-process
-                    var exeName = args[0];
-                    var process = new Process();
-                    process.StartInfo = new ProcessStartInfo(exeName);
-                    process.StartInfo.Arguments = GetArgumentsString(args, 1);
-                    process.StartInfo.UseShellExecute = false;
-                    process.Start();
-                    process.WaitForExit();
-                    Environment.Exit(process.ExitCode);
+                    new HelpCommand().ShowHelp();
+                    return;
                 }
-                else // IsAdministrator() == false, or build in Debug Mode
+                if (arg.In("-e", "--elevateonly"))
                 {
-                    args = new CommandInterceptor().AugmentCommand(args);
-
-                    Globals.Logger.Log($"Calling ProcessId is {Process.GetCurrentProcess().ParentProcessId()}", LogLevel.Debug);
-
+                    Globals.ElevateOnly = true;
+                    stack.Pop();
+                }
+                else if (arg.In("--debug"))
+                {
+                    Globals.Debug = true;
+                    stack.Pop();
+                }
+                else if (arg.In("--loglevel"))
+                {
+                    stack.Pop();
+                    arg = stack.Pop();
                     try
                     {
-                        await new WinPtyClientProcess().Start(args[0], GetArgumentsString(args, 1), NamedPipeListener.GetPipeName(), 200);
+                        Globals.LogLevel = (LogLevel)Enum.Parse(typeof(LogLevel), arg, true);
+                    }
+                    catch
+                    {
+                        Globals.Logger.Log($"\"{arg}\" is not a valid LogLevel. Valid values are: All, Debug, Info, Warning, Error, None", LogLevel.Error);
                         return;
                     }
-                    catch (System.IO.IOException) { }
-                    catch (TimeoutException) { }
-                    catch (Exception ex)
-                    {
-                        Globals.Logger.Log(ex.ToString(), LogLevel.Error);
-                    }
-                    Globals.Logger.Log("Elevating process...", LogLevel.Debug);
-
-                    // Start elevated service instance
-                    var process = new Process();
-                    var currentProcess = System.Diagnostics.Process.GetCurrentProcess();
-                    var exeName = currentProcess.MainModule.FileName;
-                    var callingPid = currentProcess.ParentProcessId();
-                    process.StartInfo = new ProcessStartInfo(exeName, $"service {callingPid}");
-                    process.StartInfo.UseShellExecute = true;
-                    process.StartInfo.Verb = "runas";
-#if !DEBUG
-                    process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-#endif
-                    process.Start();
-                    Globals.Logger.Log("Elevated instance started.", LogLevel.Debug);
-                    await new WinPtyClientProcess().Start(args[0], GetArgumentsString(args, 1), NamedPipeListener.GetPipeName(), 5000);
+                }
+                else
+                {
+                    break;
                 }
             }
-            catch (Exception ex) 
+
+            args = stack.ToArray();
+
+            var parser = new Parser(settings => settings.AutoHelp = false);
+            bool badverb = false;
+
+
+            //parser.ParseArguments<Options>(args)
+            //    .WithParsed((c) => c.Configure());
+
+            parser.ParseArguments<ServiceCommand, ConfigCommand, HelpCommand>(args)
+                .WithParsed<ICommand>((c) => cmd = c)
+//                .WithNotParsed(e => e.ToList().ForEach(er => Console.WriteLine(er)));
+                .WithNotParsed(e => e.Where(er => er.Tag == ErrorType.BadVerbSelectedError).ToList().ForEach((err) => badverb = true));
+
+            ///if (badverb)
             {
-                Globals.Logger.Log(ex.ToString(), LogLevel.Error);
+
             }
-        }
 
-        private static string GetArgumentsString(string[] args, int v)
-        {
-            if (args == null) return null;
-            if (args.Length <= v) return string.Empty;
-            return string.Join(" ", args.Skip(v).ToArray());
-        }
+            if (cmd == null)
+            {
+//                Console.WriteLine("--");
+                parser.ParseArguments<Commands.RunCommand>(args)
+                    .WithParsed((c) => cmd = c)
+                    .WithNotParsed(e => e.ToList().ForEach(er => Console.WriteLine("explotar: "+ er)));
+            }
 
-        private static bool IsAdministrator()
-        {
             try
             {
-                WindowsIdentity identity = WindowsIdentity.GetCurrent();
-                WindowsPrincipal principal = new WindowsPrincipal(identity);
-                return principal.IsInRole(WindowsBuiltInRole.Administrator);
+                if (cmd != null)
+                    await cmd.Execute().ConfigureAwait(false);
+                else
+                    await new HelpCommand().Execute();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return false;
+                Globals.Logger.Log(ex.ToString(), LogLevel.Error);
             }
         }
     }

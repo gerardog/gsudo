@@ -19,30 +19,21 @@ namespace gsudo
             this.pipe = pipe;
         }
 
-        internal async Task Start()
+        internal async Task Start(ElevationRequest request)
         {
-            var buffer = new byte[1024];
-            var requestString = "";
-            while (!(requestString.Length > 0 && requestString[requestString.Length - 1] == '}'))
-            {
-                var length = await pipe.ReadAsync(buffer, 0, 1024);
-                requestString += Globals.Encoding.GetString(buffer, 0, length);
-            }
-
-            Globals.Logger.Log("Incoming Json: " + requestString, LogLevel.Debug);
-
             try
             {
-                var request = Newtonsoft.Json.JsonConvert.DeserializeObject<ElevationRequest>(requestString);
                 process = new Process();
-                process.StartInfo = new ProcessStartInfo(request.FileName);
-                process.StartInfo.Arguments = request.Arguments;
-                process.StartInfo.WorkingDirectory = request.StartFolder;
-                process.StartInfo.CreateNoWindow = true;
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.RedirectStandardOutput = true;
-                process.StartInfo.RedirectStandardError = true;
-                process.StartInfo.RedirectStandardInput = true;
+                process.StartInfo = new ProcessStartInfo(request.FileName)
+                {
+                    Arguments = request.Arguments,
+                    WorkingDirectory = request.StartFolder,
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    RedirectStandardInput = true,
+                };
                 process.Start();
 
                 Globals.Logger.Log($"Process ({process.Id}) started: {request.FileName} {request.Arguments}", LogLevel.Debug);

@@ -29,7 +29,8 @@ namespace gsudo
                     {
                         FileName = exeName,
                         Arguments = arguments,
-                        StartFolder = Environment.CurrentDirectory
+                        StartFolder = Environment.CurrentDirectory,
+                        ElevateOnly = Globals.ElevateOnly
                     });
 
                     await pipe.WriteAsync(Globals.Encoding.GetBytes(payload), 0, payload.Length).ConfigureAwait(false);
@@ -53,7 +54,11 @@ namespace gsudo
 
                     pipe.Close();
 
-                    if (ExitCode.HasValue)
+                    if (ExitCode.HasValue && ExitCode.Value == 0 && Globals.ElevateOnly)
+                    {
+                        Globals.Logger.Log($"Elevated process started successfully", LogLevel.Debug);
+                    }
+                    else if (ExitCode.HasValue)
                     {
                         Globals.Logger.Log($"Elevated process exited with code {ExitCode}", LogLevel.Info);
                         Environment.Exit(ExitCode.Value);
@@ -102,6 +107,14 @@ namespace gsudo
             if (s == "\f") // cmd clear screen
             {
                 Console.Clear();
+                return Task.CompletedTask;
+            }
+            if (s.StartsWith(Globals.TOKEN_FOCUS, StringComparison.Ordinal))
+            {
+                int i1 = s.IndexOf(Globals.TOKEN_FOCUS, StringComparison.Ordinal) + Globals.TOKEN_FOCUS.Length;
+                int i2 = s.IndexOf(Globals.TOKEN_FOCUS, i1, StringComparison.Ordinal);
+                var hwnd = (IntPtr)int.Parse(s.Substring(i1, i2 - i1), CultureInfo.InvariantCulture);
+                Globals.Logger.Log($"SetForegroundWindow({hwnd}) returned {ProcessStarter.SetForegroundWindow(hwnd)}", LogLevel.Debug);
                 return Task.CompletedTask;
             }
             if (s.StartsWith(Globals.TOKEN_EXITCODE, StringComparison.Ordinal))

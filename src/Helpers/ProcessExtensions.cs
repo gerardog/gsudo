@@ -7,6 +7,7 @@ using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Permissions;
+using System.Security.Principal;
 
 namespace gsudo.Helpers
 {
@@ -16,19 +17,14 @@ namespace gsudo.Helpers
         {
             var signal = sendSigBreak ? "SIGBREAK" : "SIGINT";
 
-            Process p = new Process();
-            p.StartInfo.FileName = "cmd.exe";
-            p.StartInfo.Arguments = "/c \""  +
-                Path.Combine(
-                Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName),
-                "windows-kill.exe"
-                ) + 
-             $"\" -{signal} {proc.Id.ToString()}";
-            Console.WriteLine(p.StartInfo.Arguments);
-            p.StartInfo.UseShellExecute = true;
-            p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            p.Start();
-            p.WaitForExit();
+            using (var p = ProcessStarter.StartDetached
+                ("cmd.exe",
+                "/c \""
+                + Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName), "windows-kill.exe")
+                + $"\" -{signal} {proc.Id.ToString()}"))
+            {
+                p.WaitForExit();
+            }
         }
 
         public static int ParentProcessId(this Process process) // ExcludingShim
@@ -66,6 +62,20 @@ namespace gsudo.Helpers
                 } while (Process32Next(hSnapshot, ref pe32));
             }
             return -1;
+        }
+
+        public static bool IsAdministrator()
+        {
+            try
+            {
+                WindowsIdentity identity = WindowsIdentity.GetCurrent();
+                WindowsPrincipal principal = new WindowsPrincipal(identity);
+                return principal.IsInRole(WindowsBuiltInRole.Administrator);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         #region Win32 api
