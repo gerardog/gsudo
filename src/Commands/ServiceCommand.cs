@@ -20,6 +20,7 @@ namespace gsudo.Commands
             // service mode
             if (LogLvl.HasValue) Globals.LogLevel = LogLvl.Value;
 
+            Console.Title = "gsudo Service";
             Globals.Logger.Log("Service started", LogLevel.Info);
             Globals.Logger.Log($"Access allowed only for ProcessID {allowedPid} and childs", LogLevel.Debug);
 
