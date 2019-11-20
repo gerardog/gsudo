@@ -50,7 +50,7 @@ namespace gsudo
 
                         if (!IsAuthorized(pipe.GetClientProcessId(), AllowedPid))
                         {
-                            await pipe.WriteAsync(Globals.TOKEN_ERROR + "Unauthorized.");
+                            await pipe.WriteAsync(Globals.TOKEN_ERROR + "Unauthorized." + "\r\n");
                             pipe.WaitForPipeDrain();
                             pipe.Close();
                             return;

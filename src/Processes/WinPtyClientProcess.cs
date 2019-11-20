@@ -60,7 +60,7 @@ namespace gsudo
                     }
                     else if (ExitCode.HasValue)
                     {
-                        Globals.Logger.Log($"Elevated process exited with code {ExitCode}", LogLevel.Info);
+                        Globals.Logger.Log($"Elevated process exited with code {ExitCode}", ExitCode.Value == 0 ? LogLevel.Debug : LogLevel.Info);
                         Environment.Exit(ExitCode.Value);
                     }
                     else if (expectedClose)

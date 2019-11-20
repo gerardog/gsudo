@@ -22,12 +22,12 @@ namespace gsudo.Commands
             var currentProcess = System.Diagnostics.Process.GetCurrentProcess();
             var cmd = Arguments.FirstOrDefault();
 
-            Arguments = new CommandInterceptor().AugmentCommand(Arguments.ToArray());
+            Arguments = new ArgumentsHelper().AugmentCommand(Arguments.ToArray());
             var args = GetArgumentsString(Arguments, 1);
 
             if (ProcessExtensions.IsAdministrator())
             {
-                if (!Arguments.Any())
+                if (string.IsNullOrEmpty(cmd))
                 {
                     Globals.Logger.Log("Already elevated (and no parameters specified). Exiting...", LogLevel.Error);
                     Environment.Exit(1);

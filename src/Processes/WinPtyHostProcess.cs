@@ -43,7 +43,7 @@ namespace gsudo
                 var t3 = new StreamReader(pipe, Globals.Encoding).ConsumeOutput((s) => ReadFromPipe(s, process));
 
                 int i = 0;
-                while (!process.WaitForExit(0) && pipe.IsConnected)
+                while (!process.WaitForExit(0) && pipe.IsConnected && !process.HasExited)
                 {
                     await Task.Delay(10);
                     try
@@ -56,13 +56,19 @@ namespace gsudo
                         break;
                     }
                 }
+                // Globals.Logger.Log($"Process {process.Id} wait loop ended.", LogLevel.Debug);
 
                 if (process.HasExited && pipe.IsConnected)
                 {
-                    // avoid cases
-                    await Task.WhenAll(t1, t2);
+                    // we need to ensure that all process output is read.
+                    while(ShouldWait(process.StandardError) || ShouldWait(process.StandardOutput))
+                        await Task.Delay(1);
+
+                    await pipe.FlushAsync();
                     pipe.WaitForPipeDrain();
                     await pipe.WriteAsync($"{Globals.TOKEN_EXITCODE}{process.ExitCode}{Globals.TOKEN_EXITCODE}");
+                    await pipe.FlushAsync();
+                    pipe.WaitForPipeDrain();
                 }
                 else
                 {
@@ -78,12 +84,24 @@ namespace gsudo
             catch (Exception ex)
             {
                 Globals.Logger.Log(ex.ToString(), LogLevel.Error);
-                await pipe.WriteAsync(Globals.TOKEN_ERROR + "Server Error: " + ex.ToString());
+                await pipe.WriteAsync(Globals.TOKEN_ERROR + "Server Error: " + ex.ToString() + "\r\n");
                 
                 pipe.Flush();
                 pipe.WaitForPipeDrain();
                 pipe.Close();
                 return;
+            }
+        }
+
+        private bool ShouldWait(StreamReader streamReader)
+        {
+            try
+            {
+                return !streamReader.EndOfStream;
+            }
+            catch
+            {
+                return false;
             }
         }
 

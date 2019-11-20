@@ -31,7 +31,6 @@ namespace gsudo
             {
                 reader.Dispose();
                 reader.BaseStream?.Dispose();
-
             }
         }
 
@@ -67,6 +66,11 @@ namespace gsudo
         public static bool In(this string toSearch, params string[] list)
         {
             return list.Contains(toSearch, StringComparer.OrdinalIgnoreCase);
+        }
+
+        public static bool In<T>(this T toSearch, params T[] list)
+        {
+            return list.Contains(toSearch);
         }
     }
 }

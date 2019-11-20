@@ -32,9 +32,9 @@ namespace gsudo.Commands
             Console.WriteLine("gsudo [-v | --version] \t Shows gsudo version");
             Console.WriteLine();
             Console.WriteLine("Valid options:");
-            Console.WriteLine("\t --loglevel {All, Debug, Info, Warning, Error, None}\r\n\t\t Log level");
-            Console.WriteLine("\t --debug\r\n\t\t Enable diagnostics");
-            Console.WriteLine("\t -e | --elevateonly\r\n\t\t Starts the command in a new console with elevated rights and returns immediately.");
+            Console.WriteLine(" --loglevel {All, Debug, Info, Warning, Error, None}\r\n      Log level");
+            Console.WriteLine(" --debug\r\n      Enable debug mode. (makes gsudo service window visible)");
+            Console.WriteLine(" -e | --elevateonly\r\n      Starts the command in a new console with elevated rights and returns immediately.");
 
             return;
         }

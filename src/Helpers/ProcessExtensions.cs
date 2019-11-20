@@ -32,7 +32,8 @@ namespace gsudo.Helpers
             var parentId = ParentProcessId(process.Id);
             var parent = Process.GetProcessById(parentId);
 
-            if (Path.GetFileName(parent.MainModule.FileName) == Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName)) // workaround for chocolatey shim.
+            // workaround for chocolatey shim.
+            if (Path.GetFileName(parent.MainModule.FileName).In("gsudo.exe","sudo.exe"))
             {
                 return ParentProcessId(parentId);
             }

@@ -40,6 +40,7 @@ namespace gsudo
                 else if (arg.In("--debug"))
                 {
                     Globals.Debug = true;
+                    Globals.LogLevel = LogLevel.All;
                     stack.Pop();
                 }
                 else if (arg.In("--loglevel"))
@@ -65,28 +66,23 @@ namespace gsudo
             args = stack.ToArray();
 
             var parser = new Parser(settings => settings.AutoHelp = false);
-            bool badverb = false;
-
-
-            //parser.ParseArguments<Options>(args)
-            //    .WithParsed((c) => c.Configure());
+            var errors = new List<Error>();
 
             parser.ParseArguments<ServiceCommand, ConfigCommand, HelpCommand>(args)
                 .WithParsed<ICommand>((c) => cmd = c)
-//                .WithNotParsed(e => e.ToList().ForEach(er => Console.WriteLine(er)));
-                .WithNotParsed(e => e.Where(er => er.Tag == ErrorType.BadVerbSelectedError).ToList().ForEach((err) => badverb = true));
+                .WithNotParsed(e => errors.AddRange(e));
 
-            ///if (badverb)
+            if (errors.Any(e => e.Tag.In(ErrorType.BadVerbSelectedError, ErrorType.NoVerbSelectedError)))
             {
-
+                cmd = new RunCommand()
+                {
+                    Arguments = args
+                };
             }
-
-            if (cmd == null)
+            else if (cmd == null)
             {
-//                Console.WriteLine("--");
-                parser.ParseArguments<Commands.RunCommand>(args)
-                    .WithParsed((c) => cmd = c)
-                    .WithNotParsed(e => e.ToList().ForEach(er => Console.WriteLine("explotar: "+ er)));
+                errors.ForEach((e) => Globals.Logger.Log($"Error parsing arguments: {e}", LogLevel.Error));
+                cmd = new HelpCommand();
             }
 
             try
@@ -94,7 +90,7 @@ namespace gsudo
                 if (cmd != null)
                     await cmd.Execute().ConfigureAwait(false);
                 else
-                    await new HelpCommand().Execute();
+                    await new HelpCommand().Execute().ConfigureAwait(false);
             }
             catch (Exception ex)
             {

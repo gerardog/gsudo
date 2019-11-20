@@ -35,7 +35,7 @@ namespace gsudo.Processes
             {
                 Globals.Logger.Log(ex.ToString(), LogLevel.Error);
                 if (pipe.IsConnected)
-                    await pipe.WriteAsync(Globals.TOKEN_ERROR + "Server Error: " + ex.ToString());
+                    await pipe.WriteAsync(Globals.TOKEN_ERROR + "Server Error: " + ex.ToString() + "\r\n");
                 pipe.Flush();
                 pipe.WaitForPipeDrain();
                 pipe.Close();
