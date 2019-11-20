@@ -51,7 +51,7 @@ namespace gsudo
                             break;
                         }
                     }
-
+                    
                     pipe.Close();
 
                     if (ExitCode.HasValue && ExitCode.Value == 0 && Globals.ElevateOnly)

@@ -86,7 +86,7 @@ namespace gsudo
                 Globals.Logger.Log(ex.ToString(), LogLevel.Error);
                 await pipe.WriteAsync(Globals.TOKEN_ERROR + "Server Error: " + ex.ToString() + "\r\n");
                 
-                pipe.Flush();
+                await pipe.FlushAsync();
                 pipe.WaitForPipeDrain();
                 pipe.Close();
                 return;
@@ -115,14 +115,6 @@ namespace gsudo
 
             if (process.CloseMainWindow())
                 process.WaitForExit(100);
-
-            //if (!process.HasExited)
-            //{
-            //    process.WaitForExit(100);
-            //}
-
-            //if (!process.HasExited)
-            //    process.Kill();
 
             if (!process.HasExited)
             {
@@ -200,7 +192,7 @@ namespace gsudo
         private int EqualCharsCount(string s1, string s2)
         {
             int i = 0;
-            for (; i < s1.Length && i < s2.Length && s1[i] == s2[i]; i++)
+            for (; i < s1.Length && i < s2.Length && s1[i] == s2[i]; i++)   
             { }
             return i;
         }
