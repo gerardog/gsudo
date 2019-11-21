@@ -1,5 +1,6 @@
 ﻿using gsudo.Helpers;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
@@ -39,7 +40,7 @@ namespace gsudo
                 Globals.Logger.Log($"Process ({process.Id}) started: {request.FileName} {request.Arguments}", LogLevel.Debug);
 
                 var t1 = process.StandardOutput.ConsumeOutput((s) => WriteToPipe(s));
-                var t2 = process.StandardError.ConsumeOutput((s) => WriteToPipe(s));
+                var t2 = process.StandardError.ConsumeOutput((s) => WriteToErrorPipe(s));
                 var t3 = new StreamReader(pipe, Globals.Encoding).ConsumeOutput((s) => ReadFromPipe(s, process));
 
                 int i = 0;
@@ -129,44 +130,52 @@ namespace gsudo
             }   
         }
 
+        static readonly string[] TOKENS = new string[] { "\0", Globals.TOKEN_KEY_CTRLBREAK, Globals.TOKEN_KEY_CTRLC};
         private async Task ReadFromPipe(string s, Process process)
         {
-            if (s == "\0") // session keep alive
-                return;
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine(s);
-            
-            if (lastInboundMessage == null)
-                lastInboundMessage = s;
-            else 
-                lastInboundMessage += s;
+            var tokens = new Stack<string>(StringTokenizer.Split(s, TOKENS));
 
-            if (s.StartsWith(Globals.TOKEN_KEY_CTRLC))
+            while (tokens.Count > 0)
             {
-                ProcessExtensions.SendCtrlC(process);
-                await Task.Delay(10);
-                pipe.WaitForPipeDrain();
-                await WriteToErrorPipe("^C\r\n");
-                lastInboundMessage = null;
-            }
-            else if (s.StartsWith(Globals.TOKEN_KEY_CTRLBREAK))
-            {
-                ProcessExtensions.SendCtrlC(process, true);
-                await Task.Delay(10);
-                pipe.WaitForPipeDrain();
-                await WriteToErrorPipe("^BREAK\r\n");
-                lastInboundMessage = null;
-            }
+                var token = tokens.Pop();
 
-            else
-                await process.StandardInput.WriteAsync(s);
+                if (token == "\0") continue;
+
+                if (token == Globals.TOKEN_KEY_CTRLC)
+                {
+                    ProcessExtensions.SendCtrlC(process);
+                    await Task.Delay(10);
+                    pipe.WaitForPipeDrain();
+                    await WriteToErrorPipe("^C\r\n");
+                    lastInboundMessage = null;
+                    continue;
+                }
+
+                if (token == Globals.TOKEN_KEY_CTRLBREAK)
+                {
+                    ProcessExtensions.SendCtrlC(process, true);
+                    await Task.Delay(10);
+                    pipe.WaitForPipeDrain();
+                    await WriteToErrorPipe("^BREAK\r\n");
+                    lastInboundMessage = null;
+                    continue;
+                }
+
+                if (lastInboundMessage == null)
+                    lastInboundMessage = token;
+                else
+                    lastInboundMessage += token;
+
+                await process.StandardInput.WriteAsync(token);
+            }
         }
 
         private async Task WriteToErrorPipe(string s)
         {
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine(s);
-            await pipe.WriteAsync(Globals.TOKEN_ERROR + s);
+            Console.ResetColor();
+            await pipe.WriteAsync(Globals.TOKEN_ERROR + s + Globals.TOKEN_ERROR);
             await pipe.FlushAsync();
         }
 
@@ -179,7 +188,9 @@ namespace gsudo
                 {
                     s = s.Substring(c);
                     lastInboundMessage = lastInboundMessage.Substring(c);
-                }                               
+                }
+                if (Globals.Debug && !string.IsNullOrEmpty(s)) Globals.Logger.Log($"Last input command was: {s}", LogLevel.Debug);
+                
             }
             if (string.IsNullOrEmpty(s)) return; // suppress chars n s;
 

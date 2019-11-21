@@ -16,11 +16,13 @@ namespace gsudo
 #endif
 
         public static readonly Encoding Encoding = System.Text.UnicodeEncoding.UTF8;
-        internal const string TOKEN_FOCUS = "<GSUDO-FOCUS>";
-        internal const string TOKEN_EXITCODE = "<GSUDO-EXITCODE>";
-        internal const string TOKEN_ERROR = "<GSUDOERR>";
-        internal const string TOKEN_KEY_CTRLC = "<GSUDOCTRLC>";
-        internal const string TOKEN_KEY_CTRLBREAK = "<GSUDOCTRLBREAK>";
+
+        // All tokens must have small amount of chars, to avoid the token being split by the network chunking
+        internal const string TOKEN_FOCUS = "\u0011"; //"<GSUDO-FOCUS>";
+        internal const string TOKEN_EXITCODE = "\u0012";// "<GSUDO-EXITCODE>";
+        internal const string TOKEN_ERROR = "\u0013"; //"<GSUDOERR>";
+        internal const string TOKEN_KEY_CTRLC = "\u0014"; //"<GSUDOCTRLC>";
+        internal const string TOKEN_KEY_CTRLBREAK = "\u0015";// "<GSUDOCTRLBREAK>";
 
         public static Logger Logger {get;} = new Logger();
         public static bool Debug { get; internal set; }

@@ -1,8 +1,10 @@
 ﻿using gsudo.Helpers;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.IO.Pipes;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace gsudo
@@ -100,41 +102,73 @@ namespace gsudo
             }
         }
 
-        private static Task WriteToConsole(string s)
+        static readonly string[] TOKENS = new string[] { "\0", "\f", Globals.TOKEN_ERROR, Globals.TOKEN_EXITCODE, Globals.TOKEN_FOCUS, Globals.TOKEN_KEY_CTRLBREAK, Globals.TOKEN_KEY_CTRLC };
+        enum Mode { Normal, Focus, Error, ExitCode };
+        Mode CurrentMode = Mode.Normal;
+        private async Task WriteToConsole(string s)
         {
-            if (s == "\0") // session keep alive
-                return Task.CompletedTask;
-            if (s == "\f") // cmd clear screen
+            Action<Mode> Toggle = (m) => CurrentMode = CurrentMode == Mode.Normal ? m : Mode.Normal;
+
+            var tokens = new Stack<string>(StringTokenizer.Split(s, TOKENS).Reverse());
+
+            while (tokens.Count > 0)
             {
-                Console.Clear();
-                return Task.CompletedTask;
+                var token = tokens.Pop();
+
+                if (token == "\0") continue; // session keep alive
+
+                if (token == "\f")
+                {
+                    Console.Clear();
+                    continue;
+                }
+                if (token == Globals.TOKEN_FOCUS)
+                {
+                    Toggle(Mode.Focus);
+                    continue;
+                }
+                if (token == Globals.TOKEN_EXITCODE)
+                {
+                    Toggle(Mode.ExitCode);
+                    continue;
+                }
+                if (token == Globals.TOKEN_ERROR)
+                {
+                    //fix intercalation of messages;
+                    await Console.Error.FlushAsync();
+                    await Console.Out.FlushAsync();
+
+                    Toggle(Mode.Error);
+                    if (CurrentMode == Mode.Error)
+                        Console.ForegroundColor = ConsoleColor.Red;
+                    else
+                        Console.ResetColor();
+                    continue;
+                }
+
+                if (CurrentMode == Mode.Focus)
+                {
+                    var hwnd = (IntPtr)int.Parse(token, CultureInfo.InvariantCulture);
+                    Globals.Logger.Log($"SetForegroundWindow({hwnd}) returned {ProcessStarter.SetForegroundWindow(hwnd)}", LogLevel.Debug);
+                    continue;
+                }
+                if (CurrentMode == Mode.Error)
+                {
+//                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.Error.Write(token);
+//                    Console.ResetColor();
+                    continue;
+                }
+                if (CurrentMode == Mode.ExitCode)
+                {
+                    ExitCode = int.Parse(token, CultureInfo.InvariantCulture);
+                    continue;
+                }
+
+                Console.Write(token);
             }
-            if (s.StartsWith(Globals.TOKEN_FOCUS, StringComparison.Ordinal))
-            {
-                int i1 = s.IndexOf(Globals.TOKEN_FOCUS, StringComparison.Ordinal) + Globals.TOKEN_FOCUS.Length;
-                int i2 = s.IndexOf(Globals.TOKEN_FOCUS, i1, StringComparison.Ordinal);
-                var hwnd = (IntPtr)int.Parse(s.Substring(i1, i2 - i1), CultureInfo.InvariantCulture);
-                Globals.Logger.Log($"SetForegroundWindow({hwnd}) returned {ProcessStarter.SetForegroundWindow(hwnd)}", LogLevel.Debug);
-                return Task.CompletedTask;
-            }
-            if (s.StartsWith(Globals.TOKEN_EXITCODE, StringComparison.Ordinal))
-            {
-                int i1 = s.IndexOf(Globals.TOKEN_EXITCODE, StringComparison.Ordinal) + Globals.TOKEN_EXITCODE.Length;
-                int i2 = s.IndexOf(Globals.TOKEN_EXITCODE, i1, StringComparison.Ordinal);
-                ExitCode = int.Parse(s.Substring(i1, i2 - i1), CultureInfo.InvariantCulture);
-                return Task.CompletedTask;
-            }
-            if (s.StartsWith(Globals.TOKEN_ERROR, StringComparison.Ordinal))
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.Write(s.Substring(Globals.TOKEN_ERROR.Length));
-                Console.ResetColor();
-            }
-            else
-            {
-                Console.Write(s);
-            }
-            return Task.CompletedTask;
+                
+            return;
         }
 
         private async Task IncomingKey(string s, NamedPipeClientStream pipe )
