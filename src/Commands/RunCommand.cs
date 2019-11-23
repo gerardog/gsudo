@@ -25,7 +25,7 @@ namespace gsudo.Commands
             CommandToRun = new ArgumentsHelper().AugmentCommand(CommandToRun.ToArray());
             var args = GetArgumentsString(CommandToRun, 1);
 
-            if (ProcessExtensions.IsAdministrator())
+            if (ProcessExtensions.IsAdministrator() && !Globals.NewWindow)
             {
                 if (emptyArgs)
                 {
