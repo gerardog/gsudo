@@ -21,7 +21,7 @@ namespace gsudo.Processes
             try
             {
                 int exitCode = 0;
-                process = ProcessStarter.StartDetached(request.FileName, request.Arguments, false);
+                process = ProcessStarter.StartDetached(request.FileName, request.Arguments, request.StartFolder, false);
                 if (request.ForceWait)
                 {
                     process.WaitForExit();

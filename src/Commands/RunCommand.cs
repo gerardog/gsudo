@@ -40,7 +40,7 @@ namespace gsudo.Commands
                 
                 if (Globals.NewWindow)
                 {
-                    using (Process process = ProcessStarter.StartDetached(exeName, args, false))
+                    using (Process process = ProcessStarter.StartDetached(exeName, args, Environment.CurrentDirectory, false))
                     {
                         if (Globals.Wait)
                         {

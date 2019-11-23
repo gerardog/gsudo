@@ -56,13 +56,14 @@ namespace gsudo.Helpers
             return process;
         }
 
-        public static Process StartDetached(string filename, string arguments, bool hidden = true)
+        public static Process StartDetached(string filename, string arguments, string startFolder, bool hidden = true)
         {
             var process = new Process();
             process.StartInfo = new ProcessStartInfo(filename)
             {
                 Arguments = arguments,
                 UseShellExecute = true,
+                WorkingDirectory = startFolder,
             };
 
             if (hidden)

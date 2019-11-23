@@ -20,7 +20,7 @@ namespace gsudo.Helpers
             using (var p = ProcessStarter.StartDetached
                 ("cmd.exe", "/c \"" 
                 + Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName), "windows-kill.exe") 
-                + $"\" -{signal} {proc.Id.ToString()}", true))
+                + $"\" -{signal} {proc.Id.ToString()}", Environment.CurrentDirectory, true))
             {
                 p.WaitForExit();
             }
