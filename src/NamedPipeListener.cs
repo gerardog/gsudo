@@ -67,8 +67,9 @@ namespace gsudo
                         Globals.Logger.Log("Incoming Json: " + requestString, LogLevel.Debug);
 
                         var request = Newtonsoft.Json.JsonConvert.DeserializeObject<ElevationRequest>(requestString);
+                        bool isWindowsApp = ProcessStarter.IsWindowsApp(request.FileName);
 
-                        if (request.ElevateOnly)
+                        if ((isWindowsApp || request.NewWindow))
                             await new WinPtyElevateOnlyProcess(pipe).Start(request);
                         else
                             await new WinPtyHostProcess(pipe).Start(request);

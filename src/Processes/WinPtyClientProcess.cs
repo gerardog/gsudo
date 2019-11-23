@@ -17,7 +17,7 @@ namespace gsudo
         int consecutiveCancelKeys = 0;
         private bool expectedClose;
 
-        public async Task Start(string exeName, string arguments, string pipeName, int timeoutMilliseconds = 10)
+        public async Task<int> Start(string exeName, string arguments, string pipeName, int timeoutMilliseconds = 10)
         {
             using (pipe = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous, System.Security.Principal.TokenImpersonationLevel.Impersonation, System.IO.HandleInheritability.None))
             {
@@ -32,7 +32,8 @@ namespace gsudo
                         FileName = exeName,
                         Arguments = arguments,
                         StartFolder = Environment.CurrentDirectory,
-                        ElevateOnly = Globals.ElevateOnly
+                        NewWindow = Globals.NewWindow,
+                        ForceWait = Globals.Wait,
                     });
 
                     await pipe.WriteAsync(Globals.Encoding.GetBytes(payload), 0, payload.Length).ConfigureAwait(false);
@@ -56,19 +57,26 @@ namespace gsudo
                     
                     pipe.Close();
 
-                    if (ExitCode.HasValue && ExitCode.Value == 0 && Globals.ElevateOnly)
+                    if (ExitCode.HasValue && ExitCode.Value == 0 && Globals.NewWindow)
                     {
                         Globals.Logger.Log($"Elevated process started successfully", LogLevel.Debug);
+                        return 0;
                     }
                     else if (ExitCode.HasValue)
                     {
                         Globals.Logger.Log($"Elevated process exited with code {ExitCode}", ExitCode.Value == 0 ? LogLevel.Debug : LogLevel.Info);
-                        Environment.Exit(ExitCode.Value);
+                        return ExitCode.Value;
                     }
                     else if (expectedClose)
+                    {
                         Globals.Logger.Log($"Connection closed by the client.", LogLevel.Debug);
+                        return 0;
+                    }
                     else
+                    {
                         Globals.Logger.Log($"Connection from server lost.", LogLevel.Warning);
+                        return Globals.GSUDO_ERROR_EXITCODE;
+                    }
                 }
                 finally
                 {

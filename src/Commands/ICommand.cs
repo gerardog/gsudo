@@ -4,6 +4,6 @@ namespace gsudo.Commands
 {
     interface ICommand
     {
-        Task Execute();
+        Task<int> Execute();
     }
 }

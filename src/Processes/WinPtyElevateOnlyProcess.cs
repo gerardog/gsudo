@@ -20,9 +20,16 @@ namespace gsudo.Processes
         {
             try
             {
+                int exitCode = 0;
                 process = ProcessStarter.StartDetached(request.FileName, request.Arguments, false);
+                if (request.ForceWait)
+                {
+                    process.WaitForExit();
+                    exitCode = process.ExitCode;
+                }
+
                 await pipe.WriteAsync($"{Globals.TOKEN_FOCUS}{process.MainWindowHandle}{Globals.TOKEN_FOCUS}");
-                await pipe.WriteAsync($"{Globals.TOKEN_EXITCODE}0{Globals.TOKEN_EXITCODE}");
+                await pipe.WriteAsync($"{Globals.TOKEN_EXITCODE}{exitCode}{Globals.TOKEN_EXITCODE}");
                 await pipe.FlushAsync();
                 pipe.WaitForPipeDrain();
                 pipe.Close();

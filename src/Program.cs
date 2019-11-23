@@ -12,7 +12,7 @@ namespace gsudo
 {
     class Program
     {
-        async static Task Main(string[] args)
+        async static Task<int> Main(string[] args)
         {
             Environment.SetEnvironmentVariable("PROMPT", "$P# ");
             ICommand cmd = null;
@@ -25,16 +25,21 @@ namespace gsudo
                 if (arg.In("-v", "--version"))
                 {
                     new HelpCommand().ShowVersion();
-                    return;
+                    return 0;
                 }
                 else if (arg.In("-h", "--help", "help"))
                 {
                     new HelpCommand().ShowHelp();
-                    return;
+                    return 0;
                 }
-                if (arg.In("-e", "--elevateonly"))
+                else if (arg.In("-n", "--new"))
                 {
-                    Globals.ElevateOnly = true;
+                    Globals.NewWindow = true;
+                    stack.Pop();
+                }
+                else if (arg.In("-w", "--wait"))
+                {
+                    Globals.Wait = true;
                     stack.Pop();
                 }
                 else if (arg.In("--debug"))
@@ -54,8 +59,13 @@ namespace gsudo
                     catch
                     {
                         Globals.Logger.Log($"\"{arg}\" is not a valid LogLevel. Valid values are: All, Debug, Info, Warning, Error, None", LogLevel.Error);
-                        return;
+                        return Globals.GSUDO_ERROR_EXITCODE;
                     }
+                }
+                else if (arg.StartsWith("-", StringComparison.Ordinal))
+                {
+                    Globals.Logger.Log($"Invalid option: {arg}", LogLevel.Error);
+                    return Globals.GSUDO_ERROR_EXITCODE;
                 }
                 else
                 {
@@ -76,7 +86,7 @@ namespace gsudo
             {
                 cmd = new RunCommand()
                 {
-                    Arguments = args
+                    CommandToRun = args
                 };
             }
             else if (cmd == null)
@@ -88,13 +98,14 @@ namespace gsudo
             try
             {
                 if (cmd != null)
-                    await cmd.Execute().ConfigureAwait(false);
+                    return await cmd.Execute().ConfigureAwait(false);
                 else
-                    await new HelpCommand().Execute().ConfigureAwait(false);
+                    return await new HelpCommand().Execute().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 Globals.Logger.Log(ex.ToString(), LogLevel.Error);
+                return Globals.GSUDO_ERROR_EXITCODE;
             }
         }
     }

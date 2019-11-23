@@ -24,18 +24,7 @@ namespace gsudo
         {
             try
             {
-                process = new Process();
-                process.StartInfo = new ProcessStartInfo(request.FileName)
-                {
-                    Arguments = request.Arguments,
-                    WorkingDirectory = request.StartFolder,
-                    CreateNoWindow = true,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    RedirectStandardInput = true,
-                };
-                process.Start();
+                process = ProcessStarter.StartInProcessRedirected(request.FileName, request.Arguments, request.StartFolder);
 
                 Globals.Logger.Log($"Process ({process.Id}) started: {request.FileName} {request.Arguments}", LogLevel.Debug);
 

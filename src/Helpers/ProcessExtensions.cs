@@ -18,10 +18,9 @@ namespace gsudo.Helpers
             var signal = sendSigBreak ? "SIGBREAK" : "SIGINT";
 
             using (var p = ProcessStarter.StartDetached
-                ("cmd.exe",
-                "/c \""
-                + Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName), "windows-kill.exe")
-                + $"\" -{signal} {proc.Id.ToString()}"))
+                ("cmd.exe", "/c \"" 
+                + Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName), "windows-kill.exe") 
+                + $"\" -{signal} {proc.Id.ToString()}", true))
             {
                 p.WaitForExit();
             }

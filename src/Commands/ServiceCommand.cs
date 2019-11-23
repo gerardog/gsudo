@@ -15,7 +15,7 @@ namespace gsudo.Commands
 
         [Value(1)]
         public LogLevel? LogLvl { get; set; }
-        public async Task Execute()
+        public async Task<int> Execute()
         {
             // service mode
             if (LogLvl.HasValue) Globals.LogLevel = LogLvl.Value;
@@ -27,6 +27,7 @@ namespace gsudo.Commands
             NamedPipeListener.CreateListener(allowedPid);
             await NamedPipeListener.WaitAll().ConfigureAwait(false);
             Globals.Logger.Log("Service stopped", LogLevel.Info);
+            return 0;
         }
     }
 }

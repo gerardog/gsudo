@@ -10,7 +10,7 @@ namespace gsudo.Commands
     [Verb("config")]
     class ConfigCommand : ICommand
     {
-        public Task Execute()
+        public Task<int> Execute()
         {
             throw new NotImplementedException();
         }

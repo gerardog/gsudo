@@ -13,55 +13,70 @@ namespace gsudo.Commands
     public class RunCommand : ICommand
     {
         [Value(0)]
-        public IEnumerable<string> Arguments { get; set; }
+        public IEnumerable<string> CommandToRun { get; set; }
 
-        public async Task Execute()
+        public async Task<int> Execute()
         {
             Globals.Logger.Log("Params: " + Newtonsoft.Json.JsonConvert.SerializeObject(this), LogLevel.Debug);
-         
-            var currentProcess = System.Diagnostics.Process.GetCurrentProcess();
-            var cmd = Arguments.FirstOrDefault();
 
-            Arguments = new ArgumentsHelper().AugmentCommand(Arguments.ToArray());
-            var args = GetArgumentsString(Arguments, 1);
+            var currentProcess = System.Diagnostics.Process.GetCurrentProcess();
+            bool emptyArgs = string.IsNullOrEmpty(CommandToRun.FirstOrDefault());
+
+            CommandToRun = new ArgumentsHelper().AugmentCommand(CommandToRun.ToArray());
+            var args = GetArgumentsString(CommandToRun, 1);
 
             if (ProcessExtensions.IsAdministrator())
             {
-                if (string.IsNullOrEmpty(cmd))
+                if (emptyArgs)
                 {
                     Globals.Logger.Log("Already elevated (and no parameters specified). Exiting...", LogLevel.Error);
-                    Environment.Exit(1);
+                    return Globals.GSUDO_ERROR_EXITCODE;
                 }
-                cmd = Arguments.FirstOrDefault();
 
                 Globals.Logger.Log("Already elevated. Running in-process", LogLevel.Debug);
 
                 // No need to escalate. Run in-process
-                var exeName = cmd;
-                Process process;
-
-                if (Globals.ElevateOnly)
+                var exeName = CommandToRun.FirstOrDefault();
+                
+                if (Globals.NewWindow)
                 {
-                    process = ProcessStarter.StartDetached(exeName, args, false);
+                    using (Process process = ProcessStarter.StartDetached(exeName, args, false))
+                    {
+                        if (Globals.Wait)
+                        {
+                            process.WaitForExit();
+                            return process.ExitCode;
+                        }
+                        return 0;
+                    }
                 }
                 else
                 {
-                    process = ProcessStarter.StartInProcessAtached(exeName, args);
-                    process.WaitForExit();
-                    Environment.Exit(process.ExitCode);
+                    bool isWindowsApp = ProcessStarter.IsWindowsApp(exeName);
+
+                    using (Process process = ProcessStarter.StartInProcessAtached(exeName, args))
+                    {
+                        if (!isWindowsApp || Globals.Wait)
+                        {
+                            process.WaitForExit();
+                            return process.ExitCode;
+                        }
+                        else
+                        {
+                            return 0;
+                        }
+                    }
                 }
-                process.Dispose();
             }
             else // IsAdministrator() == false, or build in Debug Mode
             {
-                cmd = Arguments.FirstOrDefault();
+                var cmd = CommandToRun.FirstOrDefault();
 
                 Globals.Logger.Log($"Calling ProcessId is {currentProcess.ParentProcessId()}", LogLevel.Debug);
 
                 try
                 {
-                    await new WinPtyClientProcess().Start(cmd, args, NamedPipeListener.GetPipeName(), 200);
-                    return;
+                    return await new WinPtyClientProcess().Start(cmd, args, NamedPipeListener.GetPipeName(), 200);
                 }
                 catch (System.IO.IOException) { }
                 catch (TimeoutException) { }
@@ -75,12 +90,14 @@ namespace gsudo.Commands
                 var exeName = currentProcess.MainModule.FileName;
                 var callingPid = currentProcess.ParentProcessId();
 
-                var process = ProcessStarter.StartElevatedDetached(exeName, $"service {callingPid} {Globals.LogLevel}", !Globals.Debug);
-                Globals.Logger.Log("Elevated instance started.", LogLevel.Debug);
+                using (var process = ProcessStarter.StartElevatedDetached(exeName, $"service {callingPid} {Globals.LogLevel}", !Globals.Debug))
+                {
+                    Globals.Logger.Log("Elevated instance started.", LogLevel.Debug);
 
-                await new WinPtyClientProcess().Start(cmd, args, NamedPipeListener.GetPipeName(), 5000).ConfigureAwait(false);
-                process.Dispose();
+                    return await new WinPtyClientProcess().Start(cmd, args, NamedPipeListener.GetPipeName(), 5000).ConfigureAwait(false);
+                }
             }
+
         }
 
         private static string GetArgumentsString(IEnumerable<string> args, int v)

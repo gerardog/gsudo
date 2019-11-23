@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace gsudo.Helpers
@@ -24,6 +27,23 @@ namespace gsudo.Helpers
             return process;
         }
 
+        public static Process StartInProcessRedirected(string fileName, string arguments, string startFolder)
+        {
+            var process = new Process();
+            process.StartInfo = new ProcessStartInfo(fileName)
+            {
+                Arguments = arguments,
+                WorkingDirectory = startFolder,
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                RedirectStandardInput = true,
+            };
+            process.Start();
+            return process;
+        }
+
         public static Process StartInProcessAtached(string filename, string arguments)
         {
             var process = new Process();
@@ -42,66 +62,100 @@ namespace gsudo.Helpers
             process.StartInfo = new ProcessStartInfo(filename)
             {
                 Arguments = arguments,
+                UseShellExecute = true,
             };
 
             if (hidden)
             {
-                process.StartInfo.UseShellExecute = true;
                 process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
                 process.Start();
             }
             else
             {
-                process.StartInfo.UseShellExecute = true;
                 process.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
                 process.Start();
+                
                 for (int i = 0; process.MainWindowHandle == IntPtr.Zero && i<30; i++)
                     System.Threading.Thread.Sleep(10);
 
-                // check if the window is hidden / minimized
-                //if (process.MainWindowHandle == IntPtr.Zero)
-                //{
-                //    // the window is hidden so try to restore it before setting focus.
-                //    ShowWindow(process.Handle, ShowWindowEnum.Restore);
-                //}
-
-                // set user the focus to the window
-                SetForegroundWindow(process.MainWindowHandle);
-                
-                //IntPtr mainWindow = process.MainWindowHandle;
-                //IntPtr newPos = new IntPtr(-1);  // 0 puts it on top of Z order.   You can do new IntPtr(-1) to force it to a topmost window, instead.
-                //SetWindowPos(mainWindow, new IntPtr(0), 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_SHOWWINDOW);
-
-
+                // set user the focus to the window, if there is one.
+                if (process.MainWindowHandle != IntPtr.Zero)
+                    SetForegroundWindow(process.MainWindowHandle);
             }
 
             return process;
         }
 
-        //[System.Runtime.InteropServices.DllImport("user32.dll")]
-        //[return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
-        //private static extern bool ShowWindow(IntPtr hWnd, ShowWindowEnum flags);
-
         [System.Runtime.InteropServices.DllImport("user32.dll")]
         public static extern int SetForegroundWindow(IntPtr hwnd);
 
-        //private enum ShowWindowEnum
-        //{
-        //    Hide = 0,
-        //    ShowNormal = 1, ShowMinimized = 2, ShowMaximized = 3,
-        //    Maximize = 3, ShowNormalNoActivate = 4, Show = 5,
-        //    Minimize = 6, ShowMinNoActivate = 7, ShowNoActivate = 8,
-        //    Restore = 9, ShowDefault = 10, ForceMinimized = 11
-        //};
 
-        //[DllImport("user32.dll")]
-        //static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+        public static bool IsWindowsApp(string exe)
+        {
+            var path = FindExecutableInPath(exe);
+            var shinfo = new SHFILEINFO();
+            const int SHGFI_EXETYPE = 0x000002000;
+            var fileInfo = SHGetFileInfo(path, 0, ref shinfo, (uint)Marshal.SizeOf(shinfo), SHGFI_EXETYPE);
+            var retval = (fileInfo.ToInt64() & 0xFFFF0000) >0 ;
+            Globals.Logger.Log($"IsWindowsApp(\"{exe}\") = {retval} (\"{path}\")", LogLevel.Debug);
+            return retval;
+        }
 
-        //const UInt32 SWP_NOSIZE = 0x0001;
-        //const UInt32 SWP_NOMOVE = 0x0002;
-        //const UInt32 SWP_SHOWWINDOW = 0x0040;
+        #region IsWindowsApp Win32 Api
+        [DllImport("shell32.dll", CharSet = CharSet.Auto)]
+        public static extern IntPtr SHGetFileInfo(string pszPath, uint dwFileAttributes, ref SHFILEINFO psfi, uint cbFileInfo, uint uFlags);
 
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+        public struct SHFILEINFO
+        {
+            public IntPtr hIcon;
+            public int iIcon;
+            public uint dwAttributes;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+            public string szDisplayName;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 80)]
+            public string szTypeName;
+        }
+        #endregion
 
+        public static string FindExecutableInPath(string exe)
+        {
+            exe = Environment.ExpandEnvironmentVariables(exe);
 
+            if (File.Exists(exe))
+            {
+                return Path.GetFullPath(exe);
+            }
+
+            if (Path.GetDirectoryName(exe) == String.Empty)
+            {
+                exe = Path.GetFileName(exe);
+
+                var validExtensions = Environment.GetEnvironmentVariable("PATHEXT", EnvironmentVariableTarget.Process)
+                    .Split(';'); ;
+
+                var possibleNames = new List<string>();
+                
+                if (Path.GetExtension(exe).In(validExtensions))
+                    possibleNames.Add(exe);
+
+                possibleNames.AddRange(validExtensions.Select((ext) => exe + ext));
+
+                var paths = new List<string>();
+                paths.Add(Environment.CurrentDirectory);
+                paths.AddRange((Environment.GetEnvironmentVariable("PATH") ?? "").Split(';'));
+
+                foreach (string test in paths)
+                {
+                    foreach (string file in possibleNames)
+                    {
+                        string path = Path.Combine(test, file);
+                        if (!String.IsNullOrEmpty(path) && File.Exists(path))
+                            return Path.GetFullPath(path);
+                    }
+                }
+            }
+            return null;
+        }
     }
 }

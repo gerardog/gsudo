@@ -9,10 +9,10 @@ namespace gsudo.Commands
     [Verb("help")]
     class HelpCommand : ICommand
     {
-        public Task Execute()
+        public Task<int> Execute()
         {
             ShowHelp();
-            return Task.CompletedTask;
+            return Task.FromResult(0);
         }
 
         internal void ShowVersion()
@@ -34,7 +34,8 @@ namespace gsudo.Commands
             Console.WriteLine("Valid options:");
             Console.WriteLine(" --loglevel {All, Debug, Info, Warning, Error, None}\r\n      Log level");
             Console.WriteLine(" --debug\r\n      Enable debug mode. (makes gsudo service window visible)");
-            Console.WriteLine(" -e | --elevateonly\r\n      Starts the command in a new console with elevated rights and returns immediately.");
+            Console.WriteLine(" -n | --new\r\n      Starts the command in a new console with elevated rights and returns immediately.");
+            Console.WriteLine(" -w | --wait\r\n      Force wait for the process to end. (valid only for windows apps or combined with -n, otherwise will always wait).");
 
             return;
         }
