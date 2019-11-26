@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,9 +15,22 @@ namespace gsudo.Helpers
         {
             if (args.Length == 0)
             {
-                var parentProcess = Process.GetProcessById(Process.GetCurrentProcess().ParentProcessId());
-                if (parentProcess.MainModule.FileName.ToUpperInvariant().Contains("POWERSHELL.EXE"))
+                // If zero args specified, Try to "elevate the current shell".
+                // Which is impossible. So we launch the current shell elevated.
+
+                // Is our current shell Powershell ? (Powershell.exe -calls-> gsudo)
+                var parentProcess = Process.GetCurrentProcess().ParentProcess();
+                var parentExeName = Path.GetFileName(parentProcess.MainModule.FileName).ToUpperInvariant();
+                if (parentExeName == "POWERSHELL.EXE")
                     return new string[] { parentProcess.MainModule.FileName };
+
+                // Is our current shell Powershell Core? (Pwsh.exe -calls-> dotnet -calls-> gsudo)
+                var grandParentProcess = parentProcess.ParentProcess();
+                var grandParentExeName = Path.GetFileName(grandParentProcess.MainModule.FileName).ToUpperInvariant();
+                if (grandParentExeName == "PWSH.EXE")
+                    return new string[] { grandParentProcess.MainModule.FileName };
+
+                // Default, our current shell is CMD.
                 return new string[] { Environment.GetEnvironmentVariable("COMSPEC"), "/k" };
             }
 
