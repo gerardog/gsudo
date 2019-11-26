@@ -90,9 +90,9 @@ namespace gsudo
 
         private bool IsAuthorized(int clientPid, int allowedPid)
         {
-            var callingExe = Process.GetProcessById(clientPid).MainModule.FileName;
+            var callingExe = SymbolicLinkSupport.ResolveSymbolicLink(Process.GetProcessById(clientPid).MainModule.FileName);
             var allowedExe = Process.GetCurrentProcess().MainModule.FileName;
-            
+            //
             if (callingExe != allowedExe)
             {
                 Globals.Logger.Log($"Invalid Client. Rejecting Connection. \nAllowed: {allowedExe}\nActual:  {callingExe}", LogLevel.Error);

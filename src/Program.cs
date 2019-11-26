@@ -3,9 +3,9 @@ using gsudo.Commands;
 using gsudo.Helpers;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.IO;
 using System.Linq;
-using System.Security.Principal;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace gsudo
@@ -14,7 +14,15 @@ namespace gsudo
     {
         async static Task<int> Main(string[] args)
         {
+            SymbolicLinkSupport.EnableAssemblyLoadFix();
+
+            return await Start(args);
+        }
+
+        private static async Task<int> Start(string[] args)
+        {
             Environment.SetEnvironmentVariable("PROMPT", "$P# ");
+            //ConsoleHelper.EnableAnsiColor();
             ICommand cmd = null;
 
             Stack<string> stack = new Stack<string>(args.Reverse());
