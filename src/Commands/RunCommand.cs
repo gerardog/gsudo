@@ -17,6 +17,7 @@ namespace gsudo.Commands
 
         public async Task<int> Execute()
         {
+            ConsoleHelper.EnableVT();
             Globals.Logger.Log("Params: " + Newtonsoft.Json.JsonConvert.SerializeObject(this), LogLevel.Debug);
 
             var currentProcess = System.Diagnostics.Process.GetCurrentProcess();
@@ -73,16 +74,20 @@ namespace gsudo.Commands
                 var cmd = CommandToRun.FirstOrDefault();
 
                 Globals.Logger.Log($"Calling ProcessId is {currentProcess.ParentProcessId()}", LogLevel.Debug);
-
-                try
+                var pipeName = NamedPipeListener.GetPipeName();
+                if (System.IO.Directory.EnumerateFiles(@"\\.\pipe\", pipeName).Any())
                 {
-                    return await new WinPtyClientProcess().Start(cmd, args, NamedPipeListener.GetPipeName(), 200);
-                }
-                catch (System.IO.IOException) { }
-                catch (TimeoutException) { }
-                catch (Exception ex)
-                {
-                    Globals.Logger.Log(ex.ToString(), LogLevel.Error);
+                    try
+                    {
+                        return await new VTClientProcess().Start(cmd, args, pipeName , 300);
+                        // return await new WinPtyClientProcess().Start(cmd, args, NamedPipeListener.GetPipeName(), 100);
+                    }
+                    catch (System.IO.IOException) { }
+                    catch (TimeoutException) { }
+                    catch (Exception ex)
+                    {
+                        Globals.Logger.Log(ex.ToString(), LogLevel.Error);
+                    }
                 }
                 Globals.Logger.Log("Elevating process...", LogLevel.Debug);
 
@@ -94,7 +99,8 @@ namespace gsudo.Commands
                 {
                     Globals.Logger.Log("Elevated instance started.", LogLevel.Debug);
 
-                    return await new WinPtyClientProcess().Start(cmd, args, NamedPipeListener.GetPipeName(), 5000).ConfigureAwait(false);
+                    return await new VTClientProcess().Start(cmd, args, pipeName, 5000).ConfigureAwait(false);
+                    //return await new WinPtyClientProcess().Start(cmd, args, pipeName, 5000).ConfigureAwait(false);
                 }
             }
 

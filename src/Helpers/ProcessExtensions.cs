@@ -28,7 +28,14 @@ namespace gsudo.Helpers
 
         public static Process ParentProcess(this Process process) 
         {
-            return Process.GetProcessById(process.ParentProcessId());
+            try
+            {
+                return Process.GetProcessById(process.ParentProcessId());
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         public static int ParentProcessId(this Process process) // ExcludingShim

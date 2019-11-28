@@ -72,7 +72,8 @@ namespace gsudo
                         if ((isWindowsApp || request.NewWindow))
                             await new WinPtyElevateOnlyProcess(pipe).Start(request);
                         else
-                            await new WinPtyHostProcess(pipe).Start(request);
+                            //    await new WinPtyHostProcess(pipe).Start(request);
+                            await new VTHostProcess(pipe).Start(request);
 
                         if (RunningInstances == 0) EnableTimer();
                     }

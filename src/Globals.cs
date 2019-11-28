@@ -14,8 +14,8 @@ namespace gsudo
 #else
         public static LogLevel LogLevel { get; set; } = LogLevel.Info;
 #endif
-
         public static readonly Encoding Encoding = System.Text.UnicodeEncoding.UTF8;
+//        public static readonly Encoding Encoding = System.Text.UnicodeEncoding.Unicode;
 
         // All tokens must have small amount of chars, to avoid the token being split by the network chunking
         internal const string TOKEN_FOCUS = "\u0011"; 

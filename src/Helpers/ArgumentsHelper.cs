@@ -26,9 +26,12 @@ namespace gsudo.Helpers
 
                 // Is our current shell Powershell Core? (Pwsh.exe -calls-> dotnet -calls-> gsudo)
                 var grandParentProcess = parentProcess.ParentProcess();
-                var grandParentExeName = Path.GetFileName(grandParentProcess.MainModule.FileName).ToUpperInvariant();
-                if (grandParentExeName == "PWSH.EXE")
-                    return new string[] { grandParentProcess.MainModule.FileName };
+                if (grandParentProcess != null)
+                {
+                    var grandParentExeName = Path.GetFileName(grandParentProcess.MainModule.FileName).ToUpperInvariant();
+                    if (grandParentExeName == "PWSH.EXE")
+                        return new string[] { grandParentProcess.MainModule.FileName };
+                }
 
                 // Default, our current shell is CMD.
                 return new string[] { Environment.GetEnvironmentVariable("COMSPEC"), "/k" };

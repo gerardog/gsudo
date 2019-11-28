@@ -22,7 +22,6 @@ namespace gsudo
         private static async Task<int> Start(string[] args)
         {
             Environment.SetEnvironmentVariable("PROMPT", "$P# ");
-            //ConsoleHelper.EnableAnsiColor();
             ICommand cmd = null;
 
             Stack<string> stack = new Stack<string>(args.Reverse());

@@ -33,6 +33,10 @@ namespace gsudo
                 var t3 = new StreamReader(pipe, Globals.Encoding).ConsumeOutput((s) => ReadFromPipe(s, process));
 
                 int i = 0;
+                
+                // color test. it works! 
+                WriteToPipe("\u001b[31mHello Host Machine!\u001b[0m");
+
                 while (!process.WaitForExit(0) && pipe.IsConnected && !process.HasExited)
                 {
                     await Task.Delay(10);
@@ -133,6 +137,7 @@ namespace gsudo
                 if (token == Globals.TOKEN_KEY_CTRLC)
                 {
                     ProcessExtensions.SendCtrlC(process);
+                    //await process.StandardInput.WriteAsync("\x3");
                     await Task.Delay(10);
                     pipe.WaitForPipeDrain();
                     await WriteToErrorPipe("^C\r\n");
