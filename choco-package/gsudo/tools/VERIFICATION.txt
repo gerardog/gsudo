@@ -1,6 +1,0 @@
-﻿VERIFICATION
-Verification is intended to assist the Chocolatey moderators and community
-in verifying that this package's contents are trustworthy.
- 
-<Include details of how to verify checksum contents>
-Built from https://github.com/gerardog/gsudo
