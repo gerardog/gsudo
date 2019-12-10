@@ -20,9 +20,6 @@ namespace gsudo.ProcessHosts
         public async Task Start(Connection connection, ElevationRequest request)
         {
             _connection = connection;
-            //Native.ConsoleApi.SetConsoleCtrlHandler(HandleCtrlEvent, true);
-            //Console.CancelKeyPress += HandleCancelKey;
-            //Native.ConsoleApi.SetConsoleCtrlHandler(null, true);
             try
             {
                 process = ProcessFactory.StartInProcessRedirected(request.FileName, request.Arguments, request.StartFolder);
@@ -51,7 +48,6 @@ namespace gsudo.ProcessHosts
 
                     await Task.Delay(10).ConfigureAwait(false);
                 }
-                // Globals.Logger.Log($"Process {process.Id} wait loop ended.", LogLevel.Debug);
 
                 if (process.HasExited && connection.IsAlive)
                 {
@@ -78,9 +74,6 @@ namespace gsudo.ProcessHosts
             }
             finally
             {
-                //Native.ConsoleApi.SetConsoleCtrlHandler(null, false);
-                //  Native.ConsoleApi.SetConsoleCtrlHandler(HandleCtrlEvent, false);
-                //Console.CancelKeyPress -= HandleCancelKey;
                 process?.Dispose();
             }
         }
@@ -150,11 +143,6 @@ namespace gsudo.ProcessHosts
                 if (token == Constants.TOKEN_KEY_CTRLC)
                 {
                     ProcessExtensions.SendCtrlC(process);
-
-                    //await process.StandardInput.WriteAsync("\x3");
-                    //await Task.Delay(10);
-                    //pipe.WaitForPipeDrain();
-//                    await WriteToErrorPipe("^C\r\n").ConfigureAwait(false);
                     lastInboundMessage = null;
                     continue;
                 }
@@ -162,9 +150,6 @@ namespace gsudo.ProcessHosts
                 if (token == Constants.TOKEN_KEY_CTRLBREAK)
                 {
                     ProcessExtensions.SendCtrlC(process, true);
-                    //await Task.Delay(10);
-                    //pipe.WaitForPipeDrain();
-//                    await WriteToErrorPipe("^BREAK\r\n").ConfigureAwait(false);
                     lastInboundMessage = null;
                     continue;
                 }

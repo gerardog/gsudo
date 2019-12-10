@@ -14,16 +14,7 @@ namespace gsudo.Commands
         public string key { get; set; }
 
         [Value(1)]
-        public string value { get; set; }
-
-        IDictionary<string, RegistrySetting> AllKeys => new Dictionary<string, RegistrySetting>(StringComparer.OrdinalIgnoreCase)
-        {
-            [GlobalSettings.CredentialsCacheDuration.Name] = GlobalSettings.CredentialsCacheDuration,
-            [GlobalSettings.LogLevel.Name] = GlobalSettings.LogLevel,
-            [GlobalSettings.RootPrompt.Name] = GlobalSettings.RootPrompt,
-            [GlobalSettings.ForceRawConsole.Name] = GlobalSettings.ForceRawConsole,
-            [GlobalSettings.ForceVTConsole.Name] = GlobalSettings.ForceVTConsole, 
-        };
+        public IEnumerable<string> value { get; set; }
 
         public Task<int> Execute()
         {
@@ -31,15 +22,13 @@ namespace gsudo.Commands
 
             if (key == null)
             {
-                foreach ( var k in AllKeys)
+                foreach (var k in GlobalSettings.AllKeys)
                     Console.WriteLine($"{k.Value.Name} = { Newtonsoft.Json.JsonConvert.SerializeObject(k.Value.GetStringValue()).ToString()}");
 
-                return Task.FromResult(Constants.GSUDO_ERROR_EXITCODE);
+                return Task.FromResult(0);
             }
 
-            //            key = key.ToUpperInvariant();
-
-            AllKeys.TryGetValue(key, out setting);
+            GlobalSettings.AllKeys.TryGetValue(key, out setting);
 
             if (setting == null)
             {
@@ -47,10 +36,10 @@ namespace gsudo.Commands
                 return Task.FromResult(Constants.GSUDO_ERROR_EXITCODE);
             }
             
-            if (!string.IsNullOrEmpty(value))
+            if (value!=null && value.Any())
             {
                 // SAVE 
-                setting.Save($"\"{value}\"");
+                setting.Save($"\"{string.Join(" ", value.ToArray())}\"");
             }
 
             // READ

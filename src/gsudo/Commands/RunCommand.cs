@@ -27,7 +27,7 @@ namespace gsudo.Commands
             bool emptyArgs = string.IsNullOrEmpty(CommandToRun.FirstOrDefault());
 
             CommandToRun = ArgumentsHelper.AugmentCommand(CommandToRun.ToArray());
-            
+
             var exeName = ProcessFactory.FindExecutableInPath(CommandToRun.FirstOrDefault());
             bool isWindowsApp = ProcessFactory.IsWindowsApp(exeName);
 
@@ -38,13 +38,18 @@ namespace gsudo.Commands
                 StartFolder = Environment.CurrentDirectory,
                 NewWindow = GlobalSettings.NewWindow,
                 ForceWait = GlobalSettings.Wait,
-                Mode = GetConsoleMode(isWindowsApp), 
+                Mode = GetConsoleMode(isWindowsApp),
             };
 
-            if (elevationRequest.Mode== ElevationRequest.ConsoleMode.VT)
+            if (elevationRequest.Mode == ElevationRequest.ConsoleMode.VT)
             {
-                elevationRequest.ConsoleWidth = Console.WindowWidth-1; // the -1 fixes some issues with ConEmu -\_()_/-
+                elevationRequest.ConsoleWidth = Console.WindowWidth - 1; // the -1 fixes some issues with ConEmu -\_()_/-
                 elevationRequest.ConsoleHeight = Console.WindowHeight;
+                Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.VTPrompt.Value);
+            }
+            else
+            {
+                Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.Prompt.Value);
             }
 
             Logger.Instance.Log($"Using Console mode {elevationRequest.Mode}", LogLevel.Debug);
@@ -60,7 +65,7 @@ namespace gsudo.Commands
                 Logger.Instance.Log("Already elevated. Running in-process", LogLevel.Debug);
 
                 // No need to escalate. Run in-process
-                
+
                 if (GlobalSettings.NewWindow)
                 {
                     using (Process process = ProcessFactory.StartDetached(exeName, GetArguments(), Environment.CurrentDirectory, false))

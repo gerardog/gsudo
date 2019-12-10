@@ -51,8 +51,6 @@ namespace gsudo
             {
                 if (cmd != null)
                 {
-                    Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.RootPrompt.Value);
-                    // Environment.SetEnvironmentVariable("PROMPT", "$P# ");
                     return await cmd.Execute().ConfigureAwait(false);
                 }
                 else

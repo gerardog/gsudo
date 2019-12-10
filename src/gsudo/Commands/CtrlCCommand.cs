@@ -26,18 +26,13 @@ namespace gsudo.Commands
         public async Task<int> Execute()
         {
             // service mode
-            if (LogLvl.HasValue) GlobalSettings.LogLevel.Value = LogLvl.Value;
-
-            Logger.Instance.Log("Service started", LogLevel.Info);
-
+            if (LogLvl.HasValue) 
+                GlobalSettings.LogLevel.Value = LogLvl.Value;
+            
             FreeConsole();
 
             if (AttachConsole((uint)pid))
             {
-                ConsoleCancelEventHandler dele = null;
-
-                Console.CancelKeyPress += dele;
-
                 GenerateConsoleCtrlEvent(Helpers.ProcessExtensions.CtrlTypes.CTRL_C_EVENT, 0);
                 FreeConsole();
             }

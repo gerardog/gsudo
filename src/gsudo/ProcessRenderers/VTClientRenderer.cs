@@ -48,6 +48,7 @@ namespace gsudo.ProcessRenderers
                     {
                         if (Console.KeyAvailable)
                         {
+                            consecutiveCancelKeys = 0;
                             // send input character-by-character to the pipe
                             var key = Console.ReadKey(intercept: true);
                             var keychar = key.KeyChar;
@@ -111,8 +112,9 @@ namespace gsudo.ProcessRenderers
             string CtrlC_Command = "\x3";
             e.Cancel = true;
             if (!_connection.IsAlive) return;
+            consecutiveCancelKeys++;
 
-            if (++consecutiveCancelKeys > 3 || e.SpecialKey == ConsoleSpecialKey.ControlBreak)
+            if (consecutiveCancelKeys > 3)
             {
                 _connection.FlushAndCloseAll().Wait();
                 expectedClose = true;
@@ -122,7 +124,7 @@ namespace gsudo.ProcessRenderers
             // restart console input.
             //var t1 = new StreamReader(Console.OpenStandardInput()).ConsumeOutput((s) => IncomingKey(s, pipe));
 
-            if (++consecutiveCancelKeys > 2)
+            if (consecutiveCancelKeys > 2)
             {
                 Logger.Instance.Log("\rPress CTRL-C again to stop gsudo", LogLevel.Warning);
                 var b = GlobalSettings.Encoding.GetBytes(CtrlC_Command);

@@ -50,6 +50,12 @@ namespace gsudo.Commands
                 DisableTimer();
                 var request = await ReadElevationRequest(connection.ControlStream).ConfigureAwait(false);
                 IProcessHost applicationHost = CreateProcessHost(request);
+
+                if (request.Mode == ElevationRequest.ConsoleMode.Raw)
+                    Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.Prompt);
+                else
+                    Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.VTPrompt);
+
                 await applicationHost.Start(connection, request).ConfigureAwait(false);
             }
             catch (Exception e)
