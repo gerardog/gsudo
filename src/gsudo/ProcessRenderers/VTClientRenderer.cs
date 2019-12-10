@@ -12,7 +12,7 @@ namespace gsudo.ProcessRenderers
     // Regular Console app (WindowsPTY via .net) Client. (not ConPTY)
     class VTClientRenderer : IProcessRenderer
     {
-        static readonly string[] TOKENS = new string[] { "\x001B[6n", Constants.TOKEN_EXITCODE }; //"\0", "\f", Globals.TOKEN_ERROR, , Globals.TOKEN_FOCUS, Globals.TOKEN_KEY_CTRLBREAK, Globals.TOKEN_KEY_CTRLC };
+        static readonly string[] TOKENS = new string[] { "\x001B[6n", Constants.TOKEN_EXITCODE, Constants.TOKEN_ERROR}; //"\0", "\f", Globals.TOKEN_FOCUS, Globals.TOKEN_KEY_CTRLBREAK, Globals.TOKEN_KEY_CTRLC };
         private readonly gsudo.Rpc.Connection _connection;
         private readonly ElevationRequest _elevationRequest;
 
@@ -114,7 +114,7 @@ namespace gsudo.ProcessRenderers
 
             if (++consecutiveCancelKeys > 3 || e.SpecialKey == ConsoleSpecialKey.ControlBreak)
             {
-                _connection.FlushAndCloseAll();
+                _connection.FlushAndCloseAll().Wait();
                 expectedClose = true;
                 return;
             }
@@ -124,7 +124,7 @@ namespace gsudo.ProcessRenderers
 
             if (++consecutiveCancelKeys > 2)
             {
-                Logger.Instance.Log("Press CTRL-C again to stop gsudo\r\n", LogLevel.Warning);
+                Logger.Instance.Log("\rPress CTRL-C again to stop gsudo", LogLevel.Warning);
                 var b = GlobalSettings.Encoding.GetBytes(CtrlC_Command);
                 _connection.DataStream.Write(b, 0, b.Length);
             }
@@ -179,6 +179,18 @@ namespace gsudo.ProcessRenderers
                     ExitCode = int.Parse(token, System.Globalization.CultureInfo.InvariantCulture);
                     continue;
                 }
+
+                if (token == Constants.TOKEN_ERROR)
+                {
+                    Toggle(Mode.Error);
+                    if (CurrentMode == Mode.Error)
+                        Console.ForegroundColor = ConsoleColor.Red;
+                    else
+                        Console.ResetColor();
+                    continue;
+                }
+
+                Console.Write(token);
                 /*
                 if (token == "\f")
                 {
@@ -191,37 +203,23 @@ namespace gsudo.ProcessRenderers
                     continue;
                 }
 
-                if (token == Globals.TOKEN_ERROR)
-                {
-                    //fix intercalation of messages;
-                    await Console.Error.FlushAsync();
-                    await Console.Out.FlushAsync();
-
-                    Toggle(Mode.Error);
-                    if (CurrentMode == Mode.Error)
-                        Console.ForegroundColor = ConsoleColor.Red;
-                    else
-                        Console.ResetColor();
-                    continue;
-                }
-
-                if (CurrentMode == Mode.Focus)
-                {
-                    var hwnd = (IntPtr)int.Parse(token, CultureInfo.InvariantCulture);
-                    Globals.Logger.Log($"SetForegroundWindow({hwnd}) returned {ProcessStarter.SetForegroundWindow(hwnd)}", LogLevel.Debug);
-                    continue;
-                }
-                if (CurrentMode == Mode.Error)
-                {
+if (CurrentMode == Mode.Focus)
+{
+    var hwnd = (IntPtr)int.Parse(token, CultureInfo.InvariantCulture);
+    Globals.Logger.Log($"SetForegroundWindow({hwnd}) returned {ProcessStarter.SetForegroundWindow(hwnd)}", LogLevel.Debug);
+    continue;
+}
+if (CurrentMode == Mode.Error)
+{
 //                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.Error.Write(token);
+    Console.Error.Write(token);
 //                    Console.ResetColor();
-                    continue;
-                }
+    continue;
+}
 
-                */
+*/
             }
-                
+
             return;
         }
 

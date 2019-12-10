@@ -9,7 +9,6 @@ namespace gsudo.ProcessHosts
 {
     class ElevateOnlyHostProcess : IProcessHost
     {
-        private NamedPipeServerStream pipe;
         private Process process;
 
         public async Task Start(Connection connection, ElevationRequest request)
@@ -40,7 +39,7 @@ namespace gsudo.ProcessHosts
             {
                 Logger.Instance.Log(ex.ToString(), LogLevel.Error);
                 if (connection.IsAlive)
-                    await connection.ControlStream.WriteAsync(Constants.TOKEN_ERROR + "Server Error: " + ex.ToString() + "\r\n").ConfigureAwait(false);
+                    await connection.ControlStream.WriteAsync($"{Constants.TOKEN_ERROR}Server Error: {ex.ToString()}\r\n{Constants.TOKEN_ERROR}").ConfigureAwait(false);
 
                 await connection.FlushAndCloseAll().ConfigureAwait(false);
                 return;

@@ -1,4 +1,5 @@
 ﻿using gsudo.Helpers;
+using gsudo.Native;
 using gsudo.Rpc;
 using System;
 using System.Collections.Generic;
@@ -19,20 +20,20 @@ namespace gsudo.ProcessHosts
         public async Task Start(Connection connection, ElevationRequest request)
         {
             _connection = connection;
-            Console.CancelKeyPress += HandleCancelKey;
-            bool hasExitedHack = false;
+            //Native.ConsoleApi.SetConsoleCtrlHandler(HandleCtrlEvent, true);
+            //Console.CancelKeyPress += HandleCancelKey;
+            //Native.ConsoleApi.SetConsoleCtrlHandler(null, true);
             try
             {
                 process = ProcessFactory.StartInProcessRedirected(request.FileName, request.Arguments, request.StartFolder);
                 
-                process.Exited += (o, e) => hasExitedHack = true;
-                hasExitedHack = process.HasExited;
-
                 Logger.Instance.Log($"Process ({process.Id}) started: {request.FileName} {request.Arguments}", LogLevel.Debug);
 
                 var t1 = process.StandardOutput.ConsumeOutput((s) => WriteToPipe(s));
                 var t2 = process.StandardError.ConsumeOutput((s) => WriteToErrorPipe(s));
-                var t3 = new StreamReader(connection.DataStream, GlobalSettings.Encoding).ConsumeOutput((s) => ReadFromPipe(s, process));
+                var t3 = new StreamReader(connection.DataStream, GlobalSettings.Encoding).ConsumeOutput((s) => WriteToProcessStdIn(s, process));
+                var t4 = new StreamReader(connection.ControlStream, GlobalSettings.Encoding).ConsumeOutput((s) => HandleControl(s, process));
+
                 int i = 0;
                 
                 while (!process.WaitForExit(0) && connection.IsAlive)
@@ -55,8 +56,8 @@ namespace gsudo.ProcessHosts
                 if (process.HasExited && connection.IsAlive)
                 {
                     // we need to ensure that all process output is read.
-                    while(ShouldWait(process.StandardError) || ShouldWait(process.StandardOutput) || !hasExitedHack)
-                        await Task.Delay(10).ConfigureAwait(false);
+                    while(ShouldWait(process.StandardError) || ShouldWait(process.StandardOutput))
+                        await Task.Delay(1).ConfigureAwait(false);
 
                     await Task.WhenAll(t1, t2).ConfigureAwait(false);
                     await connection.ControlStream.WriteAsync($"{Constants.TOKEN_EXITCODE}{process.ExitCode}{Constants.TOKEN_EXITCODE}").ConfigureAwait(false);
@@ -72,17 +73,19 @@ namespace gsudo.ProcessHosts
             {
                 Logger.Instance.Log(ex.ToString(), LogLevel.Error);
 
-                await connection.ControlStream.WriteAsync(Constants.TOKEN_ERROR + "Server Error: " + ex.ToString() + "\r\n").ConfigureAwait(false);
+                await connection.ControlStream.WriteAsync($"{Constants.TOKEN_ERROR}Server Error: {ex.ToString()}\r\n{Constants.TOKEN_ERROR}").ConfigureAwait(false);
                 await connection.FlushAndCloseAll().ConfigureAwait(false);
             }
             finally
             {
-                Console.CancelKeyPress -= HandleCancelKey;
+                //Native.ConsoleApi.SetConsoleCtrlHandler(null, false);
+                //  Native.ConsoleApi.SetConsoleCtrlHandler(HandleCtrlEvent, false);
+                //Console.CancelKeyPress -= HandleCancelKey;
                 process?.Dispose();
             }
         }
-
-        private void HandleCancelKey(object sender, ConsoleCancelEventArgs e)
+               
+        internal static void HandleCancelKey(object sender, ConsoleCancelEventArgs e)
         {
             e.Cancel = true;
         }
@@ -123,8 +126,18 @@ namespace gsudo.ProcessHosts
             //}   
         }
 
+        private async Task WriteToProcessStdIn(string s, Process process)
+        {
+            if (lastInboundMessage == null)
+                lastInboundMessage = s;
+            else
+                lastInboundMessage += s;
+
+            await process.StandardInput.WriteAsync(s).ConfigureAwait(false);
+        }
+
         static readonly string[] TOKENS = new string[] { "\0", Constants.TOKEN_KEY_CTRLBREAK, Constants.TOKEN_KEY_CTRLC};
-        private async Task ReadFromPipe(string s, Process process)
+        private async Task HandleControl(string s, Process process)
         {
             var tokens = new Stack<string>(StringTokenizer.Split(s, TOKENS));
 
@@ -137,10 +150,11 @@ namespace gsudo.ProcessHosts
                 if (token == Constants.TOKEN_KEY_CTRLC)
                 {
                     ProcessExtensions.SendCtrlC(process);
+
                     //await process.StandardInput.WriteAsync("\x3");
                     //await Task.Delay(10);
                     //pipe.WaitForPipeDrain();
-                    await WriteToErrorPipe("^C\r\n");
+//                    await WriteToErrorPipe("^C\r\n").ConfigureAwait(false);
                     lastInboundMessage = null;
                     continue;
                 }
@@ -150,25 +164,21 @@ namespace gsudo.ProcessHosts
                     ProcessExtensions.SendCtrlC(process, true);
                     //await Task.Delay(10);
                     //pipe.WaitForPipeDrain();
-                    await WriteToErrorPipe("^BREAK\r\n");
+//                    await WriteToErrorPipe("^BREAK\r\n").ConfigureAwait(false);
                     lastInboundMessage = null;
                     continue;
                 }
-
-                if (lastInboundMessage == null)
-                    lastInboundMessage = token;
-                else
-                    lastInboundMessage += token;
-
-                await process.StandardInput.WriteAsync(token);
             }
         }
 
         private async Task WriteToErrorPipe(string s)
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(s);
-            Console.ResetColor();
+            if (GlobalSettings.Debug)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(s);
+                Console.ResetColor();
+            }
             await _connection.ControlStream.WriteAsync(Constants.TOKEN_ERROR + s + Constants.TOKEN_ERROR).ConfigureAwait(false);
         }
 
@@ -190,11 +200,14 @@ namespace gsudo.ProcessHosts
             await _connection.DataStream.WriteAsync(s).ConfigureAwait(false);
             await _connection.DataStream.FlushAsync().ConfigureAwait(false);
 
-            Console.ForegroundColor = ConsoleColor.Gray;
-            Console.Write(s);
+            if (GlobalSettings.Debug)
+            {
+                Console.ForegroundColor = ConsoleColor.Gray;
+                Console.Write(s);
+            }
         }
 
-        private int EqualCharsCount(string s1, string s2)
+        private static int EqualCharsCount(string s1, string s2)
         {
             int i = 0;
             for (; i < s1.Length && i < s2.Length && s1[i] == s2[i]; i++)   

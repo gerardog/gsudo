@@ -15,18 +15,48 @@ namespace gsudo.Helpers
     {
         public static void SendCtrlC(this Process proc, bool sendSigBreak = false)
         {
-            var signal = sendSigBreak ? "SIGBREAK" : "SIGINT";
+            // Sending Ctrl-C in windows is tricky.
+            // Your process must be attached to the target process console.
+            // There is no way to do that without loosing your currently attached console, and that generates a lot of issues.
+            // So the best we can do is create a new process that will attach and send Ctrl-C to the target process.
 
             using (var p = ProcessFactory.StartDetached
-                ("cmd.exe", "/c \"" 
-                + Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName), "windows-kill.exe") 
-                + $"\" -{signal} {proc.Id.ToString()}", Environment.CurrentDirectory, true))
+                (Process.GetCurrentProcess().MainModule.FileName, $"gsudoctrlc {proc.Id.ToString()}", Environment.CurrentDirectory, true))
             {
                 p.WaitForExit();
             }
         }
 
-        public static Process ParentProcess(this Process process) 
+        // send ctrl-c
+        [DllImport("kernel32.dll", SetLastError = true)]
+        internal static extern bool AttachConsole(uint dwProcessId);
+
+        [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
+        internal static extern bool FreeConsole();
+        [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
+        internal static extern bool AllocConsole();
+
+        [DllImport("kernel32.dll")]
+        internal static extern bool SetConsoleCtrlHandler(ConsoleCtrlDelegate HandlerRoutine, bool Add);
+
+        internal delegate bool ConsoleCtrlDelegate(CtrlTypes CtrlType);
+
+        // Enumerated type for the control messages sent to the handler routine
+        internal enum CtrlTypes : uint
+        {
+            CTRL_C_EVENT = 0,
+            CTRL_BREAK_EVENT,
+            CTRL_CLOSE_EVENT,
+            CTRL_LOGOFF_EVENT = 5,
+            CTRL_SHUTDOWN_EVENT
+        }
+
+        [DllImport("kernel32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool GenerateConsoleCtrlEvent(CtrlTypes dwCtrlEvent, uint dwProcessGroupId);
+
+
+        public static Process ParentProcess(this Process process)
         {
             try
             {
@@ -44,21 +74,18 @@ namespace gsudo.Helpers
             var parent = Process.GetProcessById(parentId);
 
             // workaround for chocolatey shim.
-            if (Path.GetFileName(parent.MainModule.FileName).In("gsudo.exe","sudo.exe"))
+            if (Path.GetFileName(parent.MainModule.FileName).In("gsudo.exe", "sudo.exe"))
             {
                 return ParentProcessId(parentId);
             }
             return parentId;
         }
 
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern bool GetNamedPipeClientProcessId(IntPtr Pipe, out uint ClientProcessId);
         public static int GetClientProcessId(this System.IO.Pipes.NamedPipeServerStream pipeServer)
         {
             UInt32 nProcID;
             IntPtr hPipe = pipeServer.SafePipeHandle.DangerousGetHandle();
-            if (GetNamedPipeClientProcessId(hPipe, out nProcID))
+            if (Native.ProcessApi.GetNamedPipeClientProcessId(hPipe, out nProcID))
                 return (int)nProcID;
             return 0;
         }

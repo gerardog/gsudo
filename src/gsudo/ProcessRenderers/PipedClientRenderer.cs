@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.IO.Pipes;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -49,11 +48,11 @@ namespace gsudo.ProcessRenderers
                     {
                         if (++i % 10 == 0) await _connection.ControlStream.WriteAsync("\0").ConfigureAwait(false); // Sending a KeepAlive is mandatory on NamedPipes to detect if the pipe has disconnected.
                     }
-                    catch (ObjectDisposedException) 
+                    catch (ObjectDisposedException)
                     { _connection.IsAlive = false; }
-                    catch (IOException) 
+                    catch (IOException)
                     { _connection.IsAlive = false; }
-                    
+
                 }
 
                 if (exitCode.HasValue && exitCode.Value == 0 && GlobalSettings.NewWindow)
@@ -80,10 +79,9 @@ namespace gsudo.ProcessRenderers
             finally
             {
                 Console.CancelKeyPress -= CancelKeyPressHandler;
-                _connection.FlushAndCloseAll();
+                await _connection.FlushAndCloseAll().ConfigureAwait(false);
             }
         }
-
 
         private void CancelKeyPressHandler(object sender, ConsoleCancelEventArgs e)
         {
@@ -91,8 +89,8 @@ namespace gsudo.ProcessRenderers
 
             if (++consecutiveCancelKeys > 3 || e.SpecialKey == ConsoleSpecialKey.ControlBreak)
             {
-                _connection.FlushAndCloseAll().Wait();
                 expectedClose = true;
+                _connection.FlushAndCloseAll().Wait();
                 return;
             }
 
@@ -101,18 +99,28 @@ namespace gsudo.ProcessRenderers
 
             if (++consecutiveCancelKeys > 2)
             {
-                Logger.Instance.Log("Press CTRL-C again to stop gsudo\r\n", LogLevel.Warning);
-                _connection.ControlStream.WriteAsync(Constants.TOKEN_KEY_CTRLBREAK).GetAwaiter().GetResult();
+                Logger.Instance.Log("Press CTRL-C again to stop gsudo", LogLevel.Warning);
+                _connection.ControlStream.WriteAsync(Constants.TOKEN_KEY_CTRLBREAK); // .GetAwaiter().GetResult();
             }
             else
             {
-                _connection.ControlStream.WriteAsync(Constants.TOKEN_KEY_CTRLC).GetAwaiter().GetResult();
+                _connection.ControlStream.WriteAsync(Constants.TOKEN_KEY_CTRLC); //.GetAwaiter().GetResult();
             }
         }
 
-        private async Task WriteToConsole(string s)
+        private Task WriteToConsole(string s)
         {
-            Console.Write(s);
+            if (s == "\f")
+                Console.Clear();
+            else
+            {
+                lock (this)
+                {
+                    Console.ResetColor();
+                    Console.Write(s);
+                }
+            }
+            return Task.CompletedTask;
         }
 
         enum Mode { Normal, Focus, Error, ExitCode };
@@ -152,10 +160,7 @@ namespace gsudo.ProcessRenderers
                     await Console.Out.FlushAsync().ConfigureAwait(false);
 
                     Toggle(Mode.Error);
-                    if (CurrentMode == Mode.Error)
-                        Console.ForegroundColor = ConsoleColor.Red;
-                    else
-                        Console.ResetColor();
+                    Console.ResetColor();
                     continue;
                 }
 
@@ -167,7 +172,12 @@ namespace gsudo.ProcessRenderers
                 }
                 if (CurrentMode == Mode.Error)
                 {
-                    Console.Error.Write(token);
+                    lock(this)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.Write(token);
+                        Console.ResetColor();
+                    }
                     continue;
                 }
                 if (CurrentMode == Mode.ExitCode)
@@ -176,7 +186,10 @@ namespace gsudo.ProcessRenderers
                     continue;
                 }
 
-                Console.Write(token);
+                //lock(this)
+                {
+                    Console.Write(token);
+                }
             }
         }
 

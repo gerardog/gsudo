@@ -2,6 +2,7 @@
 
 namespace gsudo
 {
+    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
     public enum LogLevel
     {
         All = 0,
@@ -19,15 +20,19 @@ namespace gsudo
 
         public void Log(string message, LogLevel level)
         {
-            if (level >= GlobalSettings.LogLevel)
+            try
             {
-                Console.ForegroundColor = GetColor(level);
-                Console.Error.WriteLine($"{level.ToString()}: {message}");
-                Console.ResetColor();
+                if (level >= GlobalSettings.LogLevel)
+                {
+                    Console.ForegroundColor = GetColor(level);
+                    Console.Error.WriteLine($"{level.ToString()}: {message}");
+                    Console.ResetColor();
+                }
             }
+            catch { }
         }
 
-        private ConsoleColor GetColor(LogLevel level)
+        private static ConsoleColor GetColor(LogLevel level)
         {
             if (level <= LogLevel.Debug) return ConsoleColor.DarkGray;
             if (level == LogLevel.Info) return ConsoleColor.Gray;

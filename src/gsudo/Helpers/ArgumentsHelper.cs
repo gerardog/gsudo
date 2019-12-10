@@ -44,7 +44,7 @@ namespace gsudo.Helpers
                 // We are sure this will not be an interactive experience, 
                 // so we can safely use raw 
 
-                GlobalSettings.PreferRawConsole = true;
+                GlobalSettings.ForceRawConsole.Value = true;
 
                 return new string[] 
                     { Environment.GetEnvironmentVariable("COMSPEC"), "/c" }
@@ -63,12 +63,12 @@ namespace gsudo.Helpers
                 var arg = stack.Peek();
                 if (arg.In("-v", "--version"))
                 {
-                    new HelpCommand().ShowVersion();
+                    HelpCommand.ShowVersion();
                     return 0;
                 }
-                else if (arg.In("-h", "--help", "help"))
+                else if (arg.In("-h", "--help", "help", "/?"))
                 {
-                    new HelpCommand().ShowHelp();
+                    HelpCommand.ShowHelp();
                     return 0;
                 }
                 else if (arg.In("-n", "--new"))
@@ -84,7 +84,7 @@ namespace gsudo.Helpers
                 else if (arg.In("--debug"))
                 {
                     GlobalSettings.Debug = true;
-                    GlobalSettings.LogLevel = LogLevel.All;
+                    GlobalSettings.LogLevel.Value = LogLevel.All;
                     stack.Pop();
                 }
                 else if (arg.In("--loglevel"))
@@ -93,7 +93,7 @@ namespace gsudo.Helpers
                     arg = stack.Pop();
                     try
                     {
-                        GlobalSettings.LogLevel = (LogLevel)Enum.Parse(typeof(LogLevel), arg, true);
+                        GlobalSettings.LogLevel.Value = (LogLevel)Enum.Parse(typeof(LogLevel), arg, true);
                     }
                     catch
                     {
@@ -103,12 +103,12 @@ namespace gsudo.Helpers
                 }
                 else if (arg.In("--raw"))
                 {
-                    GlobalSettings.PreferRawConsole = true;
+                    GlobalSettings.ForceRawConsole.Value = true;
                     stack.Pop();
                 }
                 else if (arg.In("--vt"))
                 {
-                    GlobalSettings.PreferVTConsole = true;
+                    GlobalSettings.ForceVTConsole.Value = true;
                     stack.Pop();
                 }
                 else if (arg.StartsWith("-", StringComparison.Ordinal))

@@ -28,7 +28,7 @@ namespace gsudo.ProcessHosts
                 {
                     using (var pseudoConsole = PseudoConsole.PseudoConsole.Create(inputPipe.ReadSide, outputPipe.WriteSide, (short)request.ConsoleWidth, (short)request.ConsoleHeight))
                     {
-                        using (var process = ProcessFactory.StartPseudoConsole(command, PseudoConsole.PseudoConsole.PseudoConsoleThreadAttribute, pseudoConsole.Handle))
+                        using (var process = ProcessFactory.StartPseudoConsole(command, PseudoConsole.PseudoConsole.PseudoConsoleThreadAttribute, pseudoConsole.Handle, request.StartFolder))
                         {
                             // copy all pseudoconsole output to stdout
                             t1 = Task.Run(() => CopyPipeToOutput(outputPipe.ReadSide));
@@ -54,7 +54,6 @@ namespace gsudo.ProcessHosts
                 if (connection.IsAlive)
                 {
                     await connection.ControlStream.WriteAsync($"{Constants.TOKEN_EXITCODE}{exitCode ?? 0}{Constants.TOKEN_EXITCODE}").ConfigureAwait(false);
-                    //await t1.ConfigureAwait(false);
                 }
 
                 await connection.FlushAndCloseAll().ConfigureAwait(false);
@@ -62,7 +61,7 @@ namespace gsudo.ProcessHosts
             catch (Exception ex)
             {
                 Logger.Instance.Log(ex.ToString(), LogLevel.Error);
-                await connection.ControlStream.WriteAsync(Constants.TOKEN_ERROR + "Server Error: " + ex.ToString() + "\r\n").ConfigureAwait(false);
+                await connection.ControlStream.WriteAsync($"{Constants.TOKEN_ERROR}Server Error: {ex.ToString()}\r\n{Constants.TOKEN_ERROR}").ConfigureAwait(false);
                 await connection.FlushAndCloseAll().ConfigureAwait(false);
                 return;
             }
@@ -74,37 +73,28 @@ namespace gsudo.ProcessHosts
         /// <param name="inputWriteSide">the "write" side of the pseudo console input pipe</param>
         private async Task CopyInputToPipe(SafeFileHandle inputWriteSide)
         {
+            Stream debugStream = null;
+
             using (var inputWriteStream = new FileStream(inputWriteSide, FileAccess.Write))
             using (var writer = new StreamWriter(inputWriteStream))
             {
                 writer.AutoFlush = true;
-                //    ForwardCtrlC(writer);
                 while (true)
                 {
-//                    Task.Delay(4000);
-//                    writer.Write("echo CopyInputToPipe\r\n");
-                    //pipe.Flush();
-
-                    //pipe.CopyTo(inputWriteStream);
-
                     byte[] buffer = new byte[256];
                     int cch;
 
                     while ((cch = await _connection.DataStream.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false)) > 0)
                     {
-  //                      writer.Write("echo CopyInputToPipe\r\n");
-
-//                        await inputWriteStream.WriteAsync(buffer, 0, cch);
-
                         var s = GlobalSettings.Encoding.GetString(buffer, 0, cch);
                         writer.Write(s);
 
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.Write(s);
-                        //writer.Write(s);
-                        //await pipe.WriteAsync(s);
-                        //await pipe.FlushAsync();
-
+                        if (GlobalSettings.Debug)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine(s);
+                            Console.ResetColor();
+                        }
                     }
                 }
             }
@@ -118,6 +108,13 @@ namespace gsudo.ProcessHosts
 //        private void CopyPipeToOutput(SafeFileHandle outputReadSide)
         private async Task CopyPipeToOutput(SafeFileHandle outputReadSide)
         {
+            Stream debugStream = null;
+
+            if (GlobalSettings.Debug)
+            {
+                debugStream = new FileStream("VTProcessHost.debug.txt", FileMode.Create, FileAccess.Write);
+            }
+
             using (var pseudoConsoleOutput = new FileStream(outputReadSide, FileAccess.Read))
             {
                 byte[] buffer = new byte[10240];
@@ -126,10 +123,16 @@ namespace gsudo.ProcessHosts
                 while ((cch = await pseudoConsoleOutput.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false)) > 0)
                 {
                     var s = GlobalSettings.Encoding.GetString(buffer, 0, cch);
-                    await _connection.DataStream.WriteAsync(s).ConfigureAwait(false); 
-                    Console.Write(s);
+                    await _connection.DataStream.WriteAsync(s).ConfigureAwait(false);
+
+                    debugStream?.Write(GlobalSettings.Encoding.GetBytes(s), 0, s.Length);
+                    debugStream?.Flush();
+
+                    //Console.Write(s);
+
                 }
             }
+            debugStream?.Close();
         }
 
         /// <summary>

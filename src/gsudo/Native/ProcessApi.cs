@@ -88,5 +88,8 @@ namespace gsudo.Native
         public static extern bool GetExitCodeProcess(Microsoft.Win32.SafeHandles.SafeProcessHandle processHandle, out int exitCode);
         public const int STILL_ACTIVE = 0x00000103;
 
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool GetNamedPipeClientProcessId(IntPtr Pipe, out uint ClientProcessId);
+
     }
 }

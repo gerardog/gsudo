@@ -29,7 +29,7 @@ namespace gsudo
             var errors = new List<Error>();
             using (var parser = new Parser(settings => settings.AutoHelp = false))
             {
-                parser.ParseArguments<ServiceCommand, ConfigCommand, HelpCommand>(args)
+                parser.ParseArguments<ServiceCommand, ConfigCommand, HelpCommand, CtrlCCommand, RunCommand>(args)
                     .WithParsed<ICommand>((c) => cmd = c)
                     .WithNotParsed(e => errors.AddRange(e));
             }
@@ -51,7 +51,8 @@ namespace gsudo
             {
                 if (cmd != null)
                 {
-                    Environment.SetEnvironmentVariable("PROMPT", "$P# ");
+                    Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.RootPrompt.Value);
+                    // Environment.SetEnvironmentVariable("PROMPT", "$P# ");
                     return await cmd.Execute().ConfigureAwait(false);
                 }
                 else

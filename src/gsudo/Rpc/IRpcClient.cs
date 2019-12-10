@@ -23,7 +23,7 @@ namespace gsudo.Rpc
             IsAlive = false;
         }
 
-        private async Task FlushAndClose(Stream DataStream)
+        private static async Task FlushAndClose(Stream DataStream)
         {
             if (DataStream is NamedPipeServerStream)
             {

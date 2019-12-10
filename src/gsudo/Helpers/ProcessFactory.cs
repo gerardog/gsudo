@@ -93,7 +93,7 @@ namespace gsudo.Helpers
 
         public static bool IsWindowsApp(string exe)
         {
-            var path = FindExecutableInPath(exe);
+            var path = exe;
             var shinfo = new Native.FileApi.SHFILEINFO();
             const int SHGFI_EXETYPE = 0x000002000;
             var fileInfo = Native.FileApi.SHGetFileInfo(path, 0, ref shinfo, (uint)Marshal.SizeOf(shinfo), SHGFI_EXETYPE);
@@ -111,12 +111,12 @@ namespace gsudo.Helpers
                 return Path.GetFullPath(exe);
             }
 
-            if (Path.GetDirectoryName(exe) == String.Empty)
+            if (string.IsNullOrEmpty(Path.GetDirectoryName(exe)))
             {
                 exe = Path.GetFileName(exe);
 
                 var validExtensions = Environment.GetEnvironmentVariable("PATHEXT", EnvironmentVariableTarget.Process)
-                    .Split(';'); ;
+                    .Split(';'); 
 
                 var possibleNames = new List<string>();
                 
@@ -142,10 +142,10 @@ namespace gsudo.Helpers
             return null;
         }
 
-        public static PseudoConsole.Process StartPseudoConsole(string command, IntPtr attributes, IntPtr hPC)
+        public static PseudoConsole.Process StartPseudoConsole(string command, IntPtr attributes, IntPtr hPC, string startFolder)
         {
             var startupInfo = ConfigureProcessThread(hPC, attributes);
-            var processInfo = RunProcess(ref startupInfo, command);
+            var processInfo = RunProcess(ref startupInfo, command, startFolder);
             return new PseudoConsole.Process(startupInfo, processInfo);
         }
 
@@ -197,7 +197,7 @@ namespace gsudo.Helpers
             return startupInfo;
         }
 
-        private static PROCESS_INFORMATION RunProcess(ref STARTUPINFOEX sInfoEx, string commandLine)
+        private static PROCESS_INFORMATION RunProcess(ref STARTUPINFOEX sInfoEx, string commandLine, string startFolder)
         {
             int securityAttributeSize = Marshal.SizeOf<SECURITY_ATTRIBUTES>();
             var pSec = new SECURITY_ATTRIBUTES { nLength = securityAttributeSize };
@@ -210,7 +210,7 @@ namespace gsudo.Helpers
                 bInheritHandles: false,
                 dwCreationFlags: EXTENDED_STARTUPINFO_PRESENT,
                 lpEnvironment: IntPtr.Zero,
-                lpCurrentDirectory: null,
+                lpCurrentDirectory: startFolder,
                 lpStartupInfo: ref sInfoEx,
                 lpProcessInformation: out PROCESS_INFORMATION pInfo
             );

@@ -9,7 +9,7 @@ using gsudo.Helpers;
 
 namespace gsudo.Commands
 {
-    [Verb("service")]
+    [Verb("gsudoservice")]
     class ServiceCommand : ICommand
     {
         [Value(0)]
@@ -19,13 +19,13 @@ namespace gsudo.Commands
         public LogLevel? LogLvl { get; set; }
 
         Timer ShutdownTimer;
-        void EnableTimer() => ShutdownTimer.Change((int)GlobalSettings.ServerTimeout.TotalMilliseconds, Timeout.Infinite);
+        void EnableTimer() => ShutdownTimer.Change((int)GlobalSettings.CredentialsCacheDuration.Value.TotalMilliseconds, Timeout.Infinite);
         void DisableTimer() => ShutdownTimer.Change(Timeout.Infinite, Timeout.Infinite);
 
         public async Task<int> Execute()
         {
             // service mode
-            if (LogLvl.HasValue) GlobalSettings.LogLevel = LogLvl.Value;
+            if (LogLvl.HasValue) GlobalSettings.LogLevel.Value = LogLvl.Value;
 
             Console.Title = "gsudo Service";
             Logger.Instance.Log("Service started", LogLevel.Info);
@@ -59,7 +59,7 @@ namespace gsudo.Commands
             }
         }
 
-        private IProcessHost CreateProcessHost(ElevationRequest request)
+        private static IProcessHost CreateProcessHost(ElevationRequest request)
         {
             bool isWindowsApp = ProcessFactory.IsWindowsApp(request.FileName);
 

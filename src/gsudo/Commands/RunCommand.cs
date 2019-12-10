@@ -17,7 +17,6 @@ namespace gsudo.Commands
         [Value(0)]
         public IEnumerable<string> CommandToRun { get; set; }
 
-        private string GetExeName() => CommandToRun.FirstOrDefault();
         private string GetArguments() => GetArgumentsString(CommandToRun, 1);
 
         public async Task<int> Execute()
@@ -28,21 +27,23 @@ namespace gsudo.Commands
             bool emptyArgs = string.IsNullOrEmpty(CommandToRun.FirstOrDefault());
 
             CommandToRun = ArgumentsHelper.AugmentCommand(CommandToRun.ToArray());
+            
+            var exeName = ProcessFactory.FindExecutableInPath(CommandToRun.FirstOrDefault());
+            bool isWindowsApp = ProcessFactory.IsWindowsApp(exeName);
 
             var elevationRequest = new ElevationRequest()
             {
-                FileName = GetExeName(),
+                FileName = exeName,
                 Arguments = GetArguments(),
                 StartFolder = Environment.CurrentDirectory,
                 NewWindow = GlobalSettings.NewWindow,
                 ForceWait = GlobalSettings.Wait,
-                Mode = GetConsoleMode(),
+                Mode = GetConsoleMode(isWindowsApp), 
             };
-
 
             if (elevationRequest.Mode== ElevationRequest.ConsoleMode.VT)
             {
-                elevationRequest.ConsoleWidth = Console.WindowWidth;
+                elevationRequest.ConsoleWidth = Console.WindowWidth-1; // the -1 fixes some issues with ConEmu -\_()_/-
                 elevationRequest.ConsoleHeight = Console.WindowHeight;
             }
 
@@ -59,8 +60,7 @@ namespace gsudo.Commands
                 Logger.Instance.Log("Already elevated. Running in-process", LogLevel.Debug);
 
                 // No need to escalate. Run in-process
-                var exeName = CommandToRun.FirstOrDefault();
-
+                
                 if (GlobalSettings.NewWindow)
                 {
                     using (Process process = ProcessFactory.StartDetached(exeName, GetArguments(), Environment.CurrentDirectory, false))
@@ -75,8 +75,6 @@ namespace gsudo.Commands
                 }
                 else
                 {
-                    bool isWindowsApp = ProcessFactory.IsWindowsApp(exeName);
-
                     using (Process process = ProcessFactory.StartInProcessAtached(exeName, GetArguments()))
                     {
                         if (!isWindowsApp || GlobalSettings.Wait)
@@ -117,10 +115,10 @@ namespace gsudo.Commands
                     {
                         // Start elevated service instance
                         Logger.Instance.Log("Elevating process...", LogLevel.Debug);
-                        var exeName = currentProcess.MainModule.FileName;
                         var callingPid = currentProcess.ParentProcessId();
 
-                        using (var process = ProcessFactory.StartElevatedDetached(exeName, $"service {callingPid} {GlobalSettings.LogLevel}", !GlobalSettings.Debug))
+                        var dbg = GlobalSettings.Debug ? "--debug " : string.Empty;
+                        using (var process = ProcessFactory.StartElevatedDetached(currentProcess.MainModule.FileName, $"{dbg}gsudoservice {callingPid} {GlobalSettings.LogLevel}", !GlobalSettings.Debug))
                         {
                             Logger.Instance.Log("Elevated instance started.", LogLevel.Debug);
                         }
@@ -153,12 +151,15 @@ namespace gsudo.Commands
         /// or enhanced, colorfull VT mode with nice TAB auto-complete.
         /// </summary>
         /// <returns></returns>
-        private static ElevationRequest.ConsoleMode GetConsoleMode()
+        private static ElevationRequest.ConsoleMode GetConsoleMode(bool isWindowsApp)
         {
-            if (Console.IsOutputRedirected || GlobalSettings.PreferRawConsole)  // as in "gsudo dir > somefile.txt"
+            if (isWindowsApp || GlobalSettings.NewWindow)
                 return ElevationRequest.ConsoleMode.Raw;
 
-            if (Environment.GetEnvironmentVariable("ConEmuANSI")=="ON")
+            if (Console.IsOutputRedirected || GlobalSettings.ForceRawConsole)  // as in "gsudo dir > somefile.txt"
+                return ElevationRequest.ConsoleMode.Raw;
+
+            if (Environment.GetEnvironmentVariable("ConEmuANSI") == "ON")
             {
                 // we where called from a ConEmu console which has a working 
                 // full VT terminal with no bugs.
@@ -166,8 +167,8 @@ namespace gsudo.Commands
             }
 
             // Windows 10.0.18362.356 has broken VT support. 
-            // ENABLE_VIRTUAL_TERMINAL_PROCESSING works for a few seconds 
-            // before ConHost breaks
+            // ENABLE_VIRTUAL_TERMINAL_PROCESSING works for a few seconds before ConHost breaks
+            // I could add an IF for windows 20H1 if 20H1 has this issue fixed.
             /*
             if (Windows.Version > 10.0.18362.356)
             {
@@ -175,7 +176,7 @@ namespace gsudo.Commands
             }
             */
 
-            if (GlobalSettings.PreferVTConsole)
+            if (GlobalSettings.ForceVTConsole)
             {
                 return ElevationRequest.ConsoleMode.VT;
             }
@@ -185,7 +186,7 @@ namespace gsudo.Commands
 
         private IRpcClient GetClient(ElevationRequest elevationRequest)
         {
-            // future Tcp implementations
+            // future Tcp implementations should be plugged here.
             return new NamedPipeClient();
         }
 
