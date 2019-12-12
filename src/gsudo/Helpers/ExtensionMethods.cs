@@ -12,26 +12,31 @@ namespace gsudo
 {
     static class ExtensionMethods
     {
-        public async static Task ConsumeOutput(this StreamReader reader, Func<string, Task> callback)
-        {
-            // important: buffer must be larger than Process class/Win32Api internal buffer, or else the output is truncated on 1% of the non-interactive elevations I.E. gsudo dir C:\ > output.txt 
-            char[] buffer = new char[10240];
-            int cch;
+        private static readonly TaskFactory _taskFactory = new TaskFactory();
 
-            try
+        public static Task ConsumeOutput(this StreamReader reader, Func<string, Task> callback)
+        {
+            return _taskFactory.StartNew(async () =>
             {
-                while ((cch = await reader.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                // important for ProcessStart buffers: buffer must be larger than Process Win32Api internal buffer, or else the output is truncated on 1% of the non-interactive elevations I.E. gsudo dir C:\ > output.txt 
+                char[] buffer = new char[10240];
+                int cch;
+
+                try
                 {
-                    await callback(new string(buffer, 0, cch));
+                    while ((cch = await reader.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false)) > 0)
+                    {
+                        await callback(new string(buffer, 0, cch)).ConfigureAwait(false);
+                    }
                 }
-            }
-            catch (ObjectDisposedException) { }
-            catch (IOException) { }
-            catch (Exception ex) { Logger.Instance.Log(ex.ToString(), LogLevel.Error); }
-            finally
-            {
-                reader.Dispose();
-            }
+                catch (ObjectDisposedException) { }
+                catch (IOException) { }
+                catch (Exception ex) { Logger.Instance.Log(ex.ToString(), LogLevel.Error); }
+                finally
+                {
+                    reader.Dispose();
+                }
+            }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
         }
 
         public static async Task WriteAsync(this Stream stream, string text)
@@ -54,6 +59,11 @@ namespace gsudo
         public static bool In<T>(this T toSearch, params T[] list)
         {
             return list.Contains(toSearch);
+        }
+
+        public static void AddMany<T>(this List<T> list, params T[] items)
+        {
+            list.AddRange(items);
         }
     }
 }

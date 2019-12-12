@@ -12,13 +12,13 @@ namespace gsudo.ProcessRenderers
     // Regular Console app (WindowsPTY via .net) Client. (not ConPTY)
     class VTClientRenderer : IProcessRenderer
     {
-        static readonly string[] TOKENS = new string[] { "\x001B[6n", Constants.TOKEN_EXITCODE, Constants.TOKEN_ERROR}; //"\0", "\f", Globals.TOKEN_FOCUS, Globals.TOKEN_KEY_CTRLBREAK, Globals.TOKEN_KEY_CTRLC };
+        static readonly string[] TOKENS = new string[] { "\x001B[6n", Constants.TOKEN_EXITCODE, Constants.TOKEN_ERROR }; //"\0", "\f", Globals.TOKEN_FOCUS, Globals.TOKEN_KEY_CTRLBREAK, Globals.TOKEN_KEY_CTRLC };
         private readonly gsudo.Rpc.Connection _connection;
         private readonly ElevationRequest _elevationRequest;
 
         public static int? ExitCode { get; private set; }
         int consecutiveCancelKeys = 0;
-        private bool expectedClose; 
+        private bool expectedClose;
 
         public VTClientRenderer(Connection connection, ElevationRequest elevationRequest)
         {
@@ -29,7 +29,6 @@ namespace gsudo.ProcessRenderers
         public async Task<int> Start()
         {
             ConsoleHelper.EnableVT();
-
 
             try
             {
@@ -51,17 +50,9 @@ namespace gsudo.ProcessRenderers
                             consecutiveCancelKeys = 0;
                             // send input character-by-character to the pipe
                             var key = Console.ReadKey(intercept: true);
-                            var keychar = key.KeyChar;
-                            if (key.Key == ConsoleKey.LeftArrow)
-                                await _connection.DataStream.WriteAsync("\x001B[1D").ConfigureAwait(false);
-                            else if (key.Key == ConsoleKey.RightArrow)
-                                await _connection.DataStream.WriteAsync("\x001B[1C").ConfigureAwait(false);
-                            else if (key.Key == ConsoleKey.UpArrow)
-                                await _connection.DataStream.WriteAsync("\x001B[1A").ConfigureAwait(false);
-                            else if (key.Key == ConsoleKey.DownArrow)
-                                await _connection.DataStream.WriteAsync("\x001B[1B").ConfigureAwait(false);
-                            else
-                                await _connection.DataStream.WriteAsync(keychar.ToString()).ConfigureAwait(false);
+                            byte[] sequence = TerminalHelper.GetSequenceFromConsoleKey(key, GlobalSettings.Debug && _elevationRequest.FileName.EndsWith("KeyPressTester.exe"));
+
+                            _connection.DataStream.Write(sequence, 0, sequence.Length);
                         }
 
                         i = (i + 1) % 50;
@@ -69,7 +60,7 @@ namespace gsudo.ProcessRenderers
                     }
                     catch (ObjectDisposedException)
                     {
-                        break; 
+                        break;
                     }
                     catch (IOException)
                     {
@@ -104,7 +95,6 @@ namespace gsudo.ProcessRenderers
             {
                 Console.CancelKeyPress -= CancelKeyPressHandler;
             }
-
         }
 
         private void CancelKeyPressHandler(object sender, ConsoleCancelEventArgs e)
@@ -142,7 +132,7 @@ namespace gsudo.ProcessRenderers
         {
             try
             {
-                if (s == "\x001B[6n")
+                if (s == "\x001B[6n") // Hosted app is asking the height and width of the terminal.
                 {
                     await _connection.DataStream.WriteAsync($"\x001B[{Console.CursorTop};{Console.CursorLeft}R");
                     return;
@@ -159,11 +149,11 @@ namespace gsudo.ProcessRenderers
 
         enum Mode { Normal, Focus, Error, ExitCode };
         Mode CurrentMode = Mode.Normal;
-        
+
         private async Task HandleControlData(string s)
         {
             Action<Mode> Toggle = (m) => CurrentMode = CurrentMode == Mode.Normal ? m : Mode.Normal;
-            
+
             var tokens = new Stack<string>(StringTokenizer.Split(s, TOKENS).Reverse());
 
             while (tokens.Count > 0)
@@ -193,42 +183,56 @@ namespace gsudo.ProcessRenderers
                 }
 
                 Console.Write(token);
-                /*
-                if (token == "\f")
-                {
-                    Console.Clear();
-                    continue;
-                }
-                if (token == Globals.TOKEN_FOCUS)
-                {
-                    Toggle(Mode.Focus);
-                    continue;
-                }
-
-if (CurrentMode == Mode.Focus)
-{
-    var hwnd = (IntPtr)int.Parse(token, CultureInfo.InvariantCulture);
-    Globals.Logger.Log($"SetForegroundWindow({hwnd}) returned {ProcessStarter.SetForegroundWindow(hwnd)}", LogLevel.Debug);
-    continue;
-}
-if (CurrentMode == Mode.Error)
-{
-//                    Console.ForegroundColor = ConsoleColor.Red;
-    Console.Error.Write(token);
-//                    Console.ResetColor();
-    continue;
-}
-
-*/
             }
 
             return;
         }
 
-        private async Task IncomingKey(string s, NamedPipeClientStream pipe )
+        private async Task IncomingKey(string s, NamedPipeClientStream pipe)
         {
             consecutiveCancelKeys = 0;
             await pipe.WriteAsync(s).ConfigureAwait(false);
         }
+    }
+
+    public static class EscapeSequences
+    {
+        public static readonly byte[] CmdNewline = { 10 };
+        public static readonly byte[] CmdRet = { 13 };
+        public static readonly byte[] CmdEsc = { 0x1b };
+        public static readonly byte[] CmdDel = { 0x7f };
+        public static readonly byte[] CmdDelKey = { 0x1b, (byte)'[', (byte)'3', (byte)'~' };
+        public static readonly byte[] MoveUpApp = { 0x1b, (byte)'O', (byte)'A' };
+        public static readonly byte[] MoveUpNormal = { 0x1b, (byte)'[', (byte)'A' };
+        public static readonly byte[] MoveDownApp = { 0x1b, (byte)'O', (byte)'B' };
+        public static readonly byte[] MoveDownNormal = { 0x1b, (byte)'[', (byte)'B' };
+        public static readonly byte[] MoveLeftApp = { 0x1b, (byte)'O', (byte)'D' };
+        public static readonly byte[] MoveLeftNormal = { 0x1b, (byte)'[', (byte)'D' };
+        public static readonly byte[] MoveRightApp = { 0x1b, (byte)'O', (byte)'C' };
+        public static readonly byte[] MoveRightNormal = { 0x1b, (byte)'[', (byte)'C' };
+        public static readonly byte[] MoveHomeApp = { 0x1b, (byte)'O', (byte)'H' };
+        public static readonly byte[] MoveHomeNormal = { 0x1b, (byte)'[', (byte)'H' };
+        public static readonly byte[] MoveEndApp = { 0x1b, (byte)'O', (byte)'F' };
+        public static readonly byte[] MoveEndNormal = { 0x1b, (byte)'[', (byte)'F' };
+        public static readonly byte[] CmdTab = { 9 };
+        public static readonly byte[] CmdBackTab = { 0x1b, (byte)'[', (byte)'Z' };
+        public static readonly byte[] CmdPageUp = { 0x1b, (byte)'[', (byte)'5', (byte)'~' };
+        public static readonly byte[] CmdPageDown = { 0x1b, (byte)'[', (byte)'6', (byte)'~' };
+
+        public static readonly byte[][] CmdF = {
+            new byte [] { 0x1b, (byte) 'O', (byte) 'P' }, /* F1 */
+			new byte [] { 0x1b, (byte) 'O', (byte) 'Q' }, /* F2 */
+			new byte [] { 0x1b, (byte) 'O', (byte) 'R' }, /* F3 */
+			new byte [] { 0x1b, (byte) 'O', (byte) 'S' }, /* F4 */
+			new byte [] { 0x1b, (byte) '[', (byte) '1', (byte) '5', (byte) '~' }, /* F5 */
+			new byte [] { 0x1b, (byte) '[', (byte) '1', (byte) '7', (byte) '~' }, /* F6 */
+			new byte [] { 0x1b, (byte) '[', (byte) '1', (byte) '8', (byte) '~' }, /* F7 */
+			new byte [] { 0x1b, (byte) '[', (byte) '1', (byte) '9', (byte) '~' }, /* F8 */
+			new byte [] { 0x1b, (byte) '[', (byte) '2', (byte) '0', (byte) '~' }, /* F9 */
+			new byte [] { 0x1b, (byte) '[', (byte) '2', (byte) '1', (byte) '~' }, /* F10 */
+			new byte [] { 0x1b, (byte) '[', (byte) '2', (byte) '3', (byte) '~' }, /* F11 */
+			new byte [] { 0x1b, (byte) '[', (byte) '2', (byte) '4', (byte) '~' }, /* F12 */
+		};
+
     }
 }

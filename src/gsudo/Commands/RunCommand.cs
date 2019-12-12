@@ -19,7 +19,8 @@ namespace gsudo.Commands
 
         private string GetArguments() => GetArgumentsString(CommandToRun, 1);
 
-        public async Task<int> Execute()
+        public async Task<int> 
+            Execute()
         {
             Logger.Instance.Log("Params: " + Newtonsoft.Json.JsonConvert.SerializeObject(this), LogLevel.Debug);
 
@@ -43,8 +44,12 @@ namespace gsudo.Commands
 
             if (elevationRequest.Mode == ElevationRequest.ConsoleMode.VT)
             {
-                elevationRequest.ConsoleWidth = Console.WindowWidth - 1; // the -1 fixes some issues with ConEmu -\_()_/-
+                elevationRequest.ConsoleWidth = Console.WindowWidth; 
                 elevationRequest.ConsoleHeight = Console.WindowHeight;
+
+                if (TerminalHelper.IsConEmu())
+                    elevationRequest.ConsoleWidth--; // weird ConEmu/Cmder fix
+                
                 Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.VTPrompt.Value);
             }
             else
@@ -52,7 +57,7 @@ namespace gsudo.Commands
                 Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.Prompt.Value);
             }
 
-            Logger.Instance.Log($"Using Console mode {elevationRequest.Mode}", LogLevel.Debug);
+            Logger.Instance.Log($"Using Console mode {elevationRequest.Mode}", LogLevel.Info);
 
             if (ProcessExtensions.IsAdministrator() && !GlobalSettings.NewWindow)
             {
@@ -164,7 +169,7 @@ namespace gsudo.Commands
             if (Console.IsOutputRedirected || GlobalSettings.ForceRawConsole)  // as in "gsudo dir > somefile.txt"
                 return ElevationRequest.ConsoleMode.Raw;
 
-            if (Environment.GetEnvironmentVariable("ConEmuANSI") == "ON")
+            if (TerminalHelper.TerminalHasBuiltInVTSupport())
             {
                 // we where called from a ConEmu console which has a working 
                 // full VT terminal with no bugs.

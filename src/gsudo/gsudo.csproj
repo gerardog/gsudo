@@ -13,7 +13,7 @@ It is a sudo equivalent for Windows, with a similar user-experience as the origi
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
-    <Version>0.3</Version>
+    <Version>0.4</Version>
     <Copyright>2019 Gerardo Grignoli</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
@@ -48,7 +48,7 @@ It is a sudo equivalent for Windows, with a similar user-experience as the origi
   </Target>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent" DependsOnTargets="PostBuildMacros">
-    <Exec Command="copy bin\*.* ..\choco-package\gsudo\tools\*.* /Y&#xD;&#xA;cd ..\choco-package\gsudo&#xD;&#xA;powershell -NoProfile -Command &quot;(gc gsudo.nuspec.template) -replace '#VERSION#', '@(VersionNumber)' | Out-File -encoding UTF8 gsudo.nuspec&quot;&#xD;&#xA;cd ..&#xD;&#xA;choco pack gsudo\gsudo.nuspec&#xD;&#xA;" />
+    <Exec Command="if $(ConfigurationName) == Debug exit /b 0&#xD;&#xA;copy bin\*.* ..\choco-package\gsudo\tools\*.* /Y&#xD;&#xA;cd ..\choco-package\gsudo&#xD;&#xA;powershell -NoProfile -Command &quot;(gc gsudo.nuspec.template) -replace '#VERSION#', '@(VersionNumber)' | Out-File -encoding UTF8 gsudo.nuspec&quot;&#xD;&#xA;cd ..&#xD;&#xA;choco pack gsudo\gsudo.nuspec&#xD;&#xA;" />
   </Target>
 
 </Project>

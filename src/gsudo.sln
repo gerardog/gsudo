@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "gsudo", "gsudo\gsudo.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "gsudo.Tests", "gsudo.Tests\gsudo.Tests.csproj", "{B91748FC-950F-46AB-A037-7118BEA81FF7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeyPressTester", "KeyPressTester\KeyPressTester.csproj", "{FD3B76FD-E682-4C65-A936-84B9B2C6FB19}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{B91748FC-950F-46AB-A037-7118BEA81FF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B91748FC-950F-46AB-A037-7118BEA81FF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B91748FC-950F-46AB-A037-7118BEA81FF7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FD3B76FD-E682-4C65-A936-84B9B2C6FB19}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD3B76FD-E682-4C65-A936-84B9B2C6FB19}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD3B76FD-E682-4C65-A936-84B9B2C6FB19}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD3B76FD-E682-4C65-A936-84B9B2C6FB19}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

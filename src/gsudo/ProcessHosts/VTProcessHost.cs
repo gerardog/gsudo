@@ -11,6 +11,7 @@ namespace gsudo.ProcessHosts
 {
     // PseudoConsole app host service. 
     // Speaks VT
+    // based on https://github.com/microsoft/terminal/tree/38156311e8f083614fb15ff627dabb2d3bf845b4/samples/ConPTY/MiniTerm/MiniTerm (master at dec/1/2019)
     class VTProcessHost : IProcessHost
     {
         private Connection _connection;
@@ -73,8 +74,6 @@ namespace gsudo.ProcessHosts
         /// <param name="inputWriteSide">the "write" side of the pseudo console input pipe</param>
         private async Task CopyInputToPipe(SafeFileHandle inputWriteSide)
         {
-            Stream debugStream = null;
-
             using (var inputWriteStream = new FileStream(inputWriteSide, FileAccess.Write))
             using (var writer = new StreamWriter(inputWriteStream))
             {
@@ -87,14 +86,13 @@ namespace gsudo.ProcessHosts
                     while ((cch = await _connection.DataStream.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false)) > 0)
                     {
                         var s = GlobalSettings.Encoding.GetString(buffer, 0, cch);
-                        writer.Write(s);
-
                         if (GlobalSettings.Debug)
                         {
                             Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine(s);
+                            Console.Write(s);
                             Console.ResetColor();
                         }
+                        writer.Write(s);
                     }
                 }
             }
@@ -105,14 +103,13 @@ namespace gsudo.ProcessHosts
         /// Reads PseudoConsole output and copies it to the terminal's standard out.
         /// </summary>
         /// <param name="outputReadSide">the "read" side of the pseudo console output pipe</param>
-//        private void CopyPipeToOutput(SafeFileHandle outputReadSide)
         private async Task CopyPipeToOutput(SafeFileHandle outputReadSide)
         {
-            Stream debugStream = null;
+            StreamWriter streamWriter = null;
 
             if (GlobalSettings.Debug)
             {
-                debugStream = new FileStream("VTProcessHost.debug.txt", FileMode.Create, FileAccess.Write);
+                streamWriter = new StreamWriter(new FileStream("VTProcessHost.debug.txt", FileMode.Create, FileAccess.Write), new System.Text.UTF8Encoding(true));
             }
 
             using (var pseudoConsoleOutput = new FileStream(outputReadSide, FileAccess.Read))
@@ -125,14 +122,18 @@ namespace gsudo.ProcessHosts
                     var s = GlobalSettings.Encoding.GetString(buffer, 0, cch);
                     await _connection.DataStream.WriteAsync(s).ConfigureAwait(false);
 
-                    debugStream?.Write(GlobalSettings.Encoding.GetBytes(s), 0, s.Length);
-                    debugStream?.Flush();
+                    streamWriter?.Write(s);
+                    streamWriter?.Flush();
 
-                    //Console.Write(s);
-
+                    if (GlobalSettings.Debug)
+                        Console.Write(s
+                            .Replace('\a',' ') //  no bell sounds please
+                            .Replace("\r", "\\r")
+                            .Replace("\n", "\\n")
+                            );
                 }
             }
-            debugStream?.Close();
+            streamWriter?.Close();
         }
 
         /// <summary>
