@@ -36,11 +36,14 @@ namespace gsudo.Rpc
 
                 Logger.Instance.Log($"Connected via Named Pipe {pipeName}.", LogLevel.Debug);
 
-                return new Connection()
+                var conn = new Connection()
                 {
                     ControlStream = controlPipe,
                     DataStream = dataPipe,
                 };
+
+                ConnectionKeepAliveThread.Start(conn);
+                return conn;
             }
             catch
             {

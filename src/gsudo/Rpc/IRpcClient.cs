@@ -18,9 +18,9 @@ namespace gsudo.Rpc
 
         public async Task FlushAndCloseAll()
         {
+            IsAlive = false;
             await FlushAndClose(DataStream).ConfigureAwait(false);
             await FlushAndClose(ControlStream).ConfigureAwait(false);
-            IsAlive = false;
         }
 
         private static async Task FlushAndClose(Stream DataStream)

@@ -159,7 +159,6 @@ namespace gsudo.Helpers
                     res.Add(key.KeyChar);
             }
 
-
             return res.Select(c => (byte)c).ToArray();
         }
 

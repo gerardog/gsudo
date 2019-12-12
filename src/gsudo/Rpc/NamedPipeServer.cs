@@ -60,6 +60,8 @@ namespace gsudo.Rpc
                         {
                             var connection = new Connection() { ControlStream = controlPipe, DataStream = dataPipe };
 
+                            ConnectionKeepAliveThread.Start(connection);
+
                             Logger.Instance.Log("Incoming Connection.", LogLevel.Info);
 
                             var clientPid = dataPipe.GetClientProcessId();

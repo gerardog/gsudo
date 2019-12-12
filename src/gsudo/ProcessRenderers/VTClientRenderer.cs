@@ -42,10 +42,9 @@ namespace gsudo.ProcessRenderers
                 int i = 0;
                 while (_connection.IsAlive)
                 {
-                    await Task.Delay(1).ConfigureAwait(false);
                     try
                     {
-                        if (Console.KeyAvailable)
+                        while (Console.KeyAvailable)
                         {
                             consecutiveCancelKeys = 0;
                             // send input character-by-character to the pipe
@@ -54,9 +53,6 @@ namespace gsudo.ProcessRenderers
 
                             _connection.DataStream.Write(sequence, 0, sequence.Length);
                         }
-
-                        i = (i + 1) % 50;
-                        if (i == 0) await _connection.ControlStream.WriteAsync("\0").ConfigureAwait(false); // Sending a KeepAlive is mandatory to detect if the pipe has disconnected.
                     }
                     catch (ObjectDisposedException)
                     {
@@ -66,6 +62,7 @@ namespace gsudo.ProcessRenderers
                     {
                         break;
                     }
+                    await Task.Delay(20).ConfigureAwait(false);
                 }
 
                 await _connection.FlushAndCloseAll().ConfigureAwait(false);
@@ -134,7 +131,7 @@ namespace gsudo.ProcessRenderers
             {
                 if (s == "\x001B[6n") // Hosted app is asking the height and width of the terminal.
                 {
-                    await _connection.DataStream.WriteAsync($"\x001B[{Console.CursorTop};{Console.CursorLeft}R");
+                    await _connection.DataStream.WriteAsync($"\x001B[{Console.CursorTop};{Console.CursorLeft}R").ConfigureAwait(false);
                     return;
                 }
 
@@ -193,46 +190,5 @@ namespace gsudo.ProcessRenderers
             consecutiveCancelKeys = 0;
             await pipe.WriteAsync(s).ConfigureAwait(false);
         }
-    }
-
-    public static class EscapeSequences
-    {
-        public static readonly byte[] CmdNewline = { 10 };
-        public static readonly byte[] CmdRet = { 13 };
-        public static readonly byte[] CmdEsc = { 0x1b };
-        public static readonly byte[] CmdDel = { 0x7f };
-        public static readonly byte[] CmdDelKey = { 0x1b, (byte)'[', (byte)'3', (byte)'~' };
-        public static readonly byte[] MoveUpApp = { 0x1b, (byte)'O', (byte)'A' };
-        public static readonly byte[] MoveUpNormal = { 0x1b, (byte)'[', (byte)'A' };
-        public static readonly byte[] MoveDownApp = { 0x1b, (byte)'O', (byte)'B' };
-        public static readonly byte[] MoveDownNormal = { 0x1b, (byte)'[', (byte)'B' };
-        public static readonly byte[] MoveLeftApp = { 0x1b, (byte)'O', (byte)'D' };
-        public static readonly byte[] MoveLeftNormal = { 0x1b, (byte)'[', (byte)'D' };
-        public static readonly byte[] MoveRightApp = { 0x1b, (byte)'O', (byte)'C' };
-        public static readonly byte[] MoveRightNormal = { 0x1b, (byte)'[', (byte)'C' };
-        public static readonly byte[] MoveHomeApp = { 0x1b, (byte)'O', (byte)'H' };
-        public static readonly byte[] MoveHomeNormal = { 0x1b, (byte)'[', (byte)'H' };
-        public static readonly byte[] MoveEndApp = { 0x1b, (byte)'O', (byte)'F' };
-        public static readonly byte[] MoveEndNormal = { 0x1b, (byte)'[', (byte)'F' };
-        public static readonly byte[] CmdTab = { 9 };
-        public static readonly byte[] CmdBackTab = { 0x1b, (byte)'[', (byte)'Z' };
-        public static readonly byte[] CmdPageUp = { 0x1b, (byte)'[', (byte)'5', (byte)'~' };
-        public static readonly byte[] CmdPageDown = { 0x1b, (byte)'[', (byte)'6', (byte)'~' };
-
-        public static readonly byte[][] CmdF = {
-            new byte [] { 0x1b, (byte) 'O', (byte) 'P' }, /* F1 */
-			new byte [] { 0x1b, (byte) 'O', (byte) 'Q' }, /* F2 */
-			new byte [] { 0x1b, (byte) 'O', (byte) 'R' }, /* F3 */
-			new byte [] { 0x1b, (byte) 'O', (byte) 'S' }, /* F4 */
-			new byte [] { 0x1b, (byte) '[', (byte) '1', (byte) '5', (byte) '~' }, /* F5 */
-			new byte [] { 0x1b, (byte) '[', (byte) '1', (byte) '7', (byte) '~' }, /* F6 */
-			new byte [] { 0x1b, (byte) '[', (byte) '1', (byte) '8', (byte) '~' }, /* F7 */
-			new byte [] { 0x1b, (byte) '[', (byte) '1', (byte) '9', (byte) '~' }, /* F8 */
-			new byte [] { 0x1b, (byte) '[', (byte) '2', (byte) '0', (byte) '~' }, /* F9 */
-			new byte [] { 0x1b, (byte) '[', (byte) '2', (byte) '1', (byte) '~' }, /* F10 */
-			new byte [] { 0x1b, (byte) '[', (byte) '2', (byte) '3', (byte) '~' }, /* F11 */
-			new byte [] { 0x1b, (byte) '[', (byte) '2', (byte) '4', (byte) '~' }, /* F12 */
-		};
-
     }
 }

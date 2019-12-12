@@ -44,15 +44,6 @@ namespace gsudo.ProcessRenderers
                 while (_connection.IsAlive)
                 {
                     await Task.Delay(10).ConfigureAwait(false);
-                    try
-                    {
-                        if (++i % 10 == 0) await _connection.ControlStream.WriteAsync("\0").ConfigureAwait(false); // Sending a KeepAlive is mandatory on NamedPipes to detect if the pipe has disconnected.
-                    }
-                    catch (ObjectDisposedException)
-                    { _connection.IsAlive = false; }
-                    catch (IOException)
-                    { _connection.IsAlive = false; }
-
                 }
 
                 if (exitCode.HasValue && exitCode.Value == 0 && GlobalSettings.NewWindow)

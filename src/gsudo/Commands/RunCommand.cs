@@ -57,7 +57,7 @@ namespace gsudo.Commands
                 Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.Prompt.Value);
             }
 
-            Logger.Instance.Log($"Using Console mode {elevationRequest.Mode}", LogLevel.Info);
+            Logger.Instance.Log($"Using Console mode {elevationRequest.Mode}", LogLevel.Debug);
 
             if (ProcessExtensions.IsAdministrator() && !GlobalSettings.NewWindow)
             {

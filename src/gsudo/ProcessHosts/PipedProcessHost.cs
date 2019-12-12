@@ -35,17 +35,6 @@ namespace gsudo.ProcessHosts
                 
                 while (!process.WaitForExit(0) && connection.IsAlive)
                 {
-                    try
-                    {
-                        i = (i + 1) % 50;
-                        if (i == 0) await connection.ControlStream.WriteAsync("\0").ConfigureAwait(false); // Sending a KeepAlive is mandatory to detect if the pipe has disconnected.
-                    }
-                    catch (IOException)
-                    {
-                        connection.IsAlive = false;
-                        break;
-                    }
-
                     await Task.Delay(10).ConfigureAwait(false);
                 }
 

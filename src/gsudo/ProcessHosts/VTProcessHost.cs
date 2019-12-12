@@ -19,7 +19,7 @@ namespace gsudo.ProcessHosts
         public async Task Start(Connection connection, ElevationRequest request)
         {
             int? exitCode;
-            Task t1 = null, t2 = null;
+            Task t1 = null, t2 = null, t3=null;
             _connection = connection;
             try
             {
@@ -35,6 +35,8 @@ namespace gsudo.ProcessHosts
                             t1 = Task.Run(() => CopyPipeToOutput(outputPipe.ReadSide));
                             // prompt for stdin input and send the result to the pseudoconsole
                             t2 = Task.Run(() => CopyInputToPipe(inputPipe.WriteSide));
+                            // discard Control stream
+                            t3 = new StreamReader(_connection.ControlStream).ConsumeOutput((s) => Task.CompletedTask);
 
                             Logger.Instance.Log($"Process ({process.ProcessInfo.dwProcessId}) started: {request.FileName} {request.Arguments}", LogLevel.Debug);
                             // free resources in case the console is ungracefully closed (e.g. by the 'x' in the window titlebar)
