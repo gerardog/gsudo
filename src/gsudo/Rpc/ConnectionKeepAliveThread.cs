@@ -1,7 +1,6 @@
-﻿using gsudo.Rpc;
-using System.Threading;
+﻿using System.Threading;
 
-namespace gsudo
+namespace gsudo.Rpc
 {
     // A thread that detect when the NamedPipeConnection is disconnected.
     // Couldn't find a better way to do this than periodically writing to the pipe.
@@ -39,7 +38,7 @@ namespace gsudo
             }
             catch
             { 
-                _connection.IsAlive = false; 
+                _connection.SignalDisconnected(); 
             }
         }
     }

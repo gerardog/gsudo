@@ -16,6 +16,11 @@ It is a sudo equivalent for Windows, with a similar user-experience as the origi
     <Version>0.4</Version>
     <Copyright>2019 Gerardo Grignoli</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/gerardog/gsudo</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/gerardog/gsudo</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>sudo for windows</PackageTags>
+    <AssemblyName>gsudo</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

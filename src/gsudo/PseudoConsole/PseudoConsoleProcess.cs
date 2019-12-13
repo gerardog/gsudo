@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Microsoft.Win32.SafeHandles;
+using System;
 using System.Runtime.InteropServices;
+using System.Threading;
 using static gsudo.Native.ProcessApi;
 
 namespace gsudo.PseudoConsole
@@ -7,9 +9,9 @@ namespace gsudo.PseudoConsole
     /// <summary>
     /// Represents an instance of a process.
     /// </summary>
-    internal sealed class Process : IDisposable
+    internal sealed class PseudoConsoleProcess : IDisposable
     {
-        public Process(STARTUPINFOEX startupInfo, PROCESS_INFORMATION processInfo)
+        public PseudoConsoleProcess(STARTUPINFOEX startupInfo, PROCESS_INFORMATION processInfo)
         {
             StartupInfo = startupInfo;
             ProcessInfo = processInfo;
@@ -64,7 +66,7 @@ namespace gsudo.PseudoConsole
             }
         }
 
-        ~Process()
+        ~PseudoConsoleProcess()
         {
             // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
             Dispose(false);
@@ -78,6 +80,15 @@ namespace gsudo.PseudoConsole
             // use the following line if the finalizer is overridden above.
             GC.SuppressFinalize(this);
         }
+
+        /// <summary>
+        /// Get an AutoResetEvent that signals when the process exits
+        /// </summary>
+        public AutoResetEvent GetWaitHandle() =>
+            new AutoResetEvent(false)
+            {
+                SafeWaitHandle = new SafeWaitHandle(this.ProcessInfo.hProcess, ownsHandle: false)
+            };
 
         #endregion
     }

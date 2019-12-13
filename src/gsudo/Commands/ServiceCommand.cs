@@ -61,7 +61,7 @@ namespace gsudo.Commands
             catch (Exception e)
             {
                 Logger.Instance.Log(e.ToString(), LogLevel.Error);
-                connection.IsAlive = false;
+                connection.SignalDisconnected();
             }
         }
 

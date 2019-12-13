@@ -1,10 +1,10 @@
 ﻿using gsudo.Helpers;
-using gsudo.Native;
 using gsudo.Rpc;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace gsudo.ProcessHosts
@@ -32,11 +32,8 @@ namespace gsudo.ProcessHosts
                 var t4 = new StreamReader(connection.ControlStream, GlobalSettings.Encoding).ConsumeOutput((s) => HandleControl(s, process));
 
                 int i = 0;
-                
-                while (!process.WaitForExit(0) && connection.IsAlive)
-                {
-                    await Task.Delay(10).ConfigureAwait(false);
-                }
+
+                WaitHandle.WaitAny(new WaitHandle[] { process.GetWaitHandle(), connection.DisconnectedWaitHandle });
 
                 if (process.HasExited && connection.IsAlive)
                 {
@@ -46,10 +43,6 @@ namespace gsudo.ProcessHosts
 
                     await Task.WhenAll(t1, t2).ConfigureAwait(false);
                     await connection.ControlStream.WriteAsync($"{Constants.TOKEN_EXITCODE}{process.ExitCode}{Constants.TOKEN_EXITCODE}").ConfigureAwait(false);
-                }
-                else
-                {
-                    TerminateHostedProcess();
                 }
 
                 await connection.FlushAndCloseAll().ConfigureAwait(false);
@@ -63,6 +56,10 @@ namespace gsudo.ProcessHosts
             }
             finally
             {
+                if (process != null && !process.HasExited)
+                {
+                    process?.Terminate();
+                }
                 process?.Dispose();
             }
         }
@@ -82,30 +79,6 @@ namespace gsudo.ProcessHosts
             {
                 return false;
             }
-        }
-
-        private void TerminateHostedProcess()
-        {
-            Logger.Instance.Log($"Killing process {process.Id} {process.ProcessName}", LogLevel.Debug);
-
-            if (process.HasExited) return;
-
-            process.SendCtrlC(true);
-
-            if (process.CloseMainWindow())
-                process.WaitForExit(100);
-
-            //if (!process.HasExited)
-            //{
-            //    var p = Process.Start(new ProcessStartInfo()
-            //    {
-            //        FileName = "taskkill",
-            //        Arguments = $"/PID {process.Id} /T",
-            //        WindowStyle = ProcessWindowStyle.Hidden
-
-            //    });
-            //    p.WaitForExit();
-            //}   
         }
 
         private async Task WriteToProcessStdIn(string s, Process process)
@@ -166,7 +139,7 @@ namespace gsudo.ProcessHosts
                     s = s.Substring(c);
                     lastInboundMessage = lastInboundMessage.Substring(c);
                 }
-                if (GlobalSettings.Debug && !string.IsNullOrEmpty(s)) Logger.Instance.Log($"Last input command was: {s}", LogLevel.Debug);
+                //if (GlobalSettings.Debug && !string.IsNullOrEmpty(s)) Logger.Instance.Log($"Last input command was: {s}", LogLevel.Debug);
                 
             }
             if (string.IsNullOrEmpty(s)) return; // suppress chars n s;

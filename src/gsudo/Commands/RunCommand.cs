@@ -57,8 +57,6 @@ namespace gsudo.Commands
                 Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.Prompt.Value);
             }
 
-            Logger.Instance.Log($"Using Console mode {elevationRequest.Mode}", LogLevel.Debug);
-
             if (ProcessExtensions.IsAdministrator() && !GlobalSettings.NewWindow)
             {
                 if (emptyArgs)
@@ -101,9 +99,10 @@ namespace gsudo.Commands
             }
             else // IsAdministrator() == false, or build in Debug Mode
             {
-                var cmd = CommandToRun.FirstOrDefault();
+                Logger.Instance.Log($"Using Console mode {elevationRequest.Mode}", LogLevel.Debug);
+                Logger.Instance.Log($"Caller ProcessId is {currentProcess.ParentProcessId()}", LogLevel.Debug);
 
-                Logger.Instance.Log($"Calling ProcessId is {currentProcess.ParentProcessId()}", LogLevel.Debug);
+                var cmd = CommandToRun.FirstOrDefault();
 
                 var rpcClient = GetClient(elevationRequest);
                 Rpc.Connection connection = null;
@@ -151,6 +150,13 @@ namespace gsudo.Commands
                 finally
                 {
                     connection?.Dispose();
+                    try
+                    {   
+                        // cleanup console before returning.
+                        Console.CursorVisible = true;
+                        Console.ResetColor();
+                    }
+                    catch { }
                 }
             }
 

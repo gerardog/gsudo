@@ -142,11 +142,11 @@ namespace gsudo.Helpers
             return null;
         }
 
-        public static PseudoConsole.Process StartPseudoConsole(string command, IntPtr attributes, IntPtr hPC, string startFolder)
+        public static PseudoConsole.PseudoConsoleProcess StartPseudoConsole(string command, IntPtr attributes, IntPtr hPC, string startFolder)
         {
             var startupInfo = ConfigureProcessThread(hPC, attributes);
             var processInfo = RunProcess(ref startupInfo, command, startFolder);
-            return new PseudoConsole.Process(startupInfo, processInfo);
+            return new PseudoConsole.PseudoConsoleProcess(startupInfo, processInfo);
         }
 
         private static STARTUPINFOEX ConfigureProcessThread(IntPtr hPC, IntPtr attributes)

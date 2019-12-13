@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Permissions;
 using System.Security.Principal;
+using System.Threading;
 
 namespace gsudo.Helpers
 {
@@ -188,5 +189,42 @@ namespace gsudo.Helpers
         }
 
         #endregion
+
+        public static void Terminate(this Process process)
+        {
+            if (process.HasExited) return;
+
+            Logger.Instance.Log($"Killing process {process.Id} {process.ProcessName}", LogLevel.Debug);
+
+            process.SendCtrlC(false);
+            process.CloseMainWindow();
+
+            process.WaitForExit(300);
+
+            if (!process.HasExited)
+            {
+                process.Kill();
+                /*
+                var p = Process.Start(new ProcessStartInfo()
+                {
+                    FileName = "taskkill",
+                    Arguments = $"/PID {process.Id} /T",    
+                    WindowStyle = ProcessWindowStyle.Hidden
+
+                });
+                p.WaitForExit();
+                */
+            }
+        }
+
+        /// <summary>
+        /// Get an AutoResetEvent that signals when the process exits
+        /// </summary>
+        public static AutoResetEvent GetWaitHandle(this Process process) =>
+            new AutoResetEvent(false)
+            {
+                SafeWaitHandle = new SafeWaitHandle(process.Handle, ownsHandle: false)
+            };
+
     }
 }
