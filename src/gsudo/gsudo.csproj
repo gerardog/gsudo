@@ -21,7 +21,9 @@ It is a sudo equivalent for Windows, with a similar user-experience as the origi
     <RepositoryType>git</RepositoryType>
     <PackageTags>sudo for windows</PackageTags>
     <AssemblyName>gsudo</AssemblyName>
-  </PropertyGroup>
+    <Deterministic>true</Deterministic>
+    <PathMap>$(MSBuildProjectDirectory)=C:\</PathMap>
+</PropertyGroup>
 
   <ItemGroup>
     <Compile Remove="bin\**" />
@@ -50,10 +52,6 @@ It is a sudo equivalent for Windows, with a similar user-experience as the origi
     <ItemGroup>
       <VersionNumber Include="$([System.Text.RegularExpressions.Regex]::Replace(&quot;%(Targets.Version)&quot;, &quot;^(.*?)(\.0)*$&quot;, &quot;$1&quot;))" />
     </ItemGroup>
-  </Target>
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent" DependsOnTargets="PostBuildMacros">
-    <Exec Command="if $(ConfigurationName) == Debug exit /b 0&#xD;&#xA;copy bin\*.* ..\choco-package\gsudo\tools\*.* /Y&#xD;&#xA;cd ..\choco-package\gsudo&#xD;&#xA;powershell -NoProfile -Command &quot;(gc gsudo.nuspec.template) -replace '#VERSION#', '@(VersionNumber)' | Out-File -encoding UTF8 gsudo.nuspec&quot;&#xD;&#xA;cd ..&#xD;&#xA;choco pack gsudo\gsudo.nuspec&#xD;&#xA;" />
   </Target>
 
 </Project>

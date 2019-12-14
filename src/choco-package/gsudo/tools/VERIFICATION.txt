@@ -1,0 +1,16 @@
+﻿VERIFICATION
+
+#1 - Get hashes from this choco package
+
+powershell -command Get-FileHash tools\*
+
+#2 - Compare with same version release
+
+Go to releases page
+https://github.com/gerardog/gsudo/releases
+
+Download same version as this choco package (example v0.4)
+https://github.com/gerardog/gsudo/releases/tag/v0.4
+
+unzip and get hashes
+powershell -command Get-FileHash *

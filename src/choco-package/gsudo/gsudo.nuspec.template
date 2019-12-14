@@ -30,10 +30,10 @@
     <!-- If there is a license Url available, it is is required for the community feed -->
     <licenseUrl>https://opensource.org/licenses/MIT</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <!--<projectSourceUrl>Software Source Location - is the software FOSS somewhere? Link to it with this</projectSourceUrl>-->
-    <!--<docsUrl>At what url are the software docs located?</docsUrl>-->
+	<projectSourceUrl>http://github.com/gerardog/gsudo</projectSourceUrl>
+    <docsUrl>https://github.com/gerardog/gsudo/blob/master/README.md</docsUrl>
     <!--<mailingListUrl></mailingListUrl>-->
-    <!--<bugTrackerUrl></bugTrackerUrl>-->
+    <bugTrackerUrl>https://github.com/gerardog/gsudo/issues</bugTrackerUrl>
     <tags>gsudo portable sudo for windows</tags>
     <summary>gsudo is a `sudo` for Windows with a similar user-experience as *nix sudo.</summary>
     <description>
