@@ -73,4 +73,4 @@ Read or write a user setting
 
 - Why `gsudo` instead of just `sudo`? 
 
-When I created `gsudo`, there were other `sudo` packages on most Windows popular package managers such as `Chocolatey` and `Scoop`, all of them doing the elevation on a new console. In my opinion, that context switch is improductive, and also makes such tools less usefull for scripting. I could name the app `sudo` and the package as `gsudo`, but I fear people will not remember the package name for further installations. I will add the option to bind `sudo` command to the `gsudo` app in future versions of the installer.
+When I created `gsudo`, there were other `sudo` packages on most Windows popular package managers such as `Chocolatey` and `Scoop`. I could name the app `sudo` and the package as `gsudo`, but I fear people will not remember the package name for further installations. I will add the option to bind `sudo` command to the `gsudo` app in future versions of the installer.

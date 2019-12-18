@@ -83,9 +83,20 @@ namespace gsudo.Commands
 
         private static async Task<ElevationRequest> ReadElevationRequest(Stream dataPipe)
         {
+            byte[] dataSize = new byte[sizeof(int)];
+            dataPipe.Read(dataSize, 0, sizeof(int));
+            int dataSizeInt = BitConverter.ToInt32(dataSize, 0);
+            byte[] inBuffer = new byte[dataSizeInt];
+
+            var bytesRemaining = dataSizeInt;
+            while (bytesRemaining > 0 )
+                bytesRemaining -= dataPipe.Read(inBuffer, 0, bytesRemaining);
+            
+            Logger.Instance.Log($"ElevationRequest length {dataSizeInt}", LogLevel.Debug);
+
             return (ElevationRequest) new BinaryFormatter()
 //            { TypeFormat = System.Runtime.Serialization.Formatters.FormatterTypeStyle.TypesAlways, Binder = new MySerializationBinder() }
-            .Deserialize(dataPipe);
+            .Deserialize(new MemoryStream(inBuffer));
         }
     }
 }

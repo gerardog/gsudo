@@ -41,17 +41,11 @@ namespace gsudo.Commands
 
             if (elevationRequest.Mode == ElevationRequest.ConsoleMode.VT)
             {
-                elevationRequest.ConsoleWidth = Console.WindowWidth; 
+                elevationRequest.ConsoleWidth = Console.WindowWidth;
                 elevationRequest.ConsoleHeight = Console.WindowHeight;
 
                 if (TerminalHelper.IsConEmu())
                     elevationRequest.ConsoleWidth--; // weird ConEmu/Cmder fix
-                
-                Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.VTPrompt.Value);
-            }
-            else
-            {
-                Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.Prompt.Value);
             }
 
             if (ProcessExtensions.IsAdministrator() && !GlobalSettings.NewWindow)
@@ -65,6 +59,15 @@ namespace gsudo.Commands
                 Logger.Instance.Log("Already elevated. Running in-process", LogLevel.Debug);
 
                 // No need to escalate. Run in-process
+
+                if (elevationRequest.Mode == ElevationRequest.ConsoleMode.Raw)
+                {
+                    Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.Prompt.Value);
+                }
+                else
+                {
+                    Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.VTPrompt.Value);
+                }
 
                 if (GlobalSettings.NewWindow)
                 {
@@ -137,10 +140,7 @@ namespace gsudo.Commands
                         Logger.Instance.Log("Unable to connect to the elevated service.", LogLevel.Error);
                         return Constants.GSUDO_ERROR_EXITCODE;
                     }
-
-                    new BinaryFormatter()
-//                    { TypeFormat = System.Runtime.Serialization.Formatters.FormatterTypeStyle.TypesAlways, Binder = new MySerializationBinder() }
-                        .Serialize(connection.ControlStream, elevationRequest);
+                    WriteElevationRequest(elevationRequest, connection);
 
                     await connection.ControlStream.FlushAsync().ConfigureAwait(false);
                     ConnectionKeepAliveThread.Start(connection);
@@ -155,6 +155,21 @@ namespace gsudo.Commands
                 }
             }
 
+        }
+
+        private async Task WriteElevationRequest(ElevationRequest elevationRequest, Connection connection)
+        {
+            var ms = new System.IO.MemoryStream();
+            new BinaryFormatter()
+            { TypeFormat = System.Runtime.Serialization.Formatters.FormatterTypeStyle.TypesAlways, Binder = new MySerializationBinder() }
+                .Serialize(ms, elevationRequest);
+            ms.Seek(0, System.IO.SeekOrigin.Begin);
+
+            byte[] lengthArray = BitConverter.GetBytes(ms.Length);
+            Logger.Instance.Log($"ElevationRequest length {ms.Length}", LogLevel.Debug);
+
+            await connection.ControlStream.WriteAsync(lengthArray, 0, sizeof(int)).ConfigureAwait(false);
+            await connection.ControlStream.WriteAsync(ms.ToArray(), 0, (int)ms.Length).ConfigureAwait(false);
         }
 
         /// <summary>

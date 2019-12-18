@@ -1,20 +1,22 @@
 # gsudo Backlog
 
+- Check for grandparents on Authorization()
+- raw mode shouls merge StdErr and StdOut in one file, to fix random ordering of stderr/stdout.
 - Chocolatey package / Scoop package / Release on github.
 - gsudo --nocache (service will quit immediately after process ends and will not elevate other commands with cached credentials) (find better --syntax)
 - Allow to specify other username. (RunAsUser verb)
+- console resize on vt mode.
 
 ## Other not so likely ideas
 
+- Third consecutive Ctrl-C should ask if the child process must be kept running or killed.
 - Remote sudo. Run process on another machine / as in PSExec. (security?)
-- Make gsudo chocolatey package link sudo to gsudo (conflict with chocolatey sudo package)
 - Spend 500 USD in a code-signing certificate so I can sign the builds. I need to setup an https web site for gsudo or myself first as a prerequisit to get the certificate. 
 - gsudo Chocolatey Package to genereate a self-signed cert, install, and sign the exe on install, then delete the cert. (better uac prompt without $$ buying a certificate)
 - Low level console access (https://docs.microsoft.com/en-us/windows/console/console-functions)
 
 ## Completed
 
-- Third consecutive Ctrl-C or client disconnect kills the elevated process.
 - VT console extended keys (F1-F12, CTRL+?, HOME,PAGEUP)
 - WinPty/VT100 support: When in VT mode, processes are spawn using a PseudoConsole. Rendering could be done using Windows Console ENABLE_VIRTUAL_TERMINAL processing flag but it is pretty [unstable](https://github.com/microsoft/terminal/issues/3765). So it is disabled by default unless you are running inside ConEmu/Cmder which are VT100 ready terminals.
   VT Mode is enabled automatically if you run inside a ConEmu/Cmder or if you use `--vt` flag.
