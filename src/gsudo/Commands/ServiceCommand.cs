@@ -1,5 +1,4 @@
-﻿using CommandLine;
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using System.Threading;
 using System.IO;
@@ -9,13 +8,10 @@ using gsudo.Helpers;
 
 namespace gsudo.Commands
 {
-    [Verb("gsudoservice")]
     class ServiceCommand : ICommand
     {
-        [Value(0)]
         public int allowedPid { get; set; }
 
-        [Value(1)]
         public LogLevel? LogLvl { get; set; }
 
         Timer ShutdownTimer;
@@ -61,7 +57,7 @@ namespace gsudo.Commands
             catch (Exception e)
             {
                 Logger.Instance.Log(e.ToString(), LogLevel.Error);
-                connection.SignalDisconnected();
+                await connection.FlushAndCloseAll();
             }
         }
 
@@ -71,6 +67,8 @@ namespace gsudo.Commands
 
             if (isWindowsApp || request.NewWindow)
                 return new ElevateOnlyHostProcess();
+            if (request.Mode == ElevationRequest.ConsoleMode.Attached)
+                return new AttachedConsoleHost();
             else if (request.Mode == ElevationRequest.ConsoleMode.Raw)
                 return new PipedProcessHost();
             else

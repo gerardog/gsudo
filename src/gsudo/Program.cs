@@ -1,9 +1,6 @@
-﻿using CommandLine;
-using gsudo.Commands;
+﻿using gsudo.Commands;
 using gsudo.Helpers;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace gsudo
@@ -23,27 +20,8 @@ namespace gsudo
 
             var exitCode = ArgumentsHelper.ParseCommonSettings(ref args);
             if (exitCode.HasValue) return exitCode.Value;
-            
-            var errors = new List<Error>();
-            using (var parser = new Parser(settings => settings.AutoHelp = false))
-            {
-                parser.ParseArguments<ServiceCommand, ConfigCommand, HelpCommand, CtrlCCommand, RunCommand>(args)
-                    .WithParsed<ICommand>((c) => cmd = c)
-                    .WithNotParsed(e => errors.AddRange(e));
-            }
 
-            if (errors.Any(e => e.Tag.In(ErrorType.BadVerbSelectedError, ErrorType.NoVerbSelectedError)))
-            {
-                cmd = new RunCommand()
-                {
-                    CommandToRun = args
-                };
-            }
-            else if (cmd == null)
-            {
-                errors.ForEach((e) => Logger.Instance.Log($"Error parsing arguments: {e}", LogLevel.Error));
-                cmd = new HelpCommand();
-            }
+            cmd = ArgumentsHelper.ParseCommand(args);
 
             try
             {

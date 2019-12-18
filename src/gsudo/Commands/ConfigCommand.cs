@@ -1,19 +1,14 @@
-﻿using CommandLine;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace gsudo.Commands
 {
-    [Verb("config")]
     class ConfigCommand : ICommand
     {
-        [Value(0)]
         public string key { get; set; }
 
-        [Value(1)]
         public IEnumerable<string> value { get; set; }
 
         public Task<int> Execute()

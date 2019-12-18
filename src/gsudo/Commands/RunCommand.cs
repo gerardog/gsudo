@@ -1,5 +1,4 @@
-﻿using CommandLine;
-using gsudo.Helpers;
+﻿using gsudo.Helpers;
 using gsudo.ProcessRenderers;
 using gsudo.Rpc;
 using Newtonsoft.Json;
@@ -11,16 +10,13 @@ using System.Threading.Tasks;
 
 namespace gsudo.Commands
 {
-    [Verb("run")]
     public class RunCommand : ICommand
     {
-        [Value(0)]
         public IEnumerable<string> CommandToRun { get; set; }
 
         private string GetArguments() => GetArgumentsString(CommandToRun, 1);
 
-        public async Task<int> 
-            Execute()
+        public async Task<int> Execute()
         {
             Logger.Instance.Log("Params: " + Newtonsoft.Json.JsonConvert.SerializeObject(this), LogLevel.Debug);
 
@@ -29,7 +25,7 @@ namespace gsudo.Commands
 
             CommandToRun = ArgumentsHelper.AugmentCommand(CommandToRun.ToArray());
 
-            var exeName = ProcessFactory.FindExecutableInPath(CommandToRun.FirstOrDefault());
+            var exeName = ProcessFactory.FindExecutableInPath(CommandToRun.FirstOrDefault()) ?? CommandToRun.FirstOrDefault();
             bool isWindowsApp = ProcessFactory.IsWindowsApp(exeName);
 
             var elevationRequest = new ElevationRequest()
@@ -40,6 +36,7 @@ namespace gsudo.Commands
                 NewWindow = GlobalSettings.NewWindow,
                 ForceWait = GlobalSettings.Wait,
                 Mode = GetConsoleMode(isWindowsApp),
+                ConsoleProcessId = currentProcess.Id,
             };
 
             if (elevationRequest.Mode == ElevationRequest.ConsoleMode.VT)
@@ -169,31 +166,21 @@ namespace gsudo.Commands
         /// <returns></returns>
         private static ElevationRequest.ConsoleMode GetConsoleMode(bool isWindowsApp)
         {
-            if (isWindowsApp || GlobalSettings.NewWindow)
+            if (isWindowsApp || GlobalSettings.NewWindow || Console.IsOutputRedirected)
                 return ElevationRequest.ConsoleMode.Raw;
 
-            if (Console.IsOutputRedirected || GlobalSettings.ForceRawConsole)  // as in "gsudo dir > somefile.txt"
+            if (GlobalSettings.ForceRawConsole)
                 return ElevationRequest.ConsoleMode.Raw;
+
+            if (GlobalSettings.ForceVTConsole)
+                return ElevationRequest.ConsoleMode.VT;
+
+            return ElevationRequest.ConsoleMode.Attached;
 
             if (TerminalHelper.TerminalHasBuiltInVTSupport())
             {
                 // we where called from a ConEmu console which has a working 
                 // full VT terminal with no bugs.
-                return ElevationRequest.ConsoleMode.VT;
-            }
-
-            // Windows 10.0.18362.356 has broken VT support. 
-            // ENABLE_VIRTUAL_TERMINAL_PROCESSING works for a few seconds before ConHost breaks
-            // I could add an IF for windows 20H1 if 20H1 has this issue fixed.
-            /*
-            if (Windows.Version > 10.0.18362.356)
-            {
-                return ElevationRequest.ElevationMode.VT;
-            }
-            */
-
-            if (GlobalSettings.ForceVTConsole)
-            {
                 return ElevationRequest.ConsoleMode.VT;
             }
 
@@ -208,6 +195,8 @@ namespace gsudo.Commands
 
         private static IProcessRenderer GetRenderer(Connection connection, ElevationRequest elevationRequest)
         {
+            if (elevationRequest.Mode == ElevationRequest.ConsoleMode.Attached)
+                return new AttachedConsoleRenderer(connection, elevationRequest);
             if (elevationRequest.Mode == ElevationRequest.ConsoleMode.Raw)
                 return new PipedClientRenderer(connection, elevationRequest);
             else

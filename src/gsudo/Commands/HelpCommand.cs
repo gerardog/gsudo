@@ -1,12 +1,10 @@
-﻿using CommandLine;
-using System;
+﻿using System;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace gsudo.Commands
 {
-    [Verb("help")]
     class HelpCommand : ICommand
     {
         public Task<int> Execute()

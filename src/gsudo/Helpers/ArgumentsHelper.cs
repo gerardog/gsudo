@@ -2,10 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace gsudo.Helpers
 {
@@ -43,8 +42,6 @@ namespace gsudo.Helpers
                 // add "CMD /C" prefix to commands such as MD, CD, DIR..
                 // We are sure this will not be an interactive experience, 
                 // so we can safely use raw 
-
-                GlobalSettings.ForceRawConsole.Value = true;
 
                 return new string[] 
                     { Environment.GetEnvironmentVariable("COMSPEC"), "/c" }
@@ -126,5 +123,39 @@ namespace gsudo.Helpers
             return null;
         }
 
+        internal static ICommand ParseCommand(string[] args)
+        {
+            if (args.Length == 0) return new RunCommand() { };
+
+            if (args[0].Equals("run", StringComparison.OrdinalIgnoreCase))
+                return new RunCommand() { CommandToRun = args.Skip(1) };
+
+            if (args[0].Equals("help", StringComparison.OrdinalIgnoreCase))
+                return new HelpCommand();
+
+            if (args[0].Equals("gsudoservice", StringComparison.OrdinalIgnoreCase))
+            {
+                bool hasLoglevel = false;
+                LogLevel logLevel = LogLevel.Info;
+                if (args.Length>2)
+                {
+                    hasLoglevel = Enum.TryParse<LogLevel>(args[2], out logLevel);
+                }
+
+                return new ServiceCommand()
+                {
+                    allowedPid = int.Parse(args[1], CultureInfo.InvariantCulture),
+                    LogLvl = hasLoglevel ? logLevel : (LogLevel?)null,
+                };
+            }
+
+            if (args[0].Equals("gsudoctrlc", StringComparison.OrdinalIgnoreCase))
+                return new CtrlCCommand() { pid = int.Parse(args[1], CultureInfo.InvariantCulture) };
+
+            if (args[0].Equals("config", StringComparison.OrdinalIgnoreCase))
+                return new ConfigCommand() { key = args.Skip(1).FirstOrDefault(), value = args.Skip(2) };
+
+            return new RunCommand() { CommandToRun = args };
+        }
     }
 }
