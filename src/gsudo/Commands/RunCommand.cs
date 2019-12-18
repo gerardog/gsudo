@@ -100,7 +100,8 @@ namespace gsudo.Commands
             else // IsAdministrator() == false, or build in Debug Mode
             {
                 Logger.Instance.Log($"Using Console mode {elevationRequest.Mode}", LogLevel.Debug);
-                Logger.Instance.Log($"Caller ProcessId is {currentProcess.ParentProcessId()}", LogLevel.Debug);
+                var callingPid = GetCallingPid(currentProcess);
+                Logger.Instance.Log($"Caller ProcessId is {callingPid}", LogLevel.Debug);
 
                 var cmd = CommandToRun.FirstOrDefault();
 
@@ -111,7 +112,7 @@ namespace gsudo.Commands
                 {
                     try
                     {
-                        connection = await rpcClient.Connect(elevationRequest, 300).ConfigureAwait(false);
+                        connection = await rpcClient.Connect(elevationRequest, null, 300).ConfigureAwait(false);
                     }
                     catch (System.IO.IOException) { }
                     catch (TimeoutException) { }
@@ -124,7 +125,6 @@ namespace gsudo.Commands
                     {
                         // Start elevated service instance
                         Logger.Instance.Log("Elevating process...", LogLevel.Debug);
-                        var callingPid = currentProcess.ParentProcessId();
 
                         var dbg = GlobalSettings.Debug ? "--debug " : string.Empty;
                         using (var process = ProcessFactory.StartElevatedDetached(currentProcess.MainModule.FileName, $"{dbg}gsudoservice {callingPid} {GlobalSettings.LogLevel}", !GlobalSettings.Debug))
@@ -132,7 +132,7 @@ namespace gsudo.Commands
                             Logger.Instance.Log("Elevated instance started.", LogLevel.Debug);
                         }
 
-                        connection = await rpcClient.Connect(elevationRequest, 5000).ConfigureAwait(false);
+                        connection = await rpcClient.Connect(elevationRequest, callingPid, 5000).ConfigureAwait(false);
                     }
 
                     if (connection == null) // service is not running or listening.
@@ -140,7 +140,8 @@ namespace gsudo.Commands
                         Logger.Instance.Log("Unable to connect to the elevated service.", LogLevel.Error);
                         return Constants.GSUDO_ERROR_EXITCODE;
                     }
-                    WriteElevationRequest(elevationRequest, connection);
+
+                    await WriteElevationRequest(elevationRequest, connection).ConfigureAwait(false);
 
                     await connection.ControlStream.FlushAsync().ConfigureAwait(false);
                     ConnectionKeepAliveThread.Start(connection);
@@ -155,6 +156,17 @@ namespace gsudo.Commands
                 }
             }
 
+        }
+
+        private static int GetCallingPid(Process currentProcess)
+        {
+            var parent = currentProcess.ParentProcess();
+            while (parent.MainModule.FileName.In("sudo.exe", "gsudo.exe")) // naive shim detection
+            {
+                parent = parent.ParentProcess();
+            }
+
+            return parent.Id;
         }
 
         private async Task WriteElevationRequest(ElevationRequest elevationRequest, Connection connection)

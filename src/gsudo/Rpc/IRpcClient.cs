@@ -8,7 +8,7 @@ namespace gsudo.Rpc
 {
     internal interface IRpcClient
     {
-        Task<Connection> Connect(ElevationRequest elevationRequest, int timeoutMilliseconds = 300);
+        Task<Connection> Connect(ElevationRequest elevationRequest, int? clientPid, int timeoutMilliseconds = 300);
     }
 
     class Connection : IDisposable

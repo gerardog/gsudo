@@ -1,0 +1,6 @@
+{
+    "version": "0.4",
+    "url": "https://github.com/gerardog/gsudo/releases/download/v0.4/gsudo.v0.4.zip",
+	"hash":"8D2BDA6B57FD30D8723ACC7207F270ED86F45178044F80546436C5022B0517C2",
+    "bin": [ "gsudo.exe",["gsudo.exe", "sudo"] ]
+}

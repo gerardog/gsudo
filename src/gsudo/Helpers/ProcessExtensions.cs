@@ -32,7 +32,10 @@ namespace gsudo.Helpers
         {
             try
             {
-                return Process.GetProcessById(process.ParentProcessId());
+                var parentPid = process.ParentProcessId();
+                if (parentPid == 0)
+                    return null;
+                return Process.GetProcessById(parentPid);
             }
             catch
             {
@@ -43,7 +46,15 @@ namespace gsudo.Helpers
         public static int ParentProcessId(this Process process) // ExcludingShim
         {
             var parentId = ParentProcessId(process.Id);
-            var parent = Process.GetProcessById(parentId);
+            Process parent;
+            try
+            {
+                parent = Process.GetProcessById(parentId);
+            }
+            catch 
+            {
+                return 0;
+            }
 
             // workaround for chocolatey shim.
             if (Path.GetFileName(parent.MainModule.FileName).In("gsudo.exe", "sudo.exe"))

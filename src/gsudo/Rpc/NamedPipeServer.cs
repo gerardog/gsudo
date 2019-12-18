@@ -1,6 +1,7 @@
 ﻿using gsudo.Helpers;
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.IO.Pipes;
 using System.Security.AccessControl;
 using System.Security.Principal;
@@ -79,7 +80,11 @@ namespace gsudo.Rpc
                                 controlPipe.Disconnect();
 
                                 // kill the server. I could also "break;" and keep listening, but better be on the safe side
+#if DEBUG
+                                continue;
+#else
                                 return;
+#endif
                             }
 
                             ConnectionAccepted?.Invoke(this, connection);
@@ -96,12 +101,10 @@ namespace gsudo.Rpc
             }
         }
 
-
-
         private bool IsAuthorized(int clientPid, int allowedPid)
         {
             var callingExe = SymbolicLinkSupport.ResolveSymbolicLink(Process.GetProcessById(clientPid).MainModule.FileName);
-            var allowedExe = Process.GetCurrentProcess().MainModule.FileName;
+            var allowedExe = SymbolicLinkSupport.ResolveSymbolicLink(Process.GetCurrentProcess().MainModule.FileName);
             //
             if (callingExe != allowedExe)
             {

@@ -38,8 +38,8 @@ namespace gsudo.Commands
             Console.WriteLine(" --debug           Enable debug mode. (makes gsudo service window visible)");
             Console.WriteLine(" -n | --new        Starts the command in a new console with elevated rights and returns immediately.");
             Console.WriteLine(" -w | --wait       Force wait for the process to end.");
-            Console.WriteLine(" --raw             Force use of a reduced terminal. Less features, More stable. (default=auto) ");
-            Console.WriteLine(" --vt              Force use of full VT100 terminal emulator. (default=auto)");
+            Console.WriteLine(" --raw             Force use of a reduced terminal.");
+            Console.WriteLine(" --vt              Force use of full VT100 terminal emulator (experimental).");
 
             return;
         }

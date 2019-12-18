@@ -1,5 +1,7 @@
-﻿using System;
+﻿using gsudo.Helpers;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Linq;
@@ -10,23 +12,43 @@ namespace gsudo.Rpc
 {
     class NamedPipeClient : IRpcClient
     {
-        public async Task<Connection> Connect(ElevationRequest elevationRequest, int timeoutMilliseconds)
+        public async Task<Connection> Connect(ElevationRequest elevationRequest, int? clientPid, int timeoutMilliseconds)
         {
-            var pipeName = NamedPipeServer.GetPipeName();
-
+            var localServer = true;
             var server = ".";
 
+            string pipeName = null;
+            string user = System.Security.Principal.WindowsIdentity.GetCurrent().User.Value;
             NamedPipeClientStream dataPipe = null;
             NamedPipeClientStream controlPipe = null;
 
             try
             {
-                // Does the pipe exists?
-                if (server == "." && !System.IO.Directory.EnumerateFiles(@"\\.\pipe\", pipeName).Any() && timeoutMilliseconds <= 300)
+                if (clientPid.HasValue)
                 {
-                    // fail fast without timeout.
-                    return null;
+                    pipeName = NamedPipeServer.GetPipeName(user, clientPid.Value);
+                    if (!System.IO.Directory.EnumerateFiles(@"\\.\pipe\", pipeName).Any() && timeoutMilliseconds <= 300)
+                    {
+                        // fail fast without timeout.
+                        return null;
+                    }
                 }
+                else if (localServer)
+                {
+                    var callerProcess = Process.GetCurrentProcess().ParentProcess();
+                    while (callerProcess != null)
+                    {
+                        pipeName = NamedPipeServer.GetPipeName(user, callerProcess.Id);
+                        // Does the pipe exists?
+                        if (!System.IO.Directory.EnumerateFiles(@"\\.\pipe\", pipeName).Any() && timeoutMilliseconds <= 300)
+                        {
+                            // try grandfather.
+                            callerProcess = callerProcess.ParentProcess();
+                        }
+                    }
+                }
+
+                if (pipeName == null) return null;
 
                 dataPipe = new NamedPipeClientStream(server, pipeName, PipeDirection.InOut, PipeOptions.Asynchronous, System.Security.Principal.TokenImpersonationLevel.Impersonation, HandleInheritability.None);
                 await dataPipe.ConnectAsync(timeoutMilliseconds).ConfigureAwait(false);

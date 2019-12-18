@@ -66,8 +66,9 @@ Read or write a user setting
 
 ## Known issues
 
+- Please report issues in the [Issues](https://github.com/gerardog/gsudo/issues) section.
+- Feel free to contact me at gerardog @at@ gmail.com
 - This project is a work in progress. Many improvements in the [backlog](backlog.md). 
-- You can use either `gsudo` or `sudo` alias, the one you like the most. But if you mix them you will get an 'authorization' error because gsudo forbids protects other proceses.
 
 ## FAQ
 
