@@ -41,5 +41,22 @@ namespace gsudo.Native
 
         [DllImport("kernel32.dll")]
         internal static extern bool SetConsoleCursorPosition(IntPtr hConsoleOutput, PseudoConsoleApi.COORD CursorPosition);
+
+
+        // send ctrl-c
+        [DllImport("kernel32.dll", SetLastError = true)]
+        internal static extern bool AttachConsole(uint dwProcessId);
+
+        [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
+        internal static extern bool FreeConsole();
+        [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
+        internal static extern bool AllocConsole();
+
+        // Enumerated type for the control messages sent to the handler routine
+
+        [DllImport("kernel32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool GenerateConsoleCtrlEvent(CtrlTypes dwCtrlEvent, uint dwProcessGroupId);
+
     }
 }

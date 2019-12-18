@@ -10,7 +10,10 @@
         public int ConsoleWidth { get; set; }
         public int ConsoleHeight { get; set; }
         public ConsoleMode Mode { get; set; }
+        public int ConsoleProcessId { get; set; }
 
-        internal enum ConsoleMode { Raw, VT }
+        internal enum ConsoleMode { Raw, VT,
+            Attached
+        }
     }
 }

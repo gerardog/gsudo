@@ -44,8 +44,7 @@ namespace gsudo.Rpc
                     npStream.WaitForPipeDrain();
                     npStream.Disconnect();
                 }
-                catch (IOException) { }
-                catch (ObjectDisposedException) { }
+                catch (Exception) { }
             }
             else
                 DataStream.Close();
