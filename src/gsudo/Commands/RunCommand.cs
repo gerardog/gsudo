@@ -152,13 +152,6 @@ namespace gsudo.Commands
                 finally
                 {
                     connection?.Dispose();
-                    try
-                    {   
-                        // cleanup console before returning.
-                        Console.CursorVisible = true;
-                        Console.ResetColor();
-                    }
-                    catch { }
                 }
             }
 

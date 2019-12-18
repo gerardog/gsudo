@@ -125,7 +125,7 @@ namespace gsudo.Helpers
 
         internal static ICommand ParseCommand(string[] args)
         {
-            if (args.Length == 0) return new RunCommand() { };
+            if (args.Length == 0) return new RunCommand() { CommandToRun = Array.Empty<string>() };
 
             if (args[0].Equals("run", StringComparison.OrdinalIgnoreCase))
                 return new RunCommand() { CommandToRun = args.Skip(1) };

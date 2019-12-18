@@ -37,6 +37,16 @@ namespace gsudo
                 Logger.Instance.Log(ex.ToString(), LogLevel.Error);
                 return Constants.GSUDO_ERROR_EXITCODE;
             }
+            finally
+            {
+                try
+                {
+                    // cleanup console before returning.
+                    Console.CursorVisible = true;
+                    Console.ResetColor();
+                }
+                catch { }
+            }
         }
 
     }
