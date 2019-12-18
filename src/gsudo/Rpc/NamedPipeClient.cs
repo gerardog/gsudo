@@ -40,11 +40,11 @@ namespace gsudo.Rpc
                     {
                         pipeName = NamedPipeServer.GetPipeName(user, callerProcess.Id);
                         // Does the pipe exists?
-                        if (!System.IO.Directory.EnumerateFiles(@"\\.\pipe\", pipeName).Any() && timeoutMilliseconds <= 300)
-                        {
-                            // try grandfather.
-                            callerProcess = callerProcess.ParentProcess();
-                        }
+                        if (System.IO.Directory.EnumerateFiles(@"\\.\pipe\", pipeName).Any() && timeoutMilliseconds <= 300)
+                            break;
+
+                        // try grandfather.
+                        callerProcess = callerProcess.ParentProcess();
                     }
                 }
 

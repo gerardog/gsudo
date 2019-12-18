@@ -1,6 +1,10 @@
 {
-    "version": "0.4",
-    "url": "https://github.com/gerardog/gsudo/releases/download/v0.4/gsudo.v0.4.zip",
-	"hash":"8D2BDA6B57FD30D8723ACC7207F270ED86F45178044F80546436C5022B0517C2",
-    "bin": [ "gsudo.exe",["gsudo.exe", "sudo"] ]
+	"version": "0.4.1",
+	"url": "https://github.com/gerardog/gsudo/releases/download/v0.4.1/gsudo.v0.4.1.zip",
+	"hash":"5A7C2BDAA5E2C399C99BD396FEA6E35A3267C62D901E7326959B17B1ABAF4A3B",
+	"bin": [ "gsudo.exe",["gsudo.exe", "sudo"] ],
+	"homepage": "https://github.com/gerardog/gsudo",
+	"checkver": {
+		"github" : "https://github.com/gerardog/gsudo"
+	}
 }
