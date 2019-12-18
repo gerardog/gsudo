@@ -2,7 +2,6 @@
 
 namespace gsudo
 {
-    [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
     public enum LogLevel
     {
         All = 0,

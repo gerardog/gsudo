@@ -139,7 +139,7 @@ namespace gsudo.Helpers
                 LogLevel logLevel = LogLevel.Info;
                 if (args.Length>2)
                 {
-                    hasLoglevel = Enum.TryParse<LogLevel>(args[2], out logLevel);
+                    hasLoglevel = Enum.TryParse<LogLevel>(args[2], true, out logLevel);
                 }
 
                 return new ServiceCommand()

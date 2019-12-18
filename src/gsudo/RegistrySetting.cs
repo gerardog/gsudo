@@ -1,5 +1,5 @@
 ﻿using Microsoft.Win32;
-using Newtonsoft.Json;
+using System;
 
 namespace gsudo
 {
@@ -22,6 +22,8 @@ namespace gsudo
         bool hasValue = false;
         private T defaultValue { get; }
 
+        private Func<string, T> deserializer;
+
         public T Value 
         {
             get
@@ -34,7 +36,7 @@ namespace gsudo
                     if (currentValue == null) return defaultValue;
                     try
                     {
-                        return JsonConvert.DeserializeObject<T>(currentValue);
+                        return deserializer(currentValue);
                     }
                     catch
                     {
@@ -49,20 +51,21 @@ namespace gsudo
             }
         }
 
-        public override object GetStringValue() => Value;
+        public override object GetStringValue() => Value.ToString();
        
-        public RegistrySetting(string name, T defaultValue)
+        public RegistrySetting(string name, T defaultValue, Func<string,T> deserializer)
         {
             Name = name;
             this.defaultValue = defaultValue;
+            this.deserializer = deserializer;
         }
 
         public override void Save(string newValue)
         {
-            Value = JsonConvert.DeserializeObject<T>(newValue);
+            Value = deserializer(newValue);
             using (var subkey = Registry.CurrentUser.OpenSubKey(REGKEY, true))
             {
-                subkey.SetValue(Name, JsonConvert.SerializeObject(Value));
+                subkey.SetValue(Name, GetStringValue());
             }
         }
 

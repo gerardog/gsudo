@@ -18,7 +18,7 @@ namespace gsudo.Commands
             if (key == null)
             {
                 foreach (var k in GlobalSettings.AllKeys)
-                    Console.WriteLine($"{k.Value.Name} = { Newtonsoft.Json.JsonConvert.SerializeObject(k.Value.GetStringValue()).ToString()}");
+                    Console.WriteLine($"{k.Value.Name} = \"{ k.Value.GetStringValue().ToString()}\"");
 
                 return Task.FromResult(0);
             }
@@ -34,11 +34,11 @@ namespace gsudo.Commands
             if (value!=null && value.Any())
             {
                 // SAVE 
-                setting.Save($"\"{string.Join(" ", value.ToArray())}\"");
+                setting.Save(string.Join(" ", value.ToArray()));
             }
 
             // READ
-            Console.WriteLine($"{setting.Name} = { Newtonsoft.Json.JsonConvert.SerializeObject(setting.GetStringValue()).ToString()}");
+            Console.WriteLine($"{setting.Name} = \"{ setting.GetStringValue().ToString()}\"");
             return Task.FromResult(0);
         }
     }

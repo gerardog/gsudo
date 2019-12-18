@@ -1,11 +1,11 @@
 ﻿using gsudo.Helpers;
 using gsudo.ProcessRenderers;
 using gsudo.Rpc;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
 
 namespace gsudo.Commands
@@ -18,7 +18,7 @@ namespace gsudo.Commands
 
         public async Task<int> Execute()
         {
-            Logger.Instance.Log("Params: " + Newtonsoft.Json.JsonConvert.SerializeObject(this), LogLevel.Debug);
+            //Logger.Instance.Log("Params: " + Newtonsoft.Json.JsonConvert.SerializeObject(this), LogLevel.Debug);
 
             var currentProcess = System.Diagnostics.Process.GetCurrentProcess();
             bool emptyArgs = string.IsNullOrEmpty(CommandToRun.FirstOrDefault());
@@ -138,7 +138,12 @@ namespace gsudo.Commands
                         return Constants.GSUDO_ERROR_EXITCODE;
                     }
 
-                    await connection.ControlStream.WriteAsync(JsonConvert.SerializeObject(elevationRequest)).ConfigureAwait(false);
+                    new BinaryFormatter()
+//                    { TypeFormat = System.Runtime.Serialization.Formatters.FormatterTypeStyle.TypesAlways, Binder = new MySerializationBinder() }
+                        .Serialize(connection.ControlStream, elevationRequest);
+
+                    await connection.ControlStream.FlushAsync().ConfigureAwait(false);
+                    ConnectionKeepAliveThread.Start(connection);
 
                     var p = GetRenderer(connection, elevationRequest);
                     var exitcode = await p.Start().ConfigureAwait(false);

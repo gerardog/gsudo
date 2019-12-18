@@ -5,6 +5,7 @@ using System.IO;
 using gsudo.Rpc;
 using gsudo.ProcessHosts;
 using gsudo.Helpers;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace gsudo.Commands
 {
@@ -82,18 +83,9 @@ namespace gsudo.Commands
 
         private static async Task<ElevationRequest> ReadElevationRequest(Stream dataPipe)
         {
-            var buffer = new byte[1024];
-
-            var requestString = "";
-            while (!(requestString.Length > 0 && requestString[requestString.Length - 1] == '}'))
-            {
-                var length = await dataPipe.ReadAsync(buffer, 0, 1024).ConfigureAwait(false);
-                requestString += GlobalSettings.Encoding.GetString(buffer, 0, length);
-            }
-
-            Logger.Instance.Log("Incoming Json: " + requestString, LogLevel.Debug);
-            return Newtonsoft.Json.JsonConvert.DeserializeObject<ElevationRequest>(requestString);
+            return (ElevationRequest) new BinaryFormatter()
+//            { TypeFormat = System.Runtime.Serialization.Formatters.FormatterTypeStyle.TypesAlways, Binder = new MySerializationBinder() }
+            .Deserialize(dataPipe);
         }
-
     }
 }

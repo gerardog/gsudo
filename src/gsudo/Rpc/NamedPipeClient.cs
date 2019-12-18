@@ -42,7 +42,6 @@ namespace gsudo.Rpc
                     DataStream = dataPipe,
                 };
 
-                ConnectionKeepAliveThread.Start(conn);
                 return conn;
             }
             catch
