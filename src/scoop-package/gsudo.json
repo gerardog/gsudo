@@ -1,10 +1,19 @@
 {
-	"version": "0.4.1",
-	"url": "https://github.com/gerardog/gsudo/releases/download/v0.4.1/gsudo.v0.4.1.zip",
-	"hash":"5A7C2BDAA5E2C399C99BD396FEA6E35A3267C62D901E7326959B17B1ABAF4A3B",
-	"bin": [ "gsudo.exe",["gsudo.exe", "sudo"] ],
-	"homepage": "https://github.com/gerardog/gsudo",
-	"checkver": {
-		"github" : "https://github.com/gerardog/gsudo"
-	}
+    "version": "0.4.1",
+    "description": "A Sudo for Windows",
+    "homepage": "https://github.com/gerardog/gsudo",
+    "license": "MIT",
+    "url": "https://github.com/gerardog/gsudo/releases/download/v0.4.1/gsudo.v0.4.1.zip",
+    "hash": "5a7c2bdaa5e2c399c99bd396fea6e35a3267c62d901e7326959b17b1abaf4a3b",
+    "bin": [
+        "gsudo.exe",
+        [
+            "gsudo.exe",
+            "sudo"
+        ]
+    ],
+    "checkver": "github",
+    "autoupdate": {
+        "url": "https://github.com/gerardog/gsudo/releases/download/v$version/gsudo.v$version.zip"
+    }
 }
