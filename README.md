@@ -74,9 +74,9 @@ Read or write a user setting
 
 - Why `gsudo` instead of just `sudo`? 
 
-When I created `gsudo`, there were other `sudo` packages on most Windows popular package managers such as `Chocolatey` and `Scoop`. Both 'scoop' and 'Chocolatey' installers create aliases for `sudo`, so feel free to use `sudo` instead.
+When I created `gsudo`, there were other `sudo` packages on most Windows popular package managers such as `Chocolatey` and `Scoop`, so I had no other choice to pick another name. `gsudo` installers on Scoop and Chocolatey create aliases for `sudo`, so feel free to use the `sudo` alias instead on your command line to invoke `gsudo`.
 
-- Why '.Net Framework 4.6'?
+- Why `.Net Framework 4.6`?
 
 Because 4.6 is included in every Windows 10 installation. Also avoided `.Net Core` because gsudo is Windows-specific, (other platforms can use the standard *nix sudo.) 
 
