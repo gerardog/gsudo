@@ -11,11 +11,24 @@ Internally when you call **gsudo**, it launches itself elevated as a background 
 
 ## Instalation
 
-If you are a [Chocolatey](https://chocolatey.org/install) user, do: `choco install gsudo --version=0.4.1`
+[Scoop](https://chocolatey.org/install) users: 
 
-Otherwise, download the [latest release](https://github.com/gerardog/gsudo/releases/latest). Unzip to a local folder, and add it to the path. And/or, you can map the `sudo` keyword to `gsudo`, run:
- `mklink "C:\windows\system32\sudo.exe" "C:\FullPathTo\gsudo.exe"` 
- (replace `C:\FullPathTo\` with the full absolute path. Relative paths breaks it.) (This step is already included in the `Chocolatey` package).
+``` bash
+scoop install gsudo
+```
+
+[Chocolatey](https://chocolatey.org/install) users:
+
+``` bash
+choco install gsudo --version=0.4.1
+```
+
+Note: You can use the `gsudo` command or the `sudo` alias anywhere, whatever you like the most. The alias is created automatically by both Scoop and Chocolatey installers.   
+
+Manual installation:
+
+Download the [latest release](https://github.com/gerardog/gsudo/releases/latest). Unzip to a local folder. Then either add it to the path or you can alias the `sudo` keyword to `gsudo` with:
+ `mklink "C:\windows\system32\sudo.exe" "C:\FullPathTo\gsudo.exe"`.
 
 ## Usage
 
@@ -43,26 +56,13 @@ Read or write a user setting
 ## Features
 
 - Elevated commands are shown in the user-level console, as `*nix sudo` does, instead of opening the command in a new window.
-- If **gsudo** is invoked several times within minutes it only shows the UAC pop-up once.
-- Suport for CMD commands `gsudo md folder` (no need to use the longer form `gsudo cmd.exe /c md folder`
-- Scripting: **gsudo** can be used on scripts that requires to elevate one or more commands. (the UAC popup will appear). Outputs and exit codes of the elevated commands can be interpreted: E.g. StdOutbound can be piped or captured and exit codes too (errorlevel). If **gsudo** is invoked (with params) from an already elevated console it won't fail, so scripts invoking gsudo won't fail if the script is ran already elevated. Only practical difference would be that the UAC popup would not be shown.
-
-- Three modes the elevated process is shown in the user console: Attached, Raw (Piped), or VT (full VT100 PTY)
-  - **Attached** (default)
-    - The elevated process is attached to the caller console using AttachConsole Win32 Api. 
-    - Fastest and best experience. Console colors, keys, just works.
-  - **Raw**
-    - The elevated process is internally created with redirected StdIn/Out/Err. The elevated process can only append lines to the console, and read lines, but not keys.
-    - This mode is used only if the caller is already redirected (`gsudo dir > outputfile.txt`), or if `--raw` parameter is specified.
-    - Colored outputs shown in plain black & white. All StdErr is shown in Red.
-    - In this mode, the console auto complete (arrows/<kbd>TAB</kbd> key) doesn't work as the user would expected, because they are handled by the non-elevated console host.
-  - **VT** (Experimental!)
-    - This mode is only used if `--vt` parameter is specified, future possible use when doing sudo remoting.
-    - The elevated process is created with a ConPTY PseudoConsole and has two VT100 pipes for I/O.
-    - Colors and the <kbd>TAB</kbd> key auto complete works as expected (handled by the elevated command, file autocomplete, etc).
-    - Disabled by default on the default windows console host (ConHost), because `ENABLE_VIRTUAL_TERMINAL_PROCESSING` is pretty [unstable](https://github.com/microsoft/terminal/issues/3765). Works very well in Cmder/ConEmu/new Windows Terminal.
-
-- <kbd>Ctrl</kbd>+<kbd>C</kbd> key press is forwarded to the elevated process. (eg. cmd/powershell won't die, but ping/nslookup/batch file will.). 
+- Credentials cache: If `gsudo` is invoked several times within minutes it only shows the UAC pop-up once.
+- Suport for CMD commands: `gsudo md folder` (no need to use the longer form `gsudo cmd.exe /c md folder`
+- <kbd>Ctrl</kbd>+<kbd>C</kbd> key press is correctly forwarded to the elevated process. (eg. cmd/powershell won't die, but ping/nslookup/batch file will. 
+- Scripting: 
+  - `gsudo` can be used on scripts that requires to elevate one or more commands. (the UAC popup will appear once). 
+  - Outputs and exit codes of the elevated commands can be interpreted: E.g. StdOutbound can be piped or captured (`gsudo dir | findstr /c:"bytes free" > FreeSpace.txt`) and exit codes too ('%errorlevel%)).
+  - If `gsudo` is invoked (with params) from an already elevated console it will just run the commands. So if you invoke a script that uses `gsudo` from an already elevated console, it will also work. The UAC popup would not appear.
 
 ## Known issues
 
@@ -74,4 +74,12 @@ Read or write a user setting
 
 - Why `gsudo` instead of just `sudo`? 
 
-When I created `gsudo`, there were other `sudo` packages on most Windows popular package managers such as `Chocolatey` and `Scoop`. I could name the app `sudo` and the package as `gsudo`, but I fear people will not remember the package name for further installations. I will add the option to bind `sudo` command to the `gsudo` app in future versions of the installer.
+When I created `gsudo`, there were other `sudo` packages on most Windows popular package managers such as `Chocolatey` and `Scoop`. Both 'scoop' and 'Chocolatey' installers create aliases for `sudo`, so feel free to use `sudo` instead.
+
+- Why '.Net Framework 4.6'?
+
+Because 4.6 is included in every Windows 10 installation. Also avoided `.Net Core` because gsudo is Windows-specific, (other platforms can use the standard *nix sudo.) 
+
+- Want to know more? 
+
+Check the [internals](internals) page. 
