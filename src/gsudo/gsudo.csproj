@@ -13,7 +13,7 @@ It is a sudo equivalent for Windows, with a similar user-experience as the origi
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
-    <Version>0.4.1</Version>
+    <Version>0.4.2</Version>
     <Copyright>2019 Gerardo Grignoli</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/gerardog/gsudo</PackageProjectUrl>
