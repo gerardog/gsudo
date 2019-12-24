@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace gsudo.Helpers
 {
@@ -157,5 +158,21 @@ namespace gsudo.Helpers
 
             return new RunCommand() { CommandToRun = args };
         }
+
+        internal static string[] GetRealCommandLine()
+        {
+            System.IntPtr ptr = GetCommandLine();
+            string commandLine = Marshal.PtrToStringAuto(ptr);
+            if (commandLine[0] == '"')
+                return commandLine.Substring(commandLine.IndexOf('"', 1) + 1).TrimStart(' ').Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            else if (commandLine.IndexOf(' ', 1) >= 0)
+                return commandLine.Substring(commandLine.IndexOf(' ', 1) + 1).TrimStart(' ').Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            else
+                return Array.Empty<string>();
+        }
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+        private static extern System.IntPtr GetCommandLine();
+
     }
 }

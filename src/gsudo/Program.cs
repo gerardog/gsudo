@@ -18,6 +18,7 @@ namespace gsudo
         {
             ICommand cmd = null;
 
+            args = ArgumentsHelper.GetRealCommandLine();
             var exitCode = ArgumentsHelper.ParseCommonSettings(ref args);
             if (exitCode.HasValue) return exitCode.Value;
 
