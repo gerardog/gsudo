@@ -1,0 +1,39 @@
+image: Visual Studio 2019
+
+init:
+  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+  - git config --global core.autocrlf input
+#  - ps: '(Get-ChildItem -Path "Env:")'
+
+before_build:
+  - nuget restore src\gsudo.sln
+
+clone_folder: c:\git\gsudo
+
+platform: Any CPU
+configuration: Release
+  
+build:
+  parallel: true
+  project: src\gsudo.sln
+  verbosity: minimal
+  
+test:
+  assemblies:
+    only:
+      - gsudo.Tests.dll
+
+artifacts:
+  - path: 'src\gsudo\bin'
+    name: release
+    
+cache:
+  - src\packages -> **\packages.config  # preserve "packages" directory in the root of build folder but will reset it if packages.config is modified
+  - '%LocalAppData%\NuGet\Cache'    # NuGet < v3
+  - '%LocalAppData%\NuGet\v3-cache' # NuGet v3
+ 
+notifications:
+  - provider: Email
+    to:
+      - gerardog@gmail.com
+    on_build_status_changed: true

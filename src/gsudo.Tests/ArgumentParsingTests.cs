@@ -12,7 +12,7 @@ namespace gsudo.Tests
     public class ArgumentParsingTests
     {
         [TestMethod]
-        public void QuotedArgumentsTests()
+        public void Arguments_QuotedTests()
         {
             var input = "\"my exe name\" \"my params\" OtherParam1 OtherParam2 OtherParam3";
             var expected = new string[] { "\"my exe name\"", "\"my params\"", "OtherParam1", "OtherParam2", "OtherParam3" };
@@ -26,10 +26,10 @@ namespace gsudo.Tests
         }
 
         [TestMethod]
-        public void NoQuotesArgumentsTests()
+        public void Arguments_NoQuotesTests()
         {
-            var input = "my exe name my params OtherParam1 OtherParam2 OtherParam3";
-            var expected = new string[] { "my", "exe", "name", "my", "params", "OtherParam1", "OtherParam2", "OtherParam3" };
+            var input = "HEllo I Am my params OtherParam1 OtherParam2 OtherParam3";
+            var expected = new string[] { "HEllo", "I", "Am", "my", "params", "OtherParam1", "OtherParam2", "OtherParam3" };
 
             var actual = ArgumentsHelper.SplitArgs(input);
 

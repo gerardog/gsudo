@@ -12,7 +12,7 @@ using System.Threading;
 
 namespace gsudo.Helpers
 {
-    static class ProcessExtensions
+    public static class ProcessExtensions
     {
         public static void SendCtrlC(this Process proc, bool sendSigBreak = false)
         {

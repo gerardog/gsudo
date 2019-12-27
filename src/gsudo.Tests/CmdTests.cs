@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using gsudo.Helpers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace gsudo.Tests
@@ -9,14 +10,20 @@ namespace gsudo.Tests
     {
         static CmdTests()
         {
-            //warmup 
+            // Disable elevation for test purposes.
             Environment.SetEnvironmentVariable("GSUDO-TESTMODE-NOELEVATE", "1");
         }
 
         [TestMethod]
-        public void TestDir()
+        public void Cmd_AdminUserTest()
         {
-            var p = new TestProcess("gsudo", "dir");
+            Assert.IsFalse(ProcessExtensions.IsAdministrator(), "This test suite is intended to be run as a non-elevated user.");
+        }
+
+        [TestMethod]
+        public void Cmd_DirTest()
+        {
+            var p = new TestProcess("gsudo", "--debug cmd /c dir");
             p.WaitForExit();
             Assert.AreEqual(string.Empty, p.GetStdErr());
             Assert.IsTrue(p.GetStdOut().Contains(" bytes free"));
@@ -24,7 +31,25 @@ namespace gsudo.Tests
         }
 
         [TestMethod]
-        public void TestExitCode()
+        public void Cmd_EchoDoubleQuotesTest()
+        {
+            var p = new TestProcess("gsudo", "cmd /c echo 1 \"2 3\"");
+            p.WaitForExit();
+            Assert.AreEqual("1 \"2 3\" \r\n", p.GetStdOut());
+            Assert.AreEqual(0, p.Process.ExitCode);
+        }
+
+        [TestMethod]
+        public void Cmd_EchoSimpleQuotesTest()
+        {
+            var p = new TestProcess("gsudo", "cmd /c echo 1 \'2 3\'");
+            p.WaitForExit();
+            Assert.AreEqual("1 \'2 3\' \r\n", p.GetStdOut());
+            Assert.AreEqual(0, p.Process.ExitCode);
+        }
+
+        [TestMethod]
+        public void Cmd_ExitCodeTest()
         {
             var p = new TestProcess("gsudo", "exit /b 12345");
             p.WaitForExit();
@@ -34,7 +59,38 @@ namespace gsudo.Tests
         }
 
         [TestMethod]
-        public void TestWindowsAppNoWait()
+        public void Cmd_CommandLineAppNoWaitTest()
+        {
+            // ping should take 20 seconds
+            var p = new TestProcess("gsudo", "-n ping 127.0.0.1 -n 20"); 
+            // but gsudo should exit immediately.
+            p.WaitForExit(2000);
+            Assert.AreEqual(string.Empty, p.GetStdOut());
+        }
+
+        [TestMethod]
+        public void Cmd_WindowsAppWaitTest()
+        {
+            bool stillWaiting = false;
+            var p = new TestProcess("gsudo", "-w notepad");
+            try
+            {
+                p.WaitForExit(2000);
+            }
+            catch (Exception)
+            {
+                stillWaiting = true;
+            }
+
+            Assert.IsTrue(stillWaiting);
+            Process.Start("taskkill", "/FI \"WINDOWTITLE eq Untitled - Notepad\"").WaitForExit();
+            p.WaitForExit();
+            Assert.AreEqual(string.Empty, p.GetStdErr());
+            Assert.AreEqual(string.Empty, p.GetStdOut());
+        }
+
+        [TestMethod]
+        public void Cmd_WindowsAppNoWaitTest()
         {
             var p = new TestProcess("gsudo", "calc");
             try
@@ -50,7 +106,7 @@ namespace gsudo.Tests
         }
 
         [TestMethod]
-        public void TestWindowsAppWithQuotes()
+        public void Cmd_WindowsAppWithQuotesTest()
         {
             var p = new TestProcess("gsudo", $"\"c:\\Program Files (x86)\\Windows NT\\Accessories\\wordpad.exe\"");
             try
@@ -60,40 +116,21 @@ namespace gsudo.Tests
             }
             finally
             {
-                Process.Start("taskkill", "/FI \"WINDOWTITLE eq Document - WordPad\"").WaitForExit();
+                Process.Start("C:\\Windows\\sysnative\\tskill.exe", "wordpad");
+                //Process.Start("taskkill", "/FI \"WINDOWTITLE eq WordPad\"").WaitForExit();
+                //Process.Start("taskkill", "/FI \"WINDOWTITLE eq Document - WordPad\"").WaitForExit();
+
             }
             Assert.AreEqual(string.Empty, p.GetStdErr());
             Assert.AreEqual(string.Empty, p.GetStdOut());
         }
 
         [TestMethod]
-        public void TestWindowsAppWait()
-        {
-            bool stillWaiting = false;
-            var p = new TestProcess("gsudo", "-w notepad");
-            try
-            {
-                p.WaitForExit(4000);
-            }
-            catch (Exception)
-            {
-                stillWaiting = true;
-            }
-
-            Assert.IsTrue(stillWaiting);
-            Process.Start("taskkill", "/FI \"WINDOWTITLE eq Untitled - Notepad\"").WaitForExit();
-            p.WaitForExit();
-            Assert.AreEqual(string.Empty, p.GetStdErr());
-            Assert.AreEqual(string.Empty, p.GetStdOut());
-        }
-
-        [TestMethod]
-        public void TestUnexistentApp()
+        public void Cmd_UnexistentAppTest()
         {
             var p = new TestProcess("gsudo", "qaqswswdewfwerferfwe");
             p.WaitForExit();
             Assert.AreNotEqual(0, p.Process.ExitCode);
         }
-
     }
 }
