@@ -49,8 +49,9 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="GsudoTestProcess.cs" />
-    <Compile Include="UnitTest1.cs" />
+    <Compile Include="ArgumentParsingTests.cs" />
+    <Compile Include="TestProcess.cs" />
+    <Compile Include="CmdTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
