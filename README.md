@@ -1,5 +1,7 @@
 # gsudo - a sudo for Windows
 
+[![Join the chat at https://gitter.im/gsudo/community](https://badges.gitter.im/gsudo/community.svg)](https://gitter.im/gsudo/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 **gsudo** allows to run commands with elevated permissions within the current console. 
 It is a `sudo` equivalent for Windows, with a similar user-experience as the original *nix sudo.
 
