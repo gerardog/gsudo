@@ -19,6 +19,9 @@ namespace gsudo.Helpers
                 Verb = "runas",
             };
 
+            if (Environment.GetEnvironmentVariable("GSUDO-TESTMODE-NOELEVATE") == "1")
+                process.StartInfo.Verb = null;
+
             if (hidden)
                 process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             else

@@ -25,7 +25,7 @@ namespace gsudo.Commands
 
             CommandToRun = ArgumentsHelper.AugmentCommand(CommandToRun.ToArray());
 
-            var exeName = ProcessFactory.FindExecutableInPath(CommandToRun.FirstOrDefault()) ?? CommandToRun.FirstOrDefault();
+            var exeName = CommandToRun.FirstOrDefault();
             bool isWindowsApp = ProcessFactory.IsWindowsApp(exeName);
 
             var elevationRequest = new ElevationRequest()
@@ -38,6 +38,9 @@ namespace gsudo.Commands
                 Mode = GetConsoleMode(isWindowsApp),
                 ConsoleProcessId = currentProcess.Id,
             };
+
+            Logger.Instance.Log($"Application to run: {elevationRequest.FileName}", LogLevel.Debug);
+            Logger.Instance.Log($"Arguments: {elevationRequest.Arguments}", LogLevel.Debug);
 
             if (elevationRequest.Mode == ElevationRequest.ConsoleMode.VT)
             {

@@ -66,14 +66,14 @@ namespace gsudo.Commands
         {
             bool isWindowsApp = ProcessFactory.IsWindowsApp(request.FileName);
 
-            if (isWindowsApp || request.NewWindow)
+            if (isWindowsApp || request.NewWindow && !request.ForceWait)
                 return new ElevateOnlyHostProcess();
             if (request.Mode == ElevationRequest.ConsoleMode.Attached)
                 return new AttachedConsoleHost();
-            else if (request.Mode == ElevationRequest.ConsoleMode.Raw)
-                return new PipedProcessHost();
-            else
+            else if (request.Mode == ElevationRequest.ConsoleMode.VT)
                 return new VTProcessHost();
+            else
+                return new PipedProcessHost();
         }
 
         private IRpcServer CreateServer()

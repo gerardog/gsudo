@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 
 namespace gsudo.Helpers
 {
-    class ArgumentsHelper
+    public class ArgumentsHelper
     {
         internal static string[] AugmentCommand(string[] args)
         {
@@ -23,7 +23,10 @@ namespace gsudo.Helpers
                         { parentProcess.MainModule.FileName };
                 else
                     return new string[] // Escape " => ""
-                        { parentProcess.MainModule.FileName , $"\"{ String.Join(" ", args.Select(arg => arg.Replace("\"","\"\""))) }\""};
+                        { parentProcess.MainModule.FileName , 
+                            //$"\"{ String.Join(" ", args.Select(arg => arg.Replace("\"","\"\""))) }\""
+                            String.Join(" ", args)
+                        };
             }
             else
             {
@@ -39,7 +42,10 @@ namespace gsudo.Helpers
                                 { grandParentProcess.MainModule.FileName };
                         else
                             return new string[] // Escape " => `"
-                                { grandParentProcess.MainModule.FileName , $"\"{ String.Join(" ", args.Select(arg => arg.Replace("\"","'\""))) }\""};
+                                { grandParentProcess.MainModule.FileName , 
+                                    //$"\"{ String.Join(" ", args.Select(arg => arg.Replace("\"","'\""))) }\""
+                                    String.Join(" ", args)
+                                };
                     }
                 }
             }
@@ -55,15 +61,49 @@ namespace gsudo.Helpers
             }
             else
             {
-                // add "CMD /C" prefix to commands such as MD, CD, DIR..
-                // We are sure this will not be an interactive experience, 
-                // so we can safely use raw 
+                args[0] = UnQuote(args[0]);
+                var exename = ProcessFactory.FindExecutableInPath(args[0]);
+                if (exename==null)
+                {
+                    // add "CMD /C" prefix to commands such as MD, CD, DIR..
+                    // We are sure this will not be an interactive experience, 
 
-                return new string[]
-                    { Environment.GetEnvironmentVariable("COMSPEC"), "/c" }
-                    .Concat(args).ToArray();
+                    return new string[]
+                        { Environment.GetEnvironmentVariable("COMSPEC"), "/c" }
+                        .Concat(args).ToArray();
+                }
+                else
+                {
+                    args[0] = exename;
+                    return args;
+                }
             }
         }
+
+        public static string[] SplitArgs(string args)
+        {
+            args = args.Trim();
+            var results = new List<string>();
+            int pushed = 0;
+            int curr = 0;
+            bool insideQuotes = false;
+            while (curr < args.Length)
+            {
+                if (args[curr] == '"')
+                    insideQuotes=!insideQuotes;
+                else if (args[curr] == ' ' && !insideQuotes)
+                {
+                    results.Add(args.Substring(pushed, curr-pushed));
+                    pushed = curr+1;
+                }
+                curr++;                
+            }
+
+            if (pushed < curr)
+                results.Add(args.Substring(pushed, curr - pushed));
+            return results.ToArray();
+        }
+
 
         internal static int? ParseCommonSettings(ref string[] args)
         {
@@ -172,17 +212,31 @@ namespace gsudo.Helpers
             return new RunCommand() { CommandToRun = args };
         }
 
-        internal static string[] GetRealCommandLine()
+        internal static string GetRealCommandLine()
         {
             System.IntPtr ptr = GetCommandLine();
             string commandLine = Marshal.PtrToStringAuto(ptr);
+            
             if (commandLine[0] == '"')
-                return commandLine.Substring(commandLine.IndexOf('"', 1) + 1).TrimStart(' ').Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                return commandLine.Substring(commandLine.IndexOf('"', 1) + 1).TrimStart(' ');
             else if (commandLine.IndexOf(' ', 1) >= 0)
-                return commandLine.Substring(commandLine.IndexOf(' ', 1) + 1).TrimStart(' ').Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                return commandLine.Substring(commandLine.IndexOf(' ', 1) + 1).TrimStart(' ');
             else
-                return Array.Empty<string>();
+                return string.Empty;
         }
+
+        static string UnQuote(string v)
+        {
+            if (string.IsNullOrEmpty(v)) return v;
+            if (v[0] == '"' && v[v.Length - 1] == '"')
+                return v.Substring(1, v.Length - 2);
+            else if (v[0] == '"')
+                return v.Substring(1);
+            else
+                return v;
+        }
+
+
 
         [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
         private static extern System.IntPtr GetCommandLine();
