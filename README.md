@@ -26,14 +26,14 @@ scoop install gsudo
 choco install gsudo --version=0.4.1
 ```
 
-Note: You can use the `gsudo` command or the `sudo` alias anywhere, whatever you like the most. The alias is created automatically by both Scoop and Chocolatey installers.   
-
 Manual installation:
 
 Download the [latest release](https://github.com/gerardog/gsudo/releases/latest). Unzip to a local folder. Then either add it to the path or you can alias the `sudo` keyword to `gsudo` with:
  `mklink "C:\windows\system32\sudo.exe" "C:\FullPathTo\gsudo.exe"`.
 
 ## Usage
+
+Note: You can use anywhere the `gsudo` command or the `sudo` alias created by `Scoop` or `Chocolatey` installers.
 
 ```gsudo```
 Opens an elevated shell in the current console.
@@ -52,6 +52,24 @@ Show current-user settings.
 ```gsudo config {key} [value]```
 Read or write a user setting
 
+## Usage from PowerShell
+
+`gsudo` detects if it is invoked from a PowerShell shell and allows the following syntax to elevate PS commands.
+
+`PS C:\> gsudo 'powershell string command'`
+
+Examples:
+
+``` PowerShell
+
+# Escape " with ""
+gsudo 'Get-FileHash "".\My Secret.txt""'
+
+# String values can be replaced at the string level. 
+# Variables and Objects not shared between elevated and not elevated sessions.
+gsudo "Get-FileHash "".\My Secret.txt"" -Algorithm $algorithm"
+```
+
 ## Demo
 
 ![gsudo demo](demo.gif)
@@ -61,7 +79,8 @@ Read or write a user setting
 - Elevated commands are shown in the user-level console, as `*nix sudo` does, instead of opening the command in a new window.
 - Credentials cache: If `gsudo` is invoked several times within minutes it only shows the UAC pop-up once.
 - Suport for CMD commands: `gsudo md folder` (no need to use the longer form `gsudo cmd.exe /c md folder`
-- <kbd>Ctrl</kbd>+<kbd>C</kbd> key press is correctly forwarded to the elevated process. (eg. cmd/powershell won't die, but ping/nslookup/batch file will. 
+- Suport for PowerShell commands if invoked from a PS shell.
+- <kbd>Ctrl</kbd>+<kbd>C</kbd> key press is correctly forwarded to the elevated process. (eg. cmd/powershell won't die, but ping/nslookup/batch file will.
 - Scripting: 
   - `gsudo` can be used on scripts that requires to elevate one or more commands. (the UAC popup will appear once). 
   - Outputs and exit codes of the elevated commands can be interpreted: E.g. StdOutbound can be piped or captured (`gsudo dir | findstr /c:"bytes free" > FreeSpace.txt`) and exit codes too ('%errorlevel%)).
@@ -69,20 +88,20 @@ Read or write a user setting
 
 ## Known issues
 
-- Please report issues in the [Issues](https://github.com/gerardog/gsudo/issues) section.
-- Feel free to contact me at gerardog @at@ gmail.com
-- This project is a work in progress. Many improvements in the [backlog](backlog.md). 
+- `Scoop` shim messes [CTRL-C behaviour](https://github.com/lukesampson/scoop/issues/1896). ([Upvote this!](https://github.com/lukesampson/scoop/issues/3634)) `Chocolatey` not afected, because as Choco installs elevated I could change the install to create symbolic links instead of shims.
+- Please report issues in the [Issues](https://github.com/gerardog/gsudo/issues) section or contact me at gerardog @at@ gmail.com
+- This project is a work in progress. Many improvements in the [backlog](backlog.md).
 
 ## FAQ
 
-- Why `gsudo` instead of just `sudo`? 
+- Why `gsudo` instead of just `sudo`?
 
 When I created `gsudo`, there were other `sudo` packages on most Windows popular package managers such as `Chocolatey` and `Scoop`, so I had no other choice to pick another name. `gsudo` installers on Scoop and Chocolatey create aliases for `sudo`, so feel free to use the `sudo` alias instead on your command line to invoke `gsudo`.
 
 - Why `.Net Framework 4.6`?
 
-Because 4.6 is included in every Windows 10 installation. Also avoided `.Net Core` because gsudo is Windows-specific, (other platforms can use the standard *nix sudo.) 
+Because 4.6 is included in every Windows 10 installation. Also avoided `.Net Core` because gsudo is Windows-specific, (other platforms can use the standard *nix sudo.)
 
-- Want to know more? 
+- Want to know more?
 
-Check the [internals](internals.md) page. 
+Check the [internals](internals.md) page.

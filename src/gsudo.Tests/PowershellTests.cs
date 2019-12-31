@@ -29,11 +29,22 @@ namespace gsudo.Tests
         }
 
         [TestMethod]
+        public void PS_EchoNoQuotesTest()
+        {
+            var p = new TestProcess("powershell", string.Empty);
+            p.WriteInput("gsudo 'echo 1 2 3'\r\n");
+            System.Threading.Thread.Sleep(20000);
+            p.WriteInput("exit\r\n");
+            Assert.AreEqual("1\r\n2\r\n3\r\n", p.GetStdOut());
+            Assert.AreEqual(0, p.Process.ExitCode);
+        }
+
+        [TestMethod]
         public void PS_EchoSingleQuotesTest()
         {
             var p = new TestProcess("powershell", string.Empty);
 
-            p.WriteInput("gsudo 'echo 1 \"2 3\"'");
+            p.WriteInput("gsudo 'echo 1 \"2 3\"'\r\nexit\r\n");
             p.WaitForExit();
             Assert.AreEqual("1\r\n2 3\r\n", p.GetStdOut());
             Assert.AreEqual(0, p.Process.ExitCode);
@@ -42,10 +53,9 @@ namespace gsudo.Tests
         [TestMethod]
         public void PS_EchoDoubleQuotesTest()
         {
-            var p = new TestProcess("powershell", string.Empty);
-
-            p.WriteInput("gsudo 'echo 1 \"2 3\"'");
-            p.WaitForExit();
+            var p = new TestProcess("cmd", string.Empty);
+            p.WriteInput("gsudo 'echo 1 \"2 3\"'\r\nexit\r\n");
+            //p.WaitForExit();
             Assert.AreEqual("1\r\n2 3\r\n", p.GetStdOut());
             Assert.AreEqual(0, p.Process.ExitCode);
         }

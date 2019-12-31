@@ -8,6 +8,8 @@ namespace gsudo.Tests
     class TestProcess
     {
         public Process Process { get; private set; }
+        public int ExitCode => Process.ExitCode;
+
         Stream InputStrem = null;
         string _StdErrFileName;
         string _StdOutFileName;
@@ -24,7 +26,8 @@ namespace gsudo.Tests
                 Arguments = $"{arguments} 1> \"{_StdOutFileName}\" 2> \"{_StdErrFileName}\"",
                 RedirectStandardInput = true,
                 UseShellExecute = false,
-                WindowStyle = ProcessWindowStyle.Minimized
+                WindowStyle = ProcessWindowStyle.Minimized, 
+                CreateNoWindow=false
             };
             this.Process.Start();
 
