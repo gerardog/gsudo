@@ -6,6 +6,9 @@ init:
 before_build:
   - nuget restore src\gsudo.sln
 
+after_build:
+  - appveyor PushArtifact
+  
 clone_folder: c:\git\gsudo
 
 platform: Any CPU
