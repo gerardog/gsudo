@@ -6,9 +6,6 @@ init:
 before_build:
   - nuget restore src\gsudo.sln
 
-after_build:
-  - appveyor PushArtifact
-  
 clone_folder: c:\git\gsudo
 
 platform: Any CPU
@@ -32,9 +29,3 @@ cache:
   - src\packages -> **\packages.config  # preserve "packages" directory in the root of build folder but will reset it if packages.config is modified
   - '%LocalAppData%\NuGet\Cache'    # NuGet < v3
   - '%LocalAppData%\NuGet\v3-cache' # NuGet v3
- 
-notifications:
-  - provider: Email
-    to:
-      - gerardog@gmail.com
-    on_build_status_changed: true
