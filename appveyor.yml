@@ -7,6 +7,10 @@ init:
 before_build:
   - nuget restore src\gsudo.sln
 
+after_build:
+  - 7z a gsudo.%CONFIGURATION%.%APPVEYOR_BUILD_VERSION%.Unsigned.zip %APPVEYOR_BUILD_FOLDER%\src\gsudo\bin\*.*
+  - appveyor PushArtifact gsudo.%CONFIGURATION%.%APPVEYOR_BUILD_VERSION%.Unsigned.zip
+
 clone_folder: c:\git\gsudo
 
 platform: Any CPU
@@ -21,10 +25,6 @@ test:
   assemblies:
     only:
       - gsudo.Tests.dll
-
-artifacts:
-  - path: 'src\gsudo\bin'
-    name: release
     
 cache:
   - src\packages -> **\packages.config  # preserve "packages" directory in the root of build folder but will reset it if packages.config is modified
