@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace gsudo.Tests
@@ -57,7 +58,7 @@ $@"# ./gsudo 'echo 1 2 3'
 2
 3
 # exit
-", p.GetStdOut());
+", FixAppVeyor(p.GetStdOut()));
             Assert.AreEqual(0, p.Process.ExitCode);
         }
 
@@ -67,7 +68,7 @@ $@"# ./gsudo 'echo 1 2 3'
             var p = new TestProcess(PS_FILENAME, PS_ARGS);
             p.WriteInput("./gsudo 'echo 1 ''2 3'''\r\nexit\r\n");
             p.WaitForExit();
-            Assert.AreEqual($"# ./gsudo 'echo 1 ''2 3'''\r\n1\r\n2 3\r\n# exit\r\n", p.GetStdOut());
+            Assert.AreEqual($"# ./gsudo 'echo 1 ''2 3'''\r\n1\r\n2 3\r\n# exit\r\n", FixAppVeyor(p.GetStdOut()));
             Assert.AreEqual(0, p.Process.ExitCode);
         }
 
@@ -77,8 +78,15 @@ $@"# ./gsudo 'echo 1 2 3'
             var p = new TestProcess(PS_FILENAME, PS_ARGS);
             p.WriteInput("./gsudo 'echo 1 \"\"2 3\"\"'\r\nexit\r\n");
             p.WaitForExit();
-            Assert.AreEqual($"# ./gsudo 'echo 1 \"\"2 3\"\"'\r\n1\r\n2 3\r\n# exit\r\n", p.GetStdOut());
+            Assert.AreEqual($"# ./gsudo 'echo 1 \"\"2 3\"\"'\r\n1\r\n2 3\r\n# exit\r\n", FixAppVeyor(p.GetStdOut()));
             Assert.AreEqual(0, p.Process.ExitCode);
         }
+
+        string FixAppVeyor(string input)
+        {
+            var ret = Regex.Replace(input, "((\r\n|\r|\n)Oops.*?-{71}.*?-{71}(\r\n|\r|\n))", string.Empty, RegexOptions.Singleline);
+            return ret;
+        }
+
     }
 }
