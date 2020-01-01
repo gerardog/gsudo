@@ -13,6 +13,7 @@ namespace gsudo.Tests
         {
             // Disable elevation for test purposes.
             Environment.SetEnvironmentVariable("GSUDO-TESTMODE-NOELEVATE", "1");
+            Environment.SetEnvironmentVariable("PROMPT", "$G"); // Remove path from prompt so tests results are invariant of the src folder location in the path.
         }
 
         [TestMethod]
@@ -26,7 +27,7 @@ namespace gsudo.Tests
         {
             var p = new TestProcess("gsudo.exe", "--debug cmd /c dir");
             p.WaitForExit();
-            Assert.AreEqual(string.Empty, p.GetStdErr());
+            Assert.AreNotEqual(string.Empty, p.GetStdErr());
             Assert.IsTrue(p.GetStdOut().Contains(" bytes free"));
             Assert.AreEqual(0, p.ExitCode);
         }
@@ -36,7 +37,7 @@ namespace gsudo.Tests
         {
             // TODO: Test --raw, --vt, --attached
             var testDir = Environment.CurrentDirectory;
-            var p1 = new TestProcess("gsudo.exe", "--debug cmd /c cd");
+            var p1 = new TestProcess("gsudo.exe", "cmd /c cd");
             p1.WaitForExit();
 
             var otherDir = Path.GetDirectoryName(Path.Combine(Environment.CurrentDirectory,".."));
@@ -48,7 +49,7 @@ namespace gsudo.Tests
 
             try
             {
-                var p2 = new TestProcess(Path.Combine(testDir, "gsudo.exe"), "--debug cmd /c cd");
+                var p2 = new TestProcess(Path.Combine(testDir, "gsudo.exe"), "cmd /c cd");
                 p2.WaitForExit();
 
                 Assert.AreEqual(string.Empty, p2.GetStdErr());
@@ -65,7 +66,7 @@ namespace gsudo.Tests
         {
             var p = new TestProcess("gsudo.exe", "cmd /c echo 1 \"2 3\"");
             p.WaitForExit();
-            Assert.AreEqual("1 \"2 3\" \r\n", p.GetStdOut());
+            Assert.AreEqual("1 \"2 3\"\r\n", p.GetStdOut());
             Assert.AreEqual(0, p.ExitCode);
         }
 
@@ -74,14 +75,14 @@ namespace gsudo.Tests
         {
             var p = new TestProcess("gsudo.exe", "cmd /c echo 1 \'2 3\'");
             p.WaitForExit();
-            Assert.AreEqual("1 \'2 3\' \r\n", p.GetStdOut());
+            Assert.AreEqual("1 \'2 3\'\r\n", p.GetStdOut());
             Assert.AreEqual(0, p.ExitCode);
         }
 
         [TestMethod]
         public void Cmd_ExitCodeTest()
         {
-            var p = new TestProcess("gsudo.exe", "exit /b 12345");
+            var p = new TestProcess("gsudo.exe", "--loglevel none exit /b 12345");
             p.WaitForExit();
             Assert.AreEqual(string.Empty, p.GetStdErr());
             Assert.AreEqual(string.Empty, p.GetStdOut());
