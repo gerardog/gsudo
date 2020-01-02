@@ -7,6 +7,7 @@ namespace gsudo.Native
     /// <summary>
     /// PInvoke signatures for win32 console api
     /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1060:Move pinvokes to native methods class", Justification = "Done")]
     static class ConsoleApi
     {
         internal const int STD_OUTPUT_HANDLE = -11;
@@ -58,5 +59,7 @@ namespace gsudo.Native
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool GenerateConsoleCtrlEvent(CtrlTypes dwCtrlEvent, uint dwProcessGroupId);
 
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+        public static extern System.IntPtr GetCommandLine();
     }
 }

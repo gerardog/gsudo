@@ -90,7 +90,7 @@ namespace gsudo.ProcessRenderers
                 if (CurrentMode == Mode.Focus)
                 {
                     var hwnd = (IntPtr)int.Parse(token, CultureInfo.InvariantCulture);
-                    Logger.Instance.Log($"SetForegroundWindow({hwnd}) returned {ProcessFactory.SetForegroundWindow(hwnd)}", LogLevel.Debug);
+                    Logger.Instance.Log($"SetForegroundWindow({hwnd}) returned {Native.WindowApi.SetForegroundWindow(hwnd)}", LogLevel.Debug);
                     continue;
                 }
                 if (CurrentMode == Mode.Error)

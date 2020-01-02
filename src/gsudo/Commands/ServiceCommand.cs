@@ -58,7 +58,7 @@ namespace gsudo.Commands
             catch (Exception e)
             {
                 Logger.Instance.Log(e.ToString(), LogLevel.Error);
-                await connection.FlushAndCloseAll();
+                await connection.FlushAndCloseAll().ConfigureAwait(false);
             }
         }
 
@@ -81,22 +81,23 @@ namespace gsudo.Commands
             return new NamedPipeServer(allowedPid);
         }
 
-        private static async Task<ElevationRequest> ReadElevationRequest(Stream dataPipe)
+        private async Task<ElevationRequest> ReadElevationRequest(Stream dataPipe)
         {
             byte[] dataSize = new byte[sizeof(int)];
-            dataPipe.Read(dataSize, 0, sizeof(int));
+            await dataPipe.ReadAsync(dataSize, 0, sizeof(int)).ConfigureAwait(false);
             int dataSizeInt = BitConverter.ToInt32(dataSize, 0);
             byte[] inBuffer = new byte[dataSizeInt];
 
             var bytesRemaining = dataSizeInt;
             while (bytesRemaining > 0 )
-                bytesRemaining -= dataPipe.Read(inBuffer, 0, bytesRemaining);
+                bytesRemaining -= await dataPipe.ReadAsync(inBuffer, 0, bytesRemaining).ConfigureAwait(false);
             
             Logger.Instance.Log($"ElevationRequest length {dataSizeInt}", LogLevel.Debug);
 
             return (ElevationRequest) new BinaryFormatter()
 //            { TypeFormat = System.Runtime.Serialization.Formatters.FormatterTypeStyle.TypesAlways, Binder = new MySerializationBinder() }
             .Deserialize(new MemoryStream(inBuffer));
+            
         }
     }
 }

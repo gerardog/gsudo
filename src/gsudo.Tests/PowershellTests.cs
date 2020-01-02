@@ -84,6 +84,8 @@ $@"# ./gsudo 'echo 1 2 3'
 
         string FixAppVeyor(string input)
         {
+            // AppVeyor's powershell displays a warning message because it uses PSReadLine that does not support Process Rediretion.
+            // Remove the message.
             var ret = Regex.Replace(input, "((\r\n|\r|\n)Oops.*?-{71}.*?-{71}(\r\n|\r|\n))", string.Empty, RegexOptions.Singleline);
             return ret;
         }

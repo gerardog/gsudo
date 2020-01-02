@@ -1,4 +1,5 @@
-﻿using System;
+﻿using gsudo.Native;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -85,14 +86,11 @@ namespace gsudo.Helpers
 
                 // set user the focus to the window, if there is one.
                 if (process.MainWindowHandle != IntPtr.Zero)
-                    SetForegroundWindow(process.MainWindowHandle);
+                    WindowApi.SetForegroundWindow(process.MainWindowHandle);
             }
 
             return process;
         }
-
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
-        public static extern int SetForegroundWindow(IntPtr hwnd);
 
         public static bool IsWindowsApp(string exe)
         {

@@ -1,11 +1,17 @@
-﻿using System;
+﻿using Microsoft.Win32.SafeHandles;
+using System;
+using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
+using System.Security;
+using System.Security.Permissions;
+using static gsudo.Helpers.ProcessExtensions;
 
 namespace gsudo.Native
 {
     /// <summary>
     /// PInvoke signatures for win32 process api
     /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1060:Move pinvokes to native methods class", Justification = "Done")]
     static class ProcessApi
     {
         internal const uint EXTENDED_STARTUPINFO_PRESENT = 0x00080000;
@@ -68,7 +74,7 @@ namespace gsudo.Native
             IntPtr lpAttributeList, uint dwFlags, IntPtr attribute, IntPtr lpValue,
             IntPtr cbSize, IntPtr lpPreviousValue, IntPtr lpReturnSize);
 
-        [DllImport("kernel32.dll")]
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool CreateProcess(
             string lpApplicationName, string lpCommandLine, ref SECURITY_ATTRIBUTES lpProcessAttributes,
@@ -91,5 +97,63 @@ namespace gsudo.Native
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool GetNamedPipeClientProcessId(IntPtr Pipe, out uint ClientProcessId);
 
+        #region PID traversing
+        internal const int ERROR_NO_MORE_FILES = 0x12;
+        [DllImport("kernel32.dll", SetLastError = true)]
+        internal static extern SafeSnapshotHandle CreateToolhelp32Snapshot(SnapshotFlags flags, uint id);
+        [DllImport("kernel32.dll", SetLastError = true)]
+        internal static extern bool Process32First(SafeSnapshotHandle hSnapshot, ref PROCESSENTRY32 lppe);
+        [DllImport("kernel32.dll", SetLastError = true)]
+        internal static extern bool Process32Next(SafeSnapshotHandle hSnapshot, ref PROCESSENTRY32 lppe);
+
+        [Flags]
+        internal enum SnapshotFlags : uint
+        {
+            HeapList = 0x00000001,
+            Process = 0x00000002,
+            Thread = 0x00000004,
+            Module = 0x00000008,
+            Module32 = 0x00000010,
+            All = (HeapList | Process | Thread | Module),
+            Inherit = 0x80000000,
+            NoHeaps = 0x40000000
+        }
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct PROCESSENTRY32
+        {
+            public uint dwSize;
+            public uint cntUsage;
+            public uint th32ProcessID;
+            public IntPtr th32DefaultHeapID;
+            public uint th32ModuleID;
+            public uint cntThreads;
+            public uint th32ParentProcessID;
+            public int pcPriClassBase;
+            public uint dwFlags;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)] public string szExeFile;
+        };
+
+        [SuppressUnmanagedCodeSecurity, HostProtection(SecurityAction.LinkDemand, MayLeakOnAbort = true)]
+        internal sealed class SafeSnapshotHandle : SafeHandleMinusOneIsInvalid
+        {
+            internal SafeSnapshotHandle() : base(true)
+            {
+            }
+
+            [SecurityPermission(SecurityAction.LinkDemand, UnmanagedCode = true)]
+            internal SafeSnapshotHandle(IntPtr handle) : base(true)
+            {
+                base.SetHandle(handle);
+            }
+
+            protected override bool ReleaseHandle()
+            {
+                return CloseHandle(base.handle);
+            }
+
+            [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success), DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true, ExactSpelling = true)]
+            private static extern bool CloseHandle(IntPtr handle);
+        }
+        #endregion
     }
 }

@@ -1,12 +1,11 @@
-﻿using Microsoft.Win32.SafeHandles;
+﻿using static gsudo.Native.ProcessApi;
+using Microsoft.Win32.SafeHandles;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
-using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
-using System.Security;
-using System.Security.Permissions;
 using System.Security.Principal;
 using System.Threading;
 
@@ -22,7 +21,7 @@ namespace gsudo.Helpers
             // So the best we can do is create a new process that will attach and send Ctrl-C to the target process.
 
             using (var p = ProcessFactory.StartDetached
-                (Process.GetCurrentProcess().MainModule.FileName, $"gsudoctrlc {proc.Id.ToString()}", Environment.CurrentDirectory, true))
+                (Process.GetCurrentProcess().MainModule.FileName, $"gsudoctrlc {proc.Id.ToString(CultureInfo.InvariantCulture)}", Environment.CurrentDirectory, true))
             {
                 p.WaitForExit();
             }
@@ -114,66 +113,6 @@ namespace gsudo.Helpers
             }
         }
 
-        #region Win32 api
-
-        private const int ERROR_NO_MORE_FILES = 0x12;
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern SafeSnapshotHandle CreateToolhelp32Snapshot(SnapshotFlags flags, uint id);
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern bool Process32First(SafeSnapshotHandle hSnapshot, ref PROCESSENTRY32 lppe);
-        [DllImport("kernel32.dll", SetLastError = true)]
-        private static extern bool Process32Next(SafeSnapshotHandle hSnapshot, ref PROCESSENTRY32 lppe);
-
-        [Flags]
-        private enum SnapshotFlags : uint
-        {
-            HeapList = 0x00000001,
-            Process = 0x00000002,
-            Thread = 0x00000004,
-            Module = 0x00000008,
-            Module32 = 0x00000010,
-            All = (HeapList | Process | Thread | Module),
-            Inherit = 0x80000000,
-            NoHeaps = 0x40000000
-        }
-        [StructLayout(LayoutKind.Sequential)]
-        private struct PROCESSENTRY32
-        {
-            public uint dwSize;
-            public uint cntUsage;
-            public uint th32ProcessID;
-            public IntPtr th32DefaultHeapID;
-            public uint th32ModuleID;
-            public uint cntThreads;
-            public uint th32ParentProcessID;
-            public int pcPriClassBase;
-            public uint dwFlags;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)] public string szExeFile;
-        };
-        [SuppressUnmanagedCodeSecurity, HostProtection(SecurityAction.LinkDemand, MayLeakOnAbort = true)]
-        internal sealed class SafeSnapshotHandle : SafeHandleMinusOneIsInvalid
-        {
-            internal SafeSnapshotHandle() : base(true)
-            {
-            }
-
-            [SecurityPermission(SecurityAction.LinkDemand, UnmanagedCode = true)]
-            internal SafeSnapshotHandle(IntPtr handle) : base(true)
-            {
-                base.SetHandle(handle);
-            }
-
-            protected override bool ReleaseHandle()
-            {
-                return CloseHandle(base.handle);
-            }
-
-            [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success), DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true, ExactSpelling = true)]
-            private static extern bool CloseHandle(IntPtr handle);
-        }
-
-        #endregion
-
         public static void Terminate(this Process process)
         {
             if (process.HasExited) return;
@@ -188,16 +127,6 @@ namespace gsudo.Helpers
             if (!process.HasExited)
             {
                 process.Kill();
-                /*
-                var p = Process.Start(new ProcessStartInfo()
-                {
-                    FileName = "taskkill",
-                    Arguments = $"/PID {process.Id} /T",    
-                    WindowStyle = ProcessWindowStyle.Hidden
-
-                });
-                p.WaitForExit();
-                */
             }
         }
 
