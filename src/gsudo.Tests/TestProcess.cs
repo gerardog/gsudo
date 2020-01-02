@@ -9,22 +9,19 @@ namespace gsudo.Tests
     {
         public Process Process { get; private set; }
         public int ExitCode => Process.ExitCode;
-
-        Stream InputStrem = null;
-        string _StdErrFileName;
-        string _StdOutFileName;
+        string StdOut = null;
+        string StdErr = null;
 
         public TestProcess(string exename, string arguments)
         {
-            _StdErrFileName = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
-            _StdOutFileName = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".txt");
-
             this.Process = new Process();
             this.Process.StartInfo = new ProcessStartInfo()
             {
                 FileName = exename,
-                Arguments = $"{arguments} 1> \"{_StdOutFileName}\" 2> \"{_StdErrFileName}\"",
+                Arguments = arguments,
                 RedirectStandardInput = true,
+                RedirectStandardError = true,
+                RedirectStandardOutput = true,
                 UseShellExecute = false,
                 WindowStyle = ProcessWindowStyle.Minimized, 
                 CreateNoWindow=false
@@ -39,13 +36,14 @@ namespace gsudo.Tests
             Process.StandardInput.Write(input);
         }
 
-        public string GetStdOut() => File.Exists(_StdOutFileName) ? File.ReadAllText(_StdOutFileName) : string.Empty;
-        public string GetStdErr() => File.Exists(_StdErrFileName) ? File.ReadAllText(_StdErrFileName) : string.Empty;
+        public string GetStdOut() => StdOut ?? (StdOut = Process.StandardOutput.ReadToEnd());
+        public string GetStdErr() => StdErr ?? (StdErr = Process.StandardError.ReadToEnd());
 
         public void WaitForExit(int waitMilliseconds = 10000)
         {
             if (!Process.WaitForExit(waitMilliseconds))
             {
+                Process.Kill();
                 Assert.Fail("Process still active!");
             }
             Debug.WriteLine($"Process Std Output:\n{GetStdOut()}");

@@ -23,7 +23,8 @@ namespace gsudo.Helpers
                         { parentProcess.MainModule.FileName };
                 else
                     return new string[] // Escape " => ""
-                        { parentProcess.MainModule.FileName , 
+                        { parentProcess.MainModule.FileName ,
+                            "-NoProfile",
                             //$"\"{ String.Join(" ", args.Select(arg => arg.Replace("\"","\"\""))) }\""
                             String.Join(" ", args)
                         };
@@ -42,7 +43,8 @@ namespace gsudo.Helpers
                                 { grandParentProcess.MainModule.FileName };
                         else
                             return new string[] // Escape " => `"
-                                { grandParentProcess.MainModule.FileName , 
+                                { grandParentProcess.MainModule.FileName ,
+                                    "-NoProfile",
                                     //$"\"{ String.Join(" ", args.Select(arg => arg.Replace("\"","'\""))) }\""
                                     String.Join(" ", args)
                                 };

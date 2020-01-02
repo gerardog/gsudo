@@ -102,6 +102,8 @@ namespace gsudo.Helpers
         {
             try
             {
+                if (Environment.GetEnvironmentVariable("GSUDO-TESTMODE-NOELEVATE") == "1") return false; // special mode for unit tests
+
                 WindowsIdentity identity = WindowsIdentity.GetCurrent();
                 WindowsPrincipal principal = new WindowsPrincipal(identity);
                 return principal.IsInRole(WindowsBuiltInRole.Administrator);
