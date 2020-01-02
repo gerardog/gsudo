@@ -45,7 +45,7 @@ namespace gsudo.PseudoConsole
 
         public void Dispose()
         {
-            ClosePseudoConsole(Handle);
+            _ = ClosePseudoConsole(Handle);
         }
     }
 }

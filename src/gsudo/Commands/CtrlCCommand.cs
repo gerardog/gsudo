@@ -1,5 +1,4 @@
 ﻿using System.Threading.Tasks;
-using System.Threading;
 using static gsudo.Native.ConsoleApi;
 
 namespace gsudo.Commands
@@ -8,11 +7,7 @@ namespace gsudo.Commands
     {
         public int pid { get; set; }
 
-        Timer ShutdownTimer;
-        void EnableTimer() => ShutdownTimer.Change((int)GlobalSettings.CredentialsCacheDuration.Value.TotalMilliseconds, Timeout.Infinite);
-        void DisableTimer() => ShutdownTimer.Change(Timeout.Infinite, Timeout.Infinite);
-
-        public async Task<int> Execute()
+        public Task<int> Execute()
         {            
             FreeConsole();
 
@@ -23,10 +18,10 @@ namespace gsudo.Commands
             }
             else
             {
-                return Constants.GSUDO_ERROR_EXITCODE;
+                return Task.FromResult(Constants.GSUDO_ERROR_EXITCODE);
             }
 
-            return 0;
+            return Task.FromResult(0);
         }
     }
 }

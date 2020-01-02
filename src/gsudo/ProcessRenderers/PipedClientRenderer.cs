@@ -40,7 +40,6 @@ namespace gsudo.ProcessRenderers
                 var t3 = new StreamReader(_connection.ControlStream, GlobalSettings.Encoding)
                     .ConsumeOutput((s) => HandleControlData(s));
 
-                int i = 0;
                 while (_connection.IsAlive)
                 {
                     await Task.Delay(10).ConfigureAwait(false);
@@ -91,11 +90,11 @@ namespace gsudo.ProcessRenderers
             if (++consecutiveCancelKeys > 2)
             {
                 Logger.Instance.Log("Press CTRL-C again to stop gsudo", LogLevel.Warning);
-                _connection.ControlStream.WriteAsync(Constants.TOKEN_KEY_CTRLBREAK); // .GetAwaiter().GetResult();
+                _ = _connection.ControlStream.WriteAsync(Constants.TOKEN_KEY_CTRLBREAK); // .GetAwaiter().GetResult();
             }
             else
             {
-                _connection.ControlStream.WriteAsync(Constants.TOKEN_KEY_CTRLC); //.GetAwaiter().GetResult();
+                _ = _connection.ControlStream.WriteAsync(Constants.TOKEN_KEY_CTRLC); //.GetAwaiter().GetResult();
             }
         }
 
@@ -158,7 +157,7 @@ namespace gsudo.ProcessRenderers
                 if (CurrentMode == Mode.Focus)
                 {
                     var hwnd = (IntPtr)int.Parse(token, CultureInfo.InvariantCulture);
-                    Logger.Instance.Log($"SetForegroundWindow({hwnd}) returned {ProcessFactory.SetForegroundWindow(hwnd)}", LogLevel.Debug);
+                    Logger.Instance.Log($"SetForegroundWindow({hwnd}) returned {Native.WindowApi.SetForegroundWindow(hwnd)}", LogLevel.Debug);
                     continue;
                 }
                 if (CurrentMode == Mode.Error)

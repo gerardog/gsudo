@@ -1,4 +1,5 @@
 ﻿using gsudo.Commands;
+using gsudo.Native;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -9,55 +10,30 @@ using System.Runtime.InteropServices;
 
 namespace gsudo.Helpers
 {
-    public class ArgumentsHelper
+    public static class ArgumentsHelper
     {
         internal static string[] AugmentCommand(string[] args)
         {
+            string currentShellExeName;
+            Shell currentShell = ShellHelper.DetectInvokingShell(out currentShellExeName);
+
             // Is our current shell Powershell ? (Powershell.exe -calls-> gsudo)
-            var parentProcess = Process.GetCurrentProcess().ParentProcess();
-            var parentExeName = Path.GetFileName(parentProcess.MainModule.FileName).ToUpperInvariant();
-            if (parentExeName == "POWERSHELL.EXE")
+            if (currentShell.In(Shell.PowerShell, Shell.PowerShellCore))
             {
                 if (args.Length == 0)
                     return new string[]
-                        { parentProcess.MainModule.FileName };
+                        { currentShellExeName };
                 else
-                    return new string[] // Escape " => ""
-                        { parentProcess.MainModule.FileName ,
+                    return new string[] 
+                        { currentShellExeName ,
                             "-NoProfile",
-                            //$"\"{ String.Join(" ", args.Select(arg => arg.Replace("\"","\"\""))) }\""
                             String.Join(" ", args)
                         };
             }
-            else
-            {
-                // Is our current shell Powershell Core? (Pwsh.exe -calls-> dotnet -calls-> gsudo)
-                var grandParentProcess = parentProcess.ParentProcess();
-                if (grandParentProcess != null)
-                {
-                    var grandParentExeName = Path.GetFileName(grandParentProcess.MainModule.FileName).ToUpperInvariant();
-                    if (grandParentExeName == "PWSH.EXE")
-                    {
-                        if (args.Length == 0)
-                            return new string[]
-                                { grandParentProcess.MainModule.FileName };
-                        else
-                            return new string[] // Escape " => `"
-                                { grandParentProcess.MainModule.FileName ,
-                                    "-NoProfile",
-                                    //$"\"{ String.Join(" ", args.Select(arg => arg.Replace("\"","'\""))) }\""
-                                    String.Join(" ", args)
-                                };
-                    }
-                }
-            }
-
+            
             // Not Powershell, or Powershell Core, assume CMD.
             if (args.Length == 0)
             {
-                // If zero args specified, elevate CMD.
-
-                // Default, our current shell is CMD.
                 return new string[]
                     { Environment.GetEnvironmentVariable("COMSPEC"), "/k" };
             }
@@ -105,7 +81,6 @@ namespace gsudo.Helpers
                 results.Add(args.Substring(pushed, curr - pushed));
             return results.ToArray();
         }
-
 
         internal static int? ParseCommonSettings(ref string[] args)
         {
@@ -216,7 +191,7 @@ namespace gsudo.Helpers
 
         internal static string GetRealCommandLine()
         {
-            System.IntPtr ptr = GetCommandLine();
+            System.IntPtr ptr = ConsoleApi.GetCommandLine();
             string commandLine = Marshal.PtrToStringAuto(ptr);
             
             if (commandLine[0] == '"')
@@ -237,11 +212,5 @@ namespace gsudo.Helpers
             else
                 return v;
         }
-
-
-
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
-        private static extern System.IntPtr GetCommandLine();
-
     }
 }

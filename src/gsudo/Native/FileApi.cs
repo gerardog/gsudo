@@ -5,6 +5,7 @@ using System.Text;
 
 namespace gsudo.Native
 {
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1060:Move pinvokes to native methods class", Justification = "Done")]
     static class FileApi
     {
         internal static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
@@ -12,8 +13,8 @@ namespace gsudo.Native
         internal const uint FILE_READ_EA = 0x0008;
         internal const uint FILE_FLAG_BACKUP_SEMANTICS = 0x2000000;
 
-        [DllImport("Kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        internal static extern uint GetFinalPathNameByHandle(IntPtr hFile, [MarshalAs(UnmanagedType.LPTStr)] StringBuilder lpszFilePath, uint cchFilePath, uint dwFlags);
+        [DllImport("Kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        internal static extern uint GetFinalPathNameByHandle(IntPtr hFile, StringBuilder lpszFilePath, uint cchFilePath, uint dwFlags);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -21,7 +22,7 @@ namespace gsudo.Native
 
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         internal static extern IntPtr CreateFile(
-                [MarshalAs(UnmanagedType.LPTStr)] string filename,
+                [MarshalAs(UnmanagedType.LPWStr)] string filename,
                 [MarshalAs(UnmanagedType.U4)] uint access,
                 [MarshalAs(UnmanagedType.U4)] FileShare share,
                 IntPtr securityAttributes, // optional SECURITY_ATTRIBUTES struct or IntPtr.Zero
@@ -30,7 +31,7 @@ namespace gsudo.Native
                 IntPtr templateFile);
 
         #region IsWindowsApp Win32 Api
-        [DllImport("shell32.dll", CharSet = CharSet.Auto)]
+        [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
         internal static extern IntPtr SHGetFileInfo(string pszPath, uint dwFileAttributes, ref SHFILEINFO psfi, uint cbFileInfo, uint uFlags);
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]

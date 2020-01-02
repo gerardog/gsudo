@@ -31,8 +31,6 @@ namespace gsudo.ProcessHosts
                 var t3 = new StreamReader(connection.DataStream, GlobalSettings.Encoding).ConsumeOutput((s) => WriteToProcessStdIn(s, process));
                 var t4 = new StreamReader(connection.ControlStream, GlobalSettings.Encoding).ConsumeOutput((s) => HandleControl(s, process));
 
-                int i = 0;
-
                 WaitHandle.WaitAny(new WaitHandle[] { process.GetWaitHandle(), connection.DisconnectedWaitHandle });
 
                 if (process.HasExited && connection.IsAlive)

@@ -8,3 +8,15 @@ dotnet_diagnostic.CA2000.severity = none
 
 # CA1031: Do not catch general exception types
 dotnet_diagnostic.CA1031.severity = none
+
+# IDE0008: Use explicit type
+csharp_style_var_for_built_in_types = false:silent
+
+# IDE0008: Use explicit type
+csharp_style_var_elsewhere = false:silent
+
+# IDE0008: Use explicit type
+csharp_style_var_when_type_is_apparent = false:silent
+
+# CA1062: Validate arguments of public methods
+dotnet_diagnostic.CA1062.severity = none

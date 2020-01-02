@@ -39,7 +39,6 @@ namespace gsudo.ProcessRenderers
                 var t2 = new StreamReader(_connection.ControlStream, GlobalSettings.Encoding)
                     .ConsumeOutput((s) => HandleControlData(s));
 
-                int i = 0;
                 while (_connection.IsAlive)
                 {
                     try
@@ -49,7 +48,7 @@ namespace gsudo.ProcessRenderers
                             consecutiveCancelKeys = 0;
                             // send input character-by-character to the pipe
                             var key = Console.ReadKey(intercept: true);
-                            byte[] sequence = TerminalHelper.GetSequenceFromConsoleKey(key, GlobalSettings.Debug && _elevationRequest.FileName.EndsWith("KeyPressTester.exe"));
+                            byte[] sequence = TerminalHelper.GetSequenceFromConsoleKey(key, GlobalSettings.Debug && _elevationRequest.FileName.EndsWith("KeyPressTester.exe", StringComparison.OrdinalIgnoreCase));
 
                             _connection.DataStream.Write(sequence, 0, sequence.Length);
                         }
@@ -147,7 +146,7 @@ namespace gsudo.ProcessRenderers
         enum Mode { Normal, Focus, Error, ExitCode };
         Mode CurrentMode = Mode.Normal;
 
-        private async Task HandleControlData(string s)
+        private Task HandleControlData(string s)
         {
             Action<Mode> Toggle = (m) => CurrentMode = CurrentMode == Mode.Normal ? m : Mode.Normal;
 
@@ -182,7 +181,7 @@ namespace gsudo.ProcessRenderers
                 Console.Write(token);
             }
 
-            return;
+            return Task.CompletedTask;
         }
 
         private async Task IncomingKey(string s, NamedPipeClientStream pipe)

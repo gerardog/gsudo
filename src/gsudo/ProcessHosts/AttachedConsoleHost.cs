@@ -14,11 +14,9 @@ namespace gsudo.ProcessHosts
             var exitCode = 0;
             try
             {
-
                 Native.ConsoleApi.FreeConsole();
                 uint pid = (uint)elevationRequest.ConsoleProcessId;
-                const uint ATTACH_PARENT_PROCESS = 0x0ffffffff;  // default value if not specifing a process ID
-
+                
                 if (Native.ConsoleApi.AttachConsole(pid))
                 {
                     Native.ConsoleApi.SetConsoleCtrlHandler(HandleConsoleCancelKeyPress, true);
@@ -36,7 +34,7 @@ namespace gsudo.ProcessHosts
                     }
                     catch (Exception ex)
                     {
-                        await connection.ControlStream.WriteAsync($"{Constants.TOKEN_ERROR}Server Error:{ex.ToString()}\r\n{Constants.TOKEN_ERROR}");
+                        await connection.ControlStream.WriteAsync($"{Constants.TOKEN_ERROR}Server Error:{ex.ToString()}\r\n{Constants.TOKEN_ERROR}").ConfigureAwait(false);
                         exitCode = Constants.GSUDO_ERROR_EXITCODE;
                     }
                 }
@@ -56,7 +54,7 @@ namespace gsudo.ProcessHosts
             {
                 Native.ConsoleApi.SetConsoleCtrlHandler(HandleConsoleCancelKeyPress, false);
                 Native.ConsoleApi.FreeConsole();
-                await connection.FlushAndCloseAll();
+                await connection.FlushAndCloseAll().ConfigureAwait(false);
             }
         }
 

@@ -146,11 +146,10 @@ namespace gsudo.Commands
 
                     await WriteElevationRequest(elevationRequest, connection).ConfigureAwait(false);
 
-                    await connection.ControlStream.FlushAsync().ConfigureAwait(false);
                     ConnectionKeepAliveThread.Start(connection);
 
-                    var p = GetRenderer(connection, elevationRequest);
-                    var exitcode = await p.Start().ConfigureAwait(false);
+                    var renderer = GetRenderer(connection, elevationRequest);
+                    var exitcode = await renderer.Start().ConfigureAwait(false);
                     return exitcode;
                 }
                 finally
@@ -185,6 +184,7 @@ namespace gsudo.Commands
 
             await connection.ControlStream.WriteAsync(lengthArray, 0, sizeof(int)).ConfigureAwait(false);
             await connection.ControlStream.WriteAsync(ms.ToArray(), 0, (int)ms.Length).ConfigureAwait(false);
+            await connection.ControlStream.FlushAsync().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -205,17 +205,13 @@ namespace gsudo.Commands
 
             return ElevationRequest.ConsoleMode.Attached;
 
-            if (TerminalHelper.TerminalHasBuiltInVTSupport())
-            {
-                // we where called from a ConEmu console which has a working 
-                // full VT terminal with no bugs.
-                return ElevationRequest.ConsoleMode.VT;
-            }
-
-            return ElevationRequest.ConsoleMode.Raw;
+            // if (TerminalHelper.TerminalHasBuiltInVTSupport()) return ElevationRequest.ConsoleMode.VT;
+            // else return ElevationRequest.ConsoleMode.Raw;
         }
 
+#pragma warning disable IDE0060 // Remove unused parameter (reserved for future use)
         private IRpcClient GetClient(ElevationRequest elevationRequest)
+#pragma warning restore IDE0060 // Remove unused parameter
         {
             // future Tcp implementations should be plugged here.
             return new NamedPipeClient();
