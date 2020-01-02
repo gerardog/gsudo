@@ -23,7 +23,7 @@ scoop install gsudo
 [Chocolatey](https://chocolatey.org/install) users:
 
 ``` bash
-choco install gsudo --version=0.4.1
+choco install gsudo --version=0.5
 ```
 
 Manual installation:
