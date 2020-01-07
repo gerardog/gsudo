@@ -86,7 +86,7 @@ namespace gsudo.Helpers
 
                 // set user the focus to the window, if there is one.
                 if (process.MainWindowHandle != IntPtr.Zero)
-                    WindowApi.SetForegroundWindow(process.MainWindowHandle);
+                    _ = WindowApi.SetForegroundWindow(process.MainWindowHandle);
             }
 
             return process;
