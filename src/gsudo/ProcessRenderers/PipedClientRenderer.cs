@@ -52,7 +52,6 @@ namespace gsudo.ProcessRenderers
                 }
                 else if (exitCode.HasValue)
                 {
-                    Logger.Instance.Log($"Elevated process exited with code {exitCode}", exitCode.Value == 0 ? LogLevel.Debug : LogLevel.Info);
                     return exitCode.Value;
                 }
                 else if (expectedClose)

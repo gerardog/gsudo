@@ -193,7 +193,8 @@ namespace gsudo.Helpers
         {
             System.IntPtr ptr = ConsoleApi.GetCommandLine();
             string commandLine = Marshal.PtrToStringAuto(ptr);
-            
+            Logger.Instance.Log($"Command Line: {commandLine}", LogLevel.Debug);
+
             if (commandLine[0] == '"')
                 return commandLine.Substring(commandLine.IndexOf('"', 1) + 1).TrimStart(' ');
             else if (commandLine.IndexOf(' ', 1) >= 0)

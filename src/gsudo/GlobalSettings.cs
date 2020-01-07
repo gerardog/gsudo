@@ -7,8 +7,8 @@ namespace gsudo
     class GlobalSettings
     {
         public static RegistrySetting<TimeSpan> CredentialsCacheDuration { get; set; } = new RegistrySetting<TimeSpan>("CredentialsCacheDuration", TimeSpan.FromSeconds(300), TimeSpan.Parse);
-        public static RegistrySetting<string> Prompt { get; set; } = new RegistrySetting<string>("Prompt", "$P# ", (s) => s);
-        public static RegistrySetting<string> VTPrompt { get; set; } = new RegistrySetting<string>("VTPrompt", "$p$e[1;31;40m# $e[0;37;40m", (s) => s);
+        public static RegistrySetting<string> RawPrompt { get; set; } = new RegistrySetting<string>("RawPrompt", "$P# ", (s) => s);
+        public static RegistrySetting<string> Prompt { get; set; } = new RegistrySetting<string>("Prompt", "$p$e[1;31;40m# $e[0;37;40m", (s) => s);
         public static int BufferSize { get; set; } = 1024;
         public static RegistrySetting<LogLevel> LogLevel { get; set; } = new RegistrySetting<LogLevel>("LogLevel", gsudo.LogLevel.Info, (s) => (LogLevel)Enum.Parse(typeof(LogLevel), s, true));
 
@@ -24,8 +24,8 @@ namespace gsudo
             .Add(
                 CredentialsCacheDuration,
                 LogLevel,
-                VTPrompt,
                 Prompt,
+                RawPrompt,
                 ForceRawConsole,
                 ForceVTConsole);
     }

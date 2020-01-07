@@ -9,7 +9,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 namespace gsudo.Commands
 {
-    class ServiceCommand : ICommand
+    class ServiceCommand : ICommand, IDisposable
     {
         public int allowedPid { get; set; }
 
@@ -48,10 +48,10 @@ namespace gsudo.Commands
                 var request = await ReadElevationRequest(connection.ControlStream).ConfigureAwait(false);
                 IProcessHost applicationHost = CreateProcessHost(request);
 
-                if (request.Mode == ElevationRequest.ConsoleMode.Raw)
-                    Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.Prompt);
+                if (request.Mode == ElevationRequest.ConsoleMode.Raw && !request.NewWindow)
+                    Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.RawPrompt);
                 else
-                    Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.VTPrompt);
+                    Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.Prompt);
 
                 await applicationHost.Start(connection, request).ConfigureAwait(false);
             }
@@ -64,10 +64,8 @@ namespace gsudo.Commands
 
         private static IProcessHost CreateProcessHost(ElevationRequest request)
         {
-            bool isWindowsApp = ProcessFactory.IsWindowsApp(request.FileName);
-
-            if (isWindowsApp || request.NewWindow && !request.ForceWait)
-                return new ElevateOnlyHostProcess();
+            if (request.NewWindow)
+                return new DetachedHostProcess();
             if (request.Mode == ElevationRequest.ConsoleMode.Attached)
                 return new AttachedConsoleHost();
             else if (request.Mode == ElevationRequest.ConsoleMode.VT)
@@ -81,7 +79,7 @@ namespace gsudo.Commands
             return new NamedPipeServer(allowedPid);
         }
 
-        private async Task<ElevationRequest> ReadElevationRequest(Stream dataPipe)
+        private async static Task<ElevationRequest> ReadElevationRequest(Stream dataPipe)
         {
             byte[] dataSize = new byte[sizeof(int)];
             await dataPipe.ReadAsync(dataSize, 0, sizeof(int)).ConfigureAwait(false);
@@ -95,9 +93,13 @@ namespace gsudo.Commands
             Logger.Instance.Log($"ElevationRequest length {dataSizeInt}", LogLevel.Debug);
 
             return (ElevationRequest) new BinaryFormatter()
-//            { TypeFormat = System.Runtime.Serialization.Formatters.FormatterTypeStyle.TypesAlways, Binder = new MySerializationBinder() }
             .Deserialize(new MemoryStream(inBuffer));
             
+        }
+
+        public void Dispose()
+        {
+            ShutdownTimer?.Dispose();
         }
     }
 }

@@ -33,7 +33,7 @@ namespace gsudo.Commands
                 FileName = exeName,
                 Arguments = GetArguments(),
                 StartFolder = Environment.CurrentDirectory,
-                NewWindow = GlobalSettings.NewWindow,
+                NewWindow = GlobalSettings.NewWindow || isWindowsApp,
                 ForceWait = GlobalSettings.Wait,
                 Mode = GetConsoleMode(isWindowsApp),
                 ConsoleProcessId = currentProcess.Id,
@@ -51,7 +51,7 @@ namespace gsudo.Commands
                     elevationRequest.ConsoleWidth--; // weird ConEmu/Cmder fix
             }
 
-            if (ProcessExtensions.IsAdministrator() && !GlobalSettings.NewWindow)
+            if (ProcessExtensions.IsAdministrator())
             {
                 if (emptyArgs)
                 {
@@ -63,23 +63,25 @@ namespace gsudo.Commands
 
                 // No need to escalate. Run in-process
 
-                if (elevationRequest.Mode == ElevationRequest.ConsoleMode.Raw)
+                if (elevationRequest.Mode == ElevationRequest.ConsoleMode.Raw && !elevationRequest.NewWindow)
                 {
-                    Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.Prompt.Value);
+                    Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.RawPrompt.Value);
                 }
                 else
                 {
-                    Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.VTPrompt.Value);
+                    Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.Prompt.Value);
                 }
 
                 if (GlobalSettings.NewWindow)
                 {
                     using (Process process = ProcessFactory.StartDetached(exeName, GetArguments(), Environment.CurrentDirectory, false))
                     {
-                        if (GlobalSettings.Wait)
+                        if (elevationRequest.ForceWait)
                         {
                             process.WaitForExit();
-                            return process.ExitCode;
+                            var exitCode = process.ExitCode;
+                            Logger.Instance.Log($"Elevated process exited with code {exitCode}", exitCode == 0 ? LogLevel.Debug : LogLevel.Info);
+                            return exitCode;
                         }
                         return 0;
                     }
@@ -88,19 +90,14 @@ namespace gsudo.Commands
                 {
                     using (Process process = ProcessFactory.StartInProcessAtached(exeName, GetArguments()))
                     {
-                        if (!isWindowsApp || GlobalSettings.Wait)
-                        {
-                            process.WaitForExit();
-                            return process.ExitCode;
-                        }
-                        else
-                        {
-                            return 0;
-                        }
+                        process.WaitForExit();
+                        var exitCode = process.ExitCode;
+                        Logger.Instance.Log($"Elevated process exited with code {exitCode}", exitCode == 0 ? LogLevel.Debug : LogLevel.Info);
+                        return exitCode;
                     }
                 }
             }
-            else // IsAdministrator() == false, or build in Debug Mode
+            else // IsAdministrator() == false
             {
                 Logger.Instance.Log($"Using Console mode {elevationRequest.Mode}", LogLevel.Debug);
                 var callingPid = GetCallingPid(currentProcess);
@@ -149,8 +146,12 @@ namespace gsudo.Commands
                     ConnectionKeepAliveThread.Start(connection);
 
                     var renderer = GetRenderer(connection, elevationRequest);
-                    var exitcode = await renderer.Start().ConfigureAwait(false);
-                    return exitcode;
+                    var exitCode = await renderer.Start().ConfigureAwait(false);
+                    
+                    if (!(elevationRequest.NewWindow && !elevationRequest.ForceWait))
+                        Logger.Instance.Log($"Elevated process exited with code {exitCode}", exitCode == 0 ? LogLevel.Debug : LogLevel.Info);
+
+                    return exitCode;
                 }
                 finally
                 {
@@ -209,9 +210,9 @@ namespace gsudo.Commands
             // else return ElevationRequest.ConsoleMode.Raw;
         }
 
-#pragma warning disable IDE0060 // Remove unused parameter (reserved for future use)
+#pragma warning disable IDE0060,CA1801 // Remove unused parameter (reserved for future use)
         private IRpcClient GetClient(ElevationRequest elevationRequest)
-#pragma warning restore IDE0060 // Remove unused parameter
+#pragma warning restore IDE0060,CA1801 // Remove unused parameter
         {
             // future Tcp implementations should be plugged here.
             return new NamedPipeClient();

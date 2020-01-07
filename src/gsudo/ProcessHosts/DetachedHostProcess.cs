@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace gsudo.ProcessHosts
 {
-    class ElevateOnlyHostProcess : IProcessHost
+    class DetachedHostProcess : IProcessHost
     {
         private Process process;
 
