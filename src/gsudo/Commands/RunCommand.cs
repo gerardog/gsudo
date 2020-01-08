@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Security.Principal;
 using System.Threading.Tasks;
 
 namespace gsudo.Commands
@@ -104,6 +105,7 @@ namespace gsudo.Commands
             {
                 Logger.Instance.Log($"Using Console mode {elevationRequest.Mode}", LogLevel.Debug);
                 var callingPid = GetCallingPid(currentProcess);
+                var callingSid = WindowsIdentity.GetCurrent().User.Value;
                 Logger.Instance.Log($"Caller ProcessId is {callingPid}", LogLevel.Debug);
 
                 var cmd = CommandToRun.FirstOrDefault();
@@ -130,7 +132,7 @@ namespace gsudo.Commands
                         Logger.Instance.Log("Elevating process...", LogLevel.Debug);
 
                         var dbg = GlobalSettings.Debug ? "--debug " : string.Empty;
-                        using (var process = ProcessFactory.StartElevatedDetached(currentProcess.MainModule.FileName, $"{dbg}gsudoservice {callingPid} {GlobalSettings.LogLevel}", !GlobalSettings.Debug))
+                        using (var process = ProcessFactory.StartElevatedDetached(currentProcess.MainModule.FileName, $"{dbg}gsudoservice {callingPid} {callingSid} {GlobalSettings.LogLevel}", !GlobalSettings.Debug))
                         {
                             Logger.Instance.Log("Elevated instance started.", LogLevel.Debug);
                         }
@@ -157,7 +159,6 @@ namespace gsudo.Commands
                     connection?.Dispose();
                 }
             }
-
         }
 
         private static int GetCallingPid(Process currentProcess)

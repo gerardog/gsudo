@@ -12,6 +12,7 @@ namespace gsudo.Commands
     class ServiceCommand : ICommand
     {
         public int allowedPid { get; set; }
+        public string allowedSid { get; set; }
 
         public LogLevel? LogLvl { get; set; }
 
@@ -78,7 +79,7 @@ namespace gsudo.Commands
 
         private IRpcServer CreateServer()
         {
-            return new NamedPipeServer(allowedPid);
+            return new NamedPipeServer(allowedPid, allowedSid);
         }
 
         private async Task<ElevationRequest> ReadElevationRequest(Stream dataPipe)

@@ -13,6 +13,7 @@ namespace gsudo.Rpc
     class NamedPipeServer : IRpcServer
     {
         private readonly int _allowedPid;
+        private readonly string _allowedSid;
         CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
         public event EventHandler<Connection> ConnectionAccepted;
@@ -20,9 +21,10 @@ namespace gsudo.Rpc
 
         const int MAX_SERVER_INSTANCES = 20;
 
-        public NamedPipeServer(int AllowedPid)
+        public NamedPipeServer(int AllowedPid, string AllowedSid)
         {
             _allowedPid = AllowedPid;
+            _allowedSid = AllowedSid;
         }
 
         public async Task Listen()
@@ -30,11 +32,11 @@ namespace gsudo.Rpc
             var ps = new PipeSecurity();
 
             ps.AddAccessRule(new PipeAccessRule(
-                WindowsIdentity.GetCurrent().User,
+                new SecurityIdentifier(_allowedSid),
                 PipeAccessRights.ReadWrite | PipeAccessRights.CreateNewInstance,
                 AccessControlType.Allow));
 
-            var pipeName = GetPipeName(_allowedPid);
+            var pipeName = GetPipeName(_allowedSid, _allowedPid);
             Logger.Instance.Log($"Using named pipe {pipeName}.", LogLevel.Debug);
 
             Logger.Instance.Log($"Access allowed only for ProcessID {_allowedPid} and childs", LogLevel.Debug);
