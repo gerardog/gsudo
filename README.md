@@ -54,7 +54,8 @@ Read or write a user setting
 
 ## Usage from PowerShell
 
-`gsudo` detects if it is invoked from a PowerShell shell and allows the following syntax to elevate PS commands.
+`gsudo` detects if it's invoked from PowerShell and allows the following syntax to elevate PS commands.
+You can pass a string literal with the command that needs to be elevated. [PowerShell Quoting Rules](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_quoting_rules) apply. Note that `gsudo` returns a string that can be captured, not powershell objects.  
 
 `PS C:\> gsudo 'powershell string command'`
 
@@ -62,13 +63,25 @@ Examples:
 
 ``` PowerShell
 
-# Escape " with ""
-gsudo 'Get-FileHash "".\My Secret.txt""'
+$file = ".\My Secret.txt"
+$algorithm = "sha256"
 
-# String values can be replaced at the string level. 
-# Variables and Objects not shared between elevated and not elevated sessions.
-gsudo "Get-FileHash "".\My Secret.txt"" -Algorithm $algorithm"
+# On strings enclosed in single quotation marks ('), escape " with \"
+$hash = gsudo '(Get-FileHash \"C:\My Secret.txt\").Hash'; $hash
+# For variable substitutions, use double-quoted strings with single-quotati	on marks inside
+$hash = gsudo "(Get-FileHash '$file' -Algorithm $algorithm).Hash"; $hash
+# or escape escape " with \""
+$hash = gsudo "(Get-FileHash \""$file\"" -Algorithm $algorithm).Hash"; $hash
+
+# Test gsudo success (optional):
+if ($LastExitCode -eq 999 ) {
+    'gsudo failed to elevate!'
+} elseif ($LastExitCode) {
+    'Command failed!'
+} else { 'Success!' }
 ```
+
+
 
 ## Demo
 
@@ -83,7 +96,7 @@ gsudo "Get-FileHash "".\My Secret.txt"" -Algorithm $algorithm"
 - <kbd>Ctrl</kbd>+<kbd>C</kbd> key press is correctly forwarded to the elevated process. (eg. cmd/powershell won't die, but ping/nslookup/batch file will.
 - Scripting: 
   - `gsudo` can be used on scripts that requires to elevate one or more commands. (the UAC popup will appear once). 
-  - Outputs and exit codes of the elevated commands can be interpreted: E.g. StdOutbound can be piped or captured (`gsudo dir | findstr /c:"bytes free" > FreeSpace.txt`) and exit codes too ('%errorlevel%)).
+  - Outputs and exit codes of the elevated commands can be interpreted: E.g. StdOutbound can be piped or captured (`gsudo dir | findstr /c:"bytes free" > FreeSpace.txt`) and exit codes too ('%errorlevel%)). If `gsudo` fails to elevate, the exit code will be 999.
   - If `gsudo` is invoked (with params) from an already elevated console it will just run the commands. So if you invoke a script that uses `gsudo` from an already elevated console, it will also work. The UAC popup would not appear.
 
 ## Known issues
