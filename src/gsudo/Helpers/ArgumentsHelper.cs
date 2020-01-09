@@ -168,14 +168,15 @@ namespace gsudo.Helpers
             {
                 bool hasLoglevel = false;
                 LogLevel logLevel = LogLevel.Info;
-                if (args.Length>2)
+                if (args.Length>3)
                 {
-                    hasLoglevel = Enum.TryParse<LogLevel>(args[2], true, out logLevel);
+                    hasLoglevel = Enum.TryParse<LogLevel>(args[3], true, out logLevel);
                 }
 
                 return new ServiceCommand()
                 {
                     allowedPid = int.Parse(args[1], CultureInfo.InvariantCulture),
+                    allowedSid = args[2],
                     LogLvl = hasLoglevel ? logLevel : (LogLevel?)null,
                 };
             }

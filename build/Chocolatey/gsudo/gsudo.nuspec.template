@@ -14,7 +14,7 @@
     <!-- Note that unstable versions like 0.0.1 can be considered a released version, but it's possible that one can release a 0.0.1-beta before you release a 0.0.1 version. If the version number is final, that is considered a released version and not a prerelease. -->
     <version>#VERSION#</version>
     <!--PackageSourceUrl - Where is this Chocolatey package located (think GitHub)? packageSourceUrl is highly recommended for the community feed-->
-    <packageSourceUrl>http://github.com/gerardog/gsudo</packageSourceUrl>
+    <packageSourceUrl>https://github.com/gerardog/gsudo/tree/master/src/Scripts/Chocolatey</packageSourceUrl>
     <!-- owners is a poor name for maintainers of the package. It sticks around by this name for compatibility reasons. It basically means you. -->
     <owners>Gerardo Grignoli</owners>
     <!-- ============================== -->
@@ -34,13 +34,15 @@
     <docsUrl>https://github.com/gerardog/gsudo/blob/master/README.md</docsUrl>
     <!--<mailingListUrl></mailingListUrl>-->
     <bugTrackerUrl>https://github.com/gerardog/gsudo/issues</bugTrackerUrl>
-    <tags>gsudo portable sudo for windows</tags>
+    <tags>gsudo portable sudo for windows elevate elevated user command runas</tags>
     <summary>gsudo is a `sudo` for Windows with a similar user-experience as *nix sudo.</summary>
     <description>
 `gsudo` allows to run commands with elevated permissions within the current console. 
 It is a `sudo` equivalent for Windows, with a similar user-experience as the original *nix sudo.
 
-Elevated commands are shown in the caller (non-elevated) console. This allows to run elevated commands without switching to another console.
+Elevated commands are shown in the caller (non-elevated) console, no switching to another console required.
+
+http://github.com/gerardog/gsudo
 
 ### Usage 
 
@@ -51,9 +53,6 @@ Examples
 
 ```gsudo notepad c:\Windows\System32\drivers\etc\hosts```
 ```gsudo cmd```
-
-
-[Source](https://github.com/gerardog/gsudo)
 
 	</description>
     <!-- <releaseNotes>__REPLACE_OR_REMOVE__MarkDown_Okay</releaseNotes> -->
