@@ -138,7 +138,7 @@ namespace gsudo.Rpc
 
         public static string GetPipeName(string user, int processId)
         {
-            return $"gsudo_{user}_{processId}";
+            return $"ProtectedPrefix\\Administrators\\gsudo_{user}_{processId}";
         }
 
         public void Close()
