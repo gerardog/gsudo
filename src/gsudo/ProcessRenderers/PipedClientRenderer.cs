@@ -164,7 +164,7 @@ namespace gsudo.ProcessRenderers
                     lock(this)
                     {
                         Console.ForegroundColor = ConsoleColor.Red;
-                        Console.Write(token);
+                        Console.Error.Write(token);
                         Console.ResetColor();
                     }
                     continue;
