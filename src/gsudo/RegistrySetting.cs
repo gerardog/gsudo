@@ -12,7 +12,7 @@ namespace gsudo
         }
         public string Name { get; set; }
         public abstract void Save(string newValue);
-
+        public abstract void Reset();
         public abstract object GetStringValue();
     }
 
@@ -69,6 +69,15 @@ namespace gsudo
             }
         }
 
+        public override void Reset()
+        {
+            Value = defaultValue;
+            using (var subkey = Registry.CurrentUser.OpenSubKey(REGKEY, true))
+            {
+                if (subkey.GetValue(Name) != null)
+                    subkey.DeleteValue(Name);
+            }
+        }
         public override string ToString()
         {
             return Value.ToString();

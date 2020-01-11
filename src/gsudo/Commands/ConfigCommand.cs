@@ -1,4 +1,5 @@
-﻿using System;
+﻿using gsudo.Helpers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -33,8 +34,12 @@ namespace gsudo.Commands
             
             if (value!=null && value.Any())
             {
-                // SAVE 
-                setting.Save(string.Join(" ", value.ToArray()));
+                if (value.FirstOrDefault().In("--reset"))
+                    setting.Reset(); // reset to default value
+                else if (value.Count()==1)
+                    setting.Save(ArgumentsHelper.UnQuote(value.FirstOrDefault()).Replace("\\%","%"));
+                else
+                    setting.Save(string.Join(" ", value.ToArray()));
             }
 
             // READ
