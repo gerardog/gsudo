@@ -107,40 +107,48 @@ namespace gsudo.Helpers
         {
             exe = Environment.ExpandEnvironmentVariables(exe);
 
-            if (File.Exists(exe))
+            try
             {
-                return Path.GetFullPath(exe);
-            }
 
-            if (string.IsNullOrEmpty(Path.GetDirectoryName(exe)))
-            {
-                exe = Path.GetFileName(exe);
-
-                var validExtensions = Environment.GetEnvironmentVariable("PATHEXT", EnvironmentVariableTarget.Process)
-                    .Split(';'); 
-
-                var possibleNames = new List<string>();
-                
-                if (Path.GetExtension(exe).In(validExtensions))
-                    possibleNames.Add(exe);
-
-                possibleNames.AddRange(validExtensions.Select((ext) => exe + ext));
-
-                var paths = new List<string>();
-                paths.Add(Environment.CurrentDirectory);
-                paths.AddRange((Environment.GetEnvironmentVariable("PATH") ?? "").Split(';'));
-
-                foreach (string test in paths)
+                if (File.Exists(exe))
                 {
-                    foreach (string file in possibleNames)
+                    return Path.GetFullPath(exe);
+                }
+
+                if (string.IsNullOrEmpty(Path.GetDirectoryName(exe)))
+                {
+                    exe = Path.GetFileName(exe);
+
+                    var validExtensions = Environment.GetEnvironmentVariable("PATHEXT", EnvironmentVariableTarget.Process)
+                        .Split(';');
+
+                    var possibleNames = new List<string>();
+
+                    if (Path.GetExtension(exe).In(validExtensions))
+                        possibleNames.Add(exe);
+
+                    possibleNames.AddRange(validExtensions.Select((ext) => exe + ext));
+
+                    var paths = new List<string>();
+                    paths.Add(Environment.CurrentDirectory);
+                    paths.AddRange((Environment.GetEnvironmentVariable("PATH") ?? "").Split(';'));
+
+                    foreach (string test in paths)
                     {
-                        string path = Path.Combine(test, file);
-                        if (!String.IsNullOrEmpty(path) && File.Exists(path))
-                            return Path.GetFullPath(path);
+                        foreach (string file in possibleNames)
+                        {
+                            string path = Path.Combine(test, file);
+                            if (!String.IsNullOrEmpty(path) && File.Exists(path))
+                                return Path.GetFullPath(path);
+                        }
                     }
                 }
+                return null;
             }
-            return null;
+            catch
+            { 
+                return null;
+            }
         }
 
         public static PseudoConsole.PseudoConsoleProcess StartPseudoConsole(string command, IntPtr attributes, IntPtr hPC, string startFolder)

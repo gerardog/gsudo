@@ -19,6 +19,8 @@ namespace gsudo
         public static bool Wait { get; internal set; }
         public static RegistrySetting<bool> ForceRawConsole { get; internal set; } = new RegistrySetting<bool>(nameof(ForceRawConsole), false, bool.Parse);
         public static RegistrySetting<bool> ForceVTConsole { get; internal set; } = new RegistrySetting<bool>(nameof(ForceVTConsole), false, bool.Parse);
+        public static RegistrySetting<bool> CopyEnvironmentVariables { get; internal set; } = new RegistrySetting<bool>(nameof(CopyEnvironmentVariables), false, bool.Parse);
+        public static RegistrySetting<bool> CopyNetworkShares { get; internal set; } = new RegistrySetting<bool>(nameof(CopyNetworkShares), false, bool.Parse);
 
         public static IDictionary<string, RegistrySetting> AllKeys => new Dictionary<string, RegistrySetting>(StringComparer.OrdinalIgnoreCase)
             .Add(
@@ -27,7 +29,9 @@ namespace gsudo
                 Prompt,
                 RawPrompt,
                 ForceRawConsole,
-                ForceVTConsole);
+                ForceVTConsole,
+                CopyEnvironmentVariables,
+                CopyNetworkShares);
     }
 
     static class Extension

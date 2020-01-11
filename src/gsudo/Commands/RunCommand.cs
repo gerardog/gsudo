@@ -1,12 +1,16 @@
 ﻿using gsudo.Helpers;
+using gsudo.Native;
 using gsudo.ProcessRenderers;
 using gsudo.Rpc;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Principal;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace gsudo.Commands
@@ -25,19 +29,25 @@ namespace gsudo.Commands
             bool emptyArgs = string.IsNullOrEmpty(CommandToRun.FirstOrDefault());
 
             CommandToRun = ArgumentsHelper.AugmentCommand(CommandToRun.ToArray());
+            bool isWindowsApp = ProcessFactory.IsWindowsApp(CommandToRun.FirstOrDefault());
+            var consoleMode = GetConsoleMode(isWindowsApp);
 
+            if (!ProcessExtensions.IsAdministrator())
+            {
+                CommandToRun = AddCopyEnvironment(CommandToRun);
+            }
             var exeName = CommandToRun.FirstOrDefault();
-            bool isWindowsApp = ProcessFactory.IsWindowsApp(exeName);
 
             var elevationRequest = new ElevationRequest()
             {
                 FileName = exeName,
                 Arguments = GetArguments(),
                 StartFolder = Environment.CurrentDirectory,
-                NewWindow = GlobalSettings.NewWindow || isWindowsApp,
+                NewWindow = GlobalSettings.NewWindow,
                 ForceWait = GlobalSettings.Wait,
-                Mode = GetConsoleMode(isWindowsApp),
+                Mode = consoleMode,
                 ConsoleProcessId = currentProcess.Id,
+                Prompt = consoleMode == ElevationRequest.ConsoleMode.Raw ? GlobalSettings.RawPrompt : GlobalSettings.Prompt 
             };
 
             Logger.Instance.Log($"Application to run: {elevationRequest.FileName}", LogLevel.Debug);
@@ -66,11 +76,13 @@ namespace gsudo.Commands
 
                 if (elevationRequest.Mode == ElevationRequest.ConsoleMode.Raw && !elevationRequest.NewWindow)
                 {
-                    Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.RawPrompt.Value);
+                    if (!string.IsNullOrEmpty(GlobalSettings.RawPrompt.Value))
+                        Environment.SetEnvironmentVariable("PROMPT", Environment.ExpandEnvironmentVariables(GlobalSettings.RawPrompt.Value));
                 }
                 else
                 {
-                    Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.Prompt.Value);
+                    if (!string.IsNullOrEmpty(GlobalSettings.Prompt.Value))
+                        Environment.SetEnvironmentVariable("PROMPT", Environment.ExpandEnvironmentVariables(GlobalSettings.Prompt.Value));
                 }
 
                 if (GlobalSettings.NewWindow)
@@ -196,7 +208,10 @@ namespace gsudo.Commands
         /// <returns></returns>
         private static ElevationRequest.ConsoleMode GetConsoleMode(bool isWindowsApp)
         {
-            if (isWindowsApp || GlobalSettings.NewWindow || Console.IsOutputRedirected)
+            if (isWindowsApp)
+                return ElevationRequest.ConsoleMode.Attached;
+
+            if (GlobalSettings.NewWindow || Console.IsOutputRedirected)
                 return ElevationRequest.ConsoleMode.Raw;
 
             if (GlobalSettings.ForceRawConsole)
@@ -235,5 +250,54 @@ namespace gsudo.Commands
             if (args.Count() <= v) return string.Empty;
             return string.Join(" ", args.Skip(v).ToArray());
         }
+
+        internal IEnumerable<string> AddCopyEnvironment(IEnumerable<string> args)
+        {
+            if (GlobalSettings.CopyEnvironmentVariables || GlobalSettings.CopyNetworkShares)
+            {
+                var silent = GlobalSettings.Debug ? string.Empty : "@"; 
+                var sb = new StringBuilder();
+                if (GlobalSettings.CopyEnvironmentVariables)
+                {
+                    foreach (DictionaryEntry envVar in Environment.GetEnvironmentVariables())
+                    {
+                        if (envVar.Key.ToString().In("prompt"))
+                            continue;
+
+                        sb.AppendLine($"{silent}SET {envVar.Key}={envVar.Value}");
+                    }
+                }
+                if (GlobalSettings.CopyNetworkShares)
+                {
+                    foreach (DriveInfo drive in DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Network && d.Name.Length==3))
+                    {
+                        var tmpSb = new StringBuilder(2048);
+                        var size = tmpSb.Capacity;
+
+                        var error = FileApi.WNetGetConnection(drive.Name.Substring(0,2), tmpSb, ref size);
+                        if (error == 0)
+                        {
+                            sb.AppendLine($"{silent}ECHO Connecting {drive.Name.Substring(0, 2)} to {tmpSb.ToString()} 1>&2");
+                            sb.AppendLine($"{silent}NET USE /D {drive.Name.Substring(0, 2)} >NUL 2>NUL");
+                            sb.AppendLine($"{silent}NET USE {drive.Name.Substring(0, 2)} {tmpSb.ToString()} 1>&2");
+                        }
+                    }
+                }
+
+                string tempBatName = Path.Combine(
+                    Environment.GetEnvironmentVariable("temp", EnvironmentVariableTarget.Machine), // use machine temp to ensure elevated user has access to temp folder
+                    $"{Guid.NewGuid()}.bat");
+
+                File.WriteAllText(tempBatName, sb.ToString());
+
+                return new string[] {
+                    Environment.GetEnvironmentVariable("COMSPEC"), 
+                    "/c" , 
+                    $"\"{tempBatName} & del /q {tempBatName} & {string.Join(" ",args)}\""
+                };
+            }
+            return args;
+        }
+
     }
 }

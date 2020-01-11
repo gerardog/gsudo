@@ -49,10 +49,8 @@ namespace gsudo.Commands
                 var request = await ReadElevationRequest(connection.ControlStream).ConfigureAwait(false);
                 IProcessHost applicationHost = CreateProcessHost(request);
 
-                if (request.Mode == ElevationRequest.ConsoleMode.Raw && !request.NewWindow)
-                    Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.RawPrompt);
-                else
-                    Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.Prompt);
+                if (!string.IsNullOrEmpty(request.Prompt))
+                    Environment.SetEnvironmentVariable("PROMPT", Environment.ExpandEnvironmentVariables(request.Prompt));
 
                 await applicationHost.Start(connection, request).ConfigureAwait(false);
             }

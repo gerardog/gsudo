@@ -6,6 +6,7 @@ namespace gsudo
     [Serializable]
     class ElevationRequest
     {
+        public string Prompt { get; set; }
         public string FileName { get; set; }
         public string Arguments { get; set; }
         public string StartFolder { get; set; }

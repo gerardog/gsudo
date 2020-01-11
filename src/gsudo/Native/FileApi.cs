@@ -77,5 +77,10 @@ namespace gsudo.Native
         public static extern bool FindClose(IntPtr hFindFile);
 
         #endregion
+
+        #region Network Drives
+        [DllImport("mpr.dll")]
+        public static extern uint WNetGetConnection(string lpLocalName, StringBuilder lpRemoteName, ref int lpnLength);
+        #endregion
     }
 }

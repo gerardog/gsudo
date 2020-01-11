@@ -29,7 +29,7 @@ namespace gsudo.Commands
             Console.WriteLine("gsudo \r\n\tRuns a shell with elevated permissions\r\n");
             Console.WriteLine("gsudo [options] {command} [arguments] \r\n\tRuns {command} with elevated permissions\r\n");
             Console.WriteLine("gsudo config\r\n\tShow current-user settings.\r\n");
-            Console.WriteLine("gsudo config {key} [value] \r\n\tRead or write a user setting\r\n");
+            Console.WriteLine("gsudo config {key} [value | --reset] \r\n\tRead or write a user setting\r\n");
             Console.WriteLine("gsudo [-h | --help]    \t Shows this help");
             Console.WriteLine("gsudo [-v | --version] \t Shows gsudo version");
             Console.WriteLine();
@@ -40,6 +40,8 @@ namespace gsudo.Commands
             Console.WriteLine(" -w | --wait       Force wait for the process to end.");
             Console.WriteLine(" --raw             Force use of a reduced terminal.");
             Console.WriteLine(" --vt              Force use of full VT100 terminal emulator (experimental).");
+            Console.WriteLine(" --copyev          Copy environment variables to the elevated process before executing.");
+            Console.WriteLine(" --copyns          Connect current network drives to the elevated user. Warning! This is verbose, affects the elevated user system-wide, and can prompt for credentials interactively.");
 
             return;
         }
