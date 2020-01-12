@@ -17,6 +17,7 @@ namespace gsudo
         private static async Task<int> Start(string[] args)
         {
             ICommand cmd = null;
+            //System.Diagnostics.Process.Start("cmd","/c timeout 20").WaitForExit();
 
             args = ArgumentsHelper.SplitArgs(ArgumentsHelper.GetRealCommandLine());
 

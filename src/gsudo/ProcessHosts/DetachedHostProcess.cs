@@ -22,7 +22,7 @@ namespace gsudo.ProcessHosts
                     .WriteAsync($"{Constants.TOKEN_FOCUS}{process.MainWindowHandle}{Constants.TOKEN_FOCUS}")
                     .ConfigureAwait(false);
 
-                if (request.ForceWait)
+                if (request.Wait)
                 {
                     process.WaitForExit();
                     exitCode = process.ExitCode;

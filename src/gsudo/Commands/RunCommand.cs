@@ -44,14 +44,13 @@ namespace gsudo.Commands
                 Arguments = GetArguments(),
                 StartFolder = Environment.CurrentDirectory,
                 NewWindow = GlobalSettings.NewWindow,
-                ForceWait = GlobalSettings.Wait,
+                Wait = (!isWindowsApp && !GlobalSettings.NewWindow) || GlobalSettings.Wait,
                 Mode = consoleMode,
                 ConsoleProcessId = currentProcess.Id,
                 Prompt = consoleMode == ElevationRequest.ConsoleMode.Raw ? GlobalSettings.RawPrompt : GlobalSettings.Prompt 
             };
 
-            Logger.Instance.Log($"Application to run: {elevationRequest.FileName}", LogLevel.Debug);
-            Logger.Instance.Log($"Arguments: {elevationRequest.Arguments}", LogLevel.Debug);
+            Logger.Instance.Log($"Command to run: {elevationRequest.FileName} {elevationRequest.Arguments}", LogLevel.Debug);
 
             if (elevationRequest.Mode == ElevationRequest.ConsoleMode.VT)
             {
@@ -89,7 +88,7 @@ namespace gsudo.Commands
                 {
                     using (Process process = ProcessFactory.StartDetached(exeName, GetArguments(), Environment.CurrentDirectory, false))
                     {
-                        if (elevationRequest.ForceWait)
+                        if (elevationRequest.Wait)
                         {
                             process.WaitForExit();
                             var exitCode = process.ExitCode;
@@ -115,7 +114,8 @@ namespace gsudo.Commands
                 Logger.Instance.Log($"Using Console mode {elevationRequest.Mode}", LogLevel.Debug);
                 var callingPid = GetCallingPid(currentProcess);
                 var callingSid = WindowsIdentity.GetCurrent().User.Value;
-                Logger.Instance.Log($"Caller ProcessId is {callingPid}", LogLevel.Debug);
+                Logger.Instance.Log($"Caller PID: {callingPid}", LogLevel.Debug);
+                Logger.Instance.Log($"Caller SID: {callingSid}", LogLevel.Debug);
 
                 var cmd = CommandToRun.FirstOrDefault();
 
@@ -138,8 +138,6 @@ namespace gsudo.Commands
                     if (connection == null) // service is not running or listening.
                     {
                         // Start elevated service instance
-                        Logger.Instance.Log("Elevating process...", LogLevel.Debug);
-
                         var dbg = GlobalSettings.Debug ? "--debug " : string.Empty;
                         using (var process = ProcessFactory.StartElevatedDetached(currentProcess.MainModule.FileName, $"{dbg}gsudoservice {callingPid} {callingSid} {GlobalSettings.LogLevel}", !GlobalSettings.Debug))
                         {
@@ -162,7 +160,7 @@ namespace gsudo.Commands
                     var renderer = GetRenderer(connection, elevationRequest);
                     var exitCode = await renderer.Start().ConfigureAwait(false);
                     
-                    if (!(elevationRequest.NewWindow && !elevationRequest.ForceWait))
+                    if (!(elevationRequest.NewWindow && !elevationRequest.Wait))
                         Logger.Instance.Log($"Elevated process exited with code {exitCode}", exitCode == 0 ? LogLevel.Debug : LogLevel.Info);
 
                     return exitCode;

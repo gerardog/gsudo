@@ -46,6 +46,7 @@ namespace gsudo.Rpc
                         // try grandfather.
                         callerProcess = callerProcess.ParentProcess();
                     }
+                    if (callerProcess == null) return null;
                 }
 
                 if (pipeName == null) return null;
@@ -83,9 +84,15 @@ namespace gsudo.Rpc
             if (lpFindFileData.cFileName.EndsWith(name, StringComparison.Ordinal)) return true;
             while (Native.FileApi.FindNextFile(ptr, out lpFindFileData))
             {
-                if (lpFindFileData.cFileName.EndsWith(name, StringComparison.Ordinal)) return true;
+                if (lpFindFileData.cFileName.EndsWith(name, StringComparison.Ordinal))
+                {
+                    Native.FileApi.FindClose(ptr);
+                    Logger.Instance.Log($"Named Pipe \"{name}\" exists = true.", LogLevel.Debug);
+                    return true;
+                }
             }
             Native.FileApi.FindClose(ptr);
+            Logger.Instance.Log($"Named Pipe \"{name}\" exists = false.", LogLevel.Debug);
             return false;
 
         }

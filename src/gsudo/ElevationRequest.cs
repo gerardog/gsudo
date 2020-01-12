@@ -11,7 +11,7 @@ namespace gsudo
         public string Arguments { get; set; }
         public string StartFolder { get; set; }
         public bool NewWindow { get; set; }
-        public bool ForceWait { get; set; }
+        public bool Wait { get; set; }
         public int ConsoleWidth { get; set; }
         public int ConsoleHeight { get; set; }
         public ConsoleMode Mode { get; set; }

@@ -63,7 +63,7 @@ namespace gsudo.Commands
 
         private static IProcessHost CreateProcessHost(ElevationRequest request)
         {
-            if (request.NewWindow)
+            if (request.NewWindow || !request.Wait)
                 return new DetachedHostProcess();
             if (request.Mode == ElevationRequest.ConsoleMode.Attached)
                 return new AttachedConsoleHost();
