@@ -12,6 +12,8 @@ namespace gsudo.Helpers
 {
     public static class ArgumentsHelper
     {
+        static readonly HashSet<string> CMD_COMMANDS = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "ASSOC", "ATTRIB", "BREAK", "BCDEDIT", "CACLS", "CALL", "CD", "CHCP", "CHDIR", "CHKDSK", "CHKNTFS", "CLS", /*"CMD",*/ "COLOR", "COMP", "COMPACT", "CONVERT", "COPY", "DATE", "DEL", "DIR", "DISKPART", "DOSKEY", "DRIVERQUERY", "ECHO", "ENDLOCAL", "ERASE", "EXIT", "FC", "FIND", "FINDSTR", "FOR", "FORMAT", "FSUTIL", "FTYPE", "GOTO", "GPRESULT", "GRAFTABL", "HELP", "ICACLS", "IF", "LABEL", "MD", "MKDIR", "MKLINK", "MODE", "MORE", "MOVE", "OPENFILES", "PATH", "PAUSE", "POPD", "PRINT", "PROMPT", "PUSHD", "RD", "RECOVER", "REM", "REN", "RENAME", "REPLACE", "RMDIR", "ROBOCOPY", "SET", "SETLOCAL", "SC", "SCHTASKS", "SHIFT", "SHUTDOWN", "SORT", "START", "SUBST", "SYSTEMINFO", "TASKLIST", "TASKKILL", "TIME", "TITLE", "TREE", "TYPE", "VER", "VERIFY", "VOL", "XCOPY", "WMIC" };
+
         internal static string[] AugmentCommand(string[] args)
         {
             string currentShellExeName;
@@ -39,8 +41,12 @@ namespace gsudo.Helpers
             }
             else
             {
-                args[0] = UnQuote(args[0]);
-                var exename = ProcessFactory.FindExecutableInPath(args[0]);
+                if (CMD_COMMANDS.Contains(args[0]))
+                    return new string[]
+                        { Environment.GetEnvironmentVariable("COMSPEC"), "/c" }
+                        .Concat(args).ToArray();
+
+                var exename = ProcessFactory.FindExecutableInPath(UnQuote(args[0]));
                 if (exename==null)
                 {
                     // add "CMD /C" prefix to commands such as MD, CD, DIR..
@@ -52,7 +58,6 @@ namespace gsudo.Helpers
                 }
                 else
                 {
-                    args[0] = exename;
                     return args;
                 }
             }
@@ -139,6 +144,16 @@ namespace gsudo.Helpers
                     GlobalSettings.ForceVTConsole.Value = true;
                     stack.Pop();
                 }
+                else if (arg.In("--copyEV"))
+                {
+                    GlobalSettings.CopyEnvironmentVariables.Value = true;
+                    stack.Pop();
+                }
+                else if (arg.In("--copyNS"))
+                {
+                    GlobalSettings.CopyNetworkShares.Value = true;
+                    stack.Pop();
+                }
                 else if (arg.StartsWith("-", StringComparison.Ordinal))
                 {
                     Logger.Instance.Log($"Invalid option: {arg}", LogLevel.Error);
@@ -194,7 +209,8 @@ namespace gsudo.Helpers
         {
             System.IntPtr ptr = ConsoleApi.GetCommandLine();
             string commandLine = Marshal.PtrToStringAuto(ptr);
-            
+            Logger.Instance.Log($"Command Line: {commandLine}", LogLevel.Debug);
+
             if (commandLine[0] == '"')
                 return commandLine.Substring(commandLine.IndexOf('"', 1) + 1).TrimStart(' ');
             else if (commandLine.IndexOf(' ', 1) >= 0)
@@ -203,12 +219,15 @@ namespace gsudo.Helpers
                 return string.Empty;
         }
 
-        static string UnQuote(string v)
+        public static string UnQuote(string v)
         {
-            if (string.IsNullOrEmpty(v)) return v;
+            if (string.IsNullOrEmpty(v)) 
+                return v;
             if (v[0] == '"' && v[v.Length - 1] == '"')
                 return v.Substring(1, v.Length - 2);
-            else if (v[0] == '"')
+            if (v[0] == '"' && v.Trim().EndsWith("\"", StringComparison.Ordinal))
+                return UnQuote(v.Trim());
+            if (v[0] == '"')
                 return v.Substring(1);
             else
                 return v;

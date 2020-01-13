@@ -23,8 +23,8 @@ namespace gsudo.Tests
                 RedirectStandardError = true,
                 RedirectStandardOutput = true,
                 UseShellExecute = false,
-                WindowStyle = ProcessWindowStyle.Minimized, 
-                CreateNoWindow=false
+                WindowStyle = ProcessWindowStyle.Minimized,
+                CreateNoWindow = false
             };
             this.Process.Start();
 
@@ -44,6 +44,9 @@ namespace gsudo.Tests
             if (!Process.WaitForExit(waitMilliseconds))
             {
                 Process.Kill();
+                Debug.WriteLine($"Process Std Output:\n{GetStdOut()}");
+                Debug.WriteLine($"Process Std Error:\n{GetStdErr()}");
+
                 Assert.Fail("Process still active!");
             }
             Debug.WriteLine($"Process Std Output:\n{GetStdOut()}");

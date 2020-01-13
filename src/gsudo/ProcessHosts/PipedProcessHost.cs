@@ -90,7 +90,7 @@ namespace gsudo.ProcessHosts
         }
 
         static readonly string[] TOKENS = new string[] { "\0", Constants.TOKEN_KEY_CTRLBREAK, Constants.TOKEN_KEY_CTRLC};
-        private async Task HandleControl(string s, Process process)
+        private Task HandleControl(string s, Process process)
         {
             var tokens = new Stack<string>(StringTokenizer.Split(s, TOKENS));
 
@@ -114,6 +114,7 @@ namespace gsudo.ProcessHosts
                     continue;
                 }
             }
+            return Task.CompletedTask;
         }
 
         private async Task WriteToErrorPipe(string s)

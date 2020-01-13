@@ -19,7 +19,7 @@ namespace gsudo.Tests
         [TestMethod]
         public void Cmd_AdminUserTest()
         {
-            Assert.IsFalse(ProcessExtensions.IsAdministrator(), "This test suite is intended to be run as a non-elevated user.");
+            Assert.IsFalse(ProcessExtensions.IsAdministrator(), "This test suite is intended to be run as an administrator, otherwise several UAC popups would appear");
         }
 
         [TestMethod]
@@ -40,7 +40,7 @@ namespace gsudo.Tests
             var p1 = new TestProcess("gsudo.exe", "cmd /c cd");
             p1.WaitForExit();
 
-            var otherDir = Path.GetDirectoryName(Path.Combine(Environment.CurrentDirectory,".."));
+            var otherDir = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory,".."));
             Environment.CurrentDirectory = otherDir;
 
             Assert.AreEqual(string.Empty, p1.GetStdErr());

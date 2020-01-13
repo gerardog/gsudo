@@ -188,8 +188,6 @@ namespace gsudo.ProcessHosts
                 return false;
             }
         }
-
-        static readonly string[] TOKENS = new string[] { "\0", Constants.TOKEN_KEY_CTRLBREAK, Constants.TOKEN_KEY_CTRLC};
       
     }
 }

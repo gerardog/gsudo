@@ -13,6 +13,8 @@ namespace gsudo.Helpers
     {
         public static Process StartElevatedDetached(string filename, string arguments, bool hidden)
         {
+            Logger.Instance.Log($"Elevating process: {filename} {arguments}", LogLevel.Debug);
+
             var process = new Process();
             process.StartInfo = new ProcessStartInfo(filename, arguments)
             {
@@ -86,7 +88,7 @@ namespace gsudo.Helpers
 
                 // set user the focus to the window, if there is one.
                 if (process.MainWindowHandle != IntPtr.Zero)
-                    WindowApi.SetForegroundWindow(process.MainWindowHandle);
+                    _ = WindowApi.SetForegroundWindow(process.MainWindowHandle);
             }
 
             return process;
@@ -94,7 +96,7 @@ namespace gsudo.Helpers
 
         public static bool IsWindowsApp(string exe)
         {
-            var path = exe;
+            var path = FindExecutableInPath(ArgumentsHelper.UnQuote(exe));
             var shinfo = new Native.FileApi.SHFILEINFO();
             const int SHGFI_EXETYPE = 0x000002000;
             var fileInfo = Native.FileApi.SHGetFileInfo(path, 0, ref shinfo, (uint)Marshal.SizeOf(shinfo), SHGFI_EXETYPE);
@@ -107,40 +109,48 @@ namespace gsudo.Helpers
         {
             exe = Environment.ExpandEnvironmentVariables(exe);
 
-            if (File.Exists(exe))
+            try
             {
-                return Path.GetFullPath(exe);
-            }
 
-            if (string.IsNullOrEmpty(Path.GetDirectoryName(exe)))
-            {
-                exe = Path.GetFileName(exe);
-
-                var validExtensions = Environment.GetEnvironmentVariable("PATHEXT", EnvironmentVariableTarget.Process)
-                    .Split(';'); 
-
-                var possibleNames = new List<string>();
-                
-                if (Path.GetExtension(exe).In(validExtensions))
-                    possibleNames.Add(exe);
-
-                possibleNames.AddRange(validExtensions.Select((ext) => exe + ext));
-
-                var paths = new List<string>();
-                paths.Add(Environment.CurrentDirectory);
-                paths.AddRange((Environment.GetEnvironmentVariable("PATH") ?? "").Split(';'));
-
-                foreach (string test in paths)
+                if (File.Exists(exe))
                 {
-                    foreach (string file in possibleNames)
+                    return Path.GetFullPath(exe);
+                }
+
+                if (string.IsNullOrEmpty(Path.GetDirectoryName(exe)))
+                {
+                    exe = Path.GetFileName(exe);
+
+                    var validExtensions = Environment.GetEnvironmentVariable("PATHEXT", EnvironmentVariableTarget.Process)
+                        .Split(';');
+
+                    var possibleNames = new List<string>();
+
+                    if (Path.GetExtension(exe).In(validExtensions))
+                        possibleNames.Add(exe);
+
+                    possibleNames.AddRange(validExtensions.Select((ext) => exe + ext));
+
+                    var paths = new List<string>();
+                    paths.Add(Environment.CurrentDirectory);
+                    paths.AddRange((Environment.GetEnvironmentVariable("PATH") ?? "").Split(';'));
+
+                    foreach (string test in paths)
                     {
-                        string path = Path.Combine(test, file);
-                        if (!String.IsNullOrEmpty(path) && File.Exists(path))
-                            return Path.GetFullPath(path);
+                        foreach (string file in possibleNames)
+                        {
+                            string path = Path.Combine(test, file);
+                            if (!String.IsNullOrEmpty(path) && File.Exists(path))
+                                return Path.GetFullPath(path);
+                        }
                     }
                 }
+                return null;
             }
-            return null;
+            catch
+            { 
+                return null;
+            }
         }
 
         public static PseudoConsole.PseudoConsoleProcess StartPseudoConsole(string command, IntPtr attributes, IntPtr hPC, string startFolder)
