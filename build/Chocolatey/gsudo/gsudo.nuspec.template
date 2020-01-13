@@ -14,7 +14,7 @@
     <!-- Note that unstable versions like 0.0.1 can be considered a released version, but it's possible that one can release a 0.0.1-beta before you release a 0.0.1 version. If the version number is final, that is considered a released version and not a prerelease. -->
     <version>#VERSION#</version>
     <!--PackageSourceUrl - Where is this Chocolatey package located (think GitHub)? packageSourceUrl is highly recommended for the community feed-->
-    <packageSourceUrl>https://github.com/gerardog/gsudo/tree/master/src/Scripts/Chocolatey</packageSourceUrl>
+    <packageSourceUrl>https://github.com/gerardog/gsudo/tree/master/build/Chocolatey</packageSourceUrl>
     <!-- owners is a poor name for maintainers of the package. It sticks around by this name for compatibility reasons. It basically means you. -->
     <owners>Gerardo Grignoli</owners>
     <!-- ============================== -->
