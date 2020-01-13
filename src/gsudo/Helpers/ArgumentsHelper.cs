@@ -20,17 +20,24 @@ namespace gsudo.Helpers
             Shell currentShell = ShellHelper.DetectInvokingShell(out currentShellExeName);
 
             // Is our current shell Powershell ? (Powershell.exe -calls-> gsudo)
-            if (currentShell.In(Shell.PowerShell, Shell.PowerShellCore))
+            if (currentShell.In(Shell.PowerShell, Shell.PowerShellCore6, Shell.PowerShellCore7))
             {
-                if (args.Length == 0)
-                    return new string[]
-                        { currentShellExeName };
-                else
-                    return new string[] 
-                        { currentShellExeName ,
-                            "-NoProfile",
-                            String.Join(" ", args)
-                        };
+                var newArgs = new List<string>();
+                newArgs.Add(currentShellExeName);
+
+                if (currentShell == Shell.PowerShell && !string.IsNullOrEmpty(GlobalSettings.PowerShellArguments)) 
+                    newArgs.Add(GlobalSettings.PowerShellArguments);
+
+                if (currentShell == Shell.PowerShellCore6 && !string.IsNullOrEmpty(GlobalSettings.PowerShellCore6Arguments)) 
+                    newArgs.Add(GlobalSettings.PowerShellCore6Arguments);
+
+                if (currentShell == Shell.PowerShellCore7 && !string.IsNullOrEmpty(GlobalSettings.PowerShellCore7Arguments))
+                    newArgs.Add(GlobalSettings.PowerShellCore7Arguments);
+
+                if (args.Length>0)
+                    newArgs.AddMany(args);
+
+                return newArgs.ToArray();
             }
             
             // Not Powershell, or Powershell Core, assume CMD.

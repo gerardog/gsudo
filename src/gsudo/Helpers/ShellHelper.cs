@@ -11,8 +11,9 @@ namespace gsudo.Helpers
     public enum Shell
     {
         PowerShell,
-        PowerShellCore,
-        Cmd
+        PowerShellCore6,
+        Cmd,
+        PowerShellCore7
     }
 
     static class ShellHelper
@@ -36,8 +37,13 @@ namespace gsudo.Helpers
                     var grandParentExeName = Path.GetFileName(grandParentProcess.MainModule.FileName).ToUpperInvariant();
                     if (grandParentExeName == "PWSH.EXE")
                     {
-                        ShellExeName = grandParentProcess.MainModule.FileName; ;
-                        return Shell.PowerShellCore;
+                        ShellExeName = grandParentProcess.MainModule.FileName;
+
+                        FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(ShellExeName);
+                        if (versionInfo.FileMajorPart < 7)
+                            return Shell.PowerShellCore6;
+                        else
+                            return Shell.PowerShellCore7;
                     }
                 }
             }

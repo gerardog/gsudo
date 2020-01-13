@@ -9,10 +9,25 @@ using System.Threading.Tasks;
 namespace gsudo.Tests
 {
     [TestClass]
+	public class PowerShellCoreTests : PowerShellTests
+    {
+        public PowerShellCoreTests()
+        {
+            PS_FILENAME = "pwsh.exe";
+        }
+
+        [Ignore]
+        public override void PS_EchoDoubleQuotesTest()
+        {
+            base.PS_EchoDoubleQuotesTest(); // not working on pwsh core. 
+        }
+    }
+
+    [TestClass]
     public class PowerShellTests
     {
-        const string PS_FILENAME = "PowerShell.exe";
-        const string PS_ARGS = "-NoExit -NoLogo -NoProfile Set-ExecutionPolicy UnRestricted -Scope CurrentUser; function Prompt { return '# '}";
+        internal string PS_FILENAME = "PowerShell.exe";
+        internal string PS_ARGS = "-NoExit -NoLogo -NoProfile -Command Set-ExecutionPolicy UnRestricted -Scope CurrentUser; function Prompt { return '# '}";
 
         static PowerShellTests()
         {
@@ -73,12 +88,12 @@ $@"# ./gsudo 'echo 1 2 3'
         }
 
         [TestMethod]
-        public void PS_EchoDoubleQuotesTest()
+        public virtual void PS_EchoDoubleQuotesTest()
         {
             var p = new TestProcess(PS_FILENAME, PS_ARGS);
-            p.WriteInput("./gsudo 'echo 1 \"\"2 3\"\"'\r\nexit\r\n");
+            p.WriteInput("./gsudo 'echo 1 \\\"\"2 3\\\"\"'\r\nexit\r\n");
             p.WaitForExit();
-            Assert.AreEqual($"# ./gsudo 'echo 1 \"\"2 3\"\"'\r\n1\r\n2 3\r\n# exit\r\n", FixAppVeyor(p.GetStdOut()));
+            Assert.AreEqual($"# ./gsudo 'echo 1 \\\"\"2 3\\\"\"'\r\n1\r\n2 3\r\n# exit\r\n", FixAppVeyor(p.GetStdOut()));
             Assert.AreEqual(0, p.Process.ExitCode);
         }
 
