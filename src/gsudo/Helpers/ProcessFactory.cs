@@ -96,7 +96,7 @@ namespace gsudo.Helpers
 
         public static bool IsWindowsApp(string exe)
         {
-            var path = FindExecutableInPath(exe);
+            var path = FindExecutableInPath(ArgumentsHelper.UnQuote(exe));
             var shinfo = new Native.FileApi.SHFILEINFO();
             const int SHGFI_EXETYPE = 0x000002000;
             var fileInfo = Native.FileApi.SHGetFileInfo(path, 0, ref shinfo, (uint)Marshal.SizeOf(shinfo), SHGFI_EXETYPE);
