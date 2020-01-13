@@ -22,7 +22,7 @@ namespace gsudo
         public static RegistrySetting<bool> CopyEnvironmentVariables { get; internal set; } = new RegistrySetting<bool>(nameof(CopyEnvironmentVariables), false, bool.Parse);
         public static RegistrySetting<bool> CopyNetworkShares { get; internal set; } = new RegistrySetting<bool>(nameof(CopyNetworkShares), false, bool.Parse);
         public static RegistrySetting<string> PowerShellArguments { get; set; } = new RegistrySetting<string>(nameof(PowerShellArguments), "-NoProfile", (s) => s);
-        public static RegistrySetting<string> PowerShellCore6Arguments { get; set; } = new RegistrySetting<string>(nameof(PowerShellCore6Arguments), "", (s) => s);
+        public static RegistrySetting<string> PowerShellCore6Arguments { get; set; } = new RegistrySetting<string>(nameof(PowerShellCore6Arguments), "-Command", (s) => s);
         public static RegistrySetting<string> PowerShellCore7Arguments { get; set; } = new RegistrySetting<string>(nameof(PowerShellCore7Arguments), "-Command", (s) => s);
         public static IDictionary<string, RegistrySetting> AllKeys => new Dictionary<string, RegistrySetting>(StringComparer.OrdinalIgnoreCase)
             .Add(
