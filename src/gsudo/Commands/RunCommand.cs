@@ -1,12 +1,16 @@
 ﻿using gsudo.Helpers;
+using gsudo.Native;
 using gsudo.ProcessRenderers;
 using gsudo.Rpc;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Principal;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace gsudo.Commands
@@ -25,9 +29,14 @@ namespace gsudo.Commands
             bool emptyArgs = string.IsNullOrEmpty(CommandToRun.FirstOrDefault());
 
             CommandToRun = ArgumentsHelper.AugmentCommand(CommandToRun.ToArray());
+            bool isWindowsApp = ProcessFactory.IsWindowsApp(CommandToRun.FirstOrDefault());
+            var consoleMode = GetConsoleMode(isWindowsApp);
 
+            if (!ProcessExtensions.IsAdministrator())
+            {
+                CommandToRun = AddCopyEnvironment(CommandToRun);
+            }
             var exeName = CommandToRun.FirstOrDefault();
-            bool isWindowsApp = ProcessFactory.IsWindowsApp(exeName);
 
             var elevationRequest = new ElevationRequest()
             {
@@ -35,13 +44,13 @@ namespace gsudo.Commands
                 Arguments = GetArguments(),
                 StartFolder = Environment.CurrentDirectory,
                 NewWindow = GlobalSettings.NewWindow,
-                ForceWait = GlobalSettings.Wait,
-                Mode = GetConsoleMode(isWindowsApp),
+                Wait = (!isWindowsApp && !GlobalSettings.NewWindow) || GlobalSettings.Wait,
+                Mode = consoleMode,
                 ConsoleProcessId = currentProcess.Id,
+                Prompt = consoleMode == ElevationRequest.ConsoleMode.Raw ? GlobalSettings.RawPrompt : GlobalSettings.Prompt 
             };
 
-            Logger.Instance.Log($"Application to run: {elevationRequest.FileName}", LogLevel.Debug);
-            Logger.Instance.Log($"Arguments: {elevationRequest.Arguments}", LogLevel.Debug);
+            Logger.Instance.Log($"Command to run: {elevationRequest.FileName} {elevationRequest.Arguments}", LogLevel.Debug);
 
             if (elevationRequest.Mode == ElevationRequest.ConsoleMode.VT)
             {
@@ -52,7 +61,7 @@ namespace gsudo.Commands
                     elevationRequest.ConsoleWidth--; // weird ConEmu/Cmder fix
             }
 
-            if (ProcessExtensions.IsAdministrator() && !GlobalSettings.NewWindow)
+            if (ProcessExtensions.IsAdministrator())
             {
                 if (emptyArgs)
                 {
@@ -64,23 +73,27 @@ namespace gsudo.Commands
 
                 // No need to escalate. Run in-process
 
-                if (elevationRequest.Mode == ElevationRequest.ConsoleMode.Raw)
+                if (elevationRequest.Mode == ElevationRequest.ConsoleMode.Raw && !elevationRequest.NewWindow)
                 {
-                    Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.Prompt.Value);
+                    if (!string.IsNullOrEmpty(GlobalSettings.RawPrompt.Value))
+                        Environment.SetEnvironmentVariable("PROMPT", Environment.ExpandEnvironmentVariables(GlobalSettings.RawPrompt.Value));
                 }
                 else
                 {
-                    Environment.SetEnvironmentVariable("PROMPT", GlobalSettings.VTPrompt.Value);
+                    if (!string.IsNullOrEmpty(GlobalSettings.Prompt.Value))
+                        Environment.SetEnvironmentVariable("PROMPT", Environment.ExpandEnvironmentVariables(GlobalSettings.Prompt.Value));
                 }
 
                 if (GlobalSettings.NewWindow)
                 {
                     using (Process process = ProcessFactory.StartDetached(exeName, GetArguments(), Environment.CurrentDirectory, false))
                     {
-                        if (GlobalSettings.Wait)
+                        if (elevationRequest.Wait)
                         {
                             process.WaitForExit();
-                            return process.ExitCode;
+                            var exitCode = process.ExitCode;
+                            Logger.Instance.Log($"Elevated process exited with code {exitCode}", exitCode == 0 ? LogLevel.Debug : LogLevel.Info);
+                            return exitCode;
                         }
                         return 0;
                     }
@@ -89,24 +102,20 @@ namespace gsudo.Commands
                 {
                     using (Process process = ProcessFactory.StartInProcessAtached(exeName, GetArguments()))
                     {
-                        if (!isWindowsApp || GlobalSettings.Wait)
-                        {
-                            process.WaitForExit();
-                            return process.ExitCode;
-                        }
-                        else
-                        {
-                            return 0;
-                        }
+                        process.WaitForExit();
+                        var exitCode = process.ExitCode;
+                        Logger.Instance.Log($"Elevated process exited with code {exitCode}", exitCode == 0 ? LogLevel.Debug : LogLevel.Info);
+                        return exitCode;
                     }
                 }
             }
-            else // IsAdministrator() == false, or build in Debug Mode
+            else // IsAdministrator() == false
             {
                 Logger.Instance.Log($"Using Console mode {elevationRequest.Mode}", LogLevel.Debug);
                 var callingPid = GetCallingPid(currentProcess);
                 var callingSid = WindowsIdentity.GetCurrent().User.Value;
-                Logger.Instance.Log($"Caller ProcessId is {callingPid}", LogLevel.Debug);
+                Logger.Instance.Log($"Caller PID: {callingPid}", LogLevel.Debug);
+                Logger.Instance.Log($"Caller SID: {callingSid}", LogLevel.Debug);
 
                 var cmd = CommandToRun.FirstOrDefault();
 
@@ -129,8 +138,6 @@ namespace gsudo.Commands
                     if (connection == null) // service is not running or listening.
                     {
                         // Start elevated service instance
-                        Logger.Instance.Log("Elevating process...", LogLevel.Debug);
-
                         var dbg = GlobalSettings.Debug ? "--debug " : string.Empty;
                         using (var process = ProcessFactory.StartElevatedDetached(currentProcess.MainModule.FileName, $"{dbg}gsudoservice {callingPid} {callingSid} {GlobalSettings.LogLevel}", !GlobalSettings.Debug))
                         {
@@ -151,8 +158,12 @@ namespace gsudo.Commands
                     ConnectionKeepAliveThread.Start(connection);
 
                     var renderer = GetRenderer(connection, elevationRequest);
-                    var exitcode = await renderer.Start().ConfigureAwait(false);
-                    return exitcode;
+                    var exitCode = await renderer.Start().ConfigureAwait(false);
+                    
+                    if (!(elevationRequest.NewWindow && !elevationRequest.Wait))
+                        Logger.Instance.Log($"Elevated process exited with code {exitCode}", exitCode == 0 ? LogLevel.Debug : LogLevel.Info);
+
+                    return exitCode;
                 }
                 finally
                 {
@@ -195,7 +206,10 @@ namespace gsudo.Commands
         /// <returns></returns>
         private static ElevationRequest.ConsoleMode GetConsoleMode(bool isWindowsApp)
         {
-            if (isWindowsApp || GlobalSettings.NewWindow || Console.IsOutputRedirected)
+            if (isWindowsApp)
+                return ElevationRequest.ConsoleMode.Attached;
+
+            if (GlobalSettings.NewWindow || Console.IsOutputRedirected)
                 return ElevationRequest.ConsoleMode.Raw;
 
             if (GlobalSettings.ForceRawConsole)
@@ -210,9 +224,9 @@ namespace gsudo.Commands
             // else return ElevationRequest.ConsoleMode.Raw;
         }
 
-#pragma warning disable IDE0060 // Remove unused parameter (reserved for future use)
+#pragma warning disable IDE0060,CA1801 // Remove unused parameter (reserved for future use)
         private IRpcClient GetClient(ElevationRequest elevationRequest)
-#pragma warning restore IDE0060 // Remove unused parameter
+#pragma warning restore IDE0060,CA1801 // Remove unused parameter
         {
             // future Tcp implementations should be plugged here.
             return new NamedPipeClient();
@@ -234,5 +248,54 @@ namespace gsudo.Commands
             if (args.Count() <= v) return string.Empty;
             return string.Join(" ", args.Skip(v).ToArray());
         }
+
+        internal IEnumerable<string> AddCopyEnvironment(IEnumerable<string> args)
+        {
+            if (GlobalSettings.CopyEnvironmentVariables || GlobalSettings.CopyNetworkShares)
+            {
+                var silent = GlobalSettings.Debug ? string.Empty : "@"; 
+                var sb = new StringBuilder();
+                if (GlobalSettings.CopyEnvironmentVariables)
+                {
+                    foreach (DictionaryEntry envVar in Environment.GetEnvironmentVariables())
+                    {
+                        if (envVar.Key.ToString().In("prompt"))
+                            continue;
+
+                        sb.AppendLine($"{silent}SET {envVar.Key}={envVar.Value}");
+                    }
+                }
+                if (GlobalSettings.CopyNetworkShares)
+                {
+                    foreach (DriveInfo drive in DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Network && d.Name.Length==3))
+                    {
+                        var tmpSb = new StringBuilder(2048);
+                        var size = tmpSb.Capacity;
+
+                        var error = FileApi.WNetGetConnection(drive.Name.Substring(0,2), tmpSb, ref size);
+                        if (error == 0)
+                        {
+                            sb.AppendLine($"{silent}ECHO Connecting {drive.Name.Substring(0, 2)} to {tmpSb.ToString()} 1>&2");
+                            sb.AppendLine($"{silent}NET USE /D {drive.Name.Substring(0, 2)} >NUL 2>NUL");
+                            sb.AppendLine($"{silent}NET USE {drive.Name.Substring(0, 2)} {tmpSb.ToString()} 1>&2");
+                        }
+                    }
+                }
+
+                string tempBatName = Path.Combine(
+                    Environment.GetEnvironmentVariable("temp", EnvironmentVariableTarget.Machine), // use machine temp to ensure elevated user has access to temp folder
+                    $"{Guid.NewGuid()}.bat");
+
+                File.WriteAllText(tempBatName, sb.ToString());
+
+                return new string[] {
+                    Environment.GetEnvironmentVariable("COMSPEC"), 
+                    "/c" , 
+                    $"\"{tempBatName} & del /q {tempBatName} & {string.Join(" ",args)}\""
+                };
+            }
+            return args;
+        }
+
     }
 }

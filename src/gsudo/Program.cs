@@ -17,11 +17,12 @@ namespace gsudo
         private static async Task<int> Start(string[] args)
         {
             ICommand cmd = null;
+            //System.Diagnostics.Process.Start("cmd","/c timeout 20").WaitForExit();
 
             args = ArgumentsHelper.SplitArgs(ArgumentsHelper.GetRealCommandLine());
 
-            var exitCode = ArgumentsHelper.ParseCommonSettings(ref args);
-            if (exitCode.HasValue) return exitCode.Value;
+            var parserError = ArgumentsHelper.ParseCommonSettings(ref args);
+            if (parserError.HasValue) return parserError.Value;
 
             cmd = ArgumentsHelper.ParseCommand(args);
 
@@ -29,7 +30,14 @@ namespace gsudo
             {
                 if (cmd != null)
                 {
-                    return await cmd.Execute().ConfigureAwait(false);
+                    try
+                    {
+                        return await cmd.Execute().ConfigureAwait(false);
+                    }
+                    finally
+                    {
+                        (cmd as IDisposable)?.Dispose();
+                    }
                 }
                 else
                     return await new HelpCommand().Execute().ConfigureAwait(false);

@@ -31,12 +31,6 @@ namespace gsudo.ProcessRenderers
 
             Console.CancelKeyPress -= HandleConsoleCancelKeyPress;
 
-            if (exitCode.HasValue)
-            {
-                Logger.Instance.Log($"Elevated process exited with code {exitCode}", exitCode.Value == 0 ? LogLevel.Debug : LogLevel.Info);
-                return Task.FromResult(exitCode.Value);
-            }
-
             return Task.FromResult(exitCode ?? 0);
         }
 

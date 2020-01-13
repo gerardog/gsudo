@@ -11,6 +11,7 @@ namespace gsudo
         Error = 4,
         None = 5,
     }
+
     class Logger
     {
         public static readonly Logger Instance = new Logger();

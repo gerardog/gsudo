@@ -1,19 +1,25 @@
 # gsudo Backlog
 
-- Code signing. In progresss, see issue #1
+- Run as system.
+- show less stack trace on common errors.
+- config setting for powershell line.
+
+- better unit tests with> type comando | gsudo -> read console
+
 - In Raw mode, open StdErr and StdOut in one pipe/file, to fix random ordering of stderr/stdout.
 - gsudo --nocache (service will quit immediately after process ends and will not elevate other commands with cached credentials) (find better --syntax)
 - gsudo --fullcache(?) (service will not quit and can be shared, clearly not very secure)
 - Allow to specify other username. (RunAsUser verb)
-- Console resize on vt mode doesnt work. 
 
 ## Other not so likely ideas
 
 - Third consecutive Ctrl-C should ask if the child process must be kept running or killed. (currently killed in Raw and VT modes)
 - Remote sudo. Run process on another machine / as in PSExec. (security?)
+- Console resize on vt mode doesnt work. 
 
 ## Completed
 
+- Code signed with certificate
 - Chocolatey package / Scoop package / Release on github.
 - VT console extended keys (F1-F12, CTRL+?, HOME,PAGEUP)
 - WinPty/VT100 support: When in VT mode, processes are spawn using a PseudoConsole. Rendering could be done using Windows Console ENABLE_VIRTUAL_TERMINAL processing flag but it is pretty [unstable](https://github.com/microsoft/terminal/issues/3765). So it is disabled by default unless you are running inside ConEmu/Cmder which are VT100 ready terminals.

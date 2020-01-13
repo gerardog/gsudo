@@ -27,7 +27,7 @@ namespace gsudo.Rpc
                 if (clientPid.HasValue)
                 {
                     pipeName = NamedPipeServer.GetPipeName(user, clientPid.Value);
-                    if (!System.IO.Directory.EnumerateFiles(@"\\.\pipe\", pipeName).Any() && timeoutMilliseconds <= 300)
+                    if (!ExistsNamedPipe(pipeName) && timeoutMilliseconds <= 300)
                     {
                         // fail fast without timeout.
                         return null;
@@ -40,12 +40,13 @@ namespace gsudo.Rpc
                     {
                         pipeName = NamedPipeServer.GetPipeName(user, callerProcess.Id);
                         // Does the pipe exists?
-                        if (System.IO.Directory.EnumerateFiles(@"\\.\pipe\", pipeName).Any() && timeoutMilliseconds <= 300)
+                        if (ExistsNamedPipe(pipeName) && timeoutMilliseconds <= 300)
                             break;
 
                         // try grandfather.
                         callerProcess = callerProcess.ParentProcess();
                     }
+                    if (callerProcess == null) return null;
                 }
 
                 if (pipeName == null) return null;
@@ -72,6 +73,61 @@ namespace gsudo.Rpc
                 controlPipe?.Dispose();
                 throw;
             }
+        }
+
+        bool ExistsNamedPipe(string name)
+        {
+            var namedPipes = new List<string>();
+            Native.FileApi.WIN32_FIND_DATA lpFindFileData;
+
+            var ptr = Native.FileApi.FindFirstFile($@"\\.\pipe\{GetRootFolder(name)}*", out lpFindFileData);
+            if (lpFindFileData.cFileName.EndsWith(name, StringComparison.Ordinal)) return true;
+            while (Native.FileApi.FindNextFile(ptr, out lpFindFileData))
+            {
+                if (lpFindFileData.cFileName.EndsWith(name, StringComparison.Ordinal))
+                {
+                    Native.FileApi.FindClose(ptr);
+                    Logger.Instance.Log($"Named Pipe \"{name}\" exists = true.", LogLevel.Debug);
+                    return true;
+                }
+            }
+            Native.FileApi.FindClose(ptr);
+            Logger.Instance.Log($"Named Pipe \"{name}\" exists = false.", LogLevel.Debug);
+            return false;
+
+        }
+
+        static string GetRootFolder(string path)
+        {
+            while (true)
+            {
+                string temp = Path.GetDirectoryName(path);
+                if (String.IsNullOrEmpty(temp))
+                    break;
+                path = temp;
+            }
+            return path;
+        }
+
+        public static void ListNamedPipes()
+        {
+            var namedPipes = new List<string>();
+            Native.FileApi.WIN32_FIND_DATA lpFindFileData;
+            var name = "ProtectedPrefix\\Administrators\\gsudo*";//_S-1-5-21-2190596904-3730359884-378905164-18418_36464";
+            var ptr = Native.FileApi.FindFirstFile($@"\\.\pipe\{name}", out lpFindFileData);
+            namedPipes.Add(lpFindFileData.cFileName);
+            while (Native.FileApi.FindNextFile(ptr, out lpFindFileData))
+            {
+                namedPipes.Add(lpFindFileData.cFileName);
+            }
+            Native.FileApi.FindClose(ptr);
+
+            namedPipes.Sort();
+
+            foreach (var v in namedPipes)
+                Console.WriteLine(v);
+
+            //Console.ReadLine();
         }
     }
 }
