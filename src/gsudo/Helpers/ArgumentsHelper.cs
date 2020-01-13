@@ -65,6 +65,7 @@ namespace gsudo.Helpers
                 }
                 else
                 {
+                    args[0] = exename; // Batch files not started by create process if no extension is specified.
                     return args;
                 }
             }
