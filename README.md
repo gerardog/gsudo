@@ -10,7 +10,7 @@ Internally when you call **gsudo**, it launches itself elevated as a background 
 
 ## Instalation
 
-[Scoop](https://chocolatey.org/install) users: 
+[Scoop](https://scoop.sh) users: 
 
 ``` batch
 scoop install gsudo
