@@ -47,7 +47,7 @@ namespace gsudo.Commands
                 Wait = (!isWindowsApp && !GlobalSettings.NewWindow) || GlobalSettings.Wait,
                 Mode = consoleMode,
                 ConsoleProcessId = currentProcess.Id,
-                Prompt = consoleMode == ElevationRequest.ConsoleMode.Raw ? GlobalSettings.RawPrompt : GlobalSettings.Prompt 
+                Prompt = consoleMode != ElevationRequest.ConsoleMode.Raw || GlobalSettings.NewWindow ? GlobalSettings.Prompt : GlobalSettings.RawPrompt 
             };
 
             Logger.Instance.Log($"Command to run: {elevationRequest.FileName} {elevationRequest.Arguments}", LogLevel.Debug);

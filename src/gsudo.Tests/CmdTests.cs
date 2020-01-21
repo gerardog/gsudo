@@ -159,5 +159,17 @@ namespace gsudo.Tests
             p.WaitForExit();
             Assert.AreNotEqual(0, p.ExitCode);
         }
+
+        [TestMethod]
+        public void Cmd_BatchFileWithoutExtensionTest()
+        {
+            File.WriteAllText("HelloWorld.bat", "@echo Hello");
+
+            var p = new TestProcess("gsudo.exe", "HelloWorld");
+            p.WaitForExit();
+            Assert.AreEqual(string.Empty, p.GetStdErr());
+            Assert.AreEqual("Hello\r\n", p.GetStdOut());
+            Assert.AreEqual(0, p.ExitCode);
+        }
     }
 }
