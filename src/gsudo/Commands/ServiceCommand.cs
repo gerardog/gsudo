@@ -4,7 +4,6 @@ using System.Threading;
 using System.IO;
 using gsudo.Rpc;
 using gsudo.ProcessHosts;
-using gsudo.Helpers;
 using System.Runtime.Serialization.Formatters.Binary;
 
 namespace gsudo.Commands
@@ -64,7 +63,7 @@ namespace gsudo.Commands
         private static IProcessHost CreateProcessHost(ElevationRequest request)
         {
             if (request.NewWindow || !request.Wait)
-                return new DetachedHostProcess();
+                return new NewWindowProcessHost();
             if (request.Mode == ElevationRequest.ConsoleMode.Attached)
                 return new AttachedConsoleHost();
             else if (request.Mode == ElevationRequest.ConsoleMode.VT)

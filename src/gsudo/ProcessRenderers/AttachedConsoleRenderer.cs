@@ -10,16 +10,18 @@ using System.Threading.Tasks;
 
 namespace gsudo.ProcessRenderers
 {
+    /// <summary>
+    /// Renderer empty shell, hosts a remote process until it finishes.
+    /// All rendering is done by the remote process, because its attached to our console.
+    /// </summary>
     class AttachedConsoleRenderer : IProcessRenderer
     {
         private readonly Connection _connection;
-        private readonly ElevationRequest _elevationRequest;
         private int? exitCode;
 
-        public AttachedConsoleRenderer(Connection connection, ElevationRequest elevationRequest)
+        public AttachedConsoleRenderer(Connection connection)
         {
             _connection = connection;
-            _elevationRequest = elevationRequest;
         }
 
         public Task<int> Start()
@@ -42,7 +44,7 @@ namespace gsudo.ProcessRenderers
         enum Mode { Normal, Focus, Error, ExitCode };
         Mode CurrentMode = Mode.Normal;
 
-        static readonly string[] TOKENS = new string[] { "\0", "\f", Constants.TOKEN_ERROR, Constants.TOKEN_EXITCODE, Constants.TOKEN_FOCUS};
+        static readonly string[] TOKENS = new string[] { "\0", Constants.TOKEN_ERROR, Constants.TOKEN_EXITCODE, Constants.TOKEN_FOCUS};
         private async Task HandleControlStream(string s)
         {
             Action<Mode> Toggle = (m) => CurrentMode = CurrentMode == Mode.Normal ? m : Mode.Normal;
@@ -55,11 +57,6 @@ namespace gsudo.ProcessRenderers
 
                 if (token == "\0") continue; // session keep alive
 
-                if (token == "\f")
-                {
-                    Console.Clear();
-                    continue;
-                }
                 if (token == Constants.TOKEN_FOCUS)
                 {
                     Toggle(Mode.Focus);

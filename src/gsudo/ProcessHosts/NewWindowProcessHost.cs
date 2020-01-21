@@ -2,12 +2,15 @@
 using gsudo.Rpc;
 using System;
 using System.Diagnostics;
-using System.IO.Pipes;
 using System.Threading.Tasks;
 
 namespace gsudo.ProcessHosts
 {
-    class DetachedHostProcess : IProcessHost
+    /// <summary>
+    /// Hosts a process, in a new window. 
+    /// So no I/O streaming is needed, other than process exit code.
+    /// </summary>
+    class NewWindowProcessHost : IProcessHost
     {
         private Process process;
 
@@ -18,6 +21,8 @@ namespace gsudo.ProcessHosts
                 int exitCode = 0;
                 process = ProcessFactory.StartDetached(request.FileName, request.Arguments, request.StartFolder, false);
 
+                // Windows allows us to SetFocus on the new window if only if
+                // this gsudo (service) has the focus. So we request the gsudo client to set focus as well.
                 await connection.ControlStream
                     .WriteAsync($"{Constants.TOKEN_FOCUS}{process.MainWindowHandle}{Constants.TOKEN_FOCUS}")
                     .ConfigureAwait(false);

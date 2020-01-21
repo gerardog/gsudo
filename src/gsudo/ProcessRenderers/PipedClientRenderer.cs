@@ -9,20 +9,20 @@ using System.Threading.Tasks;
 
 namespace gsudo.ProcessRenderers
 {
-    // Regular piped app Client. (not ConPTY/PseudConsole/Pty)
+    /// <summary>
+    /// Receives raw I/O from a remote process from a connection and renders on the current console.
+    /// </summary>
     class PipedClientRenderer : IProcessRenderer
     {
         static readonly string[] TOKENS = new string[] { "\0", "\f", Constants.TOKEN_ERROR, Constants.TOKEN_EXITCODE, Constants.TOKEN_FOCUS, Constants.TOKEN_KEY_CTRLBREAK, Constants.TOKEN_KEY_CTRLC };
         private readonly Connection _connection;
-        private readonly ElevationRequest _elevationRequest;
 
         int? exitCode { get; set; }
         int consecutiveCancelKeys = 0;
         private bool expectedClose;
-        public PipedClientRenderer(Connection connection, ElevationRequest elevationRequest)
+        public PipedClientRenderer(Connection connection)
         {
             _connection = connection;
-            _elevationRequest = elevationRequest;
         }
 
         public async Task<int> Start()

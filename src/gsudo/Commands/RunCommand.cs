@@ -235,9 +235,9 @@ namespace gsudo.Commands
         private static IProcessRenderer GetRenderer(Connection connection, ElevationRequest elevationRequest)
         {
             if (elevationRequest.Mode == ElevationRequest.ConsoleMode.Attached)
-                return new AttachedConsoleRenderer(connection, elevationRequest);
+                return new AttachedConsoleRenderer(connection);
             if (elevationRequest.Mode == ElevationRequest.ConsoleMode.Raw)
-                return new PipedClientRenderer(connection, elevationRequest);
+                return new PipedClientRenderer(connection);
             else
                 return new VTClientRenderer(connection, elevationRequest);
         }
