@@ -55,7 +55,7 @@ Examples
 ```gsudo cmd```
 
 	</description>
-    <!-- <releaseNotes>__REPLACE_OR_REMOVE__MarkDown_Okay</releaseNotes> -->
+    <releaseNotes>http://github.com/gerardog/gsudo/releases/v#VERSION#</releaseNotes>
     <!-- =============================== -->      
 
     <!-- Specifying dependencies and version ranges? https://docs.nuget.org/create/versioning#specifying-version-ranges-in-.nuspec-files -->
@@ -76,5 +76,6 @@ Examples
   <files>
     <!-- this section controls what actually gets packaged into the Chocolatey package -->
     <file src="tools\**" target="tools" />
+    <file src="bin\**" target="bin" />
   </files>
 </package>

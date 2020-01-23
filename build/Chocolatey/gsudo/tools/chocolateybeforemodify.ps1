@@ -1,4 +1,5 @@
-﻿Write-Output "Terminating running gsudo instances."
-cmd /c tskill gsudo.exe 2> $null
-cmd /c tskill sudo.exe  2> $null
-exit 0
+﻿$ErrorActionPreference = "SilentlyContinue"
+
+Write-Output "Terminating running gsudo instances..."
+taskkill /IM "gsudo.exe" /F
+taskkill /IM "sudo.exe" /F

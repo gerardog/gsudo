@@ -21,10 +21,12 @@ scoop install gsudo
 Choco has a ~20 days delay until new submitted versions are approved, so in order to get the latest, do...
 
 ``` batch
-:: List all versions submitted
-choco list "sudo" --all
+:: List all gsudo versions
+choco list "gsudo" --all
 :: Install the latest version number
 choco install gsudo --version=x.x.x
+:: update Path environment variable
+refreshenv
 ```
 
 Manual installation:

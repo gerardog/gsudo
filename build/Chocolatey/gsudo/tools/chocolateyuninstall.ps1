@@ -1,4 +1,7 @@
-﻿$ErrorActionPreference = 'SilentlyContinue'
+﻿$toolsPath = Split-Path -parent $MyInvocation.MyCommand.Definition
+$unScriptPath = Join-Path $toolsPath "Uninstall-ChocolateyPath.psm1"
 
-(Get-Item "$env:ChocolateyInstall\bin\sudo.exe").Delete()
-(Get-Item "$env:ChocolateyInstall\bin\gsudo.exe").Delete()
+$installPath = "$env:ChocolateyInstall\lib\gsudo\bin\"
+
+Import-Module $unScriptPath
+Uninstall-ChocolateyPath $installPath 'User'

@@ -1,17 +1,20 @@
 ﻿VERIFICATION
+Verification is intended to assist the Chocolatey moderators and community
+in verifying that this package's contents are trustworthy.
 
-#1 - Get hashes from this choco package
+1. The embedded files are also available as a release in GitHub.
 
-powershell -command Get-FileHash tools\*
-
-#2 - Compare with same version release
-
-Go to releases page
+Please go to releases page
 https://github.com/gerardog/gsudo/releases
 
-Download same version as this choco package (example v0.4)
+Download same version as this choco package (example for v0.4)
 https://github.com/gerardog/gsudo/releases/tag/v0.4
 
 unzip and get hashes
 powershell -command Get-FileHash *
 
+2. Get hashes from this choco package. Run:
+
+powershell -command Get-FileHash bin\*
+
+3. The checksums should match the following:
