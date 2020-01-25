@@ -99,6 +99,7 @@ namespace gsudo.Tests
 
         string FixAppVeyor(string input)
         {
+            return input; // temporary disable fix to debug tests
             // AppVeyor's powershell displays a warning message because it uses PSReadLine that does not support Process Rediretion.
             // Remove the message.
             var ret = Regex.Replace(input, "((\r\n|\r|\n)Oops.*?-{71}.*?-{71}(\r\n|\r|\n))", string.Empty, RegexOptions.Singleline);
