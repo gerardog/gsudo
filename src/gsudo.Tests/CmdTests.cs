@@ -29,7 +29,7 @@ namespace gsudo.Tests
         {
             var p = new TestProcess("gsudo.exe", "--debug cmd /c dir");
             p.WaitForExit();
-            p.GetStdErr().Should().BeEmpty();
+            p.GetStdErr().Should().Contain("Debug:");
             p.GetStdOut().Should().Contain(" bytes free");
             p.ExitCode.Should().Be(0);
         }
@@ -120,7 +120,7 @@ namespace gsudo.Tests
             }
 
             stillWaiting.Should().BeTrue();
-            Process.Start("C:\\Windows\\sysnative\\tskill.exe", "notepad").WaitForExit();
+            Process.Start("C:\\Windows\\System32\\taskkill.exe", "/f /fi \"STATUS eq RUNNING\" /im notepad.exe").WaitForExit();
             p.GetStdErr().Should().BeEmpty();
             p.GetStdOut().Should().BeEmpty();
         }
@@ -135,7 +135,7 @@ namespace gsudo.Tests
             }
             finally
             {
-                Process.Start("C:\\Windows\\sysnative\\tskill.exe", "notepad").WaitForExit();
+                Process.Start("C:\\Windows\\System32\\taskkill.exe", "/f /fi \"STATUS eq RUNNING\" /im notepad.exe").WaitForExit();
             }
             p.GetStdErr().Should().BeEmpty();
             p.GetStdOut().Should().BeEmpty();
@@ -152,7 +152,7 @@ namespace gsudo.Tests
             }
             finally
             {
-                Process.Start("C:\\Windows\\sysnative\\tskill.exe", "wordpad").WaitForExit();
+                Process.Start("C:\\Windows\\System32\\taskkill.exe", "/f /fi \"STATUS eq RUNNING\" /im wordpad.exe").WaitForExit();
             }
             p.GetStdErr().Should().BeEmpty();
             p.GetStdOut().Should().BeEmpty();
@@ -163,7 +163,7 @@ namespace gsudo.Tests
         {
             var p = new TestProcess("gsudo.exe", "qaqswswdewfwerferfwe");
             p.WaitForExit();
-            p.ExitCode.Should().Be(0);
+            p.ExitCode.Should().Be(1, "exit code should be thrown");
         }
 
         [TestMethod]
