@@ -1,0 +1,17 @@
+<Project>
+  <PropertyGroup>
+    <Authors>Gerardo Grignoli</Authors>
+    <Company>$(Authors)</Company>
+    <Copyright>2019 Gerardo Grignoli</Copyright>
+    <Description>gsudo allows to run commands with elevated permissions within the current console.
+It is a sudo equivalent for Windows, with a similar user-experience as the original *nix sudo.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageProjectUrl>https://github.com/gerardog/gsudo</PackageProjectUrl>
+    <PackageReleaseNotes>https://github.com/gerardog/gsudo/releases</PackageReleaseNotes>
+    <PackageTags>sudo for windows</PackageTags>
+    <RepositoryUrl>https://github.com/gerardog/gsudo</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <LangVersion>8</LangVersion>
+  </PropertyGroup>
+</Project>

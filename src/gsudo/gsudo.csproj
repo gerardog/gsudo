@@ -1,25 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net46</TargetFramework>
-    <SignAssembly>false</SignAssembly>
-    <AssemblyOriginatorKeyFile>StrongName.snk</AssemblyOriginatorKeyFile>
-    <Authors>Gerardo Grignoli</Authors>
-    <Description>gsudo allows to run commands with elevated permissions within the current console.
-It is a sudo equivalent for Windows, with a similar user-experience as the original *nix sudo.</Description>
-    <DelaySign>false</DelaySign>
     <OutputPath>bin\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
     <Version>0.5</Version>
-    <Copyright>2019 Gerardo Grignoli</Copyright>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/gerardog/gsudo</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/gerardog/gsudo</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <PackageTags>sudo for windows</PackageTags>
-    <AssemblyName>gsudo</AssemblyName>
     <Deterministic>true</Deterministic>
     <PathMap>$(MSBuildProjectDirectory)=C:\</PathMap>
   </PropertyGroup>
@@ -31,10 +17,7 @@ It is a sudo equivalent for Windows, with a similar user-experience as the origi
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.7">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.7" PrivateAssets="all" />
     <PackageReference Include="System.Security.Principal.Windows" Version="4.6.0" />
   </ItemGroup>
 

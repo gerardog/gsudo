@@ -28,5 +28,5 @@ csharp_style_var_when_type_is_apparent = false:silent
 # CA1062: Validate arguments of public methods
 dotnet_diagnostic.CA1062.severity = none
 
-[*.{xml,csproj}]
+[*.{xml,csproj,props,targets}]
 indent_size = 2
