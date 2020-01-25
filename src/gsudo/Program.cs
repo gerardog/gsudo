@@ -7,7 +7,7 @@ namespace gsudo
 {
     class Program
     {
-        async static Task<int> Main(string[] args)
+        static async Task<int> Main(string[] args)
         {
             SymbolicLinkSupport.EnableAssemblyLoadFix();
 
