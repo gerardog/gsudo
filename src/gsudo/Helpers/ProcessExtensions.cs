@@ -1,4 +1,4 @@
-﻿using static gsudo.Native.ProcessApi;
+using static gsudo.Native.ProcessApi;
 using Microsoft.Win32.SafeHandles;
 using System;
 using System.ComponentModel;
@@ -13,7 +13,7 @@ namespace gsudo.Helpers
 {
     public static class ProcessExtensions
     {
-        public static void SendCtrlC(this Process proc, bool sendSigBreak = false)
+        public static void SendCtrlC(this Process proc)
         {
             // Sending Ctrl-C in windows is tricky.
             // Your process must be attached to the target process console.
