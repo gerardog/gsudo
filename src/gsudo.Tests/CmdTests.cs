@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using FluentAssertions;
 using gsudo.Helpers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -19,7 +20,8 @@ namespace gsudo.Tests
         [TestMethod]
         public void Cmd_AdminUserTest()
         {
-            Assert.IsFalse(ProcessExtensions.IsAdministrator(), "This test suite is intended to be run as an administrator, otherwise several UAC popups would appear");
+            ProcessExtensions.IsAdministrator().Should()
+                .BeFalse("This test suite is intended to be run as an administrator, otherwise several UAC popups would appear");
         }
 
         [TestMethod]
@@ -27,9 +29,9 @@ namespace gsudo.Tests
         {
             var p = new TestProcess("gsudo.exe", "--debug cmd /c dir");
             p.WaitForExit();
-            Assert.AreNotEqual(string.Empty, p.GetStdErr());
-            Assert.IsTrue(p.GetStdOut().Contains(" bytes free"));
-            Assert.AreEqual(0, p.ExitCode);
+            p.GetStdErr().Should().BeEmpty();
+            p.GetStdOut().Should().Contain(" bytes free");
+            p.ExitCode.Should().Be(0);
         }
 
         [TestMethod]
@@ -43,9 +45,9 @@ namespace gsudo.Tests
             var otherDir = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory,".."));
             Environment.CurrentDirectory = otherDir;
 
-            Assert.AreEqual(string.Empty, p1.GetStdErr());
-            Assert.AreEqual($"{testDir}\r\n", p1.GetStdOut());
-            Assert.AreEqual(0, p1.ExitCode);
+            p1.GetStdErr().Should().BeEmpty();
+            p1.GetStdOut().Should().Be($"{testDir}\r\n");
+            p1.ExitCode.Should().Be(0);
 
             try
             {
@@ -53,8 +55,9 @@ namespace gsudo.Tests
                 p2.WaitForExit();
 
                 Assert.AreEqual(string.Empty, p2.GetStdErr());
-                Assert.AreEqual($"{otherDir}\r\n", p2.GetStdOut());
-                Assert.AreEqual(0, p2.ExitCode);
+                p2.GetStdErr().Should().BeEmpty();
+                p2.GetStdOut().Should().Be($"{otherDir}\r\n");
+                p2.ExitCode.Should().Be(0);
             }
             finally
             {
@@ -66,8 +69,9 @@ namespace gsudo.Tests
         {
             var p = new TestProcess("gsudo.exe", "cmd /c echo 1 \"2 3\"");
             p.WaitForExit();
-            Assert.AreEqual("1 \"2 3\"\r\n", p.GetStdOut());
-            Assert.AreEqual(0, p.ExitCode);
+            p.GetStdErr().Should().BeEmpty();
+            p.GetStdOut().Should().Be("1 \"2 3\"\r\n");
+            p.ExitCode.Should().Be(0);
         }
 
         [TestMethod]
@@ -75,8 +79,9 @@ namespace gsudo.Tests
         {
             var p = new TestProcess("gsudo.exe", "cmd /c echo 1 \'2 3\'");
             p.WaitForExit();
-            Assert.AreEqual("1 \'2 3\'\r\n", p.GetStdOut());
-            Assert.AreEqual(0, p.ExitCode);
+            p.GetStdErr().Should().BeEmpty();
+            p.GetStdOut().Should().Be("1 \'2 3\'\r\n");
+            p.ExitCode.Should().Be(0);
         }
 
         [TestMethod]
@@ -84,9 +89,9 @@ namespace gsudo.Tests
         {
             var p = new TestProcess("gsudo.exe", "--loglevel none exit /b 12345");
             p.WaitForExit();
-            Assert.AreEqual(string.Empty, p.GetStdErr());
-            Assert.AreEqual(string.Empty, p.GetStdOut());
-            Assert.AreEqual(12345, p.ExitCode);
+            p.GetStdErr().Should().BeEmpty();
+            p.GetStdOut().Should().BeEmpty();
+            p.ExitCode.Should().Be(12345);
         }
 
         [TestMethod]
@@ -96,7 +101,8 @@ namespace gsudo.Tests
             var p = new TestProcess("gsudo.exe", "-n ping 127.0.0.1 -n 20");
             // but gsudo should exit immediately.
             p.WaitForExit(2000);
-            Assert.AreEqual(string.Empty, p.GetStdOut());
+            p.GetStdErr().Should().BeEmpty();
+            p.GetStdOut().Should().BeEmpty();
         }
 
         [TestMethod]
@@ -113,10 +119,10 @@ namespace gsudo.Tests
                 stillWaiting = true;
             }
 
-            Assert.IsTrue(stillWaiting);
+            stillWaiting.Should().BeTrue();
             Process.Start("C:\\Windows\\sysnative\\tskill.exe", "notepad").WaitForExit();
-            Assert.AreEqual(string.Empty, p.GetStdErr());
-            Assert.AreEqual(string.Empty, p.GetStdOut());
+            p.GetStdErr().Should().BeEmpty();
+            p.GetStdOut().Should().BeEmpty();
         }
 
         [TestMethod]
@@ -131,8 +137,8 @@ namespace gsudo.Tests
             {
                 Process.Start("C:\\Windows\\sysnative\\tskill.exe", "notepad").WaitForExit();
             }
-            Assert.AreEqual(string.Empty, p.GetStdErr());
-            Assert.AreEqual(string.Empty, p.GetStdOut());
+            p.GetStdErr().Should().BeEmpty();
+            p.GetStdOut().Should().BeEmpty();
         }
 
         [TestMethod]
@@ -142,14 +148,14 @@ namespace gsudo.Tests
             try
             {
                 p.WaitForExit();
-                Assert.AreEqual(0, p.ExitCode);
+                p.ExitCode.Should().Be(0);
             }
             finally
             {
                 Process.Start("C:\\Windows\\sysnative\\tskill.exe", "wordpad").WaitForExit();
             }
-            Assert.AreEqual(string.Empty, p.GetStdErr());
-            Assert.AreEqual(string.Empty, p.GetStdOut());
+            p.GetStdErr().Should().BeEmpty();
+            p.GetStdOut().Should().BeEmpty();
         }
 
         [TestMethod]
@@ -157,7 +163,7 @@ namespace gsudo.Tests
         {
             var p = new TestProcess("gsudo.exe", "qaqswswdewfwerferfwe");
             p.WaitForExit();
-            Assert.AreNotEqual(0, p.ExitCode);
+            p.ExitCode.Should().Be(0);
         }
 
         [TestMethod]
@@ -167,9 +173,9 @@ namespace gsudo.Tests
 
             var p = new TestProcess("gsudo.exe", "HelloWorld");
             p.WaitForExit();
-            Assert.AreEqual(string.Empty, p.GetStdErr());
-            Assert.AreEqual("Hello\r\n", p.GetStdOut());
-            Assert.AreEqual(0, p.ExitCode);
+            p.GetStdErr().Should().BeEmpty();
+            p.GetStdOut().Should().Be("Hello\r\n");
+            p.ExitCode.Should().Be(0);
         }
     }
 }

@@ -37,7 +37,7 @@ namespace gsudo.Tests
         }
 
         public string GetStdOut() => StdOut ?? (StdOut = Process.StandardOutput.ReadToEnd());
-        public string GetStdErr() => StdErr ?? (StdErr = Process.StandardError.ReadToEnd());
+        public string GetStdErr() => StdErr ??= Process.StandardError.ReadToEnd();
 
         public void WaitForExit(int waitMilliseconds = 10000)
         {

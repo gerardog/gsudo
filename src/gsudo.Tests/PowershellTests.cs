@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using FluentAssertions;
 
 namespace gsudo.Tests
 {
@@ -47,8 +48,9 @@ namespace gsudo.Tests
         {
             var p = new TestProcess("gsudo", "powershell -command echo 1 '2 3'");
             p.WaitForExit();
-            Assert.AreEqual("1\r\n2 3\r\n", p.GetStdOut());
-            Assert.AreEqual(0, p.Process.ExitCode);
+            p.GetStdErr().Should().BeEmpty();
+            p.GetStdOut().Should().Be("1\r\n2 3\r\n");
+            p.ExitCode.Should().Be(0);
         }
 
         [TestMethod]
@@ -56,8 +58,10 @@ namespace gsudo.Tests
         {
             var p = new TestProcess("gsudo", "powershell -command echo 1 '\\\"2 3\\\"'");
             p.WaitForExit();
+            p.GetStdErr().Should().BeEmpty();
+            p.GetStdOut().Should().Be("1\r\n\"2 3\"\r\n");
             Assert.AreEqual("1\r\n\"2 3\"\r\n", p.GetStdOut());
-            Assert.AreEqual(0, p.Process.ExitCode);
+            p.ExitCode.Should().Be(0);
         }
 
         [TestMethod]
@@ -67,14 +71,15 @@ namespace gsudo.Tests
             p.WriteInput("./gsudo 'echo 1 2 3'\r\n");
             p.WriteInput("exit\r\n");
             p.WaitForExit();
-            Assert.AreEqual(
-$@"# ./gsudo 'echo 1 2 3'
+            p.GetStdErr().Should().BeEmpty();
+            const string expected = @"# ./gsudo 'echo 1 2 3'
 1
 2
 3
 # exit
-", FixAppVeyor(p.GetStdOut()));
-            Assert.AreEqual(0, p.Process.ExitCode);
+";
+            FixAppVeyor(p.GetStdOut()).Should().Be(expected);
+            p.ExitCode.Should().Be(0);
         }
 
         [TestMethod]
@@ -83,8 +88,9 @@ $@"# ./gsudo 'echo 1 2 3'
             var p = new TestProcess(PS_FILENAME, PS_ARGS);
             p.WriteInput("./gsudo 'echo 1 ''2 3'''\r\nexit\r\n");
             p.WaitForExit();
-            Assert.AreEqual($"# ./gsudo 'echo 1 ''2 3'''\r\n1\r\n2 3\r\n# exit\r\n", FixAppVeyor(p.GetStdOut()));
-            Assert.AreEqual(0, p.Process.ExitCode);
+            p.GetStdErr().Should().BeEmpty();
+            FixAppVeyor(p.GetStdOut()).Should().Be("# ./gsudo 'echo 1 ''2 3'''\r\n1\r\n2 3\r\n# exit\r\n");
+            p.ExitCode.Should().Be(0);
         }
 
         [TestMethod]
@@ -93,8 +99,8 @@ $@"# ./gsudo 'echo 1 2 3'
             var p = new TestProcess(PS_FILENAME, PS_ARGS);
             p.WriteInput("./gsudo 'echo 1 \\\"\"2 3\\\"\"'\r\nexit\r\n");
             p.WaitForExit();
-            Assert.AreEqual($"# ./gsudo 'echo 1 \\\"\"2 3\\\"\"'\r\n1\r\n2 3\r\n# exit\r\n", FixAppVeyor(p.GetStdOut()));
-            Assert.AreEqual(0, p.Process.ExitCode);
+            FixAppVeyor(p.GetStdOut()).Should().Be("# ./gsudo 'echo 1 \\\"\"2 3\\\"\"'\r\n1\r\n2 3\r\n# exit\r\n");
+            p.ExitCode.Should().Be(0);
         }
 
         string FixAppVeyor(string input)
