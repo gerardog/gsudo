@@ -46,7 +46,7 @@ namespace gsudo.Tests
         [TestMethod]
         public void PS_CommandLineEchoSingleQuotesTest()
         {
-            var p = new TestProcess("gsudo", "powershell -command echo 1 '2 3'");
+            var p = new TestProcess("gsudo", "powershell -noprofile -command Write-Output 1 '2 3'");
             p.WaitForExit();
             p.GetStdErr().Should().BeEmpty();
             p.GetStdOut().Should().Be("1\r\n2 3\r\n");
@@ -56,7 +56,7 @@ namespace gsudo.Tests
         [TestMethod]
         public void PS_CommandLineEchoDoubleQuotesTest()
         {
-            var p = new TestProcess("gsudo", "powershell -command echo 1 '\\\"2 3\\\"'");
+            var p = new TestProcess("gsudo", "powershell -noprofile -command Write-Output 1 '\\\"2 3\\\"'");
             p.WaitForExit();
             p.GetStdErr().Should().BeEmpty();
             p.GetStdOut().Should().Be("1\r\n\"2 3\"\r\n");
@@ -67,11 +67,11 @@ namespace gsudo.Tests
         public void PS_EchoNoQuotesTest()
         {
             var p = new TestProcess(PS_FILENAME, PS_ARGS);
-            p.WriteInput("./gsudo 'echo 1 2 3'\r\n");
+            p.WriteInput("./gsudo 'Write-Output 1 2 3'\r\n");
             p.WriteInput("exit\r\n");
             p.WaitForExit();
             p.GetStdErr().Should().BeEmpty();
-            FixAppVeyor(p.GetStdOut()).Should().Be("# ./gsudo 'echo 1 2 3'\r\n1\r\n2\r\n3\r\n# exit\r\n");
+            FixAppVeyor(p.GetStdOut()).Should().Be("# ./gsudo 'Write-Output 1 2 3'\r\n1\r\n2\r\n3\r\n# exit\r\n");
             p.ExitCode.Should().Be(0);
         }
 
@@ -79,10 +79,10 @@ namespace gsudo.Tests
         public void PS_EchoSingleQuotesTest()
         {
             var p = new TestProcess(PS_FILENAME, PS_ARGS);
-            p.WriteInput("./gsudo 'echo 1 ''2 3'''\r\nexit\r\n");
+            p.WriteInput("./gsudo 'Write-Output 1 ''2 3'''\r\nexit\r\n");
             p.WaitForExit();
             p.GetStdErr().Should().BeEmpty();
-            FixAppVeyor(p.GetStdOut()).Should().Be("# ./gsudo 'echo 1 ''2 3'''\r\n1\r\n2 3\r\n# exit\r\n");
+            FixAppVeyor(p.GetStdOut()).Should().Be("# ./gsudo 'Write-Output 1 ''2 3'''\r\n1\r\n2 3\r\n# exit\r\n");
             p.ExitCode.Should().Be(0);
         }
 
@@ -90,9 +90,9 @@ namespace gsudo.Tests
         public virtual void PS_EchoDoubleQuotesTest()
         {
             var p = new TestProcess(PS_FILENAME, PS_ARGS);
-            p.WriteInput("./gsudo 'echo 1 \\\"\"2 3\\\"\"'\r\nexit\r\n");
+            p.WriteInput("./gsudo 'Write-Output 1 \\\"\"2 3\\\"\"'\r\nexit\r\n");
             p.WaitForExit();
-            FixAppVeyor(p.GetStdOut()).Should().Be("# ./gsudo 'echo 1 \\\"\"2 3\\\"\"'\r\n1\r\n2 3\r\n# exit\r\n");
+            FixAppVeyor(p.GetStdOut()).Should().Be("# ./gsudo 'Write-Output 1 \\\"\"2 3\\\"\"'\r\n1\r\n2 3\r\n# exit\r\n");
             p.ExitCode.Should().Be(0);
         }
 
