@@ -60,7 +60,6 @@ namespace gsudo.Tests
             p.WaitForExit();
             p.GetStdErr().Should().BeEmpty();
             p.GetStdOut().Should().Be("1\r\n\"2 3\"\r\n");
-            Assert.AreEqual("1\r\n\"2 3\"\r\n", p.GetStdOut());
             p.ExitCode.Should().Be(0);
         }
 
@@ -72,13 +71,7 @@ namespace gsudo.Tests
             p.WriteInput("exit\r\n");
             p.WaitForExit();
             p.GetStdErr().Should().BeEmpty();
-            const string expected = @"# ./gsudo 'echo 1 2 3'
-1
-2
-3
-# exit
-";
-            FixAppVeyor(p.GetStdOut()).Should().Be(expected);
+            FixAppVeyor(p.GetStdOut()).Should().Be("# ./gsudo 'echo 1 2 3'\r\n1\r\n2\r\n3\r\n# exit\r\n");
             p.ExitCode.Should().Be(0);
         }
 
