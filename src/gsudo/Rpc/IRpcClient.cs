@@ -33,11 +33,10 @@ namespace gsudo.Rpc
             await FlushAndClose(ControlStream).ConfigureAwait(false);
         }
 
-        private static async Task FlushAndClose(Stream DataStream)
+        private static async Task FlushAndClose(Stream dataStream)
         {
-            if (DataStream is NamedPipeServerStream)
+            if (dataStream is NamedPipeServerStream npStream)
             {
-                var npStream = DataStream as NamedPipeServerStream;
                 try
                 {
                     await npStream.FlushAsync().ConfigureAwait(false);
@@ -47,7 +46,7 @@ namespace gsudo.Rpc
                 catch (Exception) { }
             }
             else
-                DataStream.Close();
+                dataStream.Close();
         }
         public void Dispose()
         {
