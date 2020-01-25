@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="echo Killing running gsudo commands.&#xD;&#xA;%25windir%25\sysnative\tskill gsudo&#xD;&#xA;exit 0" />
+    <Exec Command='echo Killing running gsudo commands.&#xD;&#xA;%25windir%25\System32\taskkill.exe /f /fi "STATUS eq RUNNING" /im gsudo.exe&#xD;&#xA;exit 0' />
   </Target>
 
   <Target Name="PostBuildMacros">
