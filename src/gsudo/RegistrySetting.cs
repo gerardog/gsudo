@@ -30,18 +30,16 @@ namespace gsudo
             {
                 if (hasValue) return runningValue;
 
-                using (var subkey = Registry.CurrentUser.OpenSubKey(REGKEY, false))
+                using var subkey = Registry.CurrentUser.OpenSubKey(REGKEY, false);
+                var currentValue = subkey?.GetValue(Name, null) as string;
+                if (currentValue == null) return defaultValue;
+                try
                 {
-                    var currentValue = subkey.GetValue(Name, null) as string;
-                    if (currentValue == null) return defaultValue;
-                    try
-                    {
-                        return deserializer(currentValue);
-                    }
-                    catch
-                    {
-                        return defaultValue;
-                    }
+                    return deserializer(currentValue);
+                }
+                catch
+                {
+                    return defaultValue;
                 }
             }
             set
@@ -63,20 +61,16 @@ namespace gsudo
         public override void Save(string newValue)
         {
             Value = deserializer(newValue);
-            using (var subkey = Registry.CurrentUser.OpenSubKey(REGKEY, true))
-            {
-                subkey.SetValue(Name, GetStringValue());
-            }
+            using var subkey = Registry.CurrentUser.OpenSubKey(REGKEY, true);
+            subkey?.SetValue(Name, GetStringValue());
         }
 
         public override void Reset()
         {
             Value = defaultValue;
-            using (var subkey = Registry.CurrentUser.OpenSubKey(REGKEY, true))
-            {
-                if (subkey.GetValue(Name) != null)
-                    subkey.DeleteValue(Name);
-            }
+            using var subkey = Registry.CurrentUser.OpenSubKey(REGKEY, true);
+            if (subkey?.GetValue(Name) != null)
+                subkey.DeleteValue(Name);
         }
         public override string ToString()
         {
