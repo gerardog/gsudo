@@ -44,7 +44,7 @@ namespace gsudo
             }
             catch (Exception ex)
             {
-                Logger.Instance.Log(ex.ToString(), LogLevel.Error);
+                Logger.Log(ex.ToString(), LogLevel.Error);
                 return Constants.GSUDO_ERROR_EXITCODE;
             }
             finally

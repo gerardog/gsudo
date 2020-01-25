@@ -31,7 +31,7 @@ namespace gsudo
                 }
                 catch (ObjectDisposedException) { }
                 catch (IOException) { }
-                catch (Exception ex) { Logger.Instance.Log(ex.ToString(), LogLevel.Error); }
+                catch (Exception ex) { Logger.Log(ex.ToString(), LogLevel.Error); }
                 finally
                 {
                     reader.Dispose();

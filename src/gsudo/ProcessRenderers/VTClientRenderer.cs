@@ -68,7 +68,7 @@ namespace gsudo.ProcessRenderers
 
                 if (ExitCode.HasValue && ExitCode.Value == 0 && GlobalSettings.NewWindow)
                 {
-                    Logger.Instance.Log($"Elevated process started successfully", LogLevel.Debug);
+                    Logger.Log($"Elevated process started successfully", LogLevel.Debug);
                     return 0;
                 }
                 else if (ExitCode.HasValue)
@@ -77,12 +77,12 @@ namespace gsudo.ProcessRenderers
                 }
                 else if (expectedClose)
                 {
-                    Logger.Instance.Log($"Connection closed by the client.", LogLevel.Debug);
+                    Logger.Log($"Connection closed by the client.", LogLevel.Debug);
                     return 0;
                 }
                 else
                 {
-                    Logger.Instance.Log($"Connection from server lost.", LogLevel.Warning);
+                    Logger.Log($"Connection from server lost.", LogLevel.Warning);
                     return Constants.GSUDO_ERROR_EXITCODE;
                 }
             }
@@ -111,7 +111,7 @@ namespace gsudo.ProcessRenderers
 
             if (consecutiveCancelKeys > 2)
             {
-                Logger.Instance.Log("\rPress CTRL-C again to stop gsudo", LogLevel.Warning);
+                Logger.Log("\rPress CTRL-C again to stop gsudo", LogLevel.Warning);
                 var b = GlobalSettings.Encoding.GetBytes(CtrlC_Command);
                 _connection.DataStream.Write(b, 0, b.Length);
             }
@@ -137,7 +137,7 @@ namespace gsudo.ProcessRenderers
             }
             catch (Exception ex)
             {
-                Logger.Instance.Log(ex.ToString(), LogLevel.Error);
+                Logger.Log(ex.ToString(), LogLevel.Error);
             }
         }
 

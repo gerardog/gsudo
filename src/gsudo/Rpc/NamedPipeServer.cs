@@ -37,9 +37,9 @@ namespace gsudo.Rpc
                 AccessControlType.Allow));
 
             var pipeName = GetPipeName(_allowedSid, _allowedPid);
-            Logger.Instance.Log($"Using named pipe {pipeName}.", LogLevel.Debug);
+            Logger.Log($"Using named pipe {pipeName}.", LogLevel.Debug);
 
-            Logger.Instance.Log($"Access allowed only for ProcessID {_allowedPid} and childs", LogLevel.Debug);
+            Logger.Log($"Access allowed only for ProcessID {_allowedPid} and childs", LogLevel.Debug);
 
             while (!cancellationTokenSource.IsCancellationRequested)
             {
@@ -49,7 +49,7 @@ namespace gsudo.Rpc
                     using (NamedPipeServerStream controlPipe = new NamedPipeServerStream(pipeName + "_control", PipeDirection.InOut, MAX_SERVER_INSTANCES,
                         PipeTransmissionMode.Message, PipeOptions.Asynchronous, GlobalSettings.BufferSize, GlobalSettings.BufferSize, ps))
                     {
-                        Logger.Instance.Log("NamedPipeServer listening.", LogLevel.Debug);
+                        Logger.Log("NamedPipeServer listening.", LogLevel.Debug);
                         Task.WaitAll(
                                 new Task[]
                                 {
@@ -65,13 +65,13 @@ namespace gsudo.Rpc
 
                             ConnectionKeepAliveThread.Start(connection);
 
-                            Logger.Instance.Log("Incoming Connection.", LogLevel.Info);
+                            Logger.Log("Incoming Connection.", LogLevel.Info);
 
                             var clientPid = dataPipe.GetClientProcessId();
 
                             if (!IsAuthorized(clientPid, _allowedPid))
                             {
-                                Logger.Instance.Log($"Unauthorized access from PID {clientPid}", LogLevel.Warning);
+                                Logger.Log($"Unauthorized access from PID {clientPid}", LogLevel.Warning);
 
                                 await controlPipe.WriteAsync($"{Constants.TOKEN_ERROR}Unauthorized.{Constants.TOKEN_ERROR}").ConfigureAwait(false);
                                 await controlPipe.FlushAsync().ConfigureAwait(false);
@@ -97,7 +97,7 @@ namespace gsudo.Rpc
                             ConnectionClosed?.Invoke(this, connection);
                         }
 
-                        Logger.Instance.Log("Listener Closed.", LogLevel.Debug);
+                        Logger.Log("Listener Closed.", LogLevel.Debug);
                     }
                 }
             }
@@ -110,7 +110,7 @@ namespace gsudo.Rpc
             //
             if (callingExe != allowedExe)
             {
-                Logger.Instance.Log($"Invalid Client. Rejecting Connection. \nAllowed: {allowedExe}\nActual:  {callingExe}", LogLevel.Error);
+                Logger.Log($"Invalid Client. Rejecting Connection. \nAllowed: {allowedExe}\nActual:  {callingExe}", LogLevel.Error);
                 return false;
             }
 
@@ -122,7 +122,7 @@ namespace gsudo.Rpc
                 else
                     clientPid = ProcessExtensions.ParentProcessId(clientPid);
 
-            Logger.Instance.Log($"Invalid Client Credentials. Rejecting Connection. \nAllowed Pid: {allowedPid}\nActual Pid:  {clientPid}", LogLevel.Error);
+            Logger.Log($"Invalid Client Credentials. Rejecting Connection. \nAllowed Pid: {allowedPid}\nActual Pid:  {clientPid}", LogLevel.Error);
             return false;
         }
 

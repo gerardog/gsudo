@@ -13,7 +13,7 @@ namespace gsudo.Helpers
     {
         public static Process StartElevatedDetached(string filename, string arguments, bool hidden)
         {
-            Logger.Instance.Log($"Elevating process: {filename} {arguments}", LogLevel.Debug);
+            Logger.Log($"Elevating process: {filename} {arguments}", LogLevel.Debug);
 
             var process = new Process();
             process.StartInfo = new ProcessStartInfo(filename, arguments)
@@ -101,7 +101,7 @@ namespace gsudo.Helpers
             const int SHGFI_EXETYPE = 0x000002000;
             var fileInfo = Native.FileApi.SHGetFileInfo(path, 0, ref shinfo, (uint)Marshal.SizeOf(shinfo), SHGFI_EXETYPE);
             var retval = (fileInfo.ToInt64() & 0xFFFF0000) >0 ;
-            Logger.Instance.Log($"IsWindowsApp(\"{exe}\") = {retval} (\"{path}\")", LogLevel.Debug);
+            Logger.Log($"IsWindowsApp(\"{exe}\") = {retval} (\"{path}\")", LogLevel.Debug);
             return retval;
         }
 

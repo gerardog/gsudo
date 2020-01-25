@@ -26,7 +26,7 @@ namespace gsudo.Commands
             if (LogLvl.HasValue) GlobalSettings.LogLevel.Value = LogLvl.Value;
 
             Console.Title = "gsudo Service";
-            Logger.Instance.Log("Service started", LogLevel.Info);
+            Logger.Log("Service started", LogLevel.Info);
 
             using (IRpcServer server = CreateServer())
             {
@@ -37,7 +37,7 @@ namespace gsudo.Commands
                 await server.Listen().ConfigureAwait(false);
             }
 
-            Logger.Instance.Log("Service stopped", LogLevel.Info);
+            Logger.Log("Service stopped", LogLevel.Info);
             return 0;
         }
 
@@ -56,7 +56,7 @@ namespace gsudo.Commands
             }
             catch (Exception e)
             {
-                Logger.Instance.Log(e.ToString(), LogLevel.Error);
+                Logger.Log(e.ToString(), LogLevel.Error);
                 await connection.FlushAndCloseAll().ConfigureAwait(false);
             }
         }
@@ -89,7 +89,7 @@ namespace gsudo.Commands
             while (bytesRemaining > 0 )
                 bytesRemaining -= await dataPipe.ReadAsync(inBuffer, 0, bytesRemaining).ConfigureAwait(false);
 
-            Logger.Instance.Log($"ElevationRequest length {dataSizeInt}", LogLevel.Debug);
+            Logger.Log($"ElevationRequest length {dataSizeInt}", LogLevel.Debug);
 
             return (ElevationRequest) new BinaryFormatter()
             .Deserialize(new MemoryStream(inBuffer));

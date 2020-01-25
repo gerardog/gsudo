@@ -50,7 +50,7 @@ namespace gsudo.Commands
                 Prompt = consoleMode != ElevationRequest.ConsoleMode.Raw || GlobalSettings.NewWindow ? GlobalSettings.Prompt : GlobalSettings.RawPrompt
             };
 
-            Logger.Instance.Log($"Command to run: {elevationRequest.FileName} {elevationRequest.Arguments}", LogLevel.Debug);
+            Logger.Log($"Command to run: {elevationRequest.FileName} {elevationRequest.Arguments}", LogLevel.Debug);
 
             if (elevationRequest.Mode == ElevationRequest.ConsoleMode.VT)
             {
@@ -65,11 +65,11 @@ namespace gsudo.Commands
             {
                 if (emptyArgs)
                 {
-                    Logger.Instance.Log("Already elevated (and no parameters specified). Exiting...", LogLevel.Error);
+                    Logger.Log("Already elevated (and no parameters specified). Exiting...", LogLevel.Error);
                     return Constants.GSUDO_ERROR_EXITCODE;
                 }
 
-                Logger.Instance.Log("Already elevated. Running in-process", LogLevel.Debug);
+                Logger.Log("Already elevated. Running in-process", LogLevel.Debug);
 
                 // No need to escalate. Run in-process
 
@@ -92,7 +92,7 @@ namespace gsudo.Commands
                         {
                             process.WaitForExit();
                             var exitCode = process.ExitCode;
-                            Logger.Instance.Log($"Elevated process exited with code {exitCode}", exitCode == 0 ? LogLevel.Debug : LogLevel.Info);
+                            Logger.Log($"Elevated process exited with code {exitCode}", exitCode == 0 ? LogLevel.Debug : LogLevel.Info);
                             return exitCode;
                         }
                         return 0;
@@ -104,18 +104,18 @@ namespace gsudo.Commands
                     {
                         process.WaitForExit();
                         var exitCode = process.ExitCode;
-                        Logger.Instance.Log($"Elevated process exited with code {exitCode}", exitCode == 0 ? LogLevel.Debug : LogLevel.Info);
+                        Logger.Log($"Elevated process exited with code {exitCode}", exitCode == 0 ? LogLevel.Debug : LogLevel.Info);
                         return exitCode;
                     }
                 }
             }
             else // IsAdministrator() == false
             {
-                Logger.Instance.Log($"Using Console mode {elevationRequest.Mode}", LogLevel.Debug);
+                Logger.Log($"Using Console mode {elevationRequest.Mode}", LogLevel.Debug);
                 var callingPid = GetCallingPid(currentProcess);
                 var callingSid = WindowsIdentity.GetCurrent().User.Value;
-                Logger.Instance.Log($"Caller PID: {callingPid}", LogLevel.Debug);
-                Logger.Instance.Log($"Caller SID: {callingSid}", LogLevel.Debug);
+                Logger.Log($"Caller PID: {callingPid}", LogLevel.Debug);
+                Logger.Log($"Caller SID: {callingSid}", LogLevel.Debug);
 
                 var cmd = CommandToRun.FirstOrDefault();
 
@@ -132,7 +132,7 @@ namespace gsudo.Commands
                     catch (TimeoutException) { }
                     catch (Exception ex)
                     {
-                        Logger.Instance.Log(ex.ToString(), LogLevel.Warning);
+                        Logger.Log(ex.ToString(), LogLevel.Warning);
                     }
 
                     if (connection == null) // service is not running or listening.
@@ -141,7 +141,7 @@ namespace gsudo.Commands
                         var dbg = GlobalSettings.Debug ? "--debug " : string.Empty;
                         using (var process = ProcessFactory.StartElevatedDetached(currentProcess.MainModule.FileName, $"{dbg}gsudoservice {callingPid} {callingSid} {GlobalSettings.LogLevel}", !GlobalSettings.Debug))
                         {
-                            Logger.Instance.Log("Elevated instance started.", LogLevel.Debug);
+                            Logger.Log("Elevated instance started.", LogLevel.Debug);
                         }
 
                         connection = await rpcClient.Connect(elevationRequest, callingPid, 5000).ConfigureAwait(false);
@@ -149,7 +149,7 @@ namespace gsudo.Commands
 
                     if (connection == null) // service is not running or listening.
                     {
-                        Logger.Instance.Log("Unable to connect to the elevated service.", LogLevel.Error);
+                        Logger.Log("Unable to connect to the elevated service.", LogLevel.Error);
                         return Constants.GSUDO_ERROR_EXITCODE;
                     }
 
@@ -161,7 +161,7 @@ namespace gsudo.Commands
                     var exitCode = await renderer.Start().ConfigureAwait(false);
 
                     if (!(elevationRequest.NewWindow && !elevationRequest.Wait))
-                        Logger.Instance.Log($"Elevated process exited with code {exitCode}", exitCode == 0 ? LogLevel.Debug : LogLevel.Info);
+                        Logger.Log($"Elevated process exited with code {exitCode}", exitCode == 0 ? LogLevel.Debug : LogLevel.Info);
 
                     return exitCode;
                 }
@@ -192,7 +192,7 @@ namespace gsudo.Commands
             ms.Seek(0, System.IO.SeekOrigin.Begin);
 
             byte[] lengthArray = BitConverter.GetBytes(ms.Length);
-            Logger.Instance.Log($"ElevationRequest length {ms.Length}", LogLevel.Debug);
+            Logger.Log($"ElevationRequest length {ms.Length}", LogLevel.Debug);
 
             await connection.ControlStream.WriteAsync(lengthArray, 0, sizeof(int)).ConfigureAwait(false);
             await connection.ControlStream.WriteAsync(ms.ToArray(), 0, (int)ms.Length).ConfigureAwait(false);

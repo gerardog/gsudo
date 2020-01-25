@@ -24,7 +24,7 @@ namespace gsudo.ProcessHosts
             {
                 process = ProcessFactory.StartInProcessRedirected(request.FileName, request.Arguments, request.StartFolder);
 
-                Logger.Instance.Log($"Process ({process.Id}) started: {request.FileName} {request.Arguments}", LogLevel.Debug);
+                Logger.Log($"Process ({process.Id}) started: {request.FileName} {request.Arguments}", LogLevel.Debug);
 
                 var t1 = process.StandardOutput.ConsumeOutput((s) => WriteToPipe(s));
                 var t2 = process.StandardError.ConsumeOutput((s) => WriteToErrorPipe(s));
@@ -47,7 +47,7 @@ namespace gsudo.ProcessHosts
             }
             catch (Exception ex)
             {
-                Logger.Instance.Log(ex.ToString(), LogLevel.Error);
+                Logger.Log(ex.ToString(), LogLevel.Error);
 
                 await connection.ControlStream.WriteAsync($"{Constants.TOKEN_ERROR}Server Error: {ex.ToString()}\r\n{Constants.TOKEN_ERROR}").ConfigureAwait(false);
                 await connection.FlushAndCloseAll().ConfigureAwait(false);

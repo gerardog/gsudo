@@ -57,7 +57,7 @@ namespace gsudo.Rpc
                 controlPipe = new NamedPipeClientStream(server, pipeName + "_control", PipeDirection.InOut, PipeOptions.Asynchronous, System.Security.Principal.TokenImpersonationLevel.Impersonation, HandleInheritability.None);
                 await controlPipe.ConnectAsync(timeoutMilliseconds).ConfigureAwait(false);
 
-                Logger.Instance.Log($"Connected via Named Pipe {pipeName}.", LogLevel.Debug);
+                Logger.Log($"Connected via Named Pipe {pipeName}.", LogLevel.Debug);
 
                 var conn = new Connection()
                 {
@@ -87,12 +87,12 @@ namespace gsudo.Rpc
                 if (lpFindFileData.cFileName.EndsWith(name, StringComparison.Ordinal))
                 {
                     Native.FileApi.FindClose(ptr);
-                    Logger.Instance.Log($"Named Pipe \"{name}\" exists = true.", LogLevel.Debug);
+                    Logger.Log($"Named Pipe \"{name}\" exists = true.", LogLevel.Debug);
                     return true;
                 }
             }
             Native.FileApi.FindClose(ptr);
-            Logger.Instance.Log($"Named Pipe \"{name}\" exists = false.", LogLevel.Debug);
+            Logger.Log($"Named Pipe \"{name}\" exists = false.", LogLevel.Debug);
             return false;
 
         }

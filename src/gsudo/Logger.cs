@@ -12,32 +12,29 @@ namespace gsudo
         None = 5,
     }
 
-    class Logger
+    internal static class Logger
     {
-        public static readonly Logger Instance = new Logger();
-
-        private Logger() { }
-
-        public void Log(string message, LogLevel level)
+        public static void Log(string message, LogLevel level)
         {
             try
             {
-                if (level >= GlobalSettings.LogLevel)
-                {
-                    Console.ForegroundColor = GetColor(level);
-                    Console.Error.WriteLine($"{level.ToString()}: {message}");
-                    Console.ResetColor();
-                }
+                if (level < GlobalSettings.LogLevel) return;
+                Console.ForegroundColor = GetColor(level);
+                Console.Error.WriteLine($"{level.ToString()}: {message}");
+                Console.ResetColor();
             }
             catch { }
         }
 
         private static ConsoleColor GetColor(LogLevel level)
         {
-            if (level <= LogLevel.Debug) return ConsoleColor.DarkGray;
-            if (level == LogLevel.Info) return ConsoleColor.Gray;
-            if (level == LogLevel.Warning) return ConsoleColor.Yellow;
-            return ConsoleColor.Red;
+            return level switch
+            {
+                LogLevel.Debug => ConsoleColor.DarkGray,
+                LogLevel.Info => ConsoleColor.Gray,
+                LogLevel.Warning => ConsoleColor.Yellow,
+                _ => ConsoleColor.Red
+            };
         }
     }
 }

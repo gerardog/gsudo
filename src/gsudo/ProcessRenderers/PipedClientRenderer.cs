@@ -47,7 +47,7 @@ namespace gsudo.ProcessRenderers
 
                 if (exitCode.HasValue && exitCode.Value == 0 && GlobalSettings.NewWindow)
                 {
-                    Logger.Instance.Log($"Elevated process started successfully", LogLevel.Debug);
+                    Logger.Log($"Elevated process started successfully", LogLevel.Debug);
                     return 0;
                 }
                 else if (exitCode.HasValue)
@@ -56,12 +56,12 @@ namespace gsudo.ProcessRenderers
                 }
                 else if (expectedClose)
                 {
-                    Logger.Instance.Log($"Connection closed by the client.", LogLevel.Debug);
+                    Logger.Log($"Connection closed by the client.", LogLevel.Debug);
                     return 0;
                 }
                 else
                 {
-                    Logger.Instance.Log($"Connection from server lost.", LogLevel.Warning);
+                    Logger.Log($"Connection from server lost.", LogLevel.Warning);
                     return Constants.GSUDO_ERROR_EXITCODE;
                 }
             }
@@ -88,7 +88,7 @@ namespace gsudo.ProcessRenderers
 
             if (++consecutiveCancelKeys > 2)
             {
-                Logger.Instance.Log("Press CTRL-C again to stop gsudo", LogLevel.Warning);
+                Logger.Log("Press CTRL-C again to stop gsudo", LogLevel.Warning);
                 _ = _connection.ControlStream.WriteAsync(Constants.TOKEN_KEY_CTRLBREAK); // .GetAwaiter().GetResult();
             }
             else
@@ -156,7 +156,7 @@ namespace gsudo.ProcessRenderers
                 if (CurrentMode == Mode.Focus)
                 {
                     var hwnd = (IntPtr)int.Parse(token, CultureInfo.InvariantCulture);
-                    Logger.Instance.Log($"SetForegroundWindow({hwnd}) returned {Native.WindowApi.SetForegroundWindow(hwnd)}", LogLevel.Debug);
+                    Logger.Log($"SetForegroundWindow({hwnd}) returned {Native.WindowApi.SetForegroundWindow(hwnd)}", LogLevel.Debug);
                     continue;
                 }
                 if (CurrentMode == Mode.Error)

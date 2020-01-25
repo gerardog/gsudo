@@ -138,7 +138,7 @@ namespace gsudo.Helpers
                     }
                     catch
                     {
-                        Logger.Instance.Log($"\"{arg}\" is not a valid LogLevel. Valid values are: All, Debug, Info, Warning, Error, None", LogLevel.Error);
+                        Logger.Log($"\"{arg}\" is not a valid LogLevel. Valid values are: All, Debug, Info, Warning, Error, None", LogLevel.Error);
                         return Constants.GSUDO_ERROR_EXITCODE;
                     }
                 }
@@ -164,7 +164,7 @@ namespace gsudo.Helpers
                 }
                 else if (arg.StartsWith("-", StringComparison.Ordinal))
                 {
-                    Logger.Instance.Log($"Invalid option: {arg}", LogLevel.Error);
+                    Logger.Log($"Invalid option: {arg}", LogLevel.Error);
                     return Constants.GSUDO_ERROR_EXITCODE;
                 }
                 else
@@ -217,7 +217,7 @@ namespace gsudo.Helpers
         {
             System.IntPtr ptr = ConsoleApi.GetCommandLine();
             string commandLine = Marshal.PtrToStringAuto(ptr);
-            Logger.Instance.Log($"Command Line: {commandLine}", LogLevel.Debug);
+            Logger.Log($"Command Line: {commandLine}", LogLevel.Debug);
 
             if (commandLine[0] == '"')
                 return commandLine.Substring(commandLine.IndexOf('"', 1) + 1).TrimStart(' ');

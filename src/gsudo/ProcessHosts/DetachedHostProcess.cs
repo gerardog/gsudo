@@ -37,7 +37,7 @@ namespace gsudo.ProcessHosts
             }
             catch (Exception ex)
             {
-                Logger.Instance.Log(ex.ToString(), LogLevel.Error);
+                Logger.Log(ex.ToString(), LogLevel.Error);
                 if (connection.IsAlive)
                     await connection.ControlStream.WriteAsync($"{Constants.TOKEN_ERROR}Server Error: {ex.ToString()}\r\n{Constants.TOKEN_ERROR}").ConfigureAwait(false);
 

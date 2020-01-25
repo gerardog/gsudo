@@ -117,7 +117,7 @@ namespace gsudo.Helpers
         {
             if (process.HasExited) return;
 
-            Logger.Instance.Log($"Killing process {process.Id} {process.ProcessName}", LogLevel.Debug);
+            Logger.Log($"Killing process {process.Id} {process.ProcessName}", LogLevel.Debug);
 
             process.SendCtrlC();
             process.CloseMainWindow();
