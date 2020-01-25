@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace gsudo.ProcessHosts
 {
-    // PseudoConsole app host service. 
+    // PseudoConsole app host service.
     // Speaks VT
     // based on https://github.com/microsoft/terminal/tree/38156311e8f083614fb15ff627dabb2d3bf845b4/samples/ConPTY/MiniTerm/MiniTerm (master at dec/1/2019)
     class VTProcessHost : IProcessHost
@@ -148,11 +148,11 @@ namespace gsudo.ProcessHosts
                 }
             }
             finally
-            { 
+            {
                 streamWriter?.Close();
             }
         }
-        
+
         /// <summary>
         /// Set a callback for when the terminal is closed (e.g. via the "X" window decoration button).
         /// Intended for resource cleanup logic.
@@ -188,6 +188,6 @@ namespace gsudo.ProcessHosts
                 return false;
             }
         }
-      
+
     }
 }

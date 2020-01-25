@@ -23,7 +23,7 @@ namespace gsudo.ProcessHosts
             try
             {
                 process = ProcessFactory.StartInProcessRedirected(request.FileName, request.Arguments, request.StartFolder);
-                
+
                 Logger.Instance.Log($"Process ({process.Id}) started: {request.FileName} {request.Arguments}", LogLevel.Debug);
 
                 var t1 = process.StandardOutput.ConsumeOutput((s) => WriteToPipe(s));
@@ -61,7 +61,7 @@ namespace gsudo.ProcessHosts
                 process?.Dispose();
             }
         }
-               
+
         internal static void HandleCancelKey(object sender, ConsoleCancelEventArgs e)
         {
             e.Cancel = true;
@@ -109,7 +109,7 @@ namespace gsudo.ProcessHosts
 
                 if (token == Constants.TOKEN_KEY_CTRLBREAK)
                 {
-                    ProcessExtensions.SendCtrlC(process, true);
+                    ProcessExtensions.SendCtrlC(process);
                     lastInboundMessage = null;
                     continue;
                 }
@@ -139,7 +139,7 @@ namespace gsudo.ProcessHosts
                     lastInboundMessage = lastInboundMessage.Substring(c);
                 }
                 //if (GlobalSettings.Debug && !string.IsNullOrEmpty(s)) Logger.Instance.Log($"Last input command was: {s}", LogLevel.Debug);
-                
+
             }
             if (string.IsNullOrEmpty(s)) return; // suppress chars n s;
 
@@ -156,7 +156,7 @@ namespace gsudo.ProcessHosts
         private static int EqualCharsCount(string s1, string s2)
         {
             int i = 0;
-            for (; i < s1.Length && i < s2.Length && s1[i] == s2[i]; i++)   
+            for (; i < s1.Length && i < s2.Length && s1[i] == s2[i]; i++)
             { }
             return i;
         }

@@ -5,8 +5,8 @@ namespace gsudo.Rpc
     // A thread that detect when the NamedPipeConnection is disconnected.
     // Couldn't find a better way to do this than periodically writing to the pipe.
     // You can read indifinetely on a pipe that was closed by the other end.
-    // 
-    // Separated in a different thread because named pipes sometimes hangs up 
+    //
+    // Separated in a different thread because named pipes sometimes hangs up
     // when using WriteAsync on the main loop.
     class ConnectionKeepAliveThread
     {
@@ -37,8 +37,8 @@ namespace gsudo.Rpc
                 }
             }
             catch
-            { 
-                _connection.SignalDisconnected(); 
+            {
+                _connection.SignalDisconnected();
             }
         }
     }

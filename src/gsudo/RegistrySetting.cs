@@ -3,8 +3,8 @@ using System;
 
 namespace gsudo
 {
-    abstract class RegistrySetting 
-    { 
+    abstract class RegistrySetting
+    {
         protected const string REGKEY = "SOFTWARE\\gsudo";
         static RegistrySetting()
         {
@@ -24,7 +24,7 @@ namespace gsudo
 
         private Func<string, T> deserializer;
 
-        public T Value 
+        public T Value
         {
             get
             {
@@ -43,7 +43,7 @@ namespace gsudo
                         return defaultValue;
                     }
                 }
-            } 
+            }
             set
             {
                 runningValue = value;
@@ -52,7 +52,7 @@ namespace gsudo
         }
 
         public override object GetStringValue() => Value.ToString();
-       
+
         public RegistrySetting(string name, T defaultValue, Func<string,T> deserializer)
         {
             Name = name;

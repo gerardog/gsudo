@@ -26,7 +26,7 @@ namespace gsudo.Helpers
                         if (currentSepLength == 1
                             || String.CompareOrdinal(input, i, separator, 0, currentSepLength) == 0)
                         {
-                            if (i - lastPushed>0)  
+                            if (i - lastPushed>0)
                                 yield return input.Substring(lastPushed, i - lastPushed);
 
                             yield return input.Substring(i, currentSepLength);

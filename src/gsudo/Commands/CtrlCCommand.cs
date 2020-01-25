@@ -8,7 +8,7 @@ namespace gsudo.Commands
         public int pid { get; set; }
 
         public Task<int> Execute()
-        {            
+        {
             FreeConsole();
 
             if (AttachConsole((uint)pid))

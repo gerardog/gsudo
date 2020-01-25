@@ -88,12 +88,12 @@ namespace gsudo.Commands
             var bytesRemaining = dataSizeInt;
             while (bytesRemaining > 0 )
                 bytesRemaining -= await dataPipe.ReadAsync(inBuffer, 0, bytesRemaining).ConfigureAwait(false);
-            
+
             Logger.Instance.Log($"ElevationRequest length {dataSizeInt}", LogLevel.Debug);
 
             return (ElevationRequest) new BinaryFormatter()
             .Deserialize(new MemoryStream(inBuffer));
-            
+
         }
 
         public void Dispose()

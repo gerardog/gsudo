@@ -1,5 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net46</TargetFramework>
@@ -23,7 +22,7 @@ It is a sudo equivalent for Windows, with a similar user-experience as the origi
     <AssemblyName>gsudo</AssemblyName>
     <Deterministic>true</Deterministic>
     <PathMap>$(MSBuildProjectDirectory)=C:\</PathMap>
-</PropertyGroup>
+  </PropertyGroup>
 
   <ItemGroup>
     <Compile Remove="bin\**" />
@@ -42,7 +41,7 @@ It is a sudo equivalent for Windows, with a similar user-experience as the origi
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <Exec Command="echo Killing running gsudo commands.&#xD;&#xA;%25windir%25\sysnative\tskill gsudo&#xD;&#xA;exit 0" />
   </Target>
-    
+
   <Target Name="PostBuildMacros">
     <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
       <Output TaskParameter="Assemblies" ItemName="Targets" />

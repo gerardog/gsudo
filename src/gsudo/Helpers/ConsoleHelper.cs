@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace gsudo.Helpers
 {
     class ConsoleHelper
-    { 
+    {
         public static bool EnableVT()
         {
             // If we are using ConEmu or Cmder, we can safely use their VT implementation.

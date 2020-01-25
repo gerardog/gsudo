@@ -19,7 +19,7 @@ namespace gsudo.Tests
         [Ignore]
         public override void PS_EchoDoubleQuotesTest()
         {
-            base.PS_EchoDoubleQuotesTest(); // not working on pwsh core. 
+            base.PS_EchoDoubleQuotesTest(); // not working on pwsh core.
         }
     }
 

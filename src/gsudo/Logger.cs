@@ -37,7 +37,7 @@ namespace gsudo
             if (level <= LogLevel.Debug) return ConsoleColor.DarkGray;
             if (level == LogLevel.Info) return ConsoleColor.Gray;
             if (level == LogLevel.Warning) return ConsoleColor.Yellow;
-            return ConsoleColor.Red;    
+            return ConsoleColor.Red;
         }
     }
 }

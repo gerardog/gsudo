@@ -1,4 +1,11 @@
-﻿[*.cs]
+﻿root = true
+
+[*]
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.cs]
 
 # CA1303: Do not pass literals as localized parameters
 dotnet_diagnostic.CA1303.severity = silent
@@ -20,3 +27,6 @@ csharp_style_var_when_type_is_apparent = false:silent
 
 # CA1062: Validate arguments of public methods
 dotnet_diagnostic.CA1062.severity = none
+
+[*.{xml,csproj}]
+indent_size = 2

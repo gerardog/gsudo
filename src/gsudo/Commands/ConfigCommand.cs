@@ -31,7 +31,7 @@ namespace gsudo.Commands
                 Console.WriteLine($"Invalid Setting '{key}'.", LogLevel.Error);
                 return Task.FromResult(Constants.GSUDO_ERROR_EXITCODE);
             }
-            
+
             if (value!=null && value.Any())
             {
                 if (value.FirstOrDefault().In("--reset"))

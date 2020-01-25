@@ -50,7 +50,7 @@ namespace gsudo.Helpers
             process.Start();
             return process;
         }
-        
+
         public static Process StartInProcessAtached(string filename, string arguments)
         {
             var process = new Process();
@@ -82,7 +82,7 @@ namespace gsudo.Helpers
             {
                 process.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
                 process.Start();
-                
+
                 for (int i = 0; process.MainWindowHandle == IntPtr.Zero && i<30; i++)
                     System.Threading.Thread.Sleep(10);
 
@@ -148,7 +148,7 @@ namespace gsudo.Helpers
                 return null;
             }
             catch
-            { 
+            {
                 return null;
             }
         }

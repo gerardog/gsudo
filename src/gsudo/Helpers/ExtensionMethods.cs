@@ -18,7 +18,7 @@ namespace gsudo
         {
             return _taskFactory.StartNew(async () =>
             {
-                // important for ProcessStart buffers: buffer must be larger than Process Win32Api internal buffer, or else the output is truncated on 1% of the non-interactive elevations I.E. gsudo dir C:\ > output.txt 
+                // important for ProcessStart buffers: buffer must be larger than Process Win32Api internal buffer, or else the output is truncated on 1% of the non-interactive elevations I.E. gsudo dir C:\ > output.txt
                 char[] buffer = new char[10240];
                 int cch;
 
@@ -45,7 +45,7 @@ namespace gsudo
             await stream.WriteAsync(bytes, 0, bytes.Length).ConfigureAwait(false);
             await stream.FlushAsync().ConfigureAwait(false);
         }
-        
+
         public static bool NotIn(this string toSearch, params string[] list)
         {
             return !In(toSearch, list);

@@ -93,7 +93,7 @@ namespace gsudo.Tests
         public void Cmd_CommandLineAppNoWaitTest()
         {
             // ping should take 20 seconds
-            var p = new TestProcess("gsudo.exe", "-n ping 127.0.0.1 -n 20"); 
+            var p = new TestProcess("gsudo.exe", "-n ping 127.0.0.1 -n 20");
             // but gsudo should exit immediately.
             p.WaitForExit(2000);
             Assert.AreEqual(string.Empty, p.GetStdOut());

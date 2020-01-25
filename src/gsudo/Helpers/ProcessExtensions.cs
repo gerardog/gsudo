@@ -1,4 +1,4 @@
-using static gsudo.Native.ProcessApi;
+﻿using static gsudo.Native.ProcessApi;
 using Microsoft.Win32.SafeHandles;
 using System;
 using System.ComponentModel;
@@ -50,7 +50,7 @@ namespace gsudo.Helpers
             {
                 parent = Process.GetProcessById(parentId);
             }
-            catch 
+            catch
             {
                 return 0;
             }
@@ -119,7 +119,7 @@ namespace gsudo.Helpers
 
             Logger.Instance.Log($"Killing process {process.Id} {process.ProcessName}", LogLevel.Debug);
 
-            process.SendCtrlC(false);
+            process.SendCtrlC();
             process.CloseMainWindow();
 
             process.WaitForExit(300);

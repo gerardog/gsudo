@@ -47,7 +47,7 @@ namespace gsudo.Commands
                 Wait = (!isWindowsApp && !GlobalSettings.NewWindow) || GlobalSettings.Wait,
                 Mode = consoleMode,
                 ConsoleProcessId = currentProcess.Id,
-                Prompt = consoleMode != ElevationRequest.ConsoleMode.Raw || GlobalSettings.NewWindow ? GlobalSettings.Prompt : GlobalSettings.RawPrompt 
+                Prompt = consoleMode != ElevationRequest.ConsoleMode.Raw || GlobalSettings.NewWindow ? GlobalSettings.Prompt : GlobalSettings.RawPrompt
             };
 
             Logger.Instance.Log($"Command to run: {elevationRequest.FileName} {elevationRequest.Arguments}", LogLevel.Debug);
@@ -159,7 +159,7 @@ namespace gsudo.Commands
 
                     var renderer = GetRenderer(connection, elevationRequest);
                     var exitCode = await renderer.Start().ConfigureAwait(false);
-                    
+
                     if (!(elevationRequest.NewWindow && !elevationRequest.Wait))
                         Logger.Instance.Log($"Elevated process exited with code {exitCode}", exitCode == 0 ? LogLevel.Debug : LogLevel.Info);
 
@@ -200,7 +200,7 @@ namespace gsudo.Commands
         }
 
         /// <summary>
-        /// Decide wheter we will use raw piped I/O screen communication, 
+        /// Decide wheter we will use raw piped I/O screen communication,
         /// or enhanced, colorfull VT mode with nice TAB auto-complete.
         /// </summary>
         /// <returns></returns>
@@ -253,7 +253,7 @@ namespace gsudo.Commands
         {
             if (GlobalSettings.CopyEnvironmentVariables || GlobalSettings.CopyNetworkShares)
             {
-                var silent = GlobalSettings.Debug ? string.Empty : "@"; 
+                var silent = GlobalSettings.Debug ? string.Empty : "@";
                 var sb = new StringBuilder();
                 if (GlobalSettings.CopyEnvironmentVariables)
                 {
@@ -289,8 +289,8 @@ namespace gsudo.Commands
                 File.WriteAllText(tempBatName, sb.ToString());
 
                 return new string[] {
-                    Environment.GetEnvironmentVariable("COMSPEC"), 
-                    "/c" , 
+                    Environment.GetEnvironmentVariable("COMSPEC"),
+                    "/c" ,
                     $"\"{tempBatName} & del /q {tempBatName} & {string.Join(" ",args)}\""
                 };
             }

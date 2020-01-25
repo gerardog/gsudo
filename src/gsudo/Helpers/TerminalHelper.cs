@@ -12,7 +12,7 @@ namespace gsudo.Helpers
         {
             return (IsWindowsTerminal()
                 || IsConEmu())
-                && !Console.IsOutputRedirected;                
+                && !Console.IsOutputRedirected;
         }
 
         public static bool IsConEmu() // or Cmder
@@ -77,14 +77,14 @@ namespace gsudo.Helpers
 
             bool applicationMode = true;
 
-            // DECCKM	Disable Cursor Keys Application Mode (use Normal Mode) 
+            // DECCKM	Disable Cursor Keys Application Mode (use Normal Mode)
             //res.AddMany(ESC, '[', '?', '1', 'h');
             //res.AddMany(ESC, '[', '2', 'h');
             //applicationMode = false;
 
             //if (key.Key == ConsoleKey.Spacebar && IsControl)
             //    res.Add((char)0);
-            //else 
+            //else
 
             if (key.Key == ConsoleKey.UpArrow)
                 res.AddMany(ESC, '[', '1', ';', modifier, 'A');

@@ -16,7 +16,7 @@ namespace gsudo.ProcessHosts
             {
                 Native.ConsoleApi.FreeConsole();
                 uint pid = (uint)elevationRequest.ConsoleProcessId;
-                
+
                 if (Native.ConsoleApi.AttachConsole(pid))
                 {
                     Native.ConsoleApi.SetConsoleCtrlHandler(HandleConsoleCancelKeyPress, true);
@@ -39,7 +39,7 @@ namespace gsudo.ProcessHosts
                     }
                 }
                 else
-                {   
+                {
                     exitCode = Constants.GSUDO_ERROR_EXITCODE;
                 }
 

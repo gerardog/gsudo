@@ -25,10 +25,10 @@ namespace gsudo.Helpers
                 var newArgs = new List<string>();
                 newArgs.Add(currentShellExeName);
 
-                if (currentShell == Shell.PowerShell && !string.IsNullOrEmpty(GlobalSettings.PowerShellArguments)) 
+                if (currentShell == Shell.PowerShell && !string.IsNullOrEmpty(GlobalSettings.PowerShellArguments))
                     newArgs.Add(GlobalSettings.PowerShellArguments);
 
-                if (currentShell == Shell.PowerShellCore6 && !string.IsNullOrEmpty(GlobalSettings.PowerShellCore6Arguments)) 
+                if (currentShell == Shell.PowerShellCore6 && !string.IsNullOrEmpty(GlobalSettings.PowerShellCore6Arguments))
                     newArgs.Add(GlobalSettings.PowerShellCore6Arguments);
 
                 if (currentShell == Shell.PowerShellCore7 && !string.IsNullOrEmpty(GlobalSettings.PowerShellCore7Arguments))
@@ -39,7 +39,7 @@ namespace gsudo.Helpers
 
                 return newArgs.ToArray();
             }
-            
+
             // Not Powershell, or Powershell Core, assume CMD.
             if (args.Length == 0)
             {
@@ -57,7 +57,7 @@ namespace gsudo.Helpers
                 if (exename==null)
                 {
                     // add "CMD /C" prefix to commands such as MD, CD, DIR..
-                    // We are sure this will not be an interactive experience, 
+                    // We are sure this will not be an interactive experience,
 
                     return new string[]
                         { Environment.GetEnvironmentVariable("COMSPEC"), "/c" }
@@ -87,7 +87,7 @@ namespace gsudo.Helpers
                     results.Add(args.Substring(pushed, curr-pushed));
                     pushed = curr+1;
                 }
-                curr++;                
+                curr++;
             }
 
             if (pushed < curr)
@@ -229,7 +229,7 @@ namespace gsudo.Helpers
 
         public static string UnQuote(string v)
         {
-            if (string.IsNullOrEmpty(v)) 
+            if (string.IsNullOrEmpty(v))
                 return v;
             if (v[0] == '"' && v[v.Length - 1] == '"')
                 return v.Substring(1, v.Length - 2);

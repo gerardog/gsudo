@@ -30,7 +30,7 @@ namespace gsudo.PseudoConsole
                 new COORD { X = (short)width, Y = (short)height },
                 inputReadSide, outputWriteSide,
                 InheritCursor ? (uint)1 : 0, out IntPtr hPC);
-            
+
             if(createResult != 0)
             {
                 throw new InvalidOperationException("Could not create psuedo console. Error Code " + createResult);
