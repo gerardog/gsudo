@@ -12,7 +12,7 @@ namespace gsudo
         public static int BufferSize { get; set; } = 1024;
         public static RegistrySetting<LogLevel> LogLevel { get; set; } = new RegistrySetting<LogLevel>("LogLevel", gsudo.LogLevel.Info, (s) => (LogLevel)Enum.Parse(typeof(LogLevel), s, true));
 
-        public static readonly Encoding Encoding = System.Text.UnicodeEncoding.UTF8;
+        public static readonly Encoding Encoding = Encoding.UTF8;
 
         public static bool Debug { get; internal set; }
         public static bool NewWindow { get; internal set; }
