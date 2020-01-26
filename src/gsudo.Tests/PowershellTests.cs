@@ -5,8 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using FluentAssertions;
-using FluentAssertions.Execution;
 
 namespace gsudo.Tests
 {
@@ -21,7 +19,7 @@ namespace gsudo.Tests
         [Ignore]
         public override void PS_EchoDoubleQuotesTest()
         {
-            base.PS_EchoDoubleQuotesTest(); // not working on pwsh core.
+            base.PS_EchoDoubleQuotesTest(); // not working on pwsh core. 
         }
     }
 
@@ -47,21 +45,19 @@ namespace gsudo.Tests
         [TestMethod]
         public void PS_CommandLineEchoSingleQuotesTest()
         {
-            var p = new TestProcess("gsudo", $"{PS_FILENAME} -noprofile -command echo 1 '2 3'");
+            var p = new TestProcess("gsudo", "powershell -command echo 1 '2 3'");
             p.WaitForExit();
-            p.GetStdErr().Should().BeEmpty();
-            p.GetStdOut().Should().Be("1\r\n2 3\r\n");
-            p.ExitCode.Should().Be(0);
+            Assert.AreEqual("1\r\n2 3\r\n", p.GetStdOut());
+            Assert.AreEqual(0, p.Process.ExitCode);
         }
 
         [TestMethod]
         public void PS_CommandLineEchoDoubleQuotesTest()
         {
-            var p = new TestProcess("gsudo", $"{PS_FILENAME} -noprofile -command echo 1 '\\\"2 3\\\"'");
+            var p = new TestProcess("gsudo", "powershell -command echo 1 '\\\"2 3\\\"'");
             p.WaitForExit();
-            p.GetStdErr().Should().BeEmpty();
-            p.GetStdOut().Should().Be("1\r\n\"2 3\"\r\n");
-            p.ExitCode.Should().Be(0);
+            Assert.AreEqual("1\r\n\"2 3\"\r\n", p.GetStdOut());
+            Assert.AreEqual(0, p.Process.ExitCode);
         }
 
         [TestMethod]
@@ -71,9 +67,14 @@ namespace gsudo.Tests
             p.WriteInput("./gsudo 'echo 1 2 3'\r\n");
             p.WriteInput("exit\r\n");
             p.WaitForExit();
-            p.GetStdErr().Should().BeEmpty();
-            FixAppVeyor(p.GetStdOut()).Should().Be("# ./gsudo 'echo 1 2 3'\r\n1\r\n2\r\n3\r\n# exit\r\n");
-            p.ExitCode.Should().Be(0);
+            Assert.AreEqual(
+$@"# ./gsudo 'echo 1 2 3'
+1
+2
+3
+# exit
+", FixAppVeyor(p.GetStdOut()));
+            Assert.AreEqual(0, p.Process.ExitCode);
         }
 
         [TestMethod]
@@ -82,9 +83,8 @@ namespace gsudo.Tests
             var p = new TestProcess(PS_FILENAME, PS_ARGS);
             p.WriteInput("./gsudo 'echo 1 ''2 3'''\r\nexit\r\n");
             p.WaitForExit();
-            p.GetStdErr().Should().BeEmpty();
-            FixAppVeyor(p.GetStdOut()).Should().Be("# ./gsudo 'echo 1 ''2 3'''\r\n1\r\n2 3\r\n# exit\r\n");
-            p.ExitCode.Should().Be(0);
+            Assert.AreEqual($"# ./gsudo 'echo 1 ''2 3'''\r\n1\r\n2 3\r\n# exit\r\n", FixAppVeyor(p.GetStdOut()));
+            Assert.AreEqual(0, p.Process.ExitCode);
         }
 
         [TestMethod]
@@ -93,13 +93,12 @@ namespace gsudo.Tests
             var p = new TestProcess(PS_FILENAME, PS_ARGS);
             p.WriteInput("./gsudo 'echo 1 \\\"\"2 3\\\"\"'\r\nexit\r\n");
             p.WaitForExit();
-            FixAppVeyor(p.GetStdOut()).Should().Be("# ./gsudo 'echo 1 \\\"\"2 3\\\"\"'\r\n1\r\n2 3\r\n# exit\r\n");
-            p.ExitCode.Should().Be(0);
+            Assert.AreEqual($"# ./gsudo 'echo 1 \\\"\"2 3\\\"\"'\r\n1\r\n2 3\r\n# exit\r\n", FixAppVeyor(p.GetStdOut()));
+            Assert.AreEqual(0, p.Process.ExitCode);
         }
 
         string FixAppVeyor(string input)
         {
-            return input; // temporary disable fix to debug tests
             // AppVeyor's powershell displays a warning message because it uses PSReadLine that does not support Process Rediretion.
             // Remove the message.
             var ret = Regex.Replace(input, "((\r\n|\r|\n)Oops.*?-{71}.*?-{71}(\r\n|\r|\n))", string.Empty, RegexOptions.Singleline);
