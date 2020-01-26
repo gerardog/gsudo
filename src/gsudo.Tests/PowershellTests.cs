@@ -47,7 +47,7 @@ namespace gsudo.Tests
         [TestMethod]
         public void PS_CommandLineEchoSingleQuotesTest()
         {
-            var p = new TestProcess("gsudo", "powershell -noprofile -command echo 1 '2 3'");
+            var p = new TestProcess("gsudo", $"{PS_FILENAME} -noprofile -command echo 1 '2 3'");
             p.WaitForExit();
             p.GetStdErr().Should().BeEmpty();
             p.GetStdOut().Should().Be("1\r\n2 3\r\n");
@@ -57,7 +57,7 @@ namespace gsudo.Tests
         [TestMethod]
         public void PS_CommandLineEchoDoubleQuotesTest()
         {
-            var p = new TestProcess("gsudo", "powershell -noprofile -command echo 1 '\\\"2 3\\\"'");
+            var p = new TestProcess("gsudo", $"{PS_FILENAME} -noprofile -command echo 1 '\\\"2 3\\\"'");
             p.WaitForExit();
             p.GetStdErr().Should().BeEmpty();
             p.GetStdOut().Should().Be("1\r\n\"2 3\"\r\n");

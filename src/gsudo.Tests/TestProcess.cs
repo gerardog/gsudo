@@ -2,6 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 
 namespace gsudo.Tests
 {
@@ -36,8 +37,22 @@ namespace gsudo.Tests
             Process.StandardInput.Write(input);
         }
 
-        public string GetStdOut() => StdOut ??= Process.StandardOutput.ReadToEnd();
+        public string GetStdOut() => StdOut ??= ReadAll(Process.StandardOutput);
         public string GetStdErr() => StdErr ??= Process.StandardError.ReadToEnd();
+
+        private string ReadAll(StreamReader reader)
+        {
+            var sb = new StringBuilder();
+            char[] buffer = new char[10240];
+            int cch;
+
+            while ((cch = reader.Read(buffer, 0, buffer.Length)) > 0)
+            {
+                sb.Append(new string(buffer, 0, cch));
+            }
+
+            return sb.ToString();
+        }
 
         public void WaitForExit(int waitMilliseconds = 30000)
         {
