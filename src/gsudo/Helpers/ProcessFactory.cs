@@ -1,11 +1,13 @@
 ﻿using gsudo.Native;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using static gsudo.Native.ProcessApi;
+using static gsudo.Native.TokensApi;
 
 namespace gsudo.Helpers
 {
@@ -153,6 +155,7 @@ namespace gsudo.Helpers
             }
         }
 
+        #region PseudoConsole ConPty
         public static PseudoConsole.PseudoConsoleProcess StartPseudoConsole(string command, IntPtr attributes, IntPtr hPC, string startFolder)
         {
             var startupInfo = ConfigureProcessThread(hPC, attributes);
@@ -232,7 +235,61 @@ namespace gsudo.Helpers
 
             return pInfo;
         }
+        #endregion
 
+        #region RunAsUser
 
+        public static Process StartAsSystem(string appToRun, string args, string startupFolder, bool hidden)
+        { 
+            var winlogon = Process.GetProcesses().Where(p => p.ProcessName.In("winlogon")).FirstOrDefault();
+            return StartWithProcessToken(winlogon.Id, appToRun, args, startupFolder, hidden);
+        }
+
+        public static Process StartWithProcessToken(int pidWithToken, string appToRun, string args, string startupFolder, bool hidden)
+        {
+            IntPtr existingProcessHandle = OpenProcess(PROCESS_QUERY_INFORMATION, true, (uint) pidWithToken);
+            if (existingProcessHandle == IntPtr.Zero)
+            {
+                return null;
+            }
+
+            IntPtr existingProcessToken, newToken;
+            try
+            {
+                if (!OpenProcessToken(existingProcessHandle, TOKEN_DUPLICATE, out existingProcessToken))
+                {
+                    return null;
+                }
+            }
+            finally
+            {
+                CloseHandle(existingProcessHandle);
+            }
+            if (existingProcessToken == IntPtr.Zero) return null;
+
+            var sa = new SECURITY_ATTRIBUTES();
+            const uint MAXIMUM_ALLOWED = 0x02000000;
+
+            if (!TokensApi.DuplicateTokenEx(existingProcessToken, MAXIMUM_ALLOWED, ref sa, SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation, TOKEN_TYPE.TokenPrimary, out newToken))
+            {
+                return null;
+            }
+
+            var STARTF_USESHOWWINDOW = 0x00000001;
+            var startupInfo = new STARTUPINFO()
+            {
+                cb = (int)Marshal.SizeOf(typeof(STARTUPINFO)),
+                dwFlags = STARTF_USESHOWWINDOW,
+                wShowWindow = (short)(hidden ? 0 : 1),
+            };
+
+            PROCESS_INFORMATION processInformation;
+            if (!CreateProcessWithTokenW(newToken, 0, appToRun, $"{appToRun} {args}", 0, IntPtr.Zero, startupFolder, ref startupInfo, out processInformation))
+            {
+                return null;
+            }
+            return Process.GetProcessById(processInformation.dwProcessId);
+        }
+        #endregion
     }
 }

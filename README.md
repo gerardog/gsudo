@@ -71,6 +71,7 @@ Most relevant **`[options]`**:
 
 - **`-n | --new`**        Starts the command in a **new** console with elevated rights (and returns immediately).
 - **`-w | --wait`**       Force wait for the process to end (and return the exitcode).
+- **`-s | --system`**     Run As Local System account ("NT AUTHORITY\SYSTEM").
 - **`--copyev `**         Copy all environment variables to the elevated session before executing.
 - **`--copyns `**         Reconnect current connected network shares on the elevated session. Warning! This is verbose, affects the elevated user system-wide (other processes), and can prompt for credentials interactively.
 - **`--debug `**          Debug mode (verbose).

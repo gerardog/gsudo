@@ -71,7 +71,7 @@ namespace gsudo.Helpers
             }
         }
 
-        public static string[] SplitArgs(string args)
+        public static IEnumerable<string> SplitArgs(string args)
         {
             args = args.Trim();
             var results = new List<string>();
@@ -92,10 +92,10 @@ namespace gsudo.Helpers
 
             if (pushed < curr)
                 results.Add(args.Substring(pushed, curr - pushed));
-            return results.ToArray();
+            return results;
         }
 
-        internal static int? ParseCommonSettings(ref string[] args)
+        internal static int? ParseCommonSettings(ref IEnumerable<string> args)
         {
             Stack<string> stack = new Stack<string>(args.Reverse());
 
@@ -162,6 +162,11 @@ namespace gsudo.Helpers
                     GlobalSettings.CopyNetworkShares.Value = true;
                     stack.Pop();
                 }
+                else if (arg.In("-s", "--system"))
+                {
+                    GlobalSettings.RunAsSystem = true;
+                    stack.Pop();
+                }
                 else if (arg.StartsWith("-", StringComparison.Ordinal))
                 {
                     Logger.Instance.Log($"Invalid option: {arg}", LogLevel.Error);
@@ -177,8 +182,9 @@ namespace gsudo.Helpers
             return null;
         }
 
-        internal static ICommand ParseCommand(string[] args)
+        internal static ICommand ParseCommand(IEnumerable<string> argsEnumerable)
         {
+            var args = argsEnumerable.ToArray();
             if (args.Length == 0) return new RunCommand() { CommandToRun = Array.Empty<string>() };
 
             if (args[0].Equals("run", StringComparison.OrdinalIgnoreCase))
@@ -187,7 +193,7 @@ namespace gsudo.Helpers
             if (args[0].Equals("help", StringComparison.OrdinalIgnoreCase))
                 return new HelpCommand();
 
-            if (args[0].Equals("gsudoservice", StringComparison.OrdinalIgnoreCase))
+            if (args[0].In("gsudoservice", "gsudosystemservice"))
             {
                 bool hasLoglevel = false;
                 LogLevel logLevel = LogLevel.Info;
@@ -195,13 +201,27 @@ namespace gsudo.Helpers
                 {
                     hasLoglevel = Enum.TryParse<LogLevel>(args[3], true, out logLevel);
                 }
+                var allowedPid = int.Parse(args[1], CultureInfo.InvariantCulture);
+                var allowedSid = args[2];
 
-                return new ServiceCommand()
+                if (args[0].In("gsudoservice"))
                 {
-                    allowedPid = int.Parse(args[1], CultureInfo.InvariantCulture),
-                    allowedSid = args[2],
-                    LogLvl = hasLoglevel ? logLevel : (LogLevel?)null,
-                };
+                    return new ServiceCommand()
+                    {
+                        allowedPid = allowedPid,
+                        allowedSid = allowedSid,
+                        LogLvl = hasLoglevel ? logLevel : (LogLevel?)null,
+                    };
+                }
+                else
+                {
+                    return new SystemServiceCommand()
+                    {
+                        allowedPid = allowedPid,
+                        allowedSid = allowedSid,
+                        LogLvl = hasLoglevel ? logLevel : (LogLevel?)null,
+                    };
+                }
             }
 
             if (args[0].Equals("gsudoctrlc", StringComparison.OrdinalIgnoreCase))
@@ -216,7 +236,7 @@ namespace gsudo.Helpers
         internal static string GetRealCommandLine()
         {
             System.IntPtr ptr = ConsoleApi.GetCommandLine();
-            string commandLine = Marshal.PtrToStringAuto(ptr);
+            string commandLine = Marshal.PtrToStringAuto(ptr).TrimStart();
             Logger.Instance.Log($"Command Line: {commandLine}", LogLevel.Debug);
 
             if (commandLine[0] == '"')

@@ -34,14 +34,15 @@ namespace gsudo.Commands
             Console.WriteLine("gsudo [-v | --version] \t Shows gsudo version");
             Console.WriteLine();
             Console.WriteLine("Valid options:");
-            Console.WriteLine(" --loglevel {val}  Only show logs where level is at least the value specified. Valid values are: All, Debug, Info, Warning, Error, None");
-            Console.WriteLine(" --debug           Enable debug mode. (makes gsudo service window visible)");
-            Console.WriteLine(" -n | --new        Starts the command in a new console with elevated rights and returns immediately.");
-            Console.WriteLine(" -w | --wait       Force wait for the process to end.");
-            Console.WriteLine(" --raw             Force use of a reduced terminal.");
-            Console.WriteLine(" --vt              Force use of full VT100 terminal emulator (experimental).");
+            Console.WriteLine(" -n | --new        Starts the command in a new console (and returns immediately).");
+            Console.WriteLine(" -w | --wait       Force wait for the command to end.");
+            Console.WriteLine(" -s | --system     Run As Local System account (\"NT AUTHORITY\\SYSTEM\").");
             Console.WriteLine(" --copyev          Copy environment variables to the elevated process before executing.");
             Console.WriteLine(" --copyns          Connect current network drives to the elevated user. Warning! This is verbose, affects the elevated user system-wide, and can prompt for credentials interactively.");
+            Console.WriteLine(" --raw             Force use of a reduced terminal.");
+            Console.WriteLine(" --vt              Force use of full VT100 terminal emulator (experimental).");
+            Console.WriteLine(" --loglevel {val}  Only show logs where level is at least the value specified. Valid values are: All, Debug, Info, Warning, Error, None");
+            Console.WriteLine(" --debug           Enable debug mode. (makes gsudo service window visible)");
 
             return;
         }

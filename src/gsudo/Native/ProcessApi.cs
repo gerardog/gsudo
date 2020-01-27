@@ -155,5 +155,23 @@ namespace gsudo.Native
             private static extern bool CloseHandle(IntPtr handle);
         }
         #endregion
+
+        #region Query Process Info
+        public const UInt32 PROCESS_QUERY_INFORMATION = 0x0400;
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern IntPtr OpenProcess(UInt32 dwDesiredAccess, Boolean bInheritHandle, UInt32 dwProcessId);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern Boolean OpenProcessToken(IntPtr hProcess, UInt32 dwDesiredAccess, out IntPtr hToken);
+
+        [DllImport("Wtsapi32.dll")]
+        public static extern bool WTSQuerySessionInformationW(
+            IntPtr hServer,
+            int SessionId,
+            int WTSInfoClass,
+            out IntPtr ppBuffer,
+            out IntPtr pBytesReturned);
+        #endregion
     }
 }

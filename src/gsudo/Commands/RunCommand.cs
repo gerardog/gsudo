@@ -47,7 +47,7 @@ namespace gsudo.Commands
                 Wait = (!isWindowsApp && !GlobalSettings.NewWindow) || GlobalSettings.Wait,
                 Mode = consoleMode,
                 ConsoleProcessId = currentProcess.Id,
-                Prompt = consoleMode != ElevationRequest.ConsoleMode.Raw || GlobalSettings.NewWindow ? GlobalSettings.Prompt : GlobalSettings.RawPrompt 
+                Prompt = consoleMode != ElevationRequest.ConsoleMode.Raw || GlobalSettings.NewWindow ? GlobalSettings.Prompt : GlobalSettings.RawPrompt
             };
 
             Logger.Instance.Log($"Command to run: {elevationRequest.FileName} {elevationRequest.Arguments}", LogLevel.Debug);
@@ -61,7 +61,7 @@ namespace gsudo.Commands
                     elevationRequest.ConsoleWidth--; // weird ConEmu/Cmder fix
             }
 
-            if (ProcessExtensions.IsAdministrator())
+            if (RunningAsDesiredUser()) // already elevated or running as correct user. No service needed.
             {
                 if (emptyArgs)
                 {
@@ -109,7 +109,7 @@ namespace gsudo.Commands
                     }
                 }
             }
-            else // IsAdministrator() == false
+            else
             {
                 Logger.Instance.Log($"Using Console mode {elevationRequest.Mode}", LogLevel.Debug);
                 var callingPid = GetCallingPid(currentProcess);
@@ -138,11 +138,8 @@ namespace gsudo.Commands
                     if (connection == null) // service is not running or listening.
                     {
                         // Start elevated service instance
-                        var dbg = GlobalSettings.Debug ? "--debug " : string.Empty;
-                        using (var process = ProcessFactory.StartElevatedDetached(currentProcess.MainModule.FileName, $"{dbg}gsudoservice {callingPid} {callingSid} {GlobalSettings.LogLevel}", !GlobalSettings.Debug))
-                        {
-                            Logger.Instance.Log("Elevated instance started.", LogLevel.Debug);
-                        }
+                        if (!StartElevatedService(currentProcess, callingPid, callingSid))
+                            return Constants.GSUDO_ERROR_EXITCODE;
 
                         connection = await rpcClient.Connect(elevationRequest, callingPid, 5000).ConfigureAwait(false);
                     }
@@ -159,7 +156,7 @@ namespace gsudo.Commands
 
                     var renderer = GetRenderer(connection, elevationRequest);
                     var exitCode = await renderer.Start().ConfigureAwait(false);
-                    
+
                     if (!(elevationRequest.NewWindow && !elevationRequest.Wait))
                         Logger.Instance.Log($"Elevated process exited with code {exitCode}", exitCode == 0 ? LogLevel.Debug : LogLevel.Info);
 
@@ -172,9 +169,43 @@ namespace gsudo.Commands
             }
         }
 
+        private static bool StartElevatedService(Process currentProcess, int callingPid, string callingSid)
+        {
+            var dbg = GlobalSettings.Debug ? "--debug " : string.Empty;
+            Process process;
+            if (GlobalSettings.RunAsSystem && ProcessExtensions.IsAdministrator())
+            {
+                process = ProcessFactory.StartAsSystem(currentProcess.MainModule.FileName, $"{dbg}-s gsudoservice {callingPid} {callingSid} {GlobalSettings.LogLevel}", Environment.CurrentDirectory, !GlobalSettings.Debug);
+            }
+            else
+            {
+                var verb = GlobalSettings.RunAsSystem ? "gsudosystemservice" : "gsudoservice";
+                process = ProcessFactory.StartElevatedDetached(currentProcess.MainModule.FileName, $"{dbg}{verb} {callingPid} {callingSid} {GlobalSettings.LogLevel}", !GlobalSettings.Debug);
+            }
+
+            if (process == null)
+            {
+                Logger.Instance.Log("Failed to start elevated instance.", LogLevel.Error);
+                return false;
+            }
+
+            Logger.Instance.Log("Elevated instance started.", LogLevel.Debug);
+            return true;
+        }
+
+        private static bool RunningAsDesiredUser()
+        {
+            if (GlobalSettings.RunAsSystem)
+            {
+                return WindowsIdentity.GetCurrent().IsSystem;
+            }
+            return ProcessExtensions.IsAdministrator();
+        }
+
         private static int GetCallingPid(Process currentProcess)
         {
             var parent = currentProcess.ParentProcess();
+            if (parent == null) return currentProcess.ParentProcessId();
             while (parent.MainModule.FileName.In("sudo.exe", "gsudo.exe")) // naive shim detection
             {
                 parent = parent.ParentProcess();

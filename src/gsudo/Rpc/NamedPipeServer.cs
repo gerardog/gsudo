@@ -126,19 +126,10 @@ namespace gsudo.Rpc
             return false;
         }
 
-        public static string GetPipeName()
+        public static string GetPipeName(string connectingUser, int connectingPid)
         {
-            return GetPipeName(WindowsIdentity.GetCurrent().User.Value, Process.GetCurrentProcess().ParentProcessId());
-        }
-
-        public static string GetPipeName(int AllowedProcessId)
-        {
-            return GetPipeName(WindowsIdentity.GetCurrent().User.Value, AllowedProcessId);
-        }
-
-        public static string GetPipeName(string user, int processId)
-        {
-            return $"{GetPipePrefix()}_{user}_{processId}";
+            string target = GlobalSettings.RunAsSystem ? "_S" : string.Empty;
+            return $"{GetPipePrefix()}_{connectingUser}_{connectingPid}{target}";
         }
 
         private static string GetPipePrefix()
