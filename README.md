@@ -193,7 +193,7 @@ mklink %userprofile%\scoop\shims\sudo.exe %userprofile%\scoop\apps\gsudo\current
 
 ## FAQ
 
-- Why `gsudo` instead of just `sudo`?
+- Why is it named `gsudo` instead of just `sudo`?
 
   When I created `gsudo`, there were other `sudo` packages on most Windows popular package managers such as `Chocolatey` and `Scoop`, so I had no other choice to pick another name. `gsudo` installers on Scoop and Chocolatey create aliases for `sudo`, so feel free to use the `sudo` alias on your command line to invoke `gsudo`.
 
