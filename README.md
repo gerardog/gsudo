@@ -16,14 +16,14 @@ Just prepend `gsudo` (or the `sudo` alias) to your command and it will run eleva
   - Those **streaming StdIn/Out/Err** to the non-elevated console.
     This allows to capture or redirect StdIn/Out/Err but has limited user experience: Elevated processes can only append plain text to the console, so text formatting, full screen console apps, progress bars, tab-key auto-complete, does not work.
 
-**`gsudo` implements all three methods**, and automatically uses the one that best fits your scenario, so you get the best user experience everytime.
+**`gsudo` combines all three methods**, and automatically uses the one that best fits your scenario, so you get the best user experience everytime.
 
 ## Features
 
 - Elevated commands are shown in the user-level console. (Unless you specify `-n` which opens a new window.)
 - Credentials cache: If `gsudo` is invoked several times within minutes it only shows the UAC pop-up once.
 - CMD commands: `gsudo md folder` (no need to use the longer form `gsudo cmd.exe /c md folder`)
-- Supports [PowerShell/PowerShell Core commands](#Usage-from-PowerShell).
+- Supports [PowerShell/PowerShell Core commands](#usage-from-powershell--powershell-core).
 - Supports being used on scripts: 
   - `gsudo` can be used on scripts that requires to elevate one or more commands. (the UAC popup will appear once). 
   - Outputs of the elevated commands can be interpreted: E.g. StdOut/StdErr can be piped or captured (`gsudo dir | findstr /c:"bytes free" > FreeSpace.txt`) and exit codes too ('%errorlevel%)). If `gsudo` fails to elevate, the exit code will be 999.
