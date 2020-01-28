@@ -32,7 +32,7 @@ namespace gsudo.Commands
             bool isWindowsApp = ProcessFactory.IsWindowsApp(CommandToRun.FirstOrDefault());
             var consoleMode = GetConsoleMode(isWindowsApp);
 
-            if (!ProcessExtensions.IsAdministrator())
+            if (!RunningAsDesiredUser())
             {
                 CommandToRun = AddCopyEnvironment(CommandToRun);
             }
@@ -63,7 +63,7 @@ namespace gsudo.Commands
 
             if (RunningAsDesiredUser()) // already elevated or running as correct user. No service needed.
             {
-                if (emptyArgs)
+                if (emptyArgs && !GlobalSettings.NewWindow)
                 {
                     Logger.Instance.Log("Already elevated (and no parameters specified). Exiting...", LogLevel.Error);
                     return Constants.GSUDO_ERROR_EXITCODE;

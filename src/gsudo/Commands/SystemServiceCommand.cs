@@ -5,6 +5,13 @@ using System.Diagnostics;
 
 namespace gsudo.Commands
 {
+    /// <summary>
+    /// We can only spawn a process as system account if we were elevated first. 
+    /// So, 
+    /// Non-elevated Gsudo client -(elevates)-> Gsudo SystemService -(runs as System)-> Gsudo Service.
+    /// Then..
+    /// Non-elevated Gsudo client connects to Gsudo Service running as system.
+    /// </summary>
     class SystemServiceCommand : ICommand
     {
         public int allowedPid { get; set; }

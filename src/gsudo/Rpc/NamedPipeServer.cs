@@ -81,12 +81,8 @@ namespace gsudo.Rpc
                                 dataPipe.Disconnect();
                                 controlPipe.Disconnect();
 
-                                // kill the server. I could also "break;" and keep listening, but better be on the safe side
-#if DEBUG
-                                continue;
-#else
+                                // kill the server.
                                 return;
-#endif
                             }
 
                             ConnectionAccepted?.Invoke(this, connection);
