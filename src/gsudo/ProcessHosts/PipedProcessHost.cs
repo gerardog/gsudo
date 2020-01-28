@@ -9,8 +9,10 @@ using System.Threading.Tasks;
 
 namespace gsudo.ProcessHosts
 {
-    // Regular Windows Console app host service. (not ConPTY).
-    // Sends raw text stdOut & stdErr, like when you run dir > outpipe;
+    /// <summary>
+    /// Hosts a console process with redirected StdIn/Out/Err.
+    /// Sends all I/O thru the connection.
+    /// </summary>
     class PipedProcessHost : IProcessHost
     {
         private string lastInboundMessage = null;

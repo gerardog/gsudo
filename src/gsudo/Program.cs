@@ -7,19 +7,18 @@ namespace gsudo
 {
     class Program
     {
-        async static Task<int> Main(string[] args)
+        async static Task<int> Main()
         {
             SymbolicLinkSupport.EnableAssemblyLoadFix();
 
-            return await Start(args).ConfigureAwait(false);
+            return await Start().ConfigureAwait(false);
         }
 
-        private static async Task<int> Start(string[] args)
+        private static async Task<int> Start()
         {
             ICommand cmd = null;
-            //System.Diagnostics.Process.Start("cmd","/c timeout 20").WaitForExit();
 
-            args = ArgumentsHelper.SplitArgs(ArgumentsHelper.GetRealCommandLine());
+            var args = ArgumentsHelper.SplitArgs(ArgumentsHelper.GetRealCommandLine());
 
             var parserError = ArgumentsHelper.ParseCommonSettings(ref args);
             if (parserError.HasValue) return parserError.Value;

@@ -9,9 +9,11 @@ using System.Threading.Tasks;
 
 namespace gsudo.ProcessHosts
 {
-    // PseudoConsole app host service. 
-    // Speaks VT
-    // based on https://github.com/microsoft/terminal/tree/38156311e8f083614fb15ff627dabb2d3bf845b4/samples/ConPTY/MiniTerm/MiniTerm (master at dec/1/2019)
+    /// <summary>
+    /// Hosts a console process using the new windows PseudoConsole.
+    /// Sends all I/O thru the connection using VT protocol.
+    /// based on https://github.com/microsoft/terminal/tree/38156311e8f083614fb15ff627dabb2d3bf845b4/samples/ConPTY/MiniTerm/MiniTerm 
+    /// </summary>
     class VTProcessHost : IProcessHost
     {
         private Connection _connection;

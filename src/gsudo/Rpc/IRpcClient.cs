@@ -58,15 +58,4 @@ namespace gsudo.Rpc
             IsAlive = false;
         }
     }
-
-    /*
-    /// <summary>
-    /// abstraction of named pipe stream for future implementations of other rpc mechanisms such as tcp/ip
-    /// </summary>
-    interface IRpcChannel : IDisposable
-    {
-        Stream Stream { get; }
-        void Close();
-    }
-    */
 }

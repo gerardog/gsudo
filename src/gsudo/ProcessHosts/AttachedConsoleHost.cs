@@ -7,6 +7,10 @@ using static gsudo.Native.ConsoleApi;
 
 namespace gsudo.ProcessHosts
 {
+    /// <summary>
+    /// Hosts a process that uses Win32 'AttachConsole' Api so its i/o is natively attached to the
+    /// client console. 
+    /// </summary>
     class AttachedConsoleHost : IProcessHost
     {
         public async Task Start(Connection connection, ElevationRequest elevationRequest)

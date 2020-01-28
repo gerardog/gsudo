@@ -52,7 +52,6 @@ namespace gsudo.Helpers
             bool IsShift = key.Modifiers.HasFlag(ConsoleModifiers.Shift);
             bool IsAlt = key.Modifiers.HasFlag(ConsoleModifiers.Alt);
 
-
             // http://www.xfree86.org/4.7.0/ctlseqs.html
             char modifier = '1';
             if (IsShift) modifier = (char)(modifier + 1);
@@ -62,7 +61,7 @@ namespace gsudo.Helpers
             if (debug) // hard code debug mode
             {
                 // Test mode:
-                // run from cmder: gsudo --debug KeyPressTester.exe
+                // run from cmder: gsudo --debug --vt KeyPressTester.exe
                 // you may also compare with Windows Terminal and report any issue as a Windows Terminal Bug.
 
                 Console.Write($"gsudo received. Modifier={modifier} Key={key.Key.ToString()} keyChar={key.KeyChar} => ");

@@ -17,6 +17,8 @@ namespace gsudo
         public static bool Debug { get; internal set; }
         public static bool NewWindow { get; internal set; }
         public static bool Wait { get; internal set; }
+        public static bool RunAsSystem { get; internal set; }
+
         public static RegistrySetting<bool> ForceRawConsole { get; internal set; } = new RegistrySetting<bool>(nameof(ForceRawConsole), false, bool.Parse);
         public static RegistrySetting<bool> ForceVTConsole { get; internal set; } = new RegistrySetting<bool>(nameof(ForceVTConsole), false, bool.Parse);
         public static RegistrySetting<bool> CopyEnvironmentVariables { get; internal set; } = new RegistrySetting<bool>(nameof(CopyEnvironmentVariables), false, bool.Parse);
@@ -33,10 +35,7 @@ namespace gsudo
                 ForceRawConsole,
                 ForceVTConsole,
                 CopyEnvironmentVariables,
-                CopyNetworkShares,
-                PowerShellArguments,
-                PowerShellCore6Arguments,
-                PowerShellCore7Arguments);
+                CopyNetworkShares);
     }
 
     static class Extension
