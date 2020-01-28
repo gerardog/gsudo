@@ -19,22 +19,45 @@ namespace gsudo.Helpers
             string currentShellExeName;
             Shell currentShell = ShellHelper.DetectInvokingShell(out currentShellExeName);
 
-            // Is our current shell Powershell ? (Powershell.exe -calls-> gsudo)
-            if (currentShell.In(Shell.PowerShell, Shell.PowerShellCore6, Shell.PowerShellCore7))
+            if (currentShell.In(Shell.PowerShell, Shell.PowerShellCore, Shell.PowerShellCore623BuggedGlobalInstall))
             {
+                // PowerShell Core 6.0.0 to 6.2.3 does not supports command line arguments.
+
+                // See:
+                // https://github.com/PowerShell/PowerShell/pull/10461#event-2959890147
+                // https://github.com/gerardog/gsudo/issues/10
+
+                /*                 
+                Running ./gsudo from powershell should elevate the current shell, which means:
+                    => On PowerShell, run => powershell -NoLogo 
+                    => On PowerShellCore => pwsh -NoLogo 
+                    => On PowerShellCore623BuggedGlobalInstall => pwsh 
+
+                Running ./gsudo {command}   should elevate the powershell command.
+                    => On PowerShell => powershell -NoLogo -NoProfile -Command {command} 
+                    => On PowerShellCore => pwsh -NoLogo -NoProfile -Command {command}
+                    => On PowerShellCore623BuggedGlobalInstall => pwsh {command}
+                 */
+
                 var newArgs = new List<string>();
-                newArgs.Add(currentShellExeName);
+                newArgs.Add($"\"{currentShellExeName}\"");
 
-                if (currentShell == Shell.PowerShell && !string.IsNullOrEmpty(GlobalSettings.PowerShellArguments)) 
-                    newArgs.Add(GlobalSettings.PowerShellArguments);
+                if (currentShell == Shell.PowerShellCore623BuggedGlobalInstall)
+                {
+                    Logger.Instance.Log("Please update to PowerShell Core >= 6.2.4 to avoid profile loading.", LogLevel.Warning);
+                }
+                else
+                {
+                    newArgs.Add("-NoLogo");
 
-                if (currentShell == Shell.PowerShellCore6 && !string.IsNullOrEmpty(GlobalSettings.PowerShellCore6Arguments)) 
-                    newArgs.Add(GlobalSettings.PowerShellCore6Arguments);
+                    if (args.Length > 0)
+                    {
+                        newArgs.Add("-NoProfile");
+                        newArgs.Add("-Command");
+                    }
+                }
 
-                if (currentShell == Shell.PowerShellCore7 && !string.IsNullOrEmpty(GlobalSettings.PowerShellCore7Arguments))
-                    newArgs.Add(GlobalSettings.PowerShellCore7Arguments);
-
-                if (args.Length>0)
+                if (args.Length > 0)
                     newArgs.AddMany(args);
 
                 return newArgs.ToArray();
@@ -65,7 +88,7 @@ namespace gsudo.Helpers
                 }
                 else
                 {
-                    args[0] = exename; // Batch files not started by create process if no extension is specified.
+                    args[0] = $"\"{exename}\""; // Batch files not started by create process if no extension is specified.
                     return args;
                 }
             }

@@ -35,10 +35,7 @@ namespace gsudo
                 ForceRawConsole,
                 ForceVTConsole,
                 CopyEnvironmentVariables,
-                CopyNetworkShares,
-                PowerShellArguments,
-                PowerShellCore6Arguments,
-                PowerShellCore7Arguments);
+                CopyNetworkShares);
     }
 
     static class Extension

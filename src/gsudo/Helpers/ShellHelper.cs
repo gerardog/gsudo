@@ -11,9 +11,9 @@ namespace gsudo.Helpers
     public enum Shell
     {
         PowerShell,
-        PowerShellCore6,
+        PowerShellCore,
+        PowerShellCore623BuggedGlobalInstall,
         Cmd,
-        PowerShellCore7
     }
 
     static class ShellHelper
@@ -24,7 +24,6 @@ namespace gsudo.Helpers
             var parentProcess = Process.GetCurrentProcess().ParentProcess();
             if (parentProcess != null)
             {
-
                 var parentExeName = Path.GetFileName(parentProcess.MainModule.FileName).ToUpperInvariant();
                 if (parentExeName == "POWERSHELL.EXE")
                 {
@@ -34,12 +33,7 @@ namespace gsudo.Helpers
                 else if (parentExeName == "PWSH.EXE")
                 {
                     ShellExeName = parentProcess.MainModule.FileName;
-
-                    FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(ShellExeName);
-                    if (versionInfo.FileMajorPart < 7)
-                        return Shell.PowerShellCore6;
-                    else
-                        return Shell.PowerShellCore7;
+                    return Shell.PowerShellCore;
                 }
                 else
                 {
@@ -53,10 +47,13 @@ namespace gsudo.Helpers
                             ShellExeName = grandParentProcess.MainModule.FileName;
 
                             FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(ShellExeName);
-                            if (versionInfo.FileMajorPart < 7)
-                                return Shell.PowerShellCore6;
-                            else
-                                return Shell.PowerShellCore7;
+
+                            if (Version.Parse(versionInfo.FileVersion) <= Version.Parse("6.2.3.0") && ShellExeName.EndsWith(".dotnet\\tools\\pwsh.exe", StringComparison.OrdinalIgnoreCase))
+                            {
+                                return Shell.PowerShellCore623BuggedGlobalInstall;
+                            }
+
+                            return Shell.PowerShellCore;
                         }
                     }
                 }
