@@ -55,10 +55,11 @@ choco install gsudo --version=x.x.x
 refreshenv
 -->
 
-Manual installation:
+Manual installation: (no elevation required)
 
-Download the [latest release](https://github.com/gerardog/gsudo/releases/latest). Unzip to a local folder. Then either add it to the path or, you can alias the `sudo` keyword to `gsudo` with:
- `mklink "C:\windows\system32\sudo.exe" "C:\FullPathTo\gsudo.exe"`.
+``` batch
+PowerShell -Command "Set-ExecutionPolicy RemoteSigned -scope Process; iwr -useb https://raw.githubusercontent.com/gerardog/gsudo/master/installgsudo.ps1 | iex"
+```
 
 ## Usage
 
