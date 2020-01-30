@@ -28,7 +28,7 @@ Just prepend `gsudo` (or the `sudo` alias) to your command and it will run eleva
   - `gsudo` can be used on scripts that requires to elevate one or more commands. (the UAC popup will appear once). 
   - Outputs of the elevated commands can be interpreted: E.g. StdOut/StdErr can be piped or captured (`gsudo dir | findstr /c:"bytes free" > FreeSpace.txt`) and exit codes too ('%errorlevel%)). If `gsudo` fails to elevate, the exit code will be 999.
   - If `gsudo` is invoked (with params) from an already elevated console it will just run the command. So you don't have to worry if you run `gsudo` or a script that uses `gsudo` from an already elevated console. It also works. (The UAC popup will not appear)
-## Instalation
+## Installation
 
 [Scoop](https://scoop.sh) users: 
 
