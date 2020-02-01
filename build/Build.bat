@@ -15,14 +15,16 @@ if errorlevel 1 goto badend
 
 %SignToolPath%signtool.exe sign /n "Open Source Developer, Gerardo Grignoli" /fd SHA256 /tr "http://time.certum.pl" ..\src\gsudo\bin\gsudo.exe
 
-if errorlevel 1 echo Sign Failed & pause
+if errorlevel 1 echo Sign Failed & pause & goto badend
 @echo Sign successfull
 
 7z a Releases\gsudo.v%1.zip ..\src\gsudo\bin\*.*
 powershell (Get-FileHash Releases\gsudo.v%1.zip).hash > Releases\gsudo.v%1.zip.sha256
 
 :: Chocolatey
-copy %~dp0\..\src\gsudo\bin\*.* %~dp0\Chocolatey\gsudo\Bin
+git clean Chocolatey\gsudo\Bin -xf
+md Chocolatey\gsudo\Bin
+copy ..\src\gsudo\bin\*.* Chocolatey\gsudo\Bin\
 copy Chocolatey\verification.txt.template Chocolatey\gsudo\Tools\VERIFICATION.txt
 
 @pushd %~dp0\Chocolatey\gsudo
