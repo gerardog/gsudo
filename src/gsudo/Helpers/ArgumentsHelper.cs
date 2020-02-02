@@ -190,6 +190,10 @@ namespace gsudo.Helpers
                     GlobalSettings.RunAsSystem = true;
                     stack.Pop();
                 }
+                else if (arg.In("-k", "--kill"))
+                {
+                    break;
+                }
                 else if (arg.StartsWith("-", StringComparison.Ordinal))
                 {
                     Logger.Instance.Log($"Invalid option: {arg}", LogLevel.Error);
@@ -252,6 +256,9 @@ namespace gsudo.Helpers
 
             if (args[0].Equals("config", StringComparison.OrdinalIgnoreCase))
                 return new ConfigCommand() { key = args.Skip(1).FirstOrDefault(), value = args.Skip(2) };
+
+            if (args[0].In("-k", "--kill"))
+                return new KillCacheCommand();
 
             return new RunCommand() { CommandToRun = args };
         }

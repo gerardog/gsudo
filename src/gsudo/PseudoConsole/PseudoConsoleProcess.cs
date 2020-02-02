@@ -80,16 +80,6 @@ namespace gsudo.PseudoConsole
             // use the following line if the finalizer is overridden above.
             GC.SuppressFinalize(this);
         }
-
-        /// <summary>
-        /// Get an AutoResetEvent that signals when the process exits
-        /// </summary>
-        public AutoResetEvent GetWaitHandle() =>
-            new AutoResetEvent(false)
-            {
-                SafeWaitHandle = new SafeWaitHandle(this.ProcessInfo.hProcess, ownsHandle: false)
-            };
-
         #endregion
     }
 }
