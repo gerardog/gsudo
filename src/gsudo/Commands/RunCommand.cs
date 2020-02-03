@@ -180,7 +180,15 @@ namespace gsudo.Commands
             else
             {
                 var verb = GlobalSettings.RunAsSystem ? "gsudosystemservice" : "gsudoservice";
-                process = ProcessFactory.StartElevatedDetached(currentProcess.MainModule.FileName, $"{dbg}{verb} {callingPid} {callingSid} {GlobalSettings.LogLevel}", !GlobalSettings.Debug);
+                try
+                {
+                    process = ProcessFactory.StartElevatedDetached(currentProcess.MainModule.FileName, $"{dbg}{verb} {callingPid} {callingSid} {GlobalSettings.LogLevel}", !GlobalSettings.Debug);
+                }
+                catch (System.ComponentModel.Win32Exception ex)
+                {
+                    Logger.Instance.Log(ex.Message, LogLevel.Error);
+                    return false;
+                }
             }
 
             if (process == null)
