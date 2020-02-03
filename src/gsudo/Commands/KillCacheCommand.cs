@@ -21,9 +21,10 @@ namespace gsudo.Commands
         public Task<int> Execute()
         {
             if (CredentialsCacheLifetimeManager.ClearCredentialsCache())
-                Logger.Instance.Log("All credentials cache were invalidated.", LogLevel.Info);
+                Logger.Instance.Log("Credentials cache invalidated.", LogLevel.Info);
             else
                 Logger.Instance.Log("No credentials cache were found.", LogLevel.Info);
+
             return Task.FromResult(0);
         }
     }

@@ -37,6 +37,7 @@ namespace gsudo.Commands
             Console.WriteLine(" -n | --new        Starts the command in a new console (and returns immediately).");
             Console.WriteLine(" -w | --wait       Force wait for the command to end.");
             Console.WriteLine(" -s | --system     Run As Local System account (\"NT AUTHORITY\\SYSTEM\").");
+            Console.WriteLine(" -k | --killcache  Clears cached credentials.");
             Console.WriteLine(" --copyev          Copy environment variables to the elevated process before executing.");
             Console.WriteLine(" --copyns          Connect current network drives to the elevated user. Warning! This is verbose, affects the elevated user system-wide, and can prompt for credentials interactively.");
             Console.WriteLine(" --raw             Force use of a reduced terminal.");

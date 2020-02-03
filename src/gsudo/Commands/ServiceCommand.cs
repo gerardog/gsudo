@@ -28,16 +28,21 @@ namespace gsudo.Commands
             var cacheLifetime = new CredentialsCacheLifetimeManager();
             Logger.Instance.Log("Service started", LogLevel.Info);
 
-            using (IRpcServer server = CreateServer())
+            try
             {
-                cacheLifetime.OnCacheClear += server.Close;
-                ShutdownTimer = new Timer((o) => server.Close());
-                server.ConnectionAccepted += async (o, connection) => await AcceptConnection(connection).ConfigureAwait(false);
-                server.ConnectionClosed += (o, cònnection) => EnableTimer();
+                using (IRpcServer server = CreateServer())
+                {
+                    cacheLifetime.OnCacheClear += server.Close;
+                    ShutdownTimer = new Timer((o) => server.Close());
+                    server.ConnectionAccepted += async (o, connection) => await AcceptConnection(connection).ConfigureAwait(false);
+                    server.ConnectionClosed += (o, cònnection) => EnableTimer();
 
-                await server.Listen().ConfigureAwait(false);
-                cacheLifetime.OnCacheClear -= server.Close;
+                    EnableTimer();
+                    await server.Listen().ConfigureAwait(false);
+                    cacheLifetime.OnCacheClear -= server.Close;
+                }
             }
+            catch (System.OperationCanceledException) { }
 
             Logger.Instance.Log("Service stopped", LogLevel.Info);
             return 0;
