@@ -1,13 +1,16 @@
 @pushd %~dp0
 @if ''=='%1' echo Missing version number
 @if ''=='%1' goto end
+set version=%1
+@if 'skipbuild'=='%2' goto skipbuild 
+
 @if '%msbuild%' == '' set msbuild="C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\MSBuild\Current\Bin\MSBuild.exe"
 @if '%SignToolPath%' == '' set SignToolPath="C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64\"
 
-@echo Building with version number v%1
+@echo Building with version number v%version%
 
 del ..\src\gsudo\bin\*.* /q
-%msbuild% /t:Restore,Rebuild /p:Configuration=Release /p:WarningLevel=0 %~dp0..\src\gsudo.sln /p:Version=%1
+%msbuild% /t:Restore,Rebuild /p:Configuration=Release /p:WarningLevel=0 %~dp0..\src\gsudo.sln /p:Version=%version%
 
 if errorlevel 1 goto badend
 @echo Building Succeded.
@@ -18,8 +21,10 @@ if errorlevel 1 goto badend
 if errorlevel 1 echo Sign Failed & pause & goto badend
 @echo Sign successfull
 
-7z a Releases\gsudo.v%1.zip ..\src\gsudo\bin\*.*
-powershell (Get-FileHash Releases\gsudo.v%1.zip).hash > Releases\gsudo.v%1.zip.sha256
+:skipbuild
+
+7z a Releases\gsudo.v%version%.zip ..\src\gsudo\bin\*.*
+powershell (Get-FileHash Releases\gsudo.v%version%.zip).hash > Releases\gsudo.v%version%.zip.sha256
 
 :: Chocolatey
 git clean Chocolatey\gsudo\Bin -xf
@@ -28,9 +33,9 @@ copy ..\src\gsudo\bin\*.* Chocolatey\gsudo\Bin\
 copy Chocolatey\verification.txt.template Chocolatey\gsudo\Tools\VERIFICATION.txt
 
 @pushd %~dp0\Chocolatey\gsudo
-	powershell -NoProfile -Command "(gc gsudo.nuspec.template) -replace '#VERSION#', '%1' | Out-File -encoding UTF8 gsudo.nuspec"
+	powershell -NoProfile -Command "(gc gsudo.nuspec.template) -replace '#VERSION#', '%version%' | Out-File -encoding UTF8 gsudo.nuspec"
 	echo --- >> tools\verification.txt
-	echo Version Hashes for v%1 >> tools\verification.txt
+	echo Version Hashes for v%version% >> tools\verification.txt
 	echo. >> tools\verification.txt
 	powershell "Get-FileHash bin\*.* | Out-String -Width 200" >> tools\verification.txt
 	echo. >> tools\verification.txt

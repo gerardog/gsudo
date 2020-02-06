@@ -17,6 +17,10 @@ if (!$Env:Path.ToLower().Contains($destdir.ToLower()))
 	[System.Environment]::SetEnvironmentVariable('Path',$Env:Path,[System.EnvironmentVariableTarget]::User);
 	Write-Output "Restart your console to refresh the Path env var."
 }
-Write-Output "Creating alias sudo to gsudo"
-& "$destdir\gsudo.exe" cmd /c mklink "$destdir\sudo.exe" "$destdir\gsudo.exe"
-Write-Output "Done."
+$ans = Read-host "Do you want to alias ""sudo"" to ""gsudo""? (may show UAC elevation popup.) (y/n)"
+if ($ans -eq "y") 
+{
+	& "$destdir\gsudo.exe" cmd /c mklink "$destdir\sudo.exe" "$destdir\gsudo.exe"
+}
+Write-Output "Done!"
+Start-Sleep -Seconds 5
