@@ -14,6 +14,10 @@ namespace gsudo.Rpc
     {
         private readonly int _allowedPid;
         private readonly string _allowedSid;
+        private readonly bool _singleUse;
+        private readonly string _allowedExe;
+        private readonly DateTime _allowedExeTimeStamp;
+        private readonly long _allowedExeLength;
         CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
         public event EventHandler<Connection> ConnectionAccepted;
@@ -21,10 +25,16 @@ namespace gsudo.Rpc
 
         const int MAX_SERVER_INSTANCES = 20;
 
-        public NamedPipeServer(int AllowedPid, string AllowedSid)
+        public NamedPipeServer(int AllowedPid, string AllowedSid, bool SingleUse)
         {
             _allowedPid = AllowedPid;
             _allowedSid = AllowedSid;
+            _singleUse = SingleUse;
+
+            _allowedExe = SymbolicLinkSupport.ResolveSymbolicLink(Process.GetCurrentProcess().MainModule.FileName);
+            var fileInfo = new System.IO.FileInfo(_allowedExe);
+            _allowedExeTimeStamp = fileInfo.LastWriteTimeUtc;
+            _allowedExeLength = fileInfo.Length;
         }
 
         public async Task Listen()
@@ -37,11 +47,11 @@ namespace gsudo.Rpc
                 AccessControlType.Allow));
 
             var pipeName = GetPipeName(_allowedSid, _allowedPid);
-            Logger.Instance.Log($"Using named pipe {pipeName}.", LogLevel.Debug);
+            Logger.Instance.Log($"Listening on named pipe {pipeName}.", LogLevel.Debug);
 
             Logger.Instance.Log($"Access allowed only for ProcessID {_allowedPid} and childs", LogLevel.Debug);
 
-            while (!cancellationTokenSource.IsCancellationRequested)
+            do
             {
                 using (NamedPipeServerStream dataPipe = new NamedPipeServerStream(pipeName, PipeDirection.InOut, MAX_SERVER_INSTANCES,
                     PipeTransmissionMode.Message, PipeOptions.Asynchronous, GlobalSettings.BufferSize, GlobalSettings.BufferSize, ps))
@@ -91,24 +101,37 @@ namespace gsudo.Rpc
                                 await Task.Delay(10).ConfigureAwait(false);
 
                             ConnectionClosed?.Invoke(this, connection);
+                            Logger.Instance.Log("Connection Closed.", LogLevel.Info);
                         }
 
-                        Logger.Instance.Log("Listener Closed.", LogLevel.Debug);
                     }
                 }
-            }
+            } while (!_singleUse && !cancellationTokenSource.IsCancellationRequested);
+            Logger.Instance.Log("Listener Closed.", LogLevel.Debug);
         }
 
         private bool IsAuthorized(int clientPid, int allowedPid)
         {
             var callingExe = SymbolicLinkSupport.ResolveSymbolicLink(Process.GetProcessById(clientPid).MainModule.FileName);
-            var allowedExe = SymbolicLinkSupport.ResolveSymbolicLink(Process.GetCurrentProcess().MainModule.FileName);
-            //
-            if (callingExe != allowedExe)
+            var fileInfo = new System.IO.FileInfo(callingExe);
+            var callingExeTimeStamp = fileInfo.LastWriteTimeUtc;
+            var callingExeLength = fileInfo.Length;
+
+            if (callingExe != _allowedExe || callingExeLength != _allowedExeLength || callingExeTimeStamp != _allowedExeTimeStamp)
             {
-                Logger.Instance.Log($"Invalid Client. Rejecting Connection. \nAllowed: {allowedExe}\nActual:  {callingExe}", LogLevel.Error);
+                Logger.Instance.Log($"Invalid Client. Rejecting Connection. \nAllowed: {_allowedExe}\nActual:  {callingExe}", LogLevel.Error);
                 return false;
             }
+
+#if !DEBUG
+            // Check if a malicious process is attached to the client. https://stackoverflow.com/a/39986472
+            bool isDebuggerAttached = false;
+            if (!Native.ProcessApi.CheckRemoteDebuggerPresent(Process.GetProcessById(clientPid).SafeHandle, ref isDebuggerAttached) || isDebuggerAttached)
+            {
+                Logger.Instance.Log($"Client Process may be being debugged. Rejecting to avoid process tampering. ", LogLevel.Error);
+                return false;
+            }
+#endif
 
             if (allowedPid == -1) return true;
 

@@ -28,21 +28,24 @@ namespace gsudo.Commands
             var cacheLifetime = new CredentialsCacheLifetimeManager();
             Logger.Instance.Log("Service started", LogLevel.Info);
 
-            try
+            using (IRpcServer server = CreateServer())
             {
-                using (IRpcServer server = CreateServer())
+                try
                 {
                     cacheLifetime.OnCacheClear += server.Close;
-                    ShutdownTimer = new Timer((o) => server.Close());
+                    ShutdownTimer = new Timer((o) => server.Close(), null, 10000, Timeout.Infinite); // 10 seconds for initial connection or die.
                     server.ConnectionAccepted += async (o, connection) => await AcceptConnection(connection).ConfigureAwait(false);
                     server.ConnectionClosed += (o, cònnection) => EnableTimer();
 
-                    EnableTimer();
                     await server.Listen().ConfigureAwait(false);
+                    EnableTimer();
+                }
+                catch (System.OperationCanceledException) { }
+                finally
+                {
                     cacheLifetime.OnCacheClear -= server.Close;
                 }
             }
-            catch (System.OperationCanceledException) { }
 
             Logger.Instance.Log("Service stopped", LogLevel.Info);
             return 0;
@@ -82,7 +85,9 @@ namespace gsudo.Commands
 
         private IRpcServer CreateServer()
         {
-            return new NamedPipeServer(allowedPid, allowedSid);
+            // No credentials cache when CredentialsCacheDuration = 0
+            bool singleUse = GlobalSettings.CredentialsCacheDuration.Value.TotalSeconds < 1;
+            return new NamedPipeServer(allowedPid, allowedSid, singleUse);
         }
 
         private async static Task<ElevationRequest> ReadElevationRequest(Stream dataPipe)

@@ -173,5 +173,20 @@ namespace gsudo.Native
             out IntPtr ppBuffer,
             out IntPtr pBytesReturned);
         #endregion
+
+        /// <summary>Checks whether a process is being debugged.</summary>
+        /// <remarks>
+        /// The "remote" in CheckRemoteDebuggerPresent does not imply that the debugger
+        /// necessarily resides on a different computer; instead, it indicates that the 
+        /// debugger resides in a separate and parallel process.
+        /// <para/>
+        /// Use the IsDebuggerPresent function to detect whether the calling process 
+        /// is running under the debugger.
+        /// </remarks>
+        [DllImport("Kernel32.dll", SetLastError = true, ExactSpelling = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool CheckRemoteDebuggerPresent(
+            SafeHandle hProcess,
+            [MarshalAs(UnmanagedType.Bool)] ref bool isDebuggerPresent);
     }
 }
