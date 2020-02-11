@@ -49,14 +49,17 @@ namespace gsudo
                 eventWaitHandle = new EventWaitHandle(false, EventResetMode.ManualReset, GLOBAL_WAIT_HANDLE_NAME, out var created, security);
             }
 
-            new Thread(() =>
+            var credentialsResetThread = new Thread(() =>
             {
                 if (eventWaitHandle.WaitOne())
                 {
                     Logger.Instance.Log("Credentials Cache termination received", LogLevel.Info);
                     OnCacheClear?.Invoke();
                 }
-            }).Start();
+            });
+
+            credentialsResetThread.IsBackground = true;
+            credentialsResetThread.Start();
         }
 
         public static bool ClearCredentialsCache()
