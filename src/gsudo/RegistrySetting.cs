@@ -8,7 +8,11 @@ namespace gsudo
         protected const string REGKEY = "SOFTWARE\\gsudo";
         static RegistrySetting()
         {
-            Registry.CurrentUser.CreateSubKey(REGKEY);
+            try
+            {
+                Registry.CurrentUser.CreateSubKey(REGKEY);
+            }
+            catch { }
         }
         public string Name { get; set; }
         public abstract void Save(string newValue);
@@ -30,20 +34,27 @@ namespace gsudo
             {
                 if (hasValue) return runningValue;
 
-                using (var subkey = Registry.CurrentUser.OpenSubKey(REGKEY, false))
+                try
                 {
-                    var currentValue = subkey.GetValue(Name, null) as string;
-                    if (currentValue == null) return defaultValue;
-                    try
+                    using (var subkey = Registry.CurrentUser.OpenSubKey(REGKEY, false))
                     {
-                        return deserializer(currentValue);
-                    }
-                    catch
-                    {
-                        return defaultValue;
+                        var currentValue = subkey.GetValue(Name, null) as string;
+                        if (currentValue == null) return defaultValue;
+                        try
+                        {
+                            return deserializer(currentValue);
+                        }
+                        catch
+                        {
+                            return defaultValue;
+                        }
                     }
                 }
-            } 
+                catch (UnauthorizedAccessException)
+                {
+                    return defaultValue;
+                }
+            }
             set
             {
                 runningValue = value;

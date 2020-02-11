@@ -130,7 +130,7 @@ namespace gsudo.Helpers
                     HelpCommand.ShowVersion();
                     return 0;
                 }
-                else if (arg.In("-h", "--help", "help", "/?"))
+                else if (arg.In("-h", "--help", "help", "/?", "/h"))
                 {
                     HelpCommand.ShowHelp();
                     return 0;

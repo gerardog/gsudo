@@ -245,7 +245,7 @@ namespace gsudo.Helpers
             return StartWithProcessToken(winlogon.Id, appToRun, args, startupFolder, hidden);
         }
 
-        public static Process StartWithProcessToken(int pidWithToken, string appToRun, string args, string startupFolder, bool hidden)
+        private static Process StartWithProcessToken(int pidWithToken, string appToRun, string args, string startupFolder, bool hidden)
         {
             IntPtr existingProcessHandle = OpenProcess(PROCESS_QUERY_INFORMATION, true, (uint) pidWithToken);
             if (existingProcessHandle == IntPtr.Zero)
