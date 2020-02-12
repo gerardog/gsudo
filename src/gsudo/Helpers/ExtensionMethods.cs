@@ -41,7 +41,7 @@ namespace gsudo
 
         public static async Task WriteAsync(this Stream stream, string text)
         {
-            var bytes = GlobalSettings.Encoding.GetBytes(text);
+            var bytes = Settings.Encoding.GetBytes(text);
             await stream.WriteAsync(bytes, 0, bytes.Length).ConfigureAwait(false);
             await stream.FlushAsync().ConfigureAwait(false);
         }

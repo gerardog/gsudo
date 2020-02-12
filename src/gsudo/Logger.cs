@@ -22,7 +22,7 @@ namespace gsudo
         {
             try
             {
-                if (level >= GlobalSettings.LogLevel)
+                if (level >= Settings.LogLevel)
                 {
                     Console.ForegroundColor = GetColor(level);
                     Console.Error.WriteLine($"{level.ToString()}: {message}");

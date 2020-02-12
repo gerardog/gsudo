@@ -25,14 +25,24 @@ namespace gsudo.Commands
         {
             //Logger.Instance.Log("Params: " + Newtonsoft.Json.JsonConvert.SerializeObject(this), LogLevel.Debug);
 
-            var currentProcess = System.Diagnostics.Process.GetCurrentProcess();
+            if (Settings.KillCache)
+                await new KillCacheCommand().Execute().ConfigureAwait(false); // handle rare case of "gsudo -k cmd"
+
+            var runningAsDesiredUser = RunningAsDesiredUser();
+            var currentProcess = System.Diagnostics.Process.GetCurrentProcess(); 
             bool emptyArgs = string.IsNullOrEmpty(CommandToRun.FirstOrDefault());
+
+            if (!CommandToRun.Any() && Settings.SecurityEnforceUacIsolation && !runningAsDesiredUser)
+            {
+                // for those using SecurityEnforceUacIsolation=true, 
+                // force auto shell elevation in new window
+                InputArguments.NewWindow = true;
+            }
 
             CommandToRun = ArgumentsHelper.AugmentCommand(CommandToRun.ToArray());
             bool isWindowsApp = ProcessFactory.IsWindowsApp(CommandToRun.FirstOrDefault());
-            var consoleMode = GetConsoleMode(isWindowsApp);
-
-            if (!RunningAsDesiredUser())
+            
+            if (!runningAsDesiredUser)
             {
                 CommandToRun = AddCopyEnvironment(CommandToRun);
             }
@@ -43,12 +53,16 @@ namespace gsudo.Commands
                 FileName = exeName,
                 Arguments = GetArguments(),
                 StartFolder = Environment.CurrentDirectory,
-                NewWindow = GlobalSettings.NewWindow,
-                Wait = (!isWindowsApp && !GlobalSettings.NewWindow) || GlobalSettings.Wait,
-                Mode = consoleMode,
+                NewWindow = InputArguments.NewWindow,
+                Wait = (!isWindowsApp && !InputArguments.NewWindow) || InputArguments.Wait,
+                Mode = GetConsoleMode(isWindowsApp),
                 ConsoleProcessId = currentProcess.Id,
-                Prompt = consoleMode != ElevationRequest.ConsoleMode.Raw || GlobalSettings.NewWindow ? GlobalSettings.Prompt : GlobalSettings.RawPrompt
             };
+
+            if (!runningAsDesiredUser && Settings.SecurityEnforceUacIsolation)
+                AdjustUacIsolationRequest(elevationRequest);
+
+            elevationRequest.Prompt = (elevationRequest.Mode != ElevationRequest.ConsoleMode.Raw || InputArguments.NewWindow) ? Settings.Prompt : Settings.RawPrompt;
 
             Logger.Instance.Log($"Command to run: {elevationRequest.FileName} {elevationRequest.Arguments}", LogLevel.Debug);
 
@@ -61,9 +75,9 @@ namespace gsudo.Commands
                     elevationRequest.ConsoleWidth--; // weird ConEmu/Cmder fix
             }
 
-            if (RunningAsDesiredUser()) // already elevated or running as correct user. No service needed.
+            if (runningAsDesiredUser) // already elevated or running as correct user. No service needed.
             {
-                if (emptyArgs && !GlobalSettings.NewWindow)
+                if (emptyArgs && !InputArguments.NewWindow)
                 {
                     Logger.Instance.Log("Already elevated (and no parameters specified). Exiting...", LogLevel.Error);
                     return Constants.GSUDO_ERROR_EXITCODE;
@@ -73,18 +87,10 @@ namespace gsudo.Commands
 
                 // No need to escalate. Run in-process
 
-                if (elevationRequest.Mode == ElevationRequest.ConsoleMode.Raw && !elevationRequest.NewWindow)
-                {
-                    if (!string.IsNullOrEmpty(GlobalSettings.RawPrompt.Value))
-                        Environment.SetEnvironmentVariable("PROMPT", Environment.ExpandEnvironmentVariables(GlobalSettings.RawPrompt.Value));
-                }
-                else
-                {
-                    if (!string.IsNullOrEmpty(GlobalSettings.Prompt.Value))
-                        Environment.SetEnvironmentVariable("PROMPT", Environment.ExpandEnvironmentVariables(GlobalSettings.Prompt.Value));
-                }
+                if (!string.IsNullOrEmpty(elevationRequest.Prompt))
+                    Environment.SetEnvironmentVariable("PROMPT", Environment.ExpandEnvironmentVariables(elevationRequest.Prompt));
 
-                if (GlobalSettings.NewWindow)
+                if (InputArguments.NewWindow)
                 {
                     using (Process process = ProcessFactory.StartDetached(exeName, GetArguments(), Environment.CurrentDirectory, false))
                     {
@@ -169,20 +175,29 @@ namespace gsudo.Commands
             }
         }
 
+        private void AdjustUacIsolationRequest(ElevationRequest elevationRequest)
+        {
+            if (!elevationRequest.NewWindow)
+            {
+                elevationRequest.Mode = ElevationRequest.ConsoleMode.Raw;
+                Logger.Instance.Log("User Input disabled because of SecurityEnforceUacIsolation. Press Ctrl-C three times to abort. Or use -n argument to elevate in new window.", LogLevel.Warning);
+            }
+        }
+
         private static bool StartElevatedService(Process currentProcess, int callingPid, string callingSid)
         {
-            var dbg = GlobalSettings.Debug ? "--debug " : string.Empty;
+            var dbg = InputArguments.Debug ? "--debug " : string.Empty;
             Process process;
-            if (GlobalSettings.RunAsSystem && ProcessExtensions.IsAdministrator())
+            if (InputArguments.RunAsSystem && ProcessExtensions.IsAdministrator())
             {
-                process = ProcessFactory.StartAsSystem(currentProcess.MainModule.FileName, $"{dbg}-s gsudoservice {callingPid} {callingSid} {GlobalSettings.LogLevel}", Environment.CurrentDirectory, !GlobalSettings.Debug);
+                process = ProcessFactory.StartAsSystem(currentProcess.MainModule.FileName, $"{dbg}-s gsudoservice {callingPid} {callingSid} {Settings.LogLevel}", Environment.CurrentDirectory, !InputArguments.Debug);
             }
             else
             {
-                var verb = GlobalSettings.RunAsSystem ? "gsudosystemservice" : "gsudoservice";
+                var verb = InputArguments.RunAsSystem ? "gsudosystemservice" : "gsudoservice";
                 try
                 {
-                    process = ProcessFactory.StartElevatedDetached(currentProcess.MainModule.FileName, $"{dbg}{verb} {callingPid} {callingSid} {GlobalSettings.LogLevel}", !GlobalSettings.Debug);
+                    process = ProcessFactory.StartElevatedDetached(currentProcess.MainModule.FileName, $"{dbg}{verb} {callingPid} {callingSid} {Settings.LogLevel}", !InputArguments.Debug);
                 }
                 catch (System.ComponentModel.Win32Exception ex)
                 {
@@ -203,7 +218,7 @@ namespace gsudo.Commands
 
         private static bool RunningAsDesiredUser()
         {
-            if (GlobalSettings.RunAsSystem)
+            if (InputArguments.RunAsSystem)
             {
                 return WindowsIdentity.GetCurrent().IsSystem;
             }
@@ -248,13 +263,13 @@ namespace gsudo.Commands
             if (isWindowsApp)
                 return ElevationRequest.ConsoleMode.Attached;
 
-            if (GlobalSettings.NewWindow || Console.IsOutputRedirected)
+            if (InputArguments.NewWindow || Console.IsOutputRedirected)
                 return ElevationRequest.ConsoleMode.Raw;
 
-            if (GlobalSettings.ForceRawConsole)
+            if (Settings.ForceRawConsole)
                 return ElevationRequest.ConsoleMode.Raw;
 
-            if (GlobalSettings.ForceVTConsole)
+            if (Settings.ForceVTConsole)
                 return ElevationRequest.ConsoleMode.VT;
 
             return ElevationRequest.ConsoleMode.Attached;
@@ -290,11 +305,11 @@ namespace gsudo.Commands
 
         internal IEnumerable<string> AddCopyEnvironment(IEnumerable<string> args)
         {
-            if (GlobalSettings.CopyEnvironmentVariables || GlobalSettings.CopyNetworkShares)
+            if (Settings.CopyEnvironmentVariables || Settings.CopyNetworkShares)
             {
-                var silent = GlobalSettings.Debug ? string.Empty : "@"; 
+                var silent = InputArguments.Debug ? string.Empty : "@";
                 var sb = new StringBuilder();
-                if (GlobalSettings.CopyEnvironmentVariables)
+                if (Settings.CopyEnvironmentVariables)
                 {
                     foreach (DictionaryEntry envVar in Environment.GetEnvironmentVariables())
                     {
@@ -304,14 +319,14 @@ namespace gsudo.Commands
                         sb.AppendLine($"{silent}SET {envVar.Key}={envVar.Value}");
                     }
                 }
-                if (GlobalSettings.CopyNetworkShares)
+                if (Settings.CopyNetworkShares)
                 {
-                    foreach (DriveInfo drive in DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Network && d.Name.Length==3))
+                    foreach (DriveInfo drive in DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Network && d.Name.Length == 3))
                     {
                         var tmpSb = new StringBuilder(2048);
                         var size = tmpSb.Capacity;
 
-                        var error = FileApi.WNetGetConnection(drive.Name.Substring(0,2), tmpSb, ref size);
+                        var error = FileApi.WNetGetConnection(drive.Name.Substring(0, 2), tmpSb, ref size);
                         if (error == 0)
                         {
                             sb.AppendLine($"{silent}ECHO Connecting {drive.Name.Substring(0, 2)} to {tmpSb.ToString()} 1>&2");
@@ -328,8 +343,8 @@ namespace gsudo.Commands
                 File.WriteAllText(tempBatName, sb.ToString());
 
                 return new string[] {
-                    Environment.GetEnvironmentVariable("COMSPEC"), 
-                    "/c" , 
+                    Environment.GetEnvironmentVariable("COMSPEC"),
+                    "/c" ,
                     $"\"{tempBatName} & del /q {tempBatName} & {string.Join(" ",args)}\""
                 };
             }

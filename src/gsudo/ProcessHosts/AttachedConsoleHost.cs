@@ -16,6 +16,10 @@ namespace gsudo.ProcessHosts
         public async Task Start(Connection connection, ElevationRequest elevationRequest)
         {
             var exitCode = 0;
+
+            if (Settings.SecurityEnforceUacIsolation)
+                throw new Exception("Attached mode not supported when SecurityEnforceUacIsolation is set.");
+
             try
             {
                 Native.ConsoleApi.FreeConsole();

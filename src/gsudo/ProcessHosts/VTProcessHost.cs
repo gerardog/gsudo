@@ -20,6 +20,9 @@ namespace gsudo.ProcessHosts
 
         public async Task Start(Connection connection, ElevationRequest request)
         {
+            if (Settings.SecurityEnforceUacIsolation)
+                throw new NotSupportedException("VT Mode not supported when SecurityEnforceUacIsolation=true");
+
             int? exitCode;
             Task t1 = null, t2 = null, t3=null;
             _connection = connection;
@@ -94,8 +97,8 @@ namespace gsudo.ProcessHosts
 
                     while ((cch = await _connection.DataStream.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false)) > 0)
                     {
-                        var s = GlobalSettings.Encoding.GetString(buffer, 0, cch);
-                        if (GlobalSettings.Debug)
+                        var s = Settings.Encoding.GetString(buffer, 0, cch);
+                        if (InputArguments.Debug)
                         {
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.Write(s);
@@ -116,7 +119,7 @@ namespace gsudo.ProcessHosts
         {
             StreamWriter streamWriter = null;
 
-            if (GlobalSettings.Debug)
+            if (InputArguments.Debug)
             {
                 try
                 {
@@ -134,13 +137,13 @@ namespace gsudo.ProcessHosts
 
                     while ((cch = await pseudoConsoleOutput.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false)) > 0)
                     {
-                        var s = GlobalSettings.Encoding.GetString(buffer, 0, cch);
+                        var s = Settings.Encoding.GetString(buffer, 0, cch);
                         await _connection.DataStream.WriteAsync(s).ConfigureAwait(false);
 
                         streamWriter?.Write(s);
                         streamWriter?.Flush();
 
-                        if (GlobalSettings.Debug)
+                        if (InputArguments.Debug)
                             Console.Write(s
                                 .Replace('\a', ' ') //  no bell sounds please
                                 .Replace("\r", "\\r")

@@ -32,15 +32,18 @@ namespace gsudo.ProcessRenderers
 
         public async Task<int> Start()
         {
+            if (Settings.SecurityEnforceUacIsolation)
+                throw new NotSupportedException("VT Mode not supported when SecurityEnforceUacIsolation=true");
+
             ConsoleHelper.EnableVT();
 
             try
             {
                 Console.CancelKeyPress += CancelKeyPressHandler;
 
-                var t1 = new StreamReader(_connection.DataStream, GlobalSettings.Encoding)
+                var t1 = new StreamReader(_connection.DataStream, Settings.Encoding)
                     .ConsumeOutput((s) => WriteToConsole(s));
-                var t2 = new StreamReader(_connection.ControlStream, GlobalSettings.Encoding)
+                var t2 = new StreamReader(_connection.ControlStream, Settings.Encoding)
                     .ConsumeOutput((s) => HandleControlData(s));
 
                 while (_connection.IsAlive)
@@ -52,7 +55,7 @@ namespace gsudo.ProcessRenderers
                             consecutiveCancelKeys = 0;
                             // send input character-by-character to the pipe
                             var key = Console.ReadKey(intercept: true);
-                            byte[] sequence = TerminalHelper.GetSequenceFromConsoleKey(key, GlobalSettings.Debug && _elevationRequest.FileName.EndsWith("KeyPressTester.exe", StringComparison.OrdinalIgnoreCase));
+                            byte[] sequence = TerminalHelper.GetSequenceFromConsoleKey(key, InputArguments.Debug && _elevationRequest.FileName.EndsWith("KeyPressTester.exe", StringComparison.OrdinalIgnoreCase));
 
                             _connection.DataStream.Write(sequence, 0, sequence.Length);
                         }
@@ -70,7 +73,7 @@ namespace gsudo.ProcessRenderers
 
                 await _connection.FlushAndCloseAll().ConfigureAwait(false);
 
-                if (ExitCode.HasValue && ExitCode.Value == 0 && GlobalSettings.NewWindow)
+                if (ExitCode.HasValue && ExitCode.Value == 0 && InputArguments.NewWindow)
                 {
                     Logger.Instance.Log($"Elevated process started successfully", LogLevel.Debug);
                     return 0;
@@ -116,12 +119,12 @@ namespace gsudo.ProcessRenderers
             if (consecutiveCancelKeys > 2)
             {
                 Logger.Instance.Log("\rPress CTRL-C again to stop gsudo", LogLevel.Warning);
-                var b = GlobalSettings.Encoding.GetBytes(CtrlC_Command);
+                var b = Settings.Encoding.GetBytes(CtrlC_Command);
                 _connection.DataStream.Write(b, 0, b.Length);
             }
             else
             {
-                var b = GlobalSettings.Encoding.GetBytes(CtrlC_Command);
+                var b = Settings.Encoding.GetBytes(CtrlC_Command);
                 _connection.DataStream.Write(b, 0, b.Length);
             }
         }

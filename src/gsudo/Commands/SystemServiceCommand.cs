@@ -22,13 +22,13 @@ namespace gsudo.Commands
         public Task<int> Execute()
         {
             // service mode
-            if (LogLvl.HasValue) GlobalSettings.LogLevel.Value = LogLvl.Value;
+            if (LogLvl.HasValue) Settings.LogLevel.Value = LogLvl.Value;
 
-            var dbg = GlobalSettings.Debug ? "--debug " : string.Empty;
+            var dbg = InputArguments.Debug ? "--debug " : string.Empty;
 
             if (ProcessExtensions.IsAdministrator())
             {
-                var process = ProcessFactory.StartAsSystem(Process.GetCurrentProcess().MainModule.FileName, $"{dbg}-s gsudoservice {allowedPid} {allowedSid} {GlobalSettings.LogLevel}", Environment.CurrentDirectory, !GlobalSettings.Debug);
+                var process = ProcessFactory.StartAsSystem(Process.GetCurrentProcess().MainModule.FileName, $"{dbg}-s gsudoservice {allowedPid} {allowedSid} {Settings.LogLevel}", Environment.CurrentDirectory, !InputArguments.Debug);
                 if (process == null)
                 {
                     Logger.Instance.Log("Failed to start elevated instance.", LogLevel.Error);

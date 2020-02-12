@@ -62,7 +62,7 @@ namespace gsudo.Helpers
 
                 return newArgs.ToArray();
             }
-            
+
             // Not Powershell, or Powershell Core, assume CMD.
             if (args.Length == 0)
             {
@@ -77,7 +77,7 @@ namespace gsudo.Helpers
                         .Concat(args).ToArray();
 
                 var exename = ProcessFactory.FindExecutableInPath(UnQuote(args[0]));
-                if (exename==null)
+                if (exename == null)
                 {
                     // add "CMD /C" prefix to commands such as MD, CD, DIR..
                     // We are sure this will not be an interactive experience, 
@@ -104,13 +104,13 @@ namespace gsudo.Helpers
             while (curr < args.Length)
             {
                 if (args[curr] == '"')
-                    insideQuotes=!insideQuotes;
+                    insideQuotes = !insideQuotes;
                 else if (args[curr] == ' ' && !insideQuotes)
                 {
-                    results.Add(args.Substring(pushed, curr-pushed));
-                    pushed = curr+1;
+                    results.Add(args.Substring(pushed, curr - pushed));
+                    pushed = curr + 1;
                 }
-                curr++;                
+                curr++;
             }
 
             if (pushed < curr)
@@ -124,8 +124,23 @@ namespace gsudo.Helpers
 
             while (stack.Any())
             {
+
                 var arg = stack.Peek();
-                if (arg.In("-v", "--version"))
+
+                if (
+                SetTrueIf(arg, () => InputArguments.NewWindow = true, "-n", "--new") ||
+                SetTrueIf(arg, () => InputArguments.Wait = true, "-w", "--wait") ||
+                SetTrueIf(arg, () => Settings.ForceRawConsole.Value = true, "--raw") ||
+                SetTrueIf(arg, () => Settings.ForceVTConsole.Value = true, "--vt") ||
+                SetTrueIf(arg, () => Settings.CopyEnvironmentVariables.Value = true, "--copyEV") ||
+                SetTrueIf(arg, () => Settings.CopyNetworkShares.Value = true, "--copyNS") ||
+                SetTrueIf(arg, () => InputArguments.RunAsSystem = true, "-s", "--system") ||
+                SetTrueIf(arg, () => InputArguments.Global = true, "--global") ||
+                false)
+                {
+                    stack.Pop();
+                }
+                else if (arg.In("-v", "--version"))
                 {
                     HelpCommand.ShowVersion();
                     return 0;
@@ -135,20 +150,10 @@ namespace gsudo.Helpers
                     HelpCommand.ShowHelp();
                     return 0;
                 }
-                else if (arg.In("-n", "--new"))
-                {
-                    GlobalSettings.NewWindow = true;
-                    stack.Pop();
-                }
-                else if (arg.In("-w", "--wait"))
-                {
-                    GlobalSettings.Wait = true;
-                    stack.Pop();
-                }
                 else if (arg.In("--debug"))
                 {
-                    GlobalSettings.Debug = true;
-                    GlobalSettings.LogLevel.Value = LogLevel.All;
+                    InputArguments.Debug = true;
+                    Settings.LogLevel.Value = LogLevel.All;
                     stack.Pop();
                 }
                 else if (arg.In("--loglevel"))
@@ -157,38 +162,13 @@ namespace gsudo.Helpers
                     arg = stack.Pop();
                     try
                     {
-                        GlobalSettings.LogLevel.Value = (LogLevel)Enum.Parse(typeof(LogLevel), arg, true);
+                        Settings.LogLevel.Value = (LogLevel)Enum.Parse(typeof(LogLevel), arg, true);
                     }
                     catch
                     {
                         Logger.Instance.Log($"\"{arg}\" is not a valid LogLevel. Valid values are: All, Debug, Info, Warning, Error, None", LogLevel.Error);
                         return Constants.GSUDO_ERROR_EXITCODE;
                     }
-                }
-                else if (arg.In("--raw"))
-                {
-                    GlobalSettings.ForceRawConsole.Value = true;
-                    stack.Pop();
-                }
-                else if (arg.In("--vt"))
-                {
-                    GlobalSettings.ForceVTConsole.Value = true;
-                    stack.Pop();
-                }
-                else if (arg.In("--copyEV"))
-                {
-                    GlobalSettings.CopyEnvironmentVariables.Value = true;
-                    stack.Pop();
-                }
-                else if (arg.In("--copyNS"))
-                {
-                    GlobalSettings.CopyNetworkShares.Value = true;
-                    stack.Pop();
-                }
-                else if (arg.In("-s", "--system"))
-                {
-                    GlobalSettings.RunAsSystem = true;
-                    stack.Pop();
                 }
                 else if (arg.In("-k", "--kill"))
                 {
@@ -209,6 +189,16 @@ namespace gsudo.Helpers
             return null;
         }
 
+        private static bool SetTrueIf(string arg, Action setting, params string[] v)
+        {
+            if (arg.In(v))
+            {
+                setting();
+                return true;
+            }
+            return false;
+        }
+
         internal static ICommand ParseCommand(IEnumerable<string> argsEnumerable)
         {
             var args = argsEnumerable.ToArray();
@@ -224,7 +214,7 @@ namespace gsudo.Helpers
             {
                 bool hasLoglevel = false;
                 LogLevel logLevel = LogLevel.Info;
-                if (args.Length>3)
+                if (args.Length > 3)
                 {
                     hasLoglevel = Enum.TryParse<LogLevel>(args[3], true, out logLevel);
                 }
@@ -279,7 +269,7 @@ namespace gsudo.Helpers
 
         public static string UnQuote(string v)
         {
-            if (string.IsNullOrEmpty(v)) 
+            if (string.IsNullOrEmpty(v))
                 return v;
             if (v[0] == '"' && v[v.Length - 1] == '"')
                 return v.Substring(1, v.Length - 2);

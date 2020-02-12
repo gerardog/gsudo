@@ -54,10 +54,10 @@ namespace gsudo.Rpc
             do
             {
                 using (NamedPipeServerStream dataPipe = new NamedPipeServerStream(pipeName, PipeDirection.InOut, MAX_SERVER_INSTANCES,
-                    PipeTransmissionMode.Message, PipeOptions.Asynchronous, GlobalSettings.BufferSize, GlobalSettings.BufferSize, ps))
+                    PipeTransmissionMode.Message, PipeOptions.Asynchronous, Settings.BufferSize, Settings.BufferSize, ps))
                 {
                     using (NamedPipeServerStream controlPipe = new NamedPipeServerStream(pipeName + "_control", PipeDirection.InOut, MAX_SERVER_INSTANCES,
-                        PipeTransmissionMode.Message, PipeOptions.Asynchronous, GlobalSettings.BufferSize, GlobalSettings.BufferSize, ps))
+                        PipeTransmissionMode.Message, PipeOptions.Asynchronous, Settings.BufferSize, Settings.BufferSize, ps))
                     {
                         Logger.Instance.Log("NamedPipeServer listening.", LogLevel.Debug);
                         Task.WaitAll(
@@ -147,7 +147,7 @@ namespace gsudo.Rpc
 
         public static string GetPipeName(string connectingUser, int connectingPid)
         {
-            string target = GlobalSettings.RunAsSystem ? "_S" : string.Empty;
+            string target = InputArguments.RunAsSystem ? "_S" : string.Empty;
             return $"{GetPipePrefix()}_{connectingUser}_{connectingPid}{target}";
         }
 

@@ -31,13 +31,16 @@ namespace gsudo.ProcessRenderers
 
             try
             {
-                var t1 = new StreamReader(Console.OpenStandardInput())
-                    .ConsumeOutput((s) => SendKeysToHost(s));
+                if(!Settings.SecurityEnforceUacIsolation)
+                {
+                    var t1 = new StreamReader(Console.OpenStandardInput())
+                        .ConsumeOutput((s) => SendKeysToHost(s));
+                }
 
-                var t2 = new StreamReader(_connection.DataStream, GlobalSettings.Encoding)
+                var t2 = new StreamReader(_connection.DataStream, Settings.Encoding)
                     .ConsumeOutput((s) => WriteToConsole(s));
 
-                var t3 = new StreamReader(_connection.ControlStream, GlobalSettings.Encoding)
+                var t3 = new StreamReader(_connection.ControlStream, Settings.Encoding)
                     .ConsumeOutput((s) => HandleControlData(s));
 
                 while (_connection.IsAlive)
@@ -45,7 +48,7 @@ namespace gsudo.ProcessRenderers
                     await Task.Delay(10).ConfigureAwait(false);
                 }
 
-                if (exitCode.HasValue && exitCode.Value == 0 && GlobalSettings.NewWindow)
+                if (exitCode.HasValue && exitCode.Value == 0 && InputArguments.NewWindow)
                 {
                     Logger.Instance.Log($"Elevated process started successfully", LogLevel.Debug);
                     return 0;
@@ -89,7 +92,7 @@ namespace gsudo.ProcessRenderers
             if (++consecutiveCancelKeys > 2)
             {
                 Logger.Instance.Log("Press CTRL-C again to stop gsudo", LogLevel.Warning);
-                _ = _connection.ControlStream.WriteAsync(Constants.TOKEN_KEY_CTRLBREAK); // .GetAwaiter().GetResult();
+                _ = _connection.ControlStream.WriteAsync(Constants.TOKEN_KEY_CTRLC); // .GetAwaiter().GetResult();
             }
             else
             {

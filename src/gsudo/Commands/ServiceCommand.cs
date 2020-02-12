@@ -16,13 +16,13 @@ namespace gsudo.Commands
         public LogLevel? LogLvl { get; set; }
 
         Timer ShutdownTimer;
-        void EnableTimer() => ShutdownTimer.Change((int)GlobalSettings.CredentialsCacheDuration.Value.TotalMilliseconds, Timeout.Infinite);
+        void EnableTimer() => ShutdownTimer.Change((int)Settings.CredentialsCacheDuration.Value.TotalMilliseconds, Timeout.Infinite);
         void DisableTimer() => ShutdownTimer.Change(Timeout.Infinite, Timeout.Infinite);
 
         public async Task<int> Execute()
         {
             // service mode
-            if (LogLvl.HasValue) GlobalSettings.LogLevel.Value = LogLvl.Value;
+            if (LogLvl.HasValue) Settings.LogLevel.Value = LogLvl.Value;
 
             Console.Title = "gsudo Service";
             var cacheLifetime = new CredentialsCacheLifetimeManager();
@@ -34,7 +34,7 @@ namespace gsudo.Commands
                 {
                     cacheLifetime.OnCacheClear += server.Close;
                     ShutdownTimer = new Timer((o) => server.Close(), null, 10000, Timeout.Infinite); // 10 seconds for initial connection or die.
-                    server.ConnectionAccepted += async (o, connection) => await AcceptConnection(connection).ConfigureAwait(false);
+                    server.ConnectionAccepted += (o, connection) => AcceptConnection(connection).ConfigureAwait(false).GetAwaiter().GetResult();
                     server.ConnectionClosed += (o, cònnection) => EnableTimer();
 
                     await server.Listen().ConfigureAwait(false);
@@ -86,7 +86,7 @@ namespace gsudo.Commands
         private IRpcServer CreateServer()
         {
             // No credentials cache when CredentialsCacheDuration = 0
-            bool singleUse = GlobalSettings.CredentialsCacheDuration.Value.TotalSeconds < 1;
+            bool singleUse = Settings.CredentialsCacheDuration.Value.TotalSeconds < 1;
             return new NamedPipeServer(allowedPid, allowedSid, singleUse);
         }
 
