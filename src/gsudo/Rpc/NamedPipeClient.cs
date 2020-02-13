@@ -12,9 +12,9 @@ namespace gsudo.Rpc
 {
     class NamedPipeClient : IRpcClient
     {
-        public async Task<Connection> Connect(ElevationRequest elevationRequest, int? clientPid, int timeoutMilliseconds)
+        public async Task<Connection> Connect(ElevationRequest elevationRequest, int? clientPid, bool failFast)
         {
-            var localServer = true;
+            int timeoutMilliseconds = failFast ? 300 : 5000;
             var server = ".";
 
             string pipeName = null;
@@ -27,26 +27,26 @@ namespace gsudo.Rpc
                 if (clientPid.HasValue)
                 {
                     pipeName = NamedPipeServer.GetPipeName(user, clientPid.Value);
-                    if (!ExistsNamedPipe(pipeName) && timeoutMilliseconds <= 300)
+                    if (!ExistsNamedPipe(pipeName) && failFast)
                     {
                         // fail fast without timeout.
                         return null;
                     }
                 }
-                else if (localServer)
+                else
                 {
-                    var callerProcess = Process.GetCurrentProcess().ParentProcess();
+                    var callerProcess = Process.GetCurrentProcess();
                     while (callerProcess != null)
                     {
-                        pipeName = NamedPipeServer.GetPipeName(user, callerProcess.Id);
+                        callerProcess = callerProcess?.ParentProcess();
+                        pipeName = NamedPipeServer.GetPipeName(user, callerProcess?.Id ?? 0);
                         // Does the pipe exists?
-                        if (ExistsNamedPipe(pipeName) && timeoutMilliseconds <= 300)
+                        if (ExistsNamedPipe(pipeName))
                             break;
 
+                        pipeName = null;
                         // try grandfather.
-                        callerProcess = callerProcess.ParentProcess();
-                    }
-                    if (callerProcess == null) return null;
+                    } 
                 }
 
                 if (pipeName == null) return null;
@@ -81,8 +81,7 @@ namespace gsudo.Rpc
             Native.FileApi.WIN32_FIND_DATA lpFindFileData;
 
             var ptr = Native.FileApi.FindFirstFile($@"\\.\pipe\{GetRootFolder(name)}*", out lpFindFileData);
-            if (lpFindFileData.cFileName.EndsWith(name, StringComparison.Ordinal)) return true;
-            while (Native.FileApi.FindNextFile(ptr, out lpFindFileData))
+            do
             {
                 if (lpFindFileData.cFileName.EndsWith(name, StringComparison.Ordinal))
                 {
@@ -91,6 +90,8 @@ namespace gsudo.Rpc
                     return true;
                 }
             }
+            while (Native.FileApi.FindNextFile(ptr, out lpFindFileData)) ;
+
             Native.FileApi.FindClose(ptr);
             Logger.Instance.Log($"Named Pipe \"{name}\" exists = false.", LogLevel.Debug);
             return false;
