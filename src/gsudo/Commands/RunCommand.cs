@@ -23,16 +23,11 @@ namespace gsudo.Commands
 
         public async Task<int> Execute()
         {
-            //Logger.Instance.Log("Params: " + Newtonsoft.Json.JsonConvert.SerializeObject(this), LogLevel.Debug);
-
-            if (Settings.KillCache)
-                await new KillCacheCommand().Execute().ConfigureAwait(false); // handle rare case of "gsudo -k cmd"
-
             var runningAsDesiredUser = RunningAsDesiredUser();
             var currentProcess = System.Diagnostics.Process.GetCurrentProcess(); 
             bool emptyArgs = string.IsNullOrEmpty(CommandToRun.FirstOrDefault());
 
-            if (!CommandToRun.Any() && Settings.SecurityEnforceUacIsolation && !runningAsDesiredUser)
+            if (emptyArgs && Settings.SecurityEnforceUacIsolation && !runningAsDesiredUser)
             {
                 // for those using SecurityEnforceUacIsolation=true, 
                 // force auto shell elevation in new window
@@ -57,6 +52,7 @@ namespace gsudo.Commands
                 Wait = (!isWindowsApp && !InputArguments.NewWindow) || InputArguments.Wait,
                 Mode = GetConsoleMode(isWindowsApp),
                 ConsoleProcessId = currentProcess.Id,
+                NoCache = InputArguments.NoCache,
             };
 
             if (!runningAsDesiredUser && Settings.SecurityEnforceUacIsolation)
@@ -79,7 +75,7 @@ namespace gsudo.Commands
             {
                 if (emptyArgs && !InputArguments.NewWindow)
                 {
-                    Logger.Instance.Log("Already elevated (and no parameters specified). Exiting...", LogLevel.Error);
+                    Logger.Instance.Log("Already elevated (and no command specified). Exiting...", LogLevel.Error);
                     return Constants.GSUDO_ERROR_EXITCODE;
                 }
 
@@ -123,16 +119,22 @@ namespace gsudo.Commands
                 Logger.Instance.Log($"Caller PID: {callingPid}", LogLevel.Debug);
                 Logger.Instance.Log($"Caller SID: {callingSid}", LogLevel.Debug);
 
+                if (InputArguments.UnsafeCache)
+                {
+                    Logger.Instance.Log("'--unsafe' option disables several gsudo security meassures. Use 'gsudo -k' to revert security.", LogLevel.Warning);
+                    callingPid = 0;
+                }
+
                 var cmd = CommandToRun.FirstOrDefault();
 
                 var rpcClient = GetClient(elevationRequest);
                 Rpc.Connection connection = null;
-
                 try
                 {
                     try
                     {
-                        connection = await rpcClient.Connect(elevationRequest, null, 300).ConfigureAwait(false);
+                        int? cachePid = InputArguments.UnsafeCache ? (int?)0 : null;
+                        connection = await rpcClient.Connect(elevationRequest, cachePid, true).ConfigureAwait(false);
                     }
                     catch (System.IO.IOException) { }
                     catch (TimeoutException) { }
@@ -143,11 +145,13 @@ namespace gsudo.Commands
 
                     if (connection == null) // service is not running or listening.
                     {
+                        int cachePid = InputArguments.UnsafeCache ? 0 : callingPid;
+                        
                         // Start elevated service instance
-                        if (!StartElevatedService(currentProcess, callingPid, callingSid))
+                        if (!StartElevatedService(currentProcess, cachePid, callingSid))
                             return Constants.GSUDO_ERROR_EXITCODE;
 
-                        connection = await rpcClient.Connect(elevationRequest, callingPid, 5000).ConfigureAwait(false);
+                        connection = await rpcClient.Connect(elevationRequest, cachePid, false).ConfigureAwait(false);
                     }
 
                     if (connection == null) // service is not running or listening.

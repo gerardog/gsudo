@@ -16,7 +16,6 @@ namespace gsudo.Commands
     {
         public int allowedPid { get; set; }
         public string allowedSid { get; set; }
-
         public LogLevel? LogLvl { get; set; }
 
         public Task<int> Execute()

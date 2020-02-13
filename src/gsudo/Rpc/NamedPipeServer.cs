@@ -133,7 +133,7 @@ namespace gsudo.Rpc
             }
 #endif
 
-            if (allowedPid == -1) return true;
+            if (allowedPid == 0) return true;
 
             while (clientPid > 0)
                 if (allowedPid == clientPid)

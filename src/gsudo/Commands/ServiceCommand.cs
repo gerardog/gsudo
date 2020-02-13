@@ -16,7 +16,12 @@ namespace gsudo.Commands
         public LogLevel? LogLvl { get; set; }
 
         Timer ShutdownTimer;
-        void EnableTimer() => ShutdownTimer.Change((int)Settings.CredentialsCacheDuration.Value.TotalMilliseconds, Timeout.Infinite);
+        void EnableTimer()
+        {
+            if (allowedPid != 0) // allowedPid == 0 is flag for --fullcache
+                ShutdownTimer.Change((int)Settings.CredentialsCacheDuration.Value.TotalMilliseconds, Timeout.Infinite);
+        }
+
         void DisableTimer() => ShutdownTimer.Change(Timeout.Infinite, Timeout.Infinite);
 
         public async Task<int> Execute()
@@ -63,6 +68,9 @@ namespace gsudo.Commands
                     Environment.SetEnvironmentVariable("PROMPT", Environment.ExpandEnvironmentVariables(request.Prompt));
 
                 await applicationHost.Start(connection, request).ConfigureAwait(false);
+
+                if (request.NoCache)
+                    CredentialsCacheLifetimeManager.ClearCredentialsCache();
             }
             catch (Exception e)
             {

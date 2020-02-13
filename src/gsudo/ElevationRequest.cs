@@ -16,6 +16,7 @@ namespace gsudo
         public int ConsoleHeight { get; set; }
         public ConsoleMode Mode { get; set; }
         public int ConsoleProcessId { get; set; }
+        public bool NoCache { get; set; }
 
         [Serializable]
         internal enum ConsoleMode { Raw, VT,

@@ -60,7 +60,7 @@ namespace gsudo.Commands
                     return new RunCommand()
                     {
                         CommandToRun = new string[]
-                            { Process.GetCurrentProcess().MainModule.FileName, "--raw", "--global", "config", key, reset ? "--reset" : $"\"{unescapedValue}\""}
+                            { Process.GetCurrentProcess().MainModule.FileName, "--piped", "--global", "config", key, reset ? "--reset" : $"\"{unescapedValue}\""}
                     }.Execute();
                 }
 

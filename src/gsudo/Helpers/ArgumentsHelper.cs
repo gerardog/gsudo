@@ -2,9 +2,7 @@
 using gsudo.Native;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 
@@ -124,18 +122,19 @@ namespace gsudo.Helpers
 
             while (stack.Any())
             {
-
                 var arg = stack.Peek();
 
                 if (
                 SetTrueIf(arg, () => InputArguments.NewWindow = true, "-n", "--new") ||
                 SetTrueIf(arg, () => InputArguments.Wait = true, "-w", "--wait") ||
-                SetTrueIf(arg, () => Settings.ForceRawConsole.Value = true, "--raw") ||
+                SetTrueIf(arg, () => Settings.ForceRawConsole.Value = true, "--piped", "--raw" /*--raw for backward compat*/) ||
                 SetTrueIf(arg, () => Settings.ForceVTConsole.Value = true, "--vt") ||
                 SetTrueIf(arg, () => Settings.CopyEnvironmentVariables.Value = true, "--copyEV") ||
                 SetTrueIf(arg, () => Settings.CopyNetworkShares.Value = true, "--copyNS") ||
                 SetTrueIf(arg, () => InputArguments.RunAsSystem = true, "-s", "--system") ||
                 SetTrueIf(arg, () => InputArguments.Global = true, "--global") ||
+                SetTrueIf(arg, () => InputArguments.NoCache = true, "--nocache") ||
+                SetTrueIf(arg, () => InputArguments.UnsafeCache = true, "--unsafe") ||
                 false)
                 {
                     stack.Pop();
