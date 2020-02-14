@@ -27,13 +27,6 @@ namespace gsudo.Commands
             var currentProcess = System.Diagnostics.Process.GetCurrentProcess(); 
             bool emptyArgs = string.IsNullOrEmpty(CommandToRun.FirstOrDefault());
 
-            if (emptyArgs && Settings.SecurityEnforceUacIsolation && !runningAsDesiredUser)
-            {
-                // for those using SecurityEnforceUacIsolation=true, 
-                // force auto shell elevation in new window
-                InputArguments.NewWindow = true;
-            }
-
             CommandToRun = ArgumentsHelper.AugmentCommand(CommandToRun.ToArray());
             bool isWindowsApp = ProcessFactory.IsWindowsApp(CommandToRun.FirstOrDefault());
             
@@ -56,9 +49,9 @@ namespace gsudo.Commands
             };
 
             if (!runningAsDesiredUser && Settings.SecurityEnforceUacIsolation)
-                AdjustUacIsolationRequest(elevationRequest);
+                AdjustUacIsolationRequest(elevationRequest, emptyArgs);
 
-            elevationRequest.Prompt = (elevationRequest.Mode != ElevationRequest.ConsoleMode.Raw || InputArguments.NewWindow) ? Settings.Prompt : Settings.RawPrompt;
+            elevationRequest.Prompt = (elevationRequest.Mode != ElevationRequest.ConsoleMode.Piped || InputArguments.NewWindow) ? Settings.Prompt : Settings.PipedPrompt;
 
             Logger.Instance.Log($"Command to run: {elevationRequest.FileName} {elevationRequest.Arguments}", LogLevel.Debug);
 
@@ -145,7 +138,7 @@ namespace gsudo.Commands
 
                     if (connection == null) // service is not running or listening.
                     {
-                        int cachePid = InputArguments.UnsafeCache ? 0 : callingPid;
+                        int  cachePid = InputArguments.UnsafeCache ? 0 : callingPid;
                         
                         // Start elevated service instance
                         if (!StartElevatedService(currentProcess, cachePid, callingSid))
@@ -179,12 +172,25 @@ namespace gsudo.Commands
             }
         }
 
-        private void AdjustUacIsolationRequest(ElevationRequest elevationRequest)
+        // Enforce SecurityEnforceUacIsolation
+        private void AdjustUacIsolationRequest(ElevationRequest elevationRequest, bool isShellElevation)
         {
             if (!elevationRequest.NewWindow)
             {
-                elevationRequest.Mode = ElevationRequest.ConsoleMode.Raw;
-                Logger.Instance.Log("User Input disabled because of SecurityEnforceUacIsolation. Press Ctrl-C three times to abort. Or use -n argument to elevate in new window.", LogLevel.Warning);
+                if (isShellElevation)
+                {
+                    // force auto shell elevation in new window
+                    elevationRequest.NewWindow = true;
+                    // do not wait by default on this scenario, only if user has requested it.
+                    elevationRequest.Wait = InputArguments.Wait;
+                    Logger.Instance.Log("Elevating shell in a new console window because of SecurityEnforceUacIsolation", LogLevel.Info);
+                }
+                else
+                {
+                    // force raw mode (that disables user input with SecurityEnforceUacIsolation)
+                    elevationRequest.Mode = ElevationRequest.ConsoleMode.Piped;
+                    Logger.Instance.Log("User Input disabled because of SecurityEnforceUacIsolation. Press Ctrl-C three times to abort. Or use -n argument to elevate in new window.", LogLevel.Warning);
+                }
             }
         }
 
@@ -268,10 +274,10 @@ namespace gsudo.Commands
                 return ElevationRequest.ConsoleMode.Attached;
 
             if (InputArguments.NewWindow || Console.IsOutputRedirected)
-                return ElevationRequest.ConsoleMode.Raw;
+                return ElevationRequest.ConsoleMode.Piped;
 
             if (Settings.ForceRawConsole)
-                return ElevationRequest.ConsoleMode.Raw;
+                return ElevationRequest.ConsoleMode.Piped;
 
             if (Settings.ForceVTConsole)
                 return ElevationRequest.ConsoleMode.VT;
@@ -294,7 +300,7 @@ namespace gsudo.Commands
         {
             if (elevationRequest.Mode == ElevationRequest.ConsoleMode.Attached)
                 return new AttachedConsoleRenderer(connection);
-            if (elevationRequest.Mode == ElevationRequest.ConsoleMode.Raw)
+            if (elevationRequest.Mode == ElevationRequest.ConsoleMode.Piped)
                 return new PipedClientRenderer(connection);
             else
                 return new VTClientRenderer(connection, elevationRequest);

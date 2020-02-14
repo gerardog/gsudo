@@ -19,7 +19,7 @@ namespace gsudo
         public bool NoCache { get; set; }
 
         [Serializable]
-        internal enum ConsoleMode { Raw, VT,
+        internal enum ConsoleMode { Piped, VT,
             Attached
         }
     }

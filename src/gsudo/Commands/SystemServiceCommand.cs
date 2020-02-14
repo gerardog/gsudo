@@ -6,12 +6,16 @@ using System.Diagnostics;
 namespace gsudo.Commands
 {
     /// <summary>
-    /// We can only spawn a process as system account if we were elevated first. 
-    /// So, 
-    /// Non-elevated Gsudo client -(elevates)-> Gsudo SystemService -(runs as System)-> Gsudo Service.
-    /// Then..
-    /// Non-elevated Gsudo client connects to Gsudo Service running as system.
+    /// Intermediate command that to be used as intermediary to launch as Local System.
     /// </summary>
+    /// <remarks>
+    /// We can only spawn a process as system account if we were elevated first. 
+    /// Here is how it works:
+    /// 'Non-elevated Gsudo client' ELEVATES-> new Gsudo SystemService.
+    /// Then elevated Gsudo SystemService STARTS-AS-SYSTEM a -> Gsudo Service.
+    /// Finally..
+    /// Non-elevated Gsudo client connects to Gsudo Service running as system.
+    /// </remarks>
     class SystemServiceCommand : ICommand
     {
         public int allowedPid { get; set; }
@@ -30,12 +34,15 @@ namespace gsudo.Commands
                 var process = ProcessFactory.StartAsSystem(Process.GetCurrentProcess().MainModule.FileName, $"{dbg}-s gsudoservice {allowedPid} {allowedSid} {Settings.LogLevel}", Environment.CurrentDirectory, !InputArguments.Debug);
                 if (process == null)
                 {
-                    Logger.Instance.Log("Failed to start elevated instance.", LogLevel.Error);
+                    Logger.Instance.Log("Failed to start instance as System.", LogLevel.Error);
                     return Task.FromResult(Constants.GSUDO_ERROR_EXITCODE);
                 }
 
                 Logger.Instance.Log("Elevated instance started.", LogLevel.Debug);
             }
+            else
+                Logger.Instance.Log($"{nameof(SystemServiceCommand)} is not supported if not elevated.", LogLevel.Error);
+
 
             return Task.FromResult(0);
         }

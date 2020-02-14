@@ -6,14 +6,12 @@ namespace gsudo
 {
     class Settings
     {
-        public static RegistrySetting<TimeSpan> CredentialsCacheDuration { get; set; } = new RegistrySetting<TimeSpan>("CredentialsCacheDuration", TimeSpan.FromSeconds(300), TimeSpan.Parse, RegistrySettingScope.GlobalOnly);
-        public static RegistrySetting<string> RawPrompt { get; set; } = new RegistrySetting<string>("RawPrompt", "$P# ", (s) => s);
-        public static RegistrySetting<string> Prompt { get; set; } = new RegistrySetting<string>("Prompt", "$p$e[1;31;40m# $e[0;37;40m", (s) => s);
         public const int BufferSize = 10240;
-        public static RegistrySetting<LogLevel> LogLevel { get; set; } = new RegistrySetting<LogLevel>("LogLevel", gsudo.LogLevel.Info, (s) => (LogLevel)Enum.Parse(typeof(LogLevel), s, true));
-
         public static readonly Encoding Encoding = System.Text.UnicodeEncoding.UTF8;
-
+        public static RegistrySetting<TimeSpan> CredentialsCacheDuration { get; set; } = new RegistrySetting<TimeSpan>(nameof(CredentialsCacheDuration), TimeSpan.FromSeconds(300), TimeSpan.Parse, RegistrySettingScope.GlobalOnly);
+        public static RegistrySetting<string> PipedPrompt { get; set; } = new RegistrySetting<string>(nameof(PipedPrompt), "$P# ", (s) => s);
+        public static RegistrySetting<string> Prompt { get; set; } = new RegistrySetting<string>(nameof(Prompt), "$p$e[1;31;40m# $e[0;37;40m", (s) => s);
+        public static RegistrySetting<LogLevel> LogLevel { get; set; } = new RegistrySetting<LogLevel>(nameof(LogLevel), gsudo.LogLevel.Info, (s) => (LogLevel)Enum.Parse(typeof(LogLevel), s, true));
         public static RegistrySetting<bool> ForceRawConsole { get; internal set; } = new RegistrySetting<bool>(nameof(ForceRawConsole), false, bool.Parse);
         public static RegistrySetting<bool> ForceVTConsole { get; internal set; } = new RegistrySetting<bool>(nameof(ForceVTConsole), false, bool.Parse);
         public static RegistrySetting<bool> CopyEnvironmentVariables { get; internal set; } = new RegistrySetting<bool>(nameof(CopyEnvironmentVariables), false, bool.Parse);
@@ -25,7 +23,7 @@ namespace gsudo
                 CredentialsCacheDuration,
                 LogLevel,
                 Prompt,
-                RawPrompt,
+                PipedPrompt,
                 ForceRawConsole,
                 ForceVTConsole,
                 CopyEnvironmentVariables,
