@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using static gsudo.Native.ConsoleApi;
 
 namespace gsudo.ProcessHosts
 {
@@ -21,6 +22,8 @@ namespace gsudo.ProcessHosts
 
         public async Task Start(Connection connection, ElevationRequest request)
         {
+            Native.ConsoleApi.SetConsoleCtrlHandler(HandleConsoleCancelKeyPress, true);
+
             _connection = connection;
 
             try
@@ -37,7 +40,7 @@ namespace gsudo.ProcessHosts
                 if (Settings.SecurityEnforceUacIsolation)
                     process.StandardInput.Close();
 
-                WaitHandle.WaitAny(new WaitHandle[] { process.GetWaitHandle(), connection.DisconnectedWaitHandle });
+                WaitHandle.WaitAny(new WaitHandle[] { process.GetProcessWaitHandle(), connection.DisconnectedWaitHandle });
 
                 if (process.HasExited && connection.IsAlive)
                 {
@@ -60,6 +63,7 @@ namespace gsudo.ProcessHosts
             }
             finally
             {
+                Native.ConsoleApi.SetConsoleCtrlHandler(HandleConsoleCancelKeyPress, false);
                 if (process != null && !process.HasExited)
                 {
                     process?.Terminate();
@@ -67,10 +71,13 @@ namespace gsudo.ProcessHosts
                 process?.Dispose();
             }
         }
-               
-        internal static void HandleCancelKey(object sender, ConsoleCancelEventArgs e)
+
+        private static bool HandleConsoleCancelKeyPress(CtrlTypes ctrlType)
         {
-            e.Cancel = true;
+            if (ctrlType.In(CtrlTypes.CTRL_C_EVENT, CtrlTypes.CTRL_BREAK_EVENT))
+                return true;
+
+            return false;
         }
 
         private bool ShouldWait(StreamReader streamReader)
@@ -111,14 +118,14 @@ namespace gsudo.ProcessHosts
 
                 if (token == Constants.TOKEN_KEY_CTRLC)
                 {
-                    ProcessExtensions.SendCtrlC(process);
+                    Commands.CtrlCCommand.Invoke(process.Id);
                     lastInboundMessage = null;
                     continue;
                 }
 
                 if (token == Constants.TOKEN_KEY_CTRLBREAK)
                 {
-                    ProcessExtensions.SendCtrlC(process, true);
+                    Commands.CtrlCCommand.Invoke(process.Id, true);
                     lastInboundMessage = null;
                     continue;
                 }

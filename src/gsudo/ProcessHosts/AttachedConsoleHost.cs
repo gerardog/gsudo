@@ -34,7 +34,7 @@ namespace gsudo.ProcessHosts
                     {
                         var process = Helpers.ProcessFactory.StartInProcessAtached(elevationRequest.FileName, elevationRequest.Arguments);
 
-                        WaitHandle.WaitAny(new WaitHandle[] { process.GetWaitHandle(), connection.DisconnectedWaitHandle });
+                        WaitHandle.WaitAny(new WaitHandle[] { process.GetProcessWaitHandle(), connection.DisconnectedWaitHandle });
                         if (process.HasExited)
                             exitCode = process.ExitCode;
 
@@ -68,7 +68,7 @@ namespace gsudo.ProcessHosts
 
         private static bool HandleConsoleCancelKeyPress(CtrlTypes ctrlType)
         {
-            if (ctrlType.In(CtrlTypes.CTRL_C_EVENT, CtrlTypes.CTRL_C_EVENT))
+            if (ctrlType.In(CtrlTypes.CTRL_C_EVENT, CtrlTypes.CTRL_BREAK_EVENT))
                 return true;
 
             return false;

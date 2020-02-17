@@ -79,7 +79,7 @@ namespace gsudo.ProcessRenderers
         {
             e.Cancel = true;
 
-            if (++consecutiveCancelKeys > 3 || e.SpecialKey == ConsoleSpecialKey.ControlBreak)
+            if (++consecutiveCancelKeys > 3)
             {
                 expectedClose = true;
                 _connection.FlushAndCloseAll().Wait();
@@ -92,12 +92,11 @@ namespace gsudo.ProcessRenderers
             if (++consecutiveCancelKeys > 2)
             {
                 Logger.Instance.Log("Press CTRL-C again to stop gsudo", LogLevel.Warning);
-                _ = _connection.ControlStream.WriteAsync(Constants.TOKEN_KEY_CTRLC); // .GetAwaiter().GetResult();
             }
-            else
-            {
-                _ = _connection.ControlStream.WriteAsync(Constants.TOKEN_KEY_CTRLC); //.GetAwaiter().GetResult();
-            }
+
+            _ = _connection.ControlStream.WriteAsync(
+                e.SpecialKey== ConsoleSpecialKey.ControlBreak ? Constants.TOKEN_KEY_CTRLBREAK : Constants.TOKEN_KEY_CTRLC
+                ); //.GetAwaiter().GetResult();
         }
 
         private Task WriteToConsole(string s)
