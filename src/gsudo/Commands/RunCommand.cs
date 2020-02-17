@@ -208,7 +208,7 @@ namespace gsudo.Commands
         {
             var dbg = InputArguments.Debug ? "--debug " : string.Empty;
             Process process;
-            if (InputArguments.RunAsSystem && ProcessExtensions.IsAdministrator())
+            if (InputArguments.RunAsSystem && ProcessHelper.IsAdministrator())
             {
                 process = ProcessFactory.StartAsSystem(currentProcess.MainModule.FileName, $"{dbg}-s gsudoservice {callingPid} {callingSid} {Settings.LogLevel}", Environment.CurrentDirectory, !InputArguments.Debug);
             }
@@ -242,13 +242,13 @@ namespace gsudo.Commands
             {
                 return WindowsIdentity.GetCurrent().IsSystem;
             }
-            return ProcessExtensions.IsAdministrator();
+            return ProcessHelper.IsAdministrator();
         }
 
         private static int GetCallingPid(Process currentProcess)
         {
             var parent = currentProcess.ParentProcess();
-            if (parent == null) return currentProcess.ParentProcessId();
+            if (parent == null) return ProcessHelper.GetParentProcessId(currentProcess);
             while (parent.MainModule.FileName.In("sudo.exe", "gsudo.exe")) // naive shim detection
             {
                 parent = parent.ParentProcess();

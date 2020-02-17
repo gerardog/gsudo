@@ -19,7 +19,7 @@ namespace gsudo.Tests
         [TestMethod]
         public void Cmd_AdminUserTest()
         {
-            Assert.IsFalse(ProcessExtensions.IsAdministrator(), "This test suite is intended to be run as an administrator, otherwise several UAC popups would appear");
+            Assert.IsFalse(ProcessHelper.IsAdministrator(), "This test suite is intended to be run as an administrator, otherwise several UAC popups would appear");
         }
 
         [TestMethod]

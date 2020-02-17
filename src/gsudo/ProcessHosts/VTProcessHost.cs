@@ -52,7 +52,7 @@ namespace gsudo.ProcessHosts
 
                             OnClose(() => DisposeResources(process, pseudoConsole, outputPipe, inputPipe));
 
-                            WaitHandle.WaitAny(new WaitHandle[] { runningProcess.GetWaitHandle(), connection.DisconnectedWaitHandle });
+                            WaitHandle.WaitAny(new WaitHandle[] { runningProcess.GetProcessWaitHandle(), connection.DisconnectedWaitHandle });
 
                             exitCode = process.GetExitCode();
                         }

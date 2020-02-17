@@ -31,7 +31,7 @@ namespace gsudo.Rpc
             _allowedSid = AllowedSid;
             _singleUse = SingleUse;
 
-            _allowedExe = SymbolicLinkSupport.ResolveSymbolicLink(Process.GetCurrentProcess().MainModule.FileName);
+            _allowedExe = SymbolicLinkSupport.ResolveSymbolicLink(ProcessHelper.GetOwnExeName());
             var fileInfo = new System.IO.FileInfo(_allowedExe);
             _allowedExeTimeStamp = fileInfo.LastWriteTimeUtc;
             _allowedExeLength = fileInfo.Length;
@@ -139,7 +139,7 @@ namespace gsudo.Rpc
                 if (allowedPid == clientPid)
                     return true;
                 else
-                    clientPid = ProcessExtensions.ParentProcessId(clientPid);
+                    clientPid = ProcessHelper.GetParentProcessId(clientPid);
 
             Logger.Instance.Log($"Invalid Client Credentials. Rejecting Connection. \nAllowed Pid: {allowedPid}\nActual Pid:  {clientPid}", LogLevel.Error);
             return false;

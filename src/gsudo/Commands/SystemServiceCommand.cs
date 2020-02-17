@@ -29,9 +29,9 @@ namespace gsudo.Commands
 
             var dbg = InputArguments.Debug ? "--debug " : string.Empty;
 
-            if (ProcessExtensions.IsAdministrator())
+            if (ProcessHelper.IsAdministrator())
             {
-                var process = ProcessFactory.StartAsSystem(Process.GetCurrentProcess().MainModule.FileName, $"{dbg}-s gsudoservice {allowedPid} {allowedSid} {Settings.LogLevel}", Environment.CurrentDirectory, !InputArguments.Debug);
+                var process = ProcessFactory.StartAsSystem(ProcessHelper.GetOwnExeName(), $"{dbg}-s gsudoservice {allowedPid} {allowedSid} {Settings.LogLevel}", Environment.CurrentDirectory, !InputArguments.Debug);
                 if (process == null)
                 {
                     Logger.Instance.Log("Failed to start instance as System.", LogLevel.Error);

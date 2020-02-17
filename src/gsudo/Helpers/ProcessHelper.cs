@@ -12,27 +12,18 @@ using gsudo.Native;
 
 namespace gsudo.Helpers
 {
-    public static class ProcessExtensions
+    public static class ProcessHelper
     {
-        public static void SendCtrlC(this Process proc, bool sendSigBreak = false)
+        public static string GetOwnExeName()
         {
-            // Sending Ctrl-C in windows is tricky.
-            // Your process must be attached to the target process console.
-            // There is no way to do that without loosing your currently attached console, and that generates a lot of issues.
-            // So the best we can do is create a new process that will attach and send Ctrl-C to the target process.
-
-            using (var p = ProcessFactory.StartDetached
-                (Process.GetCurrentProcess().MainModule.FileName, $"gsudoctrlc {proc.Id.ToString(CultureInfo.InvariantCulture)}", Environment.CurrentDirectory, true))
-            {
-                p.WaitForExit();
-            }
+            return Process.GetCurrentProcess().MainModule.FileName;
         }
 
         public static Process ParentProcess(this Process process)
         {
             try
             {
-                var parentPid = process.ParentProcessId();
+                var parentPid = ProcessHelper.GetParentProcessId(process);
                 if (parentPid == 0)
                     return null;
                 return Process.GetProcessById(parentPid);
@@ -43,9 +34,9 @@ namespace gsudo.Helpers
             }
         }
 
-        public static int ParentProcessId(this Process process) // ExcludingShim
+        public static int GetParentProcessId(Process process) // ExcludingShim
         {
-            var parentId = ParentProcessId(process.Id);
+            var parentId = GetParentProcessId(process.Id);
             Process parent;
             try
             {
@@ -59,7 +50,7 @@ namespace gsudo.Helpers
             // workaround for chocolatey shim.
             if (Path.GetFileName(parent.MainModule.FileName).In("gsudo.exe", "sudo.exe"))
             {
-                return ParentProcessId(parentId);
+                return GetParentProcessId(parentId);
             }
             return parentId;
         }
@@ -73,7 +64,7 @@ namespace gsudo.Helpers
             return 0;
         }
 
-        public static int ParentProcessId(int Id)
+        public static int GetParentProcessId(int Id)
         {
             PROCESSENTRY32 pe32 = new PROCESSENTRY32 { };
             pe32.dwSize = (uint)Marshal.SizeOf(typeof(PROCESSENTRY32));
@@ -120,7 +111,7 @@ namespace gsudo.Helpers
 
             Logger.Instance.Log($"Killing process {process.Id} {process.ProcessName}", LogLevel.Debug);
 
-            process.SendCtrlC(false);
+            Commands.CtrlCCommand.Invoke(process.Id);
             process.CloseMainWindow();
 
             process.WaitForExit(300);
@@ -134,7 +125,7 @@ namespace gsudo.Helpers
         /// <summary>
         /// Get an AutoResetEvent that signals when the process exits
         /// </summary>
-        public static AutoResetEvent GetWaitHandle(this Process process) =>
+        public static AutoResetEvent GetProcessWaitHandle(this Process process) =>
             new AutoResetEvent(false)
             {
                 SafeWaitHandle = new SafeWaitHandle(process.Handle, ownsHandle: false)
@@ -158,7 +149,7 @@ namespace gsudo.Helpers
         /// When any native Windows API call fails, the function throws a Win32Exception
         /// with the last error code.
         /// </exception>
-        static internal int GetProcessIntegrityLevel()
+        static internal int GetCurrentIntegrityLevel()
         {
             /*
              * https://docs.microsoft.com/en-us/previous-versions/dotnet/articles/bb625963(v=msdn.10)?redirectedfrom=MSDN

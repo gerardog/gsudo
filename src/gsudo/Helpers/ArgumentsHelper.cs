@@ -241,7 +241,7 @@ namespace gsudo.Helpers
             }
 
             if (args[0].Equals("gsudoctrlc", StringComparison.OrdinalIgnoreCase))
-                return new CtrlCCommand() { pid = int.Parse(args[1], CultureInfo.InvariantCulture) };
+                return new CtrlCCommand() { Pid = int.Parse(args[1], CultureInfo.InvariantCulture), sendSigBreak = bool.Parse(args[2]) };
 
             if (args[0].Equals("config", StringComparison.OrdinalIgnoreCase))
                 return new ConfigCommand() { key = args.Skip(1).FirstOrDefault(), value = args.Skip(2) };

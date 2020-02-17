@@ -1,7 +1,6 @@
 ﻿using gsudo.Helpers;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -54,13 +53,13 @@ namespace gsudo.Commands
                 }
 
                 bool reset = value.Any(v => v.In("--reset"));
-                if (InputArguments.Global && !ProcessExtensions.IsAdministrator())
+                if (InputArguments.Global && !ProcessHelper.IsAdministrator())
                 {
                     Logger.Instance.Log($"Global system settings requires elevation. Elevating...", LogLevel.Info);
                     return new RunCommand()
                     {
                         CommandToRun = new string[]
-                            { Process.GetCurrentProcess().MainModule.FileName, "--piped", "--global", "config", key, reset ? "--reset" : $"\"{unescapedValue}\""}
+                            { ProcessHelper.GetOwnExeName(), "--piped", "--global", "config", key, reset ? "--reset" : $"\"{unescapedValue}\""}
                     }.Execute();
                 }
 

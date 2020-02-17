@@ -17,7 +17,7 @@ namespace gsudo.Helpers
         /// </summary>
         public static void EnableAssemblyLoadFix()
         {
-            string exeName = Process.GetCurrentProcess().MainModule.FileName;
+            string exeName = ProcessHelper.GetOwnExeName();
             string exeNamePath = Path.GetDirectoryName(exeName);
 
             RealRoot = Path.GetDirectoryName(ResolveSymbolicLink(exeName));
