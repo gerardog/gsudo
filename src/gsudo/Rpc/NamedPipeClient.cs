@@ -51,10 +51,10 @@ namespace gsudo.Rpc
 
                 if (pipeName == null) return null;
 
-                dataPipe = new NamedPipeClientStream(server, pipeName, PipeDirection.InOut, PipeOptions.Asynchronous, System.Security.Principal.TokenImpersonationLevel.Impersonation, HandleInheritability.None);
+                dataPipe = new NamedPipeClientStream(server, pipeName, PipeDirection.InOut, PipeOptions.Asynchronous, System.Security.Principal.TokenImpersonationLevel.Identification, HandleInheritability.None);
                 await dataPipe.ConnectAsync(timeoutMilliseconds).ConfigureAwait(false);
 
-                controlPipe = new NamedPipeClientStream(server, pipeName + "_control", PipeDirection.InOut, PipeOptions.Asynchronous, System.Security.Principal.TokenImpersonationLevel.Impersonation, HandleInheritability.None);
+                controlPipe = new NamedPipeClientStream(server, pipeName + "_control", PipeDirection.InOut, PipeOptions.Asynchronous, System.Security.Principal.TokenImpersonationLevel.Identification, HandleInheritability.None);
                 await controlPipe.ConnectAsync(timeoutMilliseconds).ConfigureAwait(false);
 
                 Logger.Instance.Log($"Connected via Named Pipe {pipeName}.", LogLevel.Debug);
