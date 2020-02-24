@@ -20,12 +20,20 @@ namespace gsudo.Commands
     {
         public Task<int> Execute()
         {
-            if (CredentialsCacheLifetimeManager.ClearCredentialsCache())
-                Logger.Instance.Log("Credentials cache invalidated.", LogLevel.Info);
-            else
-                Logger.Instance.Log("No credentials cache were found.", LogLevel.Info);
+            try
+            {
+                if (CredentialsCacheLifetimeManager.ClearCredentialsCache())
+                    Logger.Instance.Log("Credentials cache invalidated.", LogLevel.Info);
+                else
+                    Logger.Instance.Log("No credentials cache were found.", LogLevel.Info);
 
-            return Task.FromResult(0);
+                return Task.FromResult(0);
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"Failed to invalidate Credentials Cache: {ex.ToString()}", LogLevel.Error);
+                return Task.FromResult(Constants.GSUDO_ERROR_EXITCODE);
+            }
         }
     }
 }

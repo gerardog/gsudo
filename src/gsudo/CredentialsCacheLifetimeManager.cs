@@ -32,6 +32,10 @@ namespace gsudo
         {
             var security = new EventWaitHandleSecurity();
 
+            //security.AddAccessRule(new EventWaitHandleAccessRule(
+            //    new SecurityIdentifier(WellKnownSidType.InteractiveSid, null),
+            //    EventWaitHandleRights.Synchronize | EventWaitHandleRights.Modify,
+            //    AccessControlType.Allow));
             security.AddAccessRule(new EventWaitHandleAccessRule(
                 new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null),
                 EventWaitHandleRights.Synchronize | EventWaitHandleRights.Modify,
@@ -55,6 +59,8 @@ namespace gsudo
                 {
                     Logger.Instance.Log("Credentials Cache termination received", LogLevel.Info);
                     OnCacheClear?.Invoke();
+                    eventWaitHandle.Close();
+                    eventWaitHandle.Dispose();
                 }
             });
 
