@@ -35,7 +35,7 @@ namespace gsudo.Helpers
                     ShellExeName = parentProcess.MainModule.FileName;
                     return Shell.PowerShellCore;
                 }
-                else
+                else if (parentExeName != "CMD.EXE")
                 {
                     // Depending on how pwsh was installed, Pwsh.exe -calls-> dotnet -calls-> gsudo.
                     var grandParentProcess = parentProcess.ParentProcess();
