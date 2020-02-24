@@ -22,12 +22,11 @@ namespace gsudo.ProcessHosts
 
             try
             {
+                Native.ConsoleApi.SetConsoleCtrlHandler(HandleConsoleCancelKeyPress, true);
                 Native.ConsoleApi.FreeConsole();
-                uint pid = (uint)elevationRequest.ConsoleProcessId;
-                
+                int pid = elevationRequest.ConsoleProcessId;
                 if (Native.ConsoleApi.AttachConsole(pid))
                 {
-                    Native.ConsoleApi.SetConsoleCtrlHandler(HandleConsoleCancelKeyPress, true);
                     System.Environment.CurrentDirectory = elevationRequest.StartFolder;
 
                     try
@@ -47,7 +46,10 @@ namespace gsudo.ProcessHosts
                     }
                 }
                 else
-                {   
+                {
+                    var ex = new System.ComponentModel.Win32Exception();
+                    await connection.ControlStream.WriteAsync($"{Constants.TOKEN_ERROR}Server Error: Attach Console Failed.\r\n{ex.Message}\r\n{Constants.TOKEN_ERROR}").ConfigureAwait(false);
+                    Logger.Instance.Log("Attach Console Failed.", LogLevel.Error);
                     exitCode = Constants.GSUDO_ERROR_EXITCODE;
                 }
 
