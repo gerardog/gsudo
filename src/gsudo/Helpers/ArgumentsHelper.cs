@@ -116,13 +116,21 @@ namespace gsudo.Helpers
             return results;
         }
 
-        internal static int? ParseCommonSettings(ref IEnumerable<string> args)
+        internal static ICommand ParseCommand(IEnumerable<string> argsEnumerable)
         {
-            Stack<string> stack = new Stack<string>(args.Reverse());
-
-            while (stack.Any())
+            var args = new LinkedList<string>(argsEnumerable);
+            Func<string> Dequeue = () =>
             {
-                var arg = stack.Peek();
+                if (args.Count == 0) throw new ApplicationException("Missing argument");
+                var ret = args.First.Value;
+                args.RemoveFirst();
+                return ret;
+            };
+
+            string arg;
+            while (args.Count>0)
+            {
+                arg = Dequeue();
 
                 if (
                 SetTrueIf(arg, () => InputArguments.NewWindow = true, "-n", "--new") ||
@@ -135,57 +143,96 @@ namespace gsudo.Helpers
                 SetTrueIf(arg, () => InputArguments.Global = true, "--global") ||
                 SetTrueIf(arg, () => InputArguments.NoCache = true, "--nocache") ||
                 SetTrueIf(arg, () => InputArguments.UnsafeCache = true, "--unsafe") ||
-                false)
-                {
-                    stack.Pop();
-                }
+                SetTrueIf(arg, () => InputArguments.KillCache = true, "-k", "--reset-timestamp")
+                   )
+                { }
                 else if (arg.In("-v", "--version"))
-                {
-                    HelpCommand.ShowVersion();
-                    return 0;
-                }
+                    return new ShowVersionHelpCommand();
                 else if (arg.In("-h", "--help", "help", "/?", "/h"))
-                {
-                    HelpCommand.ShowHelp();
-                    return 0;
-                }
+                    return new HelpCommand();
                 else if (arg.In("--debug"))
                 {
                     InputArguments.Debug = true;
                     Settings.LogLevel.Value = LogLevel.All;
-                    stack.Pop();
                 }
                 else if (arg.In("--loglevel"))
                 {
-                    stack.Pop();
-                    arg = stack.Pop();
-                    try
-                    {
-                        Settings.LogLevel.Value = (LogLevel)Enum.Parse(typeof(LogLevel), arg, true);
-                    }
-                    catch
-                    {
-                        Logger.Instance.Log($"\"{arg}\" is not a valid LogLevel. Valid values are: All, Debug, Info, Warning, Error, None", LogLevel.Error);
-                        return Constants.GSUDO_ERROR_EXITCODE;
-                    }
+                    arg = Dequeue();
+                    if (!Enum.TryParse<LogLevel>(arg, true, out var val))
+                        throw new ApplicationException($"\"{arg}\" is not a valid LogLevel. Valid values are: All, Debug, Info, Warning, Error, None");
+
+                    Settings.LogLevel.Value = val;
                 }
-                else if (arg.In("-k", "--kill"))
+                else if (arg.In("-i", "--integrity"))
                 {
-                    break;
+                    arg = Dequeue();
+                    if (!Enum.TryParse<IntegrityLevel>(arg, true, out var val))
+                        throw new ApplicationException($"\"{arg}\" is not a valid IntegrityLevel. Valid values are: \n" +
+                            $"Untrusted, Low, Medium, MediuPlus, High, System, Protected (unsupported), Secure (unsupported)");
+
+                    InputArguments.IntegrityLevel = val;
                 }
                 else if (arg.StartsWith("-", StringComparison.Ordinal))
                 {
-                    Logger.Instance.Log($"Invalid option: {arg}", LogLevel.Error);
-                    return Constants.GSUDO_ERROR_EXITCODE;
+                    throw new ApplicationException($"Invalid option: {arg}");
                 }
                 else
                 {
+                    args.AddFirst(arg);
                     break;
                 }
             }
 
-            args = stack.ToArray();
-            return null;
+            if (args.Count == 0)
+            {
+                if (InputArguments.KillCache)
+                    return null; // support for "-k" as command
+
+                return new RunCommand() { CommandToRun = Array.Empty<string>() };
+            }
+
+            arg = Dequeue();
+            if (arg.Equals("help", StringComparison.OrdinalIgnoreCase))
+                return new HelpCommand();
+
+            if (arg.In("gsudoservice"))
+            {
+                    return new ServiceCommand()
+                    {
+                        allowedPid = int.Parse(Dequeue(), CultureInfo.InvariantCulture),
+                        allowedSid = Dequeue(),
+                        LogLvl = ExtensionMethods.ParseEnum<LogLevel>(Dequeue()),
+                    };
+            }
+
+            if (arg.In("gsudoservicehop"))
+            {
+                return new ServiceHopCommand()
+                {
+                    allowedPid = int.Parse(Dequeue(), CultureInfo.InvariantCulture),
+                    allowedSid = Dequeue(),
+                    LogLvl = ExtensionMethods.ParseEnum<LogLevel>(Dequeue()),
+                };
+            }
+
+            if (arg.In("gsudoctrlc"))
+                return new CtrlCCommand() 
+                { 
+                    Pid = int.Parse(Dequeue(), CultureInfo.InvariantCulture), 
+                    sendSigBreak = bool.Parse(Dequeue()) 
+                };
+
+            if (arg.In("config"))
+                return new ConfigCommand() { key = args.FirstOrDefault(), value = args.Skip(1) };
+
+            if (arg.In("status"))
+                return new StatusCommand();
+
+            if (arg.Equals("run", StringComparison.OrdinalIgnoreCase))
+                return new RunCommand() { CommandToRun = args };
+
+            args.AddFirst(arg);
+            return new RunCommand() { CommandToRun = args };
         }
 
         private static bool SetTrueIf(string arg, Action setting, params string[] v)
@@ -196,60 +243,6 @@ namespace gsudo.Helpers
                 return true;
             }
             return false;
-        }
-
-        internal static ICommand ParseCommand(IEnumerable<string> argsEnumerable)
-        {
-            var args = argsEnumerable.ToArray();
-            if (args.Length == 0) return new RunCommand() { CommandToRun = Array.Empty<string>() };
-
-            if (args[0].Equals("run", StringComparison.OrdinalIgnoreCase))
-                return new RunCommand() { CommandToRun = args.Skip(1) };
-
-            if (args[0].Equals("help", StringComparison.OrdinalIgnoreCase))
-                return new HelpCommand();
-
-            if (args[0].In("gsudoservice", "gsudosystemservice"))
-            {
-                bool hasLoglevel = false;
-                LogLevel logLevel = LogLevel.Info;
-                if (args.Length > 3)
-                {
-                    hasLoglevel = Enum.TryParse<LogLevel>(args[3], true, out logLevel);
-                }
-                var allowedPid = int.Parse(args[1], CultureInfo.InvariantCulture);
-                var allowedSid = args[2];
-
-                if (args[0].In("gsudoservice"))
-                {
-                    return new ServiceCommand()
-                    {
-                        allowedPid = allowedPid,
-                        allowedSid = allowedSid,
-                        LogLvl = hasLoglevel ? logLevel : (LogLevel?)null,
-                    };
-                }
-                else
-                {
-                    return new SystemServiceCommand()
-                    {
-                        allowedPid = allowedPid,
-                        allowedSid = allowedSid,
-                        LogLvl = hasLoglevel ? logLevel : (LogLevel?)null,
-                    };
-                }
-            }
-
-            if (args[0].Equals("gsudoctrlc", StringComparison.OrdinalIgnoreCase))
-                return new CtrlCCommand() { Pid = int.Parse(args[1], CultureInfo.InvariantCulture), sendSigBreak = bool.Parse(args[2]) };
-
-            if (args[0].Equals("config", StringComparison.OrdinalIgnoreCase))
-                return new ConfigCommand() { key = args.Skip(1).FirstOrDefault(), value = args.Skip(2) };
-
-            if (args[0].In("-k", "--kill"))
-                return new KillCacheCommand();
-
-            return new RunCommand() { CommandToRun = args };
         }
 
         internal static string GetRealCommandLine()

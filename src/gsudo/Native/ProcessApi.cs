@@ -164,6 +164,13 @@ namespace gsudo.Native
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern Boolean OpenProcessToken(IntPtr hProcess, UInt32 dwDesiredAccess, out IntPtr hToken);
 
+        [DllImport("advapi32", CharSet = CharSet.Auto, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool OpenProcessToken(
+            IntPtr hProcess,
+            UInt32 desiredAccess,
+            out SafeTokenHandle hToken);
+
         [DllImport("Wtsapi32.dll")]
         public static extern bool WTSQuerySessionInformationW(
             IntPtr hServer,
@@ -187,5 +194,29 @@ namespace gsudo.Native
         internal static extern bool CheckRemoteDebuggerPresent(
             SafeHandle hProcess,
             [MarshalAs(UnmanagedType.Bool)] ref bool isDebuggerPresent);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Ansi, SetLastError = true)]
+        public static extern bool DuplicateHandle(IntPtr hSourceProcessHandle, SafeHandle hSourceHandle,
+            IntPtr hTargetProcess, out SafeFileHandle targetHandle, int dwDesiredAccess,
+            bool bInheritHandle, int dwOptions);
+
+        [Flags]
+        public enum DuplicateOptions : uint
+        {
+            DUPLICATE_CLOSE_SOURCE = (0x00000001),// Closes the source handle. This occurs regardless of any error status returned.
+            DUPLICATE_SAME_ACCESS = (0x00000002), //Ignores the dwDesiredAccess parameter. The duplicate handle has the same access as the source handle.
+        }
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Ansi, SetLastError = true)]
+        public static extern IntPtr GetCurrentProcess();
+
+        [DllImport("kernel32.dll")]
+        public static extern int GetCurrentProcessId();
+
+
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        internal static extern bool CreatePipe(out SafeFileHandle hReadPipe, out SafeFileHandle hWritePipe, SECURITY_ATTRIBUTES lpPipeAttributes, int nSize);
+
     }
 }

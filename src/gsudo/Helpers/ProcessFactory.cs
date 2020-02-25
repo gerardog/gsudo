@@ -1,8 +1,10 @@
 ﻿using gsudo.Native;
 using System;
+using Microsoft.Win32.SafeHandles;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -11,6 +13,8 @@ using static gsudo.Native.TokensApi;
 
 namespace gsudo.Helpers
 {
+	//https://csharp.hotexamples.com/examples/CSCreateLowIntegrityProcess/PROCESS_INFORMATION/-/php-process_information-class-examples.html
+	
     static class ProcessFactory
     {
         public static Process StartElevatedDetached(string filename, string arguments, bool hidden)
@@ -239,21 +243,158 @@ namespace gsudo.Helpers
 
         #region RunAsUser
 
-        public static Process StartAsSystem(string appToRun, string args, string startupFolder, bool hidden)
-        { 
+        public static SafeProcessHandle StartAsSystem(string appToRun, string args, string startupFolder, bool hidden)
+        {
+            Logger.Instance.Log($"{nameof(StartAsSystem)}: {appToRun} {args}", LogLevel.Debug);
             var winlogon = Process.GetProcesses().Where(p => p.ProcessName.In("winlogon")).FirstOrDefault();
-            return StartWithProcessToken(winlogon.Id, appToRun, args, startupFolder, hidden);
+            return StartAsProcess(winlogon.Id, appToRun, args, startupFolder, hidden).SafeHandle;
         }
 
-        public static Process StartAsMediumIntegrity(string appToRun, string args, string startupFolder, bool hidden)
+        //public static SafeProcessHandle StartAsExplorerDetached(string appToRun, string args, string startupFolder, bool newWindow, bool hidden)
+        //{
+        //    Logger.Instance.Log($"{nameof(StartAsExplorerDetached)}: {appToRun} {args}", LogLevel.Debug);
+        //    var explorer = Process.GetProcesses().Where(p => p.ProcessName.In("explorer")).FirstOrDefault();
+        //    using (var newToken = GetTokenFromProcess(explorer.Id))
+        //    {
+        //        return StartWithProcessToken(newToken, appToRun, args, startupFolder, newWindow, hidden);
+        //    }
+        //}
+
+        public static SafeProcessHandle StartWithIntegrity(IntegrityLevel integrityLevel, string appToRun, string args, string startupFolder, bool newWindow, bool hidden)
         {
-            var explorer = Process.GetProcesses().Where(p => p.ProcessName.In("explorer")).FirstOrDefault();
-            return StartWithProcessToken(explorer.Id, appToRun, args, startupFolder, hidden);
+            // must return a process Handle because we cant create a Process() from a handle and get the exit code. 
+            Logger.Instance.Log($"{nameof(StartWithIntegrity)}: {appToRun} {args}", LogLevel.Debug);
+            using (var newToken = DuplicateOurToken())
+            {
+                if (!AdjustedTokenIntegrity(newToken, integrityLevel))
+                    return null;
+
+                return StartWithToken(newToken, appToRun, args, startupFolder, newWindow, hidden);
+            }
         }
 
-        private static Process StartWithProcessToken(int pidWithToken, string appToRun, string args, string startupFolder, bool hidden)
+        private static SafeProcessHandle StartWithToken(SafeTokenHandle newToken, string appToRun, string args, string startupFolder, bool newWindow, bool hidden)
         {
-            IntPtr existingProcessHandle = OpenProcess(PROCESS_QUERY_INFORMATION, true, (uint) pidWithToken);
+            var si = new STARTUPINFO();
+
+            if (newWindow)
+            {
+                si.dwFlags = 0x00000001; // STARTF_USESHOWWINDOW
+                si.wShowWindow = (short)(hidden ? 0 : 1);
+            }
+
+            si.cb = Marshal.SizeOf(si);
+
+            var pi = new PROCESS_INFORMATION();
+            uint dwCreationFlags = newWindow ? (uint)0x00000010 /*CREATE_NEW_CONSOLE*/: 0;
+
+            if (!TokensApi.CreateProcessAsUser(newToken, null, $"{appToRun} {args}",
+                IntPtr.Zero, IntPtr.Zero, false, dwCreationFlags, IntPtr.Zero, startupFolder, ref si,
+                out pi))
+            {
+                throw new Win32Exception();
+            }
+
+            CloseHandle(pi.hThread);
+            return new SafeProcessHandle(pi.hProcess, true);
+        }
+
+        private static SafeTokenHandle GetTokenFromProcess(int pidWithToken)
+        {
+            IntPtr existingProcessHandle = OpenProcess(PROCESS_QUERY_INFORMATION, true, (uint)pidWithToken);
+            if (existingProcessHandle == IntPtr.Zero)
+            {
+                return null;
+            }
+
+            IntPtr existingProcessToken;
+            try
+            {
+                if (!ProcessApi.OpenProcessToken(existingProcessHandle,
+                    TokensApi.TOKEN_DUPLICATE,
+                    out existingProcessToken))
+                {
+                    return null;
+                }
+            }
+            finally
+            {
+                CloseHandle(existingProcessHandle);
+            }
+            if (existingProcessToken == IntPtr.Zero) return null;
+
+            var sa = new SECURITY_ATTRIBUTES();
+            sa.nLength = 0;
+            const uint MAXIMUM_ALLOWED = 0x02000000;
+            const uint desiredAccess = 0;
+
+            SafeTokenHandle newToken;
+
+            if (!TokensApi.DuplicateTokenEx(existingProcessToken, desiredAccess, IntPtr.Zero, SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation, TOKEN_TYPE.TokenPrimary, out newToken))
+            {
+                return null;
+            }
+
+            return newToken;
+        }
+
+        private static SafeTokenHandle DuplicateOurToken()
+        {
+            IntPtr existingProcessToken;
+            
+            if (!ProcessApi.OpenProcessToken(Process.GetCurrentProcess().Handle,
+                TokensApi.TOKEN_DUPLICATE | TokensApi.TOKEN_ADJUST_DEFAULT |
+                TokensApi.TOKEN_QUERY | TokensApi.TOKEN_ASSIGN_PRIMARY,
+                out existingProcessToken))
+            {
+                return null;
+            }
+
+            if (existingProcessToken == IntPtr.Zero) return null;
+
+            var sa = new SECURITY_ATTRIBUTES();
+            sa.nLength = 0;
+            const uint MAXIMUM_ALLOWED = 0x02000000;
+            const uint desiredAccess = 0;
+
+            SafeTokenHandle newToken;
+
+            if (!TokensApi.DuplicateTokenEx(existingProcessToken, desiredAccess, IntPtr.Zero, SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation, TOKEN_TYPE.TokenPrimary, out newToken))
+            {
+                return null;
+            }
+
+            return newToken;
+        }
+
+        private static bool AdjustedTokenIntegrity(SafeTokenHandle newToken, IntegrityLevel integrityLevel)
+        {
+            string integritySid = "S-1-16-" + ((int)integrityLevel).ToString(CultureInfo.InvariantCulture);
+            IntPtr pIntegritySid;
+            if (!ConvertStringSidToSid(integritySid, out pIntegritySid))
+                return false;
+
+            TOKEN_MANDATORY_LABEL TIL = new TOKEN_MANDATORY_LABEL();
+            TIL.Label.Attributes = 0x00000020 /* SE_GROUP_INTEGRITY */;
+            TIL.Label.Sid = pIntegritySid;
+
+            var pTIL = Marshal.AllocHGlobal(Marshal.SizeOf<TOKEN_MANDATORY_LABEL>());
+            Marshal.StructureToPtr(TIL, pTIL, false);
+
+            if (!SetTokenInformation(newToken.DangerousGetHandle(),
+               TOKEN_INFORMATION_CLASS.TokenIntegrityLevel,
+               pTIL,
+               (uint)(Marshal.SizeOf<TOKEN_MANDATORY_LABEL>() + GetLengthSid(pIntegritySid))))
+                return false;
+
+            STARTUPINFO StartupInfo = new STARTUPINFO();
+
+            return true;
+        }
+
+        private static Process StartAsProcess(int pidWithToken, string appToRun, string args, string startupFolder, bool hidden)
+        {
+            IntPtr existingProcessHandle = OpenProcess(PROCESS_QUERY_INFORMATION, true, (uint)pidWithToken);
             if (existingProcessHandle == IntPtr.Zero)
             {
                 return null;
@@ -299,3 +440,4 @@ namespace gsudo.Helpers
         #endregion
     }
 }
+

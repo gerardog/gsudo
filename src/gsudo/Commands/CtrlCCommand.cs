@@ -15,7 +15,7 @@ namespace gsudo.Commands
         {            
             FreeConsole();
 
-            if (AttachConsole((uint)Pid))
+            if (AttachConsole(Pid))
             {
                 if (sendSigBreak)
                     GenerateConsoleCtrlEvent(CtrlTypes.CTRL_BREAK_EVENT, 0);

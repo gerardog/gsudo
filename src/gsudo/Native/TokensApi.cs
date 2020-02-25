@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Win32.SafeHandles;
+using System;
 using System.Runtime.InteropServices;
 using static gsudo.Native.ProcessApi;
 
@@ -96,6 +97,19 @@ namespace gsudo.Native
             TOKEN_TYPE TokenType,
             out IntPtr phNewToken);
 
+
+        public const UInt32 SE_GROUP_INTEGRITY = 0x00000020;
+
+        [DllImport("advapi32", CharSet = CharSet.Auto, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public extern static bool DuplicateTokenEx(
+            IntPtr hExistingToken,
+            uint dwDesiredAccess,
+            IntPtr lpTokenAttributes,
+            SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
+            TOKEN_TYPE TokenType,
+            out SafeTokenHandle phNewToken);
+
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         public static extern bool CreateProcessWithLogonW(
            String userName,
@@ -110,11 +124,23 @@ namespace gsudo.Native
            ref STARTUPINFO startupInfo,
            out PROCESS_INFORMATION processInformation);
 
-        [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern Boolean CreateProcessAsUser(IntPtr hToken, IntPtr lpApplicationName, IntPtr lpCommandLine, ref SECURITY_ATTRIBUTES lpProcessAttributes, ref SECURITY_ATTRIBUTES lpThreadAttributes, Boolean bInheritHandles, CreationFlags dwCreationFlags, IntPtr lpEnvironment, IntPtr lpCurrentDirectory, ref STARTUPINFO lpStartupInfo, out PROCESS_INFORMATION lpProcessInfo);
+        [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool CreateProcessAsUser(
+            SafeTokenHandle hToken,
+            string applicationName,
+            string commandLine,
+            IntPtr pProcessAttributes,
+            IntPtr pThreadAttributes,
+            bool bInheritHandles,
+            uint dwCreationFlags,
+            IntPtr pEnvironment,
+            string currentDirectory,
+            ref STARTUPINFO startupInfo,
+            out PROCESS_INFORMATION processInformation);
 
         [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern Boolean CreateProcessAsUserW(IntPtr hToken, IntPtr lpApplicationName, IntPtr lpCommandLine, IntPtr lpProcessAttributes, IntPtr lpThreadAttributes, Boolean bInheritHandles, CreationFlags dwCreationFlags, IntPtr lpEnvironment, IntPtr lpCurrentDirectory, ref STARTUPINFO lpStartupInfo, out PROCESS_INFORMATION lpProcessInfo);
+        public static extern Boolean CreateProcessAsUserW(IntPtr hToken, string lpApplicationName, string lpCommandLine, IntPtr lpProcessAttributes, IntPtr lpThreadAttributes, Boolean bInheritHandles, CreationFlags dwCreationFlags, IntPtr lpEnvironment, IntPtr lpCurrentDirectory, ref STARTUPINFO lpStartupInfo, out PROCESS_INFORMATION lpProcessInfo);
 
         // Integrity Levels
         public enum TOKEN_INFORMATION_CLASS
@@ -285,7 +311,7 @@ namespace gsudo.Native
         public struct SID_AND_ATTRIBUTES
         {
             public IntPtr Sid;
-            public int Attributes;
+            public uint Attributes;
         }
 
         [DllImport("advapi32.dll", SetLastError = true)]
@@ -293,5 +319,27 @@ namespace gsudo.Native
 
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern IntPtr GetSidSubAuthorityCount(IntPtr pSid);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern Boolean SetTokenInformation(IntPtr TokenHandle, TOKEN_INFORMATION_CLASS TokenInformationClass,
+            IntPtr TokenInformation, UInt32 TokenInformationLength);
+
+        [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool SetTokenInformation(
+    SafeTokenHandle hToken,
+    TOKEN_INFORMATION_CLASS tokenInfoClass,
+    IntPtr pTokenInfo,
+    Int32 tokenInfoLength);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool ConvertStringSidToSid(
+            string StringSid,
+            out IntPtr ptrSid
+            );
+
+        [DllImport("advapi32.dll")]
+        public static extern int GetLengthSid(IntPtr pSid);
+
     }
 }

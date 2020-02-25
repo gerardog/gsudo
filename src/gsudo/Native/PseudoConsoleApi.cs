@@ -29,7 +29,5 @@ namespace gsudo.Native
         [DllImport("kernel32.dll", SetLastError = true)]
         internal static extern int ClosePseudoConsole(IntPtr hPC);
 
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        internal static extern bool CreatePipe(out SafeFileHandle hReadPipe, out SafeFileHandle hWritePipe, IntPtr lpPipeAttributes, int nSize);
     }
 }

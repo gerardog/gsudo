@@ -1,6 +1,6 @@
 ﻿using Microsoft.Win32.SafeHandles;
 using System;
-using static gsudo.Native.PseudoConsoleApi;
+using static gsudo.Native.ProcessApi;
 
 namespace gsudo.PseudoConsole
 {
@@ -18,7 +18,8 @@ namespace gsudo.PseudoConsole
 
         public PseudoConsolePipe()
         {
-            if (!CreatePipe(out ReadSide, out WriteSide, IntPtr.Zero, 0))
+            var sa = new SECURITY_ATTRIBUTES();
+            if (!CreatePipe(out ReadSide, out WriteSide, sa, 0))
             {
                 throw new InvalidOperationException("failed to create pipe");
             }

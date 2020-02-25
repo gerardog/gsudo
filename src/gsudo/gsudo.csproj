@@ -40,7 +40,7 @@ It is a sudo equivalent for Windows, with a similar user-experience as the origi
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="echo Killing running gsudo commands.&#xD;&#xA;%25windir%25\sysnative\tskill gsudo&#xD;&#xA;exit 0" />
+    <Exec Command="echo Killing running gsudo commands.&#xD;&#xA;gsudo -k&#xD;&#xA;%25windir%25\sysnative\tskill gsudo&#xD;&#xA;exit 0" />
   </Target>
     
   <Target Name="PostBuildMacros">

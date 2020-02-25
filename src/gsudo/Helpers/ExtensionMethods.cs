@@ -65,5 +65,12 @@ namespace gsudo
         {
             list.AddRange(items);
         }
+
+        public static T ParseEnum<T>(string inString, bool ignoreCase = true) where T : struct
+        {
+            if (!Enum.TryParse<T>(inString, ignoreCase, out var returnEnum))
+                throw new ApplicationException($"\"{inString}\" is not a valid {typeof(T).Name}");
+            return returnEnum;
+        }
     }
 }

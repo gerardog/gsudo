@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace gsudo
+﻿namespace gsudo
 {
     class InputArguments
     {
@@ -14,5 +10,7 @@ namespace gsudo
         public static bool KillCache { get; internal set; }
         public static bool NoCache { get; internal set; }
         public static bool UnsafeCache { get; internal set; }
+        public static IntegrityLevel? IntegrityLevel { get; internal set; }
+        public static IntegrityLevel GetIntegrityLevel() => (RunAsSystem ? gsudo.IntegrityLevel.System : IntegrityLevel ?? gsudo.IntegrityLevel.High);
     }
 }

@@ -89,6 +89,11 @@ namespace gsudo.Helpers
             return -1;
         }
 
+        public static bool IsHighIntegrity()
+        {
+            return ProcessHelper.GetCurrentIntegrityLevel() >= (int)IntegrityLevel.High;
+        }
+
         public static bool IsAdministrator()
         {
             try
@@ -126,11 +131,15 @@ namespace gsudo.Helpers
         /// Get an AutoResetEvent that signals when the process exits
         /// </summary>
         public static AutoResetEvent GetProcessWaitHandle(this Process process) =>
+            GetProcessWaitHandle(process.Handle);
+
+        public static AutoResetEvent GetProcessWaitHandle(IntPtr processHandle) =>
             new AutoResetEvent(false)
             {
-                SafeWaitHandle = new SafeWaitHandle(process.Handle, ownsHandle: false)
+                SafeWaitHandle = new SafeWaitHandle(processHandle, ownsHandle: false)
             };
 
+        private static int? GetCurrentIntegrityLevelCache;
         /// <summary>
         /// The function gets the integrity level of the current process.
         /// </summary>
@@ -151,6 +160,7 @@ namespace gsudo.Helpers
         /// </exception>
         static internal int GetCurrentIntegrityLevel()
         {
+            if (GetCurrentIntegrityLevelCache.HasValue) return GetCurrentIntegrityLevelCache.Value;
             /*
              * https://docs.microsoft.com/en-us/previous-versions/dotnet/articles/bb625963(v=msdn.10)?redirectedfrom=MSDN
              * https://support.microsoft.com/en-us/help/243330/well-known-security-identifiers-in-windows-operating-systems
@@ -245,7 +255,7 @@ namespace gsudo.Helpers
                 }
             }
 
-            return IL;
+            return (GetCurrentIntegrityLevelCache=IL).Value;
         }
     }
 }

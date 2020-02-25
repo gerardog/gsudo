@@ -50,7 +50,7 @@ namespace gsudo.ProcessRenderers
 
                 if (exitCode.HasValue && exitCode.Value == 0 && InputArguments.NewWindow)
                 {
-                    Logger.Instance.Log($"Elevated process started successfully", LogLevel.Debug);
+                    Logger.Instance.Log($"Process started successfully", LogLevel.Debug);
                     return 0;
                 }
                 else if (exitCode.HasValue)
