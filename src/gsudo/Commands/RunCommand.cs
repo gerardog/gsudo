@@ -240,7 +240,7 @@ namespace gsudo.Commands
             if (isWindowsApp)
                 return ElevationRequest.ConsoleMode.Attached;
 
-            if (GlobalSettings.NewWindow || Console.IsOutputRedirected)
+            if (GlobalSettings.NewWindow || Console.IsOutputRedirected || Console.IsInputRedirected || Console.IsErrorRedirected)
                 return ElevationRequest.ConsoleMode.Raw;
 
             if (GlobalSettings.ForceRawConsole)
