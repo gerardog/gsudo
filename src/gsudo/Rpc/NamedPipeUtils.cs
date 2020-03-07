@@ -63,5 +63,13 @@ namespace gsudo.Rpc
             return path;
         }
 
+        public static int GetClientProcessId(this System.IO.Pipes.NamedPipeServerStream pipeServer)
+        {
+            UInt32 nProcID;
+            IntPtr hPipe = pipeServer.SafePipeHandle.DangerousGetHandle();
+            if (Native.ProcessApi.GetNamedPipeClientProcessId(hPipe, out nProcID))
+                return (int)nProcID;
+            return 0;
+        }
     }
 }
