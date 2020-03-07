@@ -3,6 +3,7 @@ using gsudo.Native;
 using gsudo.Rpc;
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Security.Principal;
 using System.Threading.Tasks;
@@ -13,6 +14,8 @@ namespace gsudo.Commands
     {
         public Task<int> Execute()
         {
+            Console.WriteLine($"Caller Pid: {RunCommand.GetCallingPid(Process.GetCurrentProcess())}");
+
             var id = WindowsIdentity.GetCurrent();
             bool isAdmin = ProcessHelper.IsAdministrator();
             Console.Write($"Running as:\n  User: ");
@@ -38,7 +41,7 @@ namespace gsudo.Commands
             if (Enum.IsDefined(typeof(IntegrityLevel), integrity))
                 integrityString = $"{((IntegrityLevel)integrity).ToString()}";
 
-            if (integrity > (int)IntegrityLevel.MediumPlus)
+            if (integrity >= (int)IntegrityLevel.High)
                 Console.ForegroundColor = ConsoleColor.Red;
 
             Console.WriteLine($"{integrityString} ({integrity})");
@@ -52,7 +55,7 @@ namespace gsudo.Commands
                 Console.WriteLine($"  {s}");
             }
             if (pipes.Count == 0)
-                Console.WriteLine($"  No active gsudo processes");
+                Console.WriteLine($"  No active gsudo credentials cache");
 
             if (Console.IsInputRedirected || Console.IsOutputRedirected || Console.IsErrorRedirected)
                 Console.WriteLine($"\nProcesses attached to the current **REDIRECTED** console:");
@@ -69,21 +72,48 @@ namespace gsudo.Commands
             var processIds = new uint[100];
             var ownPid = ProcessApi.GetCurrentProcessId();
             processIds = GetConsoleAttachedPids(processIds);
+            const string unknown = "(Unknown)";
+            Console.WriteLine($"{"PID".PadLeft(9)} {"Integrity".PadRight(10)} {"UserName".PadRight(25)} {"Name"}");
 
             foreach (var pid in processIds.Reverse())
             {
                 Process p = null;
-                string name = "(Unknown)";
+                string name = unknown;
+                string integrity = unknown;
+                string username = unknown;
                 try
                 {
                     p = Process.GetProcessById((int)pid);
-                    name = p.ProcessName;
-                    name = p.MainModule.FileName;
+
+                    try
+                    {
+                        name = p.ProcessName;
+                        name = p.MainModule.FileName;
+                    }
+                    catch
+                    { }
+
+                    try
+                    {
+                        var i = ProcessHelper.GetProcessIntegrityLevel(p.Handle);
+                        integrity = i.ToString(CultureInfo.InvariantCulture);
+                        if (Enum.IsDefined(typeof(IntegrityLevel), i))
+                            integrity = ((IntegrityLevel)i).ToString();
+                    }
+                    catch
+                    { }
+
+                    try
+                    {
+                        username = p.GetProcessUser() ?? unknown;
+                    }
+                    catch
+                    { }
                 }
                 catch
                 { }
 
-                Console.WriteLine($"  {pid}\t{name}{((ownPid == pid) ? " (own)" : null)}");
+                Console.WriteLine($"{pid.ToString(CultureInfo.InvariantCulture).PadLeft(9)} {integrity.PadRight(10)} {username.PadRight(25)} {name}{((ownPid == pid) ? " (this gsudo status)" : null)}");
             }
         }
 
