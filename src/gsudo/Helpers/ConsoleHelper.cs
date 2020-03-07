@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using static gsudo.Native.ConsoleApi;
 
 namespace gsudo.Helpers
 {
@@ -32,5 +33,15 @@ namespace gsudo.Helpers
             Logger.Instance.Log("Console VT mode enabled.", LogLevel.Debug);
             return true;
         }
+
+        internal static bool IgnoreConsoleCancelKeyPress(CtrlTypes ctrlType)
+        {
+            if (ctrlType.In(CtrlTypes.CTRL_C_EVENT, CtrlTypes.CTRL_BREAK_EVENT))
+                return true;
+
+            return false;
+        }
+
+
     }
 }

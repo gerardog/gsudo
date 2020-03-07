@@ -80,6 +80,8 @@ namespace gsudo.Commands
 
         private static IProcessHost CreateProcessHost(ElevationRequest request)
         {
+            if (request.Mode == ElevationRequest.ConsoleMode.TokenSwitch)
+                return new TokenSwitchHost();
             if (request.NewWindow || !request.Wait)
                 return new NewWindowProcessHost();
             if (request.Mode == ElevationRequest.ConsoleMode.Attached)

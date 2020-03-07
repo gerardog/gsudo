@@ -118,6 +118,7 @@ namespace gsudo.Helpers
 
         internal static ICommand ParseCommand(IEnumerable<string> argsEnumerable)
         {
+            // Parse Options
             var args = new LinkedList<string>(argsEnumerable);
             Func<string> Dequeue = () =>
             {
@@ -135,10 +136,14 @@ namespace gsudo.Helpers
                 if (
                 SetTrueIf(arg, () => InputArguments.NewWindow = true, "-n", "--new") ||
                 SetTrueIf(arg, () => InputArguments.Wait = true, "-w", "--wait") ||
+
+                // Legacy, now undocumented features.
                 SetTrueIf(arg, () => Settings.ForceRawConsole.Value = true, "--piped", "--raw" /*--raw for backward compat*/) ||
+                SetTrueIf(arg, () => Settings.ForceAttachedConsole.Value = true, "--attached") ||
                 SetTrueIf(arg, () => Settings.ForceVTConsole.Value = true, "--vt") ||
                 SetTrueIf(arg, () => Settings.CopyEnvironmentVariables.Value = true, "--copyEV") ||
                 SetTrueIf(arg, () => Settings.CopyNetworkShares.Value = true, "--copyNS") ||
+
                 SetTrueIf(arg, () => InputArguments.RunAsSystem = true, "-s", "--system") ||
                 SetTrueIf(arg, () => InputArguments.Global = true, "--global") ||
                 SetTrueIf(arg, () => InputArguments.NoCache = true, "--nocache") ||
@@ -178,6 +183,7 @@ namespace gsudo.Helpers
                 }
                 else
                 {
+                    // arg is not an option, requeue and parse as a command.
                     args.AddFirst(arg);
                     break;
                 }
@@ -190,7 +196,8 @@ namespace gsudo.Helpers
 
                 return new RunCommand() { CommandToRun = Array.Empty<string>() };
             }
-
+            
+            // Parse Command
             arg = Dequeue();
             if (arg.Equals("help", StringComparison.OrdinalIgnoreCase))
                 return new HelpCommand();
@@ -228,7 +235,10 @@ namespace gsudo.Helpers
             if (arg.In("status"))
                 return new StatusCommand();
 
-            if (arg.Equals("run", StringComparison.OrdinalIgnoreCase))
+            if (arg.In("AttachRun"))
+                return new AttachRun() { CommandToRun = args };
+
+            if (arg.In("run"))
                 return new RunCommand() { CommandToRun = args };
 
             args.AddFirst(arg);

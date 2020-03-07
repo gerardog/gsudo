@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 namespace gsudo
 {
     class Program
-    {
+    {   
         async static Task<int> Main()
         {
             SymbolicLinkSupport.EnableAssemblyLoadFix();
@@ -18,7 +18,7 @@ namespace gsudo
         {
             ICommand cmd = null;
 
-            var args = ArgumentsHelper.SplitArgs(ArgumentsHelper.GetRealCommandLine());            
+            var args = ArgumentsHelper.SplitArgs(ArgumentsHelper.GetRealCommandLine());              
 
             try
             {

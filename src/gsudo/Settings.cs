@@ -13,6 +13,7 @@ namespace gsudo
         public static RegistrySetting<string> Prompt { get; set; } = new RegistrySetting<string>(nameof(Prompt), "$p$e[1;31;40m# $e[0;37;40m", (s) => s);
         public static RegistrySetting<LogLevel> LogLevel { get; set; } = new RegistrySetting<LogLevel>(nameof(LogLevel), gsudo.LogLevel.Info, (s) => (LogLevel)Enum.Parse(typeof(LogLevel), s, true));
         public static RegistrySetting<bool> ForceRawConsole { get; internal set; } = new RegistrySetting<bool>(nameof(ForceRawConsole), false, bool.Parse);
+        public static RegistrySetting<bool> ForceAttachedConsole { get; internal set; } = new RegistrySetting<bool>(nameof(ForceAttachedConsole), false, bool.Parse);
         public static RegistrySetting<bool> ForceVTConsole { get; internal set; } = new RegistrySetting<bool>(nameof(ForceVTConsole), false, bool.Parse);
         public static RegistrySetting<bool> CopyEnvironmentVariables { get; internal set; } = new RegistrySetting<bool>(nameof(CopyEnvironmentVariables), false, bool.Parse);
         public static RegistrySetting<bool> CopyNetworkShares { get; internal set; } = new RegistrySetting<bool>(nameof(CopyNetworkShares), false, bool.Parse);
@@ -24,6 +25,7 @@ namespace gsudo
                 LogLevel,
                 Prompt,
                 PipedPrompt,
+                ForceAttachedConsole,
                 ForceRawConsole,
                 ForceVTConsole,
                 CopyEnvironmentVariables,

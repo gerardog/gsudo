@@ -16,11 +16,28 @@ namespace gsudo
         public int ConsoleHeight { get; set; }
         public ConsoleMode Mode { get; set; }
         public int ConsoleProcessId { get; set; }
+        public int TargetProcessId { get; set; }
         public bool NoCache { get; set; }
+        public IntegrityLevel IntegrityLevel { get; set; }
 
         [Serializable]
-        internal enum ConsoleMode { Piped, VT,
-            Attached
+        internal enum ConsoleMode { 
+            /// <summary>
+            /// Obsolete, Process started at the service, I/O streamed via named pipes.
+            /// </summary>
+            Piped,
+            /// <summary>
+            /// Obsolete, Experimental, Process started at the service using PseudoConsole, VT100 I/O streamed via named pipes.
+            /// </summary>
+            VT,
+            /// <summary>
+            /// Obsolete, Process started at the service, then attached to the caller console unsing APIs.
+            /// </summary>
+            Attached,
+            /// <summary>
+            /// Process started at the client, then the service replaces it's security token.
+            /// </summary>
+            TokenSwitch
         }
     }
 

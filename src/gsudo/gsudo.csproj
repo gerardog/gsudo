@@ -25,6 +25,12 @@ It is a sudo equivalent for Windows, with a similar user-experience as the origi
     <PathMap>$(MSBuildProjectDirectory)=C:\</PathMap>
 </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>DEBUG</DefineConstants>
+    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Remove="bin\**" />
     <EmbeddedResource Remove="bin\**" />
@@ -40,7 +46,7 @@ It is a sudo equivalent for Windows, with a similar user-experience as the origi
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="echo Killing running gsudo commands.&#xD;&#xA;gsudo -k&#xD;&#xA;%25windir%25\sysnative\tskill gsudo&#xD;&#xA;exit 0" />
+    <Exec Command="echo Killing running gsudo commands.&#xD;&#xA;gsudo -k 2&gt;nul&#xD;&#xA;%25windir%25\sysnative\tskill gsudo&#xD;&#xA;exit 0" />
   </Target>
     
   <Target Name="PostBuildMacros">

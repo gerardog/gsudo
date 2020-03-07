@@ -14,6 +14,7 @@ namespace gsudo.ProcessHosts
     /// Hosts a console process with redirected StdIn/Out/Err.
     /// Sends all I/O thru the connection.
     /// </summary>
+    [Obsolete("Superseded by TokenSwitch mode")]
     class PipedProcessHost : IProcessHost
     {
         private string lastInboundMessage = null;
@@ -22,13 +23,13 @@ namespace gsudo.ProcessHosts
 
         public async Task Start(Connection connection, ElevationRequest request)
         {
-            Native.ConsoleApi.SetConsoleCtrlHandler(HandleConsoleCancelKeyPress, true);
+            Native.ConsoleApi.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, true);
 
             _connection = connection;
 
             try
             {
-                process = ProcessFactory.StartInProcessRedirected(request.FileName, request.Arguments, request.StartFolder);
+                process = ProcessFactory.StartRedirected(request.FileName, request.Arguments, request.StartFolder);
                 
                 Logger.Instance.Log($"Process ({process.Id}) started: {request.FileName} {request.Arguments}", LogLevel.Debug);
 

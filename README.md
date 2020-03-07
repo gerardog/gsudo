@@ -4,7 +4,7 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/nkd11bifhnqaxay9/branch/master?svg=true)](https://ci.appveyor.com/project/gerardog/gsudo)
 
 **gsudo** is a `sudo` equivalent for Windows, with a similar user-experience as the original *nix sudo.
-It allows either to run commands with elevated permissions on the current console, or to elevate the current shell, or launch elevated commands on a new console.
+It allows either to run commands with elevated permissions or to elevate the current shell, in the the current console window or a new one.
 
 Just prepend `gsudo` (or the `sudo` alias) to your command and it will run elevated. (UAC popup will appear just once per session).
 
@@ -44,22 +44,13 @@ choco install gsudo
 refreshenv
 ```
 
-<!---
-Choco has a ~20 days delay until new submitted versions are approved, so in order to get the latest, do...
-
-:: List all gsudo versions
-choco list "gsudo" --all
-:: Install the latest version number
-choco install gsudo --version=x.x.x
-:: update Path environment variable
-refreshenv
--->
-
 Manual installation: (no elevation required)
 
 ``` batch
 PowerShell -Command "Set-ExecutionPolicy RemoteSigned -scope Process; iwr -useb https://raw.githubusercontent.com/gerardog/gsudo/master/installgsudo.ps1 | iex"
 ```
+
+Note: The installation consists of unzipping the release and adding `gsudo` to the path. No windows service required.
 
 ## Usage
 
@@ -202,6 +193,10 @@ mklink %userprofile%\scoop\shims\sudo.exe %userprofile%\scoop\apps\gsudo\current
 - Why `.Net Framework 4.6`?
 
   Because 4.6 is included in every Windows 10 installation. `.Net Core` requires additional installation steps and provides no substantial benefit since gsudo is Windows-specific, (other platforms can use the standard *nix sudo.)
+
+- Is `gsudo` a port of `*nix sudo`?
+
+  No. `gsudo` reminds of the original sudo regarding user expectations. Many `sudo` features are `*nix` specific and could never have a `Windows` counterpart. Other features (such as `sudoers`) could potentially be implemented but are not at this point.
 
 - Want to know more?
 

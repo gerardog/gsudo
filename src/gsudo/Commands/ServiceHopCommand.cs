@@ -41,7 +41,7 @@ namespace gsudo.Commands
                 }
                 else // lower integrity
                 {
-                    var p = ProcessFactory.StartWithIntegrity(InputArguments.IntegrityLevel.Value, app, args, null, true, !InputArguments.Debug);
+                    var p = ProcessFactory.StartAttachedWithIntegrity(InputArguments.IntegrityLevel.Value, app, args, null, true, !InputArguments.Debug);
                     if (p == null || p.IsInvalid)
                         return Task.FromResult(Constants.GSUDO_ERROR_EXITCODE);
 

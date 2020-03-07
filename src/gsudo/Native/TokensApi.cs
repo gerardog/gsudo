@@ -33,17 +33,6 @@ namespace gsudo.Native
             NetCredentialsOnly
         }
 
-        public enum CreationFlags
-        {
-            DefaultErrorMode = 0x04000000,
-            NewConsole = 0x00000010,
-            NewProcessGroup = 0x00000200,
-            SeparateWOWVDM = 0x00000800,
-            Suspended = 0x00000004,
-            UnicodeEnvironment = 0x00000400,
-            ExtendedStartupInfoPresent = 0x00080000
-        }
-
         internal const int SE_PRIVILEGE_ENABLED = 0x00000002;
 
         internal const int ERROR_NOT_ALL_ASSIGNED = 1300;
@@ -72,7 +61,9 @@ namespace gsudo.Native
                             TOKEN_ADJUST_SESSIONID);
 
         [DllImport("advapi32", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern bool CreateProcessWithTokenW(IntPtr hToken, LogonFlags dwLogonFlags, string lpApplicationName, string lpCommandLine, CreationFlags dwCreationFlags, IntPtr lpEnvironment, string lpCurrentDirectory, [In] ref STARTUPINFO lpStartupInfo, out PROCESS_INFORMATION lpProcessInformation);
+        public static extern bool CreateProcessWithTokenW(IntPtr hToken, LogonFlags dwLogonFlags, string lpApplicationName, string lpCommandLine, ProcessApi.CreateProcessFlags dwCreationFlags, IntPtr lpEnvironment, string lpCurrentDirectory, [In] ref STARTUPINFO lpStartupInfo, out PROCESS_INFORMATION lpProcessInformation);
+        [DllImport("advapi32", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern bool CreateProcessWithTokenW(IntPtr hToken, LogonFlags dwLogonFlags, string lpApplicationName, string lpCommandLine, UInt32 dwCreationFlags, IntPtr lpEnvironment, string lpCurrentDirectory, [In] ref STARTUPINFO lpStartupInfo, out PROCESS_INFORMATION lpProcessInformation);
 
         public enum SECURITY_IMPERSONATION_LEVEL
         {
@@ -118,7 +109,7 @@ namespace gsudo.Native
            LogonFlags logonFlags,
            String applicationName,
            String commandLine,
-           CreationFlags creationFlags,
+           CreateProcessFlags creationFlags,
            UInt32 environment,
            String currentDirectory,
            ref STARTUPINFO startupInfo,
@@ -140,7 +131,7 @@ namespace gsudo.Native
             out PROCESS_INFORMATION processInformation);
 
         [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern Boolean CreateProcessAsUserW(IntPtr hToken, string lpApplicationName, string lpCommandLine, IntPtr lpProcessAttributes, IntPtr lpThreadAttributes, Boolean bInheritHandles, CreationFlags dwCreationFlags, IntPtr lpEnvironment, IntPtr lpCurrentDirectory, ref STARTUPINFO lpStartupInfo, out PROCESS_INFORMATION lpProcessInfo);
+        public static extern Boolean CreateProcessAsUserW(IntPtr hToken, string lpApplicationName, string lpCommandLine, IntPtr lpProcessAttributes, IntPtr lpThreadAttributes, Boolean bInheritHandles, CreateProcessFlags dwCreationFlags, IntPtr lpEnvironment, IntPtr lpCurrentDirectory, ref STARTUPINFO lpStartupInfo, out PROCESS_INFORMATION lpProcessInfo);
 
         // Integrity Levels
         public enum TOKEN_INFORMATION_CLASS
@@ -302,9 +293,13 @@ namespace gsudo.Native
         [StructLayout(LayoutKind.Sequential)]
         public struct TOKEN_MANDATORY_LABEL
         {
-
             public SID_AND_ATTRIBUTES Label;
+        }
 
+        [StructLayout(LayoutKind.Sequential)]
+        public struct TOKEN_LINKED_TOKEN
+        {
+            public IntPtr LinkedToken;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -341,5 +336,135 @@ namespace gsudo.Native
         [DllImport("advapi32.dll")]
         public static extern int GetLengthSid(IntPtr pSid);
 
+        #region Safer
+
+        [DllImport("advapi32", SetLastError = true, CallingConvention = CallingConvention.StdCall)]
+        public static extern bool SaferCreateLevel(
+            SaferScopes dwScopeId,
+            SaferLevels dwLevelId,
+            int OpenFlags,
+            out IntPtr pLevelHandle,
+            IntPtr lpReserved);
+
+        [DllImport("advapi32", SetLastError = true, CallingConvention = CallingConvention.StdCall)]
+        public static extern bool SaferCloseLevel(
+            IntPtr pLevelHandle);
+
+        [DllImport("advapi32", SetLastError = true, CallingConvention = CallingConvention.StdCall)]
+        public static extern bool SaferComputeTokenFromLevel(
+          IntPtr levelHandle,
+          IntPtr inAccessToken,
+          out SafeTokenHandle outAccessToken,
+          SaferComputeTokenFlags dwFlags,
+          IntPtr lpReserved
+        );
+
+        [Flags]
+        public enum SaferLevels : uint
+        {
+            Disallowed = 0,
+            Untrusted = 0x1000,
+            Constrained = 0x10000,
+            NormalUser = 0x20000,
+            FullyTrusted = 0x40000
+        }
+
+        [Flags]
+        public enum SaferComputeTokenFlags : uint
+        {
+            None = 0x0,
+            NullIfEqual = 0x1,
+            CompareOnly = 0x2,
+            MakeIntert = 0x4,
+            WantFlags = 0x8
+        }
+
+        [Flags]
+        public enum SaferScopes : uint
+        {
+            Machine = 1,
+            User = 2
+        }
+        #endregion
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool CreateRestrictedToken(
+            SafeTokenHandle ExistingTokenHandle,
+            UInt32 Flags,
+            UInt32 DisableSidCount,
+            IntPtr SidsToDisable,
+            UInt32 DeletePrivilegeCount,
+            IntPtr PrivilegesToDelete,
+            UInt32 RestrictedSidCount,
+            IntPtr SidsToRestrict,
+            out SafeTokenHandle NewTokenHandle
+        );
+
+        #region AdjustToken
+        const int ANYSIZE_ARRAY = 1;
+        public struct TOKEN_PRIVILEGES
+        {
+            public int PrivilegeCount;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = ANYSIZE_ARRAY)]
+            public LUID_AND_ATTRIBUTES[] Privileges;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        public struct LUID_AND_ATTRIBUTES
+        {
+            public LUID Luid;
+            public UInt32 Attributes;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct LUID
+        {
+            public UInt32 LowPart;
+            public Int32 HighPart;
+        }
+
+        [DllImport("advapi32.dll")]
+        public static extern bool LookupPrivilegeValue(string lpSystemName, string lpName, ref LUID lpLuid);
+
+        #endregion
+
+        [DllImport("ntdll.dll", SetLastError = true)]
+        public static extern int NtSetInformationProcess(IntPtr hProcess, _PROCESS_INFORMATION_CLASS processInformationClass, ref PROCESS_ACCESS_TOKEN processInformation, int processInformationLength);
+
+        public enum _PROCESS_INFORMATION_CLASS
+        {
+            ProcessBasicInformation,
+            ProcessQuotaLimits,
+            ProcessIoCounters,
+            ProcessVmCounters,
+            ProcessTimes,
+            ProcessBasePriority,
+            ProcessRaisePriority,
+            ProcessDebugPort,
+            ProcessExceptionPort,
+            ProcessAccessToken,
+            ProcessLdtInformation,
+            ProcessLdtSize,
+            ProcessDefaultHardErrorMode,
+            ProcessIoPortHandlers,
+            ProcessPooledUsageAndLimits,
+            ProcessWorkingSetWatch,
+            ProcessUserModeIOPL,
+            ProcessEnableAlignmentFaultFixup,
+            ProcessPriorityClass,
+            ProcessWx86Information,
+            ProcessHandleCount,
+            ProcessAffinityMask,
+            ProcessPriorityBoost,
+            MaxProcessInfoClass
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct PROCESS_ACCESS_TOKEN
+        {
+            public IntPtr Token;
+            public IntPtr Thread;
+        }
     }
 }

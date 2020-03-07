@@ -4,17 +4,17 @@ using Microsoft.Win32.SafeHandles;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using static gsudo.Native.ProcessApi;
 using static gsudo.Native.TokensApi;
+using gsudo.Tokens;
 
 namespace gsudo.Helpers
 {
-	//https://csharp.hotexamples.com/examples/CSCreateLowIntegrityProcess/PROCESS_INFORMATION/-/php-process_information-class-examples.html
-	
+    //https://csharp.hotexamples.com/examples/CSCreateLowIntegrityProcess/PROCESS_INFORMATION/-/php-process_information-class-examples.html
+
     static class ProcessFactory
     {
         public static Process StartElevatedDetached(string filename, string arguments, bool hidden)
@@ -40,7 +40,7 @@ namespace gsudo.Helpers
             return process;
         }
 
-        public static Process StartInProcessRedirected(string fileName, string arguments, string startFolder)
+        public static Process StartRedirected(string fileName, string arguments, string startFolder)
         {
             var process = new Process();
             process.StartInfo = new ProcessStartInfo(fileName)
@@ -56,8 +56,8 @@ namespace gsudo.Helpers
             process.Start();
             return process;
         }
-        
-        public static Process StartInProcessAtached(string filename, string arguments)
+
+        public static Process StartAttached(string filename, string arguments)
         {
             var process = new Process();
             process.StartInfo = new ProcessStartInfo(filename)
@@ -88,8 +88,8 @@ namespace gsudo.Helpers
             {
                 process.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
                 process.Start();
-                
-                for (int i = 0; process.MainWindowHandle == IntPtr.Zero && i<30; i++)
+
+                for (int i = 0; process.MainWindowHandle == IntPtr.Zero && i < 30; i++)
                     System.Threading.Thread.Sleep(10);
 
                 // set user the focus to the window, if there is one.
@@ -106,7 +106,7 @@ namespace gsudo.Helpers
             var shinfo = new Native.FileApi.SHFILEINFO();
             const int SHGFI_EXETYPE = 0x000002000;
             var fileInfo = Native.FileApi.SHGetFileInfo(path, 0, ref shinfo, (uint)Marshal.SizeOf(shinfo), SHGFI_EXETYPE);
-            var retval = (fileInfo.ToInt64() & 0xFFFF0000) >0 ;
+            var retval = (fileInfo.ToInt64() & 0xFFFF0000) > 0;
             Logger.Instance.Log($"IsWindowsApp(\"{exe}\") = {retval} (\"{path}\")", LogLevel.Debug);
             return retval;
         }
@@ -154,94 +154,10 @@ namespace gsudo.Helpers
                 return null;
             }
             catch
-            { 
+            {
                 return null;
             }
         }
-
-        #region PseudoConsole ConPty
-        public static PseudoConsole.PseudoConsoleProcess StartPseudoConsole(string command, IntPtr attributes, IntPtr hPC, string startFolder)
-        {
-            var startupInfo = ConfigureProcessThread(hPC, attributes);
-            var processInfo = RunProcess(ref startupInfo, command, startFolder);
-            return new PseudoConsole.PseudoConsoleProcess(startupInfo, processInfo);
-        }
-
-        private static STARTUPINFOEX ConfigureProcessThread(IntPtr hPC, IntPtr attributes)
-        {
-            // this method implements the behavior described in https://docs.microsoft.com/en-us/windows/console/creating-a-pseudoconsole-session#preparing-for-creation-of-the-child-process
-
-            var lpSize = IntPtr.Zero;
-            var success = InitializeProcThreadAttributeList(
-                lpAttributeList: IntPtr.Zero,
-                dwAttributeCount: 1,
-                dwFlags: 0,
-                lpSize: ref lpSize
-            );
-            if (success || lpSize == IntPtr.Zero) // we're not expecting `success` here, we just want to get the calculated lpSize
-            {
-                throw new InvalidOperationException("Could not calculate the number of bytes for the attribute list. " + Marshal.GetLastWin32Error());
-            }
-
-            var startupInfo = new STARTUPINFOEX();
-            startupInfo.StartupInfo.cb = Marshal.SizeOf<STARTUPINFOEX>();
-            startupInfo.lpAttributeList = Marshal.AllocHGlobal(lpSize);
-
-            success = InitializeProcThreadAttributeList(
-                lpAttributeList: startupInfo.lpAttributeList,
-                dwAttributeCount: 1,
-                dwFlags: 0,
-                lpSize: ref lpSize
-            );
-            if (!success)
-            {
-                throw new InvalidOperationException("Could not set up attribute list. " + Marshal.GetLastWin32Error());
-            }
-
-            success = UpdateProcThreadAttribute(
-                lpAttributeList: startupInfo.lpAttributeList,
-                dwFlags: 0,
-                attribute: attributes,
-                lpValue: hPC,
-                cbSize: (IntPtr)IntPtr.Size,
-                lpPreviousValue: IntPtr.Zero,
-                lpReturnSize: IntPtr.Zero
-            );
-            if (!success)
-            {
-                throw new InvalidOperationException("Could not set pseudoconsole thread attribute. " + Marshal.GetLastWin32Error());
-            }
-
-            return startupInfo;
-        }
-
-        private static PROCESS_INFORMATION RunProcess(ref STARTUPINFOEX sInfoEx, string commandLine, string startFolder)
-        {
-            int securityAttributeSize = Marshal.SizeOf<SECURITY_ATTRIBUTES>();
-            var pSec = new SECURITY_ATTRIBUTES { nLength = securityAttributeSize };
-            var tSec = new SECURITY_ATTRIBUTES { nLength = securityAttributeSize };
-            var success = CreateProcess(
-                lpApplicationName: null,
-                lpCommandLine: commandLine,
-                lpProcessAttributes: ref pSec,
-                lpThreadAttributes: ref tSec,
-                bInheritHandles: false,
-                dwCreationFlags: EXTENDED_STARTUPINFO_PRESENT,
-                lpEnvironment: IntPtr.Zero,
-                lpCurrentDirectory: startFolder,
-                lpStartupInfo: ref sInfoEx,
-                lpProcessInformation: out PROCESS_INFORMATION pInfo
-            );
-            if (!success)
-            {
-                throw new InvalidOperationException("Could not create process. " + Marshal.GetLastWin32Error());
-            }
-
-            return pInfo;
-        }
-        #endregion
-
-        #region RunAsUser
 
         public static SafeProcessHandle StartAsSystem(string appToRun, string args, string startupFolder, bool hidden)
         {
@@ -250,146 +166,86 @@ namespace gsudo.Helpers
             return StartAsProcess(winlogon.Id, appToRun, args, startupFolder, hidden).SafeHandle;
         }
 
-        //public static SafeProcessHandle StartAsExplorerDetached(string appToRun, string args, string startupFolder, bool newWindow, bool hidden)
-        //{
-        //    Logger.Instance.Log($"{nameof(StartAsExplorerDetached)}: {appToRun} {args}", LogLevel.Debug);
-        //    var explorer = Process.GetProcesses().Where(p => p.ProcessName.In("explorer")).FirstOrDefault();
-        //    using (var newToken = GetTokenFromProcess(explorer.Id))
-        //    {
-        //        return StartWithProcessToken(newToken, appToRun, args, startupFolder, newWindow, hidden);
-        //    }
-        //}
-
-        public static SafeProcessHandle StartWithIntegrity(IntegrityLevel integrityLevel, string appToRun, string args, string startupFolder, bool newWindow, bool hidden)
+        /// <summary>
+        /// You can only call this if you are elevated.
+        /// </summary>
+        public static SafeProcessHandle StartAttachedWithIntegrity(IntegrityLevel integrityLevel, string appToRun, string args, string startupFolder, bool newWindow, bool hidden)
         {
             // must return a process Handle because we cant create a Process() from a handle and get the exit code. 
-            Logger.Instance.Log($"{nameof(StartWithIntegrity)}: {appToRun} {args}", LogLevel.Debug);
-            using (var newToken = DuplicateOurToken())
-            {
-                if (!AdjustedTokenIntegrity(newToken, integrityLevel))
-                    return null;
+            Logger.Instance.Log($"{nameof(StartAttachedWithIntegrity)}: {appToRun} {args}", LogLevel.Debug);
+            int currentIntegrity = ProcessHelper.GetCurrentIntegrityLevel();
+            SafeTokenHandle newToken;
 
-                return StartWithToken(newToken, appToRun, args, startupFolder, newWindow, hidden);
+            if ((int)integrityLevel == currentIntegrity)
+            {
+                return new SafeProcessHandle(StartAttached(appToRun, args).Handle, true);
             }
-        }
+            
+            if (integrityLevel.In(IntegrityLevel.Medium, IntegrityLevel.MediumPlus) && 
+                ProcessHelper.IsAdministrator()) // Unelevation request.
+            {   
+                return TokenManager
+                    .CreateFromSystemAccount()
+                    .Impersonate(() =>
+                    {
+                        // Impersonate system to manipulate token.
+                        SafeTokenHandle nonElevatedToken = null;
+                        try
+                        {
+                            var nonElevatedTokenManger = TokenManager.CreateUnelevated();
 
-        private static SafeProcessHandle StartWithToken(SafeTokenHandle newToken, string appToRun, string args, string startupFolder, bool newWindow, bool hidden)
-        {
-            var si = new STARTUPINFO();
+                            if (newWindow)
+                            {
+                                nonElevatedToken = nonElevatedTokenManger
+                                    .SetIntegrity(InputArguments.GetIntegrityLevel())
+                                    .GetToken();
+                            }
+                            else
+                            {
+                                // Use gsudo AttachRun helper:
+                                // Launch unelevated with same integrity process so it can attach to current console
+                                // then the child gsudo will set the desired integrity.
+                                nonElevatedToken = nonElevatedTokenManger
+                                        .SetIntegrity(ProcessHelper.GetCurrentIntegrityLevel())
+                                        .GetToken();
 
-            if (newWindow)
-            {
-                si.dwFlags = 0x00000001; // STARTF_USESHOWWINDOW
-                si.wShowWindow = (short)(hidden ? 0 : 1);
+                                args = $"-i {integrityLevel.ToString()} AttachRun {appToRun} {args}";
+                                appToRun = ProcessHelper.GetOwnExeName();
+                                hidden = !InputArguments.Debug;
+                            }
+                            
+                            return new SafeProcessHandle(CreateProcessWithToken(nonElevatedToken.DangerousGetHandle(), appToRun, args, startupFolder, hidden).Handle, true);
+                        }
+                        finally
+                        {
+                            nonElevatedToken?.Close();
+                        }
+                    });
             }
-
-            si.cb = Marshal.SizeOf(si);
-
-            var pi = new PROCESS_INFORMATION();
-            uint dwCreationFlags = newWindow ? (uint)0x00000010 /*CREATE_NEW_CONSOLE*/: 0;
-
-            if (!TokensApi.CreateProcessAsUser(newToken, null, $"{appToRun} {args}",
-                IntPtr.Zero, IntPtr.Zero, false, dwCreationFlags, IntPtr.Zero, startupFolder, ref si,
-                out pi))
+            else
             {
-                throw new Win32Exception();
-            }
-
-            CloseHandle(pi.hThread);
-            return new SafeProcessHandle(pi.hProcess, true);
-        }
-
-        private static SafeTokenHandle GetTokenFromProcess(int pidWithToken)
-        {
-            IntPtr existingProcessHandle = OpenProcess(PROCESS_QUERY_INFORMATION, true, (uint)pidWithToken);
-            if (existingProcessHandle == IntPtr.Zero)
-            {
-                return null;
-            }
-
-            IntPtr existingProcessToken;
-            try
-            {
-                if (!ProcessApi.OpenProcessToken(existingProcessHandle,
-                    TokensApi.TOKEN_DUPLICATE,
-                    out existingProcessToken))
+                // Lower integrity
+                if (true || ProcessHelper.IsAdministrator() )
                 {
-                    return null;
+                    var tf = TokenManager.CreateFromSaferApi(integrityLevel.ToSaferLevel())
+                        .SetIntegrity(integrityLevel);
+
+                    newToken = tf.GetToken();
+                }
+                else
+                {
+                    var tf = TokenManager.CreateFromCurrentProcessToken()
+                        .SetIntegrity(integrityLevel)
+                        .RestrictTokenMaxPrivilege();
+
+                    newToken = tf.GetToken();
                 }
             }
-            finally
+
+            using (newToken)
             {
-                CloseHandle(existingProcessHandle);
+                return CreateProcessAsUser(newToken, appToRun, args, startupFolder, newWindow, hidden);
             }
-            if (existingProcessToken == IntPtr.Zero) return null;
-
-            var sa = new SECURITY_ATTRIBUTES();
-            sa.nLength = 0;
-            const uint MAXIMUM_ALLOWED = 0x02000000;
-            const uint desiredAccess = 0;
-
-            SafeTokenHandle newToken;
-
-            if (!TokensApi.DuplicateTokenEx(existingProcessToken, desiredAccess, IntPtr.Zero, SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation, TOKEN_TYPE.TokenPrimary, out newToken))
-            {
-                return null;
-            }
-
-            return newToken;
-        }
-
-        private static SafeTokenHandle DuplicateOurToken()
-        {
-            IntPtr existingProcessToken;
-            
-            if (!ProcessApi.OpenProcessToken(Process.GetCurrentProcess().Handle,
-                TokensApi.TOKEN_DUPLICATE | TokensApi.TOKEN_ADJUST_DEFAULT |
-                TokensApi.TOKEN_QUERY | TokensApi.TOKEN_ASSIGN_PRIMARY,
-                out existingProcessToken))
-            {
-                return null;
-            }
-
-            if (existingProcessToken == IntPtr.Zero) return null;
-
-            var sa = new SECURITY_ATTRIBUTES();
-            sa.nLength = 0;
-            const uint MAXIMUM_ALLOWED = 0x02000000;
-            const uint desiredAccess = 0;
-
-            SafeTokenHandle newToken;
-
-            if (!TokensApi.DuplicateTokenEx(existingProcessToken, desiredAccess, IntPtr.Zero, SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation, TOKEN_TYPE.TokenPrimary, out newToken))
-            {
-                return null;
-            }
-
-            return newToken;
-        }
-
-        private static bool AdjustedTokenIntegrity(SafeTokenHandle newToken, IntegrityLevel integrityLevel)
-        {
-            string integritySid = "S-1-16-" + ((int)integrityLevel).ToString(CultureInfo.InvariantCulture);
-            IntPtr pIntegritySid;
-            if (!ConvertStringSidToSid(integritySid, out pIntegritySid))
-                return false;
-
-            TOKEN_MANDATORY_LABEL TIL = new TOKEN_MANDATORY_LABEL();
-            TIL.Label.Attributes = 0x00000020 /* SE_GROUP_INTEGRITY */;
-            TIL.Label.Sid = pIntegritySid;
-
-            var pTIL = Marshal.AllocHGlobal(Marshal.SizeOf<TOKEN_MANDATORY_LABEL>());
-            Marshal.StructureToPtr(TIL, pTIL, false);
-
-            if (!SetTokenInformation(newToken.DangerousGetHandle(),
-               TOKEN_INFORMATION_CLASS.TokenIntegrityLevel,
-               pTIL,
-               (uint)(Marshal.SizeOf<TOKEN_MANDATORY_LABEL>() + GetLengthSid(pIntegritySid))))
-                return false;
-
-            STARTUPINFO StartupInfo = new STARTUPINFO();
-
-            return true;
         }
 
         private static Process StartAsProcess(int pidWithToken, string appToRun, string args, string startupFolder, bool hidden)
@@ -431,13 +287,87 @@ namespace gsudo.Helpers
             };
 
             PROCESS_INFORMATION processInformation;
-            if (!CreateProcessWithTokenW(newToken, 0, appToRun, $"{appToRun} {args}", 0, IntPtr.Zero, startupFolder, ref startupInfo, out processInformation))
+            if (!CreateProcessWithTokenW(newToken, 0, appToRun, $"{appToRun} {args}", (UInt32) 0, IntPtr.Zero, startupFolder, ref startupInfo, out processInformation))
             {
                 return null;
             }
             return Process.GetProcessById(processInformation.dwProcessId);
         }
-        #endregion
+
+        private static SafeProcessHandle CreateProcessAsUser(SafeTokenHandle newToken, string appToRun, string args, string startupFolder, bool newWindow, bool hidden)
+        {
+            var si = new STARTUPINFO();
+
+            if (newWindow)
+            {
+                si.dwFlags = 0x00000001; // STARTF_USESHOWWINDOW
+                si.wShowWindow = (short)(hidden ? 0 : 1);
+            }
+
+            si.cb = Marshal.SizeOf(si);
+
+            var pi = new PROCESS_INFORMATION();
+            uint dwCreationFlags = newWindow ? (uint)CreateProcessFlags.CREATE_NEW_CONSOLE : 0;
+
+            if (!TokensApi.CreateProcessAsUser(newToken, ArgumentsHelper.UnQuote(appToRun), $"{appToRun} {args}",
+                IntPtr.Zero, IntPtr.Zero, false, dwCreationFlags, IntPtr.Zero, startupFolder, ref si,
+                out pi))
+            {
+                throw new Win32Exception();
+            }
+
+            CloseHandle(pi.hThread);
+            return new SafeProcessHandle(pi.hProcess, true);
+        }
+        
+        private static Process CreateProcessWithToken(IntPtr newToken, string appToRun, string args, string startupFolder, bool hidden)
+        {
+            var STARTF_USESHOWWINDOW = 0x00000001;
+            var STARTF_USESTDHANDLES = 0x00000100;
+            const uint DETACHED_PROCESS = 0x00000008;
+
+            var startupInfo = new STARTUPINFO()
+            {
+                cb = (int)Marshal.SizeOf(typeof(STARTUPINFO)),
+                dwFlags = STARTF_USESHOWWINDOW,
+                wShowWindow = (short)(hidden ? 0 : 1),
+            };
+
+            if (Console.IsErrorRedirected | Console.IsInputRedirected | Console.IsOutputRedirected)
+            {
+                startupInfo.dwFlags |= STARTF_USESTDHANDLES;
+                startupInfo.hStdOutput = ConsoleApi.GetStdHandle(ConsoleApi.STD_OUTPUT_HANDLE).DangerousGetHandle();
+                startupInfo.hStdInput = ConsoleApi.GetStdHandle(ConsoleApi.STD_INPUT_HANDLE).DangerousGetHandle();
+                startupInfo.hStdError = ConsoleApi.GetStdHandle(ConsoleApi.STD_ERROR_HANDLE).DangerousGetHandle();
+            }
+
+            PROCESS_INFORMATION processInformation;
+            if (!CreateProcessWithTokenW(newToken, 0, null, $"{appToRun} {args}",(UInt32) 0, IntPtr.Zero, startupFolder, ref startupInfo, out processInformation))
+            {
+                throw new Win32Exception();
+            }
+            return Process.GetProcessById(processInformation.dwProcessId);
+        }
+
+        public static SafeProcessHandle CreateProcessWithFlags(string lpApplicationName, string args, ProcessApi.CreateProcessFlags dwCreationFlags, out PROCESS_INFORMATION pInfo)
+        {
+            var sInfoEx = new ProcessApi.STARTUPINFOEX();
+            sInfoEx.StartupInfo.cb = Marshal.SizeOf(sInfoEx);
+            IntPtr lpValue = IntPtr.Zero;
+
+            var pSec = new ProcessApi.SECURITY_ATTRIBUTES();
+            var tSec = new ProcessApi.SECURITY_ATTRIBUTES();
+            pSec.nLength = Marshal.SizeOf(pSec);
+            tSec.nLength = Marshal.SizeOf(tSec);
+
+            var command = $"{lpApplicationName} {args}";
+
+            if (!ProcessApi.CreateProcess(null, command, ref pSec, ref tSec, false, dwCreationFlags, IntPtr.Zero, null, ref sInfoEx, out pInfo))
+                throw new Win32Exception();
+
+            return new Microsoft.Win32.SafeHandles.SafeProcessHandle(pInfo.hProcess, true);
+        }
+
     }
 }
 

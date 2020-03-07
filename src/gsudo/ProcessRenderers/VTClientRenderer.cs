@@ -14,6 +14,7 @@ namespace gsudo.ProcessRenderers
     /// Receives and renders I/O from a remote process that sends VT100 sequences, 
     /// using the VT100 capabilities of the current terminal.
     /// </summary>
+    [Obsolete("Experimental. Superseded by TokenSwitch mode")]
     class VTClientRenderer : IProcessRenderer
     {
         static readonly string[] TOKENS = new string[] { "\x001B[6n", Constants.TOKEN_EXITCODE, Constants.TOKEN_ERROR }; //"\0", "\f", Globals.TOKEN_FOCUS, Globals.TOKEN_KEY_CTRLBREAK, Globals.TOKEN_KEY_CTRLC };

@@ -14,16 +14,56 @@ namespace gsudo.Helpers
 {
     public static class ProcessHelper
     {
+        private static int? _cacheGetCurrentIntegrityLevelCache;
+        private static bool? _cacheIsAdmin;
+
         public static string GetOwnExeName()
         {
-            return Process.GetCurrentProcess().MainModule.FileName;
+            return System.Reflection.Assembly.GetEntryAssembly().Location;
+            //return Process.GetCurrentProcess().MainModule.FileName;
         }
 
-        public static Process ParentProcess(this Process process)
+        public static string GetExeName(this Process process)
+        {
+            var exeName = string.Empty;
+            try
+            {
+                exeName = process.ProcessName;
+                exeName = process.MainModule.FileName;
+            }
+            catch {}
+            return exeName;
+        }
+
+        public static string GetProcessUser(this Process process)
+        {
+            IntPtr processHandle = IntPtr.Zero;
+            try
+            {
+                OpenProcessToken(process.Handle, 8, out processHandle);
+                WindowsIdentity wi = new WindowsIdentity(processHandle);
+                string user = wi.Name;
+                return user; //.Contains(@"\") ? user.Substring(user.IndexOf(@"\", StringComparison.OrdinalIgnoreCase) + 1) : user;
+            }
+            catch
+            {
+                return null;
+            }
+            finally
+            {
+                if (processHandle != IntPtr.Zero)
+                {
+                    CloseHandle(processHandle);
+                }
+            }
+        }
+
+
+        public static Process GetParentProcessExcludingShim(this Process process)
         {
             try
             {
-                var parentPid = ProcessHelper.GetParentProcessId(process);
+                var parentPid = ProcessHelper.GetParentProcessIdExcludingShim(process);
                 if (parentPid == 0)
                     return null;
                 return Process.GetProcessById(parentPid);
@@ -34,7 +74,7 @@ namespace gsudo.Helpers
             }
         }
 
-        public static int GetParentProcessId(Process process) // ExcludingShim
+        public static int GetParentProcessIdExcludingShim(Process process) 
         {
             var parentId = GetParentProcessId(process.Id);
             Process parent;
@@ -44,24 +84,15 @@ namespace gsudo.Helpers
             }
             catch 
             {
-                return 0;
+                return parentId;
             }
 
-            // workaround for chocolatey shim.
-            if (Path.GetFileName(parent.MainModule.FileName).In("gsudo.exe", "sudo.exe"))
+            if (IsShim(parent))
             {
                 return GetParentProcessId(parentId);
             }
-            return parentId;
-        }
 
-        public static int GetClientProcessId(this System.IO.Pipes.NamedPipeServerStream pipeServer)
-        {
-            UInt32 nProcID;
-            IntPtr hPipe = pipeServer.SafePipeHandle.DangerousGetHandle();
-            if (Native.ProcessApi.GetNamedPipeClientProcessId(hPipe, out nProcID))
-                return (int)nProcID;
-            return 0;
+            return parentId;
         }
 
         public static int GetParentProcessId(int Id)
@@ -96,13 +127,16 @@ namespace gsudo.Helpers
 
         public static bool IsAdministrator()
         {
+            if (_cacheIsAdmin.HasValue) return _cacheIsAdmin.Value;
+
             try
             {
                 if (Environment.GetEnvironmentVariable("GSUDO-TESTMODE-NOELEVATE") == "1") return false; // special mode for unit tests
 
                 WindowsIdentity identity = WindowsIdentity.GetCurrent();
                 WindowsPrincipal principal = new WindowsPrincipal(identity);
-                return principal.IsInRole(WindowsBuiltInRole.Administrator);
+                _cacheIsAdmin = principal.IsInRole(WindowsBuiltInRole.Administrator);
+                return _cacheIsAdmin.Value;
             }
             catch (Exception)
             {
@@ -110,6 +144,7 @@ namespace gsudo.Helpers
             }
         }
 
+        [Obsolete]
         public static void Terminate(this Process process)
         {
             if (process.HasExited) return;
@@ -139,7 +174,12 @@ namespace gsudo.Helpers
                 SafeWaitHandle = new SafeWaitHandle(processHandle, ownsHandle: false)
             };
 
-        private static int? GetCurrentIntegrityLevelCache;
+        public static AutoResetEvent GetProcessWaitHandle(this SafeProcessHandle processHandle) =>
+            new AutoResetEvent(false)
+            {
+                SafeWaitHandle = new SafeWaitHandle(processHandle.DangerousGetHandle(), ownsHandle: false)
+            };
+
         /// <summary>
         /// The function gets the integrity level of the current process.
         /// </summary>
@@ -160,7 +200,13 @@ namespace gsudo.Helpers
         /// </exception>
         static internal int GetCurrentIntegrityLevel()
         {
-            if (GetCurrentIntegrityLevelCache.HasValue) return GetCurrentIntegrityLevelCache.Value;
+            if (_cacheGetCurrentIntegrityLevelCache.HasValue) return _cacheGetCurrentIntegrityLevelCache.Value;
+
+            return GetProcessIntegrityLevel(ProcessApi.GetCurrentProcess());
+        }
+
+        static internal int GetProcessIntegrityLevel(IntPtr processHandle)
+        {
             /*
              * https://docs.microsoft.com/en-us/previous-versions/dotnet/articles/bb625963(v=msdn.10)?redirectedfrom=MSDN
              * https://support.microsoft.com/en-us/help/243330/well-known-security-identifiers-in-windows-operating-systems
@@ -168,10 +214,10 @@ namespace gsudo.Helpers
             S-1-16-4096		Low Mandatory Level	A low integrity level.
             S-1-16-8192		Medium Mandatory Level	A medium integrity level.
             S-1-16-8448		Medium Plus Mandatory Level	A medium plus integrity level.
-            S-1-16-12288	High Mandatory Level	A high integrity level.
-            S-1-16-16384	System Mandatory Level	A system integrity level.
-            S-1-16-20480	Protected Process Mandatory Level	A protected-process integrity level.
-            S-1-16-28672	Secure Process Mandatory Level	A secure process integrity level.
+            S-1-16-12288    	High Mandatory Level	A high integrity level.
+            S-1-16-16384	    System Mandatory Level	A system integrity level.
+            S-1-16-20480	    Protected Process Mandatory Level	A protected-process integrity level.
+            S-1-16-28672	    Secure Process Mandatory Level	A secure process integrity level.
             */
             int IL = -1;
             //SafeWaitHandle hToken = null;
@@ -183,7 +229,7 @@ namespace gsudo.Helpers
             try
             {
                 // Open the access token of the current process with TOKEN_QUERY.
-                if (!OpenProcessToken(Process.GetCurrentProcess().Handle,
+                if (!OpenProcessToken(processHandle,
                     Native.TokensApi.TOKEN_QUERY, out hToken))
                 {
                     throw new Win32Exception(Marshal.GetLastWin32Error());
@@ -242,9 +288,9 @@ namespace gsudo.Helpers
                 if (hToken != IntPtr.Zero)
                 {
                     CloseHandle(hToken);
-//                    Marshal.FreeHGlobal(hToken);
-//                    hToken.Close();
-//                    hToken = null;
+                    //                    Marshal.FreeHGlobal(hToken);
+                    //                    hToken.Close();
+                    //                    hToken = null;
                 }
 
                 if (pTokenIL != IntPtr.Zero)
@@ -255,7 +301,30 @@ namespace gsudo.Helpers
                 }
             }
 
-            return (GetCurrentIntegrityLevelCache=IL).Value;
+            return (_cacheGetCurrentIntegrityLevelCache = IL).Value;
         }
+
+        /// <summary>
+        /// Naive Shim Detection.
+        /// </summary>
+        /// <param name="parent"></param>
+        /// <returns></returns>
+        public static bool IsShim(Process parent)
+        {
+            try
+            {
+                var fileName = parent.MainModule.FileName;
+
+                if (fileName.NotIn(ProcessHelper.GetOwnExeName())
+                    && fileName.In("sudo.exe", "gsudo.exe"))
+                {
+                    return true;
+                }
+            }
+            catch { } // fails to get parent.MainModule if our parent process is elevated and we are not.
+
+            return false;
+        }
+
     }
 }

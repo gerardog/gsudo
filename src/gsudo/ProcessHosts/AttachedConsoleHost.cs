@@ -11,6 +11,7 @@ namespace gsudo.ProcessHosts
     /// Hosts a process that uses Win32 'AttachConsole' Api so its i/o is natively attached to the
     /// client console. 
     /// </summary>
+    [Obsolete("Superseded by TokenSwitch mode")]
     class AttachedConsoleHost : IProcessHost
     {
         public async Task Start(Connection connection, ElevationRequest elevationRequest)
@@ -22,7 +23,7 @@ namespace gsudo.ProcessHosts
 
             try
             {
-                Native.ConsoleApi.SetConsoleCtrlHandler(HandleConsoleCancelKeyPress, true);
+                Native.ConsoleApi.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, true);
                 Native.ConsoleApi.FreeConsole();
                 int pid = elevationRequest.ConsoleProcessId;
                 if (Native.ConsoleApi.AttachConsole(pid))
@@ -31,7 +32,7 @@ namespace gsudo.ProcessHosts
 
                     try
                     {
-                        var process = Helpers.ProcessFactory.StartInProcessAtached(elevationRequest.FileName, elevationRequest.Arguments);
+                        var process = Helpers.ProcessFactory.StartAttached(elevationRequest.FileName, elevationRequest.Arguments);
 
                         WaitHandle.WaitAny(new WaitHandle[] { process.GetProcessWaitHandle(), connection.DisconnectedWaitHandle });
                         if (process.HasExited)
@@ -62,18 +63,10 @@ namespace gsudo.ProcessHosts
             }
             finally
             {
-                Native.ConsoleApi.SetConsoleCtrlHandler(HandleConsoleCancelKeyPress, false);
+                Native.ConsoleApi.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, false);
                 Native.ConsoleApi.FreeConsole();
                 await connection.FlushAndCloseAll().ConfigureAwait(false);
             }
-        }
-
-        private static bool HandleConsoleCancelKeyPress(CtrlTypes ctrlType)
-        {
-            if (ctrlType.In(CtrlTypes.CTRL_C_EVENT, CtrlTypes.CTRL_BREAK_EVENT))
-                return true;
-
-            return false;
         }
     }
 }

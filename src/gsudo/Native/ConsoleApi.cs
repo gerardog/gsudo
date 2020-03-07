@@ -69,6 +69,21 @@ namespace gsudo.Native
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern uint GetConsoleProcessList(uint[] processList, uint processCount);
 
+        /// <summary>
+        ///     Retrieves a handle to the Shell's desktop window.
+        ///     <para>
+        ///     Go to https://msdn.microsoft.com/en-us/library/windows/desktop/ms633512%28v=vs.85%29.aspx for more
+        ///     information
+        ///     </para>
+        /// </summary>
+        /// <returns>
+        ///     C++ ( Type: HWND )<br />The return value is the handle of the Shell's desktop window. If no Shell process is
+        ///     present, the return value is NULL.
+        /// </returns>
+        [DllImport("user32.dll")]
+        internal static extern IntPtr GetShellWindow();
 
+        [DllImport("user32.dll", SetLastError = true)]
+        internal static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
     }
 }

@@ -10,6 +10,7 @@ namespace gsudo.ProcessHosts
     /// Hosts a process, in a new window. 
     /// So no I/O streaming is needed, other than process exit code.
     /// </summary>
+    [Obsolete("Superseded by TokenSwitch mode")]
     class NewWindowProcessHost : IProcessHost
     {
         private Process process;
