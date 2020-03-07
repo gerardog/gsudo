@@ -4,6 +4,8 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using gsudo.Native;
+using Microsoft.Win32.SafeHandles;
 
 namespace gsudo.Commands
 {
@@ -28,15 +30,20 @@ namespace gsudo.Commands
             var app = CommandToRun.First();
             var args = string.Join(" ", CommandToRun.Skip(1).ToArray());
 
-            if (InputArguments.IntegrityLevel.HasValue && (int)InputArguments.IntegrityLevel != ProcessHelper.GetCurrentIntegrityLevel())
+            if (InputArguments.IntegrityLevel.HasValue &&
+                (int) InputArguments.IntegrityLevel != ProcessHelper.GetCurrentIntegrityLevel())
             {
-                Helpers.ProcessFactory.StartWithIntegrity(InputArguments.GetIntegrityLevel(), app, args, Directory.GetCurrentDirectory(), false, true)
-                    .GetProcessWaitHandle()
-                    .WaitOne();
+                var process = ProcessFactory.StartAttachedWithIntegrity(
+                    InputArguments.GetIntegrityLevel(), app, args, Directory.GetCurrentDirectory(), false, true);
+
+                process.GetProcessWaitHandle().WaitOne();
+
+                if (ProcessApi.GetExitCodeProcess(process, out var exitCode))
+                    return Task.FromResult(exitCode);
             }
             else
             {
-                Helpers.ProcessFactory.StartInProcessAtached(app, args).WaitForExit();
+                Helpers.ProcessFactory.StartAttached(app, args).WaitForExit();
             }
 
             return Task.FromResult(0);
