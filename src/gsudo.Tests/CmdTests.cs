@@ -8,17 +8,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace gsudo.Tests
 {
     [TestClass]
-    public class CmdTests
+    public class CmdTests : TestBase
     {
-        static CmdTests()
-        {
-            // Start elevated service.
-            var callingSid = WindowsIdentity.GetCurrent().User.Value;
-
-            // start elevated service (to prevent uac popups).
-            Process.Start($"gsudo", $@" gsudoservice 0 {callingSid} All");
-        }
-
         [TestMethod]
         public void Cmd_DebugTests()
         {
@@ -168,6 +159,18 @@ namespace gsudo.Tests
             Assert.AreEqual(string.Empty, p.GetStdErr());
             Assert.IsTrue(p.GetStdOut().Contains("Hello\r\n"));
             Assert.AreEqual(0, p.ExitCode);
+        }
+    }
+
+    public class TestBase
+    {
+        static TestBase()
+        {
+            // Start elevated service.
+            var callingSid = WindowsIdentity.GetCurrent().User.Value;
+
+            // start elevated service (to prevent uac popups).
+            Process.Start($"gsudo", $@" gsudoservice 0 {callingSid} All");
         }
     }
 }

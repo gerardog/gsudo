@@ -24,7 +24,7 @@ namespace gsudo.Tests
     }
 
     [TestClass]
-    public class PowerShellTests
+    public class PowerShellTests : TestBase
     {
         internal string PS_FILENAME = "PowerShell.exe";
         internal string PS_ARGS = "-NoExit -NoLogo -NoProfile -Command Set-ExecutionPolicy UnRestricted -Scope CurrentUser; function Prompt { return '# '}";
