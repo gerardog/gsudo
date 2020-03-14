@@ -180,16 +180,62 @@ namespace gsudo.Helpers
             
             if (integrityLevel.In(IntegrityLevel.Medium, IntegrityLevel.MediumPlus) && 
                 ProcessHelper.IsAdministrator()) // Unelevation request.
-            {   
-                return TokenManager
-                    .CreateFromSystemAccount()
-                    .Impersonate(() =>
-                    {
-                        // Impersonate system to manipulate token.
-                        SafeTokenHandle nonElevatedToken = null;
+            {
+                    TokenManager.OpenCurrentProcessToken().EnablePrivilege(Privilege.SeIncreaseQuotaPrivilege, true);
+
+                    return TokenManager
+                        .CreateFromSystemAccount()
+                        .Impersonate(() =>
+                        {
+                            newToken = TokenManager.CreateFromCurrentProcessToken().GetLinkedToken()
+                                .SetIntegrity(integrityLevel)
+                                .GetToken();
+
+                            //newToken = TokenManager.CreateFromSaferApi(IntegrityLevel.Medium.ToSaferLevel())
+                            //    .SetIntegrity(integrityLevel)
+                            //    .GetToken();
+
+
+                            if (newWindow)
+                            {
+                                newToken = TokenManager.CreateFromCurrentProcessToken().GetLinkedToken()
+                                    .SetIntegrity(integrityLevel)
+                                    .GetToken();
+                            }
+                            else
+                            {
+                                newToken = TokenManager.CreateFromCurrentProcessToken().GetLinkedToken()
+                                    .SetIntegrity(ProcessHelper.GetCurrentIntegrityLevel())
+                                    .GetToken();
+
+                                args = $"-i {integrityLevel.ToString()} AttachRun {appToRun} {args}";
+                                appToRun = ProcessHelper.GetOwnExeName();
+                                hidden = !InputArguments.Debug;
+                            }
+
+                            using (newToken)
+                            {
+
+                                return new SafeProcessHandle(
+                                    CreateProcessWithToken(newToken.DangerousGetHandle(), appToRun, args,
+                                        startupFolder,
+                                        hidden).Handle, true);
+
+//                            return CreateProcessAsUser(newToken, appToRun, args, startupFolder, newWindow, hidden);
+                            }
+                        });
+
+                    //return TokenManager
+                //    .CreateFromSystemAccount()
+                //    .Impersonate(() =>
+                //    {
+                // Impersonate system to manipulate token.
+                SafeTokenHandle nonElevatedToken = null;
                         try
                         {
-                            var nonElevatedTokenManger = TokenManager.CreateUnelevated();
+                            //var nonElevatedTokenManger = TokenManager.CreateUnelevated();
+                            var nonElevatedTokenManger = TokenManager
+                                .CreateFromSaferApi(SaferLevels.Constrained);
 
                             if (newWindow)
                             {
@@ -206,18 +252,19 @@ namespace gsudo.Helpers
                                         .SetIntegrity(ProcessHelper.GetCurrentIntegrityLevel())
                                         .GetToken();
 
+
                                 args = $"-i {integrityLevel.ToString()} AttachRun {appToRun} {args}";
                                 appToRun = ProcessHelper.GetOwnExeName();
+
                                 hidden = !InputArguments.Debug;
                             }
                             
-                            return new SafeProcessHandle(CreateProcessWithToken(nonElevatedToken.DangerousGetHandle(), appToRun, args, startupFolder, hidden).Handle, true);
                         }
                         finally
                         {
                             nonElevatedToken?.Close();
                         }
-                    });
+                 //   });
             }
             else
             {

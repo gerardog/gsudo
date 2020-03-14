@@ -1,4 +1,5 @@
-﻿using gsudo.Helpers;
+﻿using System;
+using gsudo.Helpers;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -31,8 +32,11 @@ namespace gsudo.Commands
             var args = string.Join(" ", CommandToRun.Skip(1).ToArray());
 
             if (InputArguments.IntegrityLevel.HasValue &&
-                (int) InputArguments.IntegrityLevel != ProcessHelper.GetCurrentIntegrityLevel())
+                (int) InputArguments.IntegrityLevel != ProcessHelper.GetCurrentIntegrityLevel() &&
+                Environment.GetEnvironmentVariable("gsudoAttachRun") != "1")
             {
+                Environment.SetEnvironmentVariable("gsudoAttachRun", "1"); // prevents infinite loop on machines with UAC disabled.
+                
                 var process = ProcessFactory.StartAttachedWithIntegrity(
                     InputArguments.GetIntegrityLevel(), app, args, Directory.GetCurrentDirectory(), false, true);
 
