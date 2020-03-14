@@ -15,7 +15,7 @@ namespace gsudo.Helpers
 {
     //https://csharp.hotexamples.com/examples/CSCreateLowIntegrityProcess/PROCESS_INFORMATION/-/php-process_information-class-examples.html
 
-    static class ProcessFactory
+    public static class ProcessFactory
     {
         public static Process StartElevatedDetached(string filename, string arguments, bool hidden)
         {
@@ -27,9 +27,6 @@ namespace gsudo.Helpers
                 UseShellExecute = true,
                 Verb = "runas",
             };
-
-            if (Environment.GetEnvironmentVariable("GSUDO-TESTMODE-NOELEVATE") == "1")
-                process.StartInfo.Verb = null;
 
             if (hidden)
                 process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
@@ -349,7 +346,7 @@ namespace gsudo.Helpers
             return Process.GetProcessById(processInformation.dwProcessId);
         }
 
-        public static SafeProcessHandle CreateProcessWithFlags(string lpApplicationName, string args, ProcessApi.CreateProcessFlags dwCreationFlags, out PROCESS_INFORMATION pInfo)
+        internal static SafeProcessHandle CreateProcessWithFlags(string lpApplicationName, string args, ProcessApi.CreateProcessFlags dwCreationFlags, out PROCESS_INFORMATION pInfo)
         {
             var sInfoEx = new ProcessApi.STARTUPINFOEX();
             sInfoEx.StartupInfo.cb = Marshal.SizeOf(sInfoEx);

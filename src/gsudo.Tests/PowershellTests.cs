@@ -31,79 +31,85 @@ namespace gsudo.Tests
 
         static PowerShellTests()
         {
-            // Disable elevation for test purposes.
-            Environment.SetEnvironmentVariable("GSUDO-TESTMODE-NOELEVATE", "1");
             Environment.SetEnvironmentVariable("PROMPT", "$G"); // Remove path from prompt so tests results are invariant of the src folder location in the path.
         }
 
         //[TestMethod]
         public void Debug()
         {
-            var p = System.Diagnostics.Process.Start(PS_FILENAME, PS_ARGS);
+            var p = System.Diagnostics.Process.Start($"{PS_FILENAME} {PS_ARGS}");
         }
 
         [TestMethod]
         public void PS_CommandLineEchoSingleQuotesTest()
         {
-            var p = new TestProcess("gsudo", "powershell -command echo 1 '2 3'");
+            var p = new TestProcess("gsudo powershell -noprofile -NoLogo -command echo 1 '2 3'");
             p.WaitForExit();
-            Assert.AreEqual("1\r\n2 3\r\n", p.GetStdOut());
-            Assert.AreEqual(0, p.Process.ExitCode);
+            p.GetStdOut()
+                .AssertHasLine("1")
+                .AssertHasLine("2 3");
+            Assert.AreEqual(0, p.ExitCode);
         }
 
         [TestMethod]
         public void PS_CommandLineEchoDoubleQuotesTest()
         {
-            var p = new TestProcess("gsudo", "powershell -command echo 1 '\\\"2 3\\\"'");
+            var p = new TestProcess("gsudo powershell -noprofile -NoLogo -command echo 1 '\\\"2 3\\\"'");
             p.WaitForExit();
-            Assert.AreEqual("1\r\n\"2 3\"\r\n", p.GetStdOut());
-            Assert.AreEqual(0, p.Process.ExitCode);
+            p.GetStdOut()
+                .AssertHasLine("1")
+                .AssertHasLine("\"2 3\"");
+            Assert.AreEqual(0, p.ExitCode);
         }
 
         [TestMethod]
         public void PS_EchoNoQuotesTest()
         {
-            var p = new TestProcess(PS_FILENAME, PS_ARGS);
-            p.WriteInput("./gsudo 'echo 1 2 3'\r\n");
-            p.WriteInput("exit\r\n");
+            var p = new TestProcess(
+                $@"{PS_FILENAME} {PS_ARGS}
+./gsudo 'echo 1 2 3'
+exit
+");
             p.WaitForExit();
-            Assert.AreEqual(
-$@"# ./gsudo 'echo 1 2 3'
-1
-2
-3
-# exit
-", FixAppVeyor(p.GetStdOut()));
-            Assert.AreEqual(0, p.Process.ExitCode);
+
+            p.GetStdOut()
+                .AssertHasLine("1")
+                .AssertHasLine("2")
+                .AssertHasLine("3");
+
+            Assert.AreEqual(0, p.ExitCode);
         }
 
         [TestMethod]
         public void PS_EchoSingleQuotesTest()
         {
-            var p = new TestProcess(PS_FILENAME, PS_ARGS);
-            p.WriteInput("./gsudo 'echo 1 ''2 3'''\r\nexit\r\n");
+            var p = new TestProcess($@"{PS_FILENAME} {PS_ARGS}
+./gsudo 'echo 1 ''2 3'''
+exit
+");
+
             p.WaitForExit();
-            Assert.AreEqual($"# ./gsudo 'echo 1 ''2 3'''\r\n1\r\n2 3\r\n# exit\r\n", FixAppVeyor(p.GetStdOut()));
-            Assert.AreEqual(0, p.Process.ExitCode);
+
+            p.GetStdOut()
+                .AssertHasLine("1")
+                .AssertHasLine("2 3")
+                ;
+            Assert.AreEqual(0, p.ExitCode);
         }
 
         [TestMethod]
         public virtual void PS_EchoDoubleQuotesTest()
         {
-            var p = new TestProcess(PS_FILENAME, PS_ARGS);
-            p.WriteInput("./gsudo 'echo 1 \\\"\"2 3\\\"\"'\r\nexit\r\n");
+            var p = new TestProcess(
+$@"{PS_FILENAME} {PS_ARGS}
+./gsudo 'echo 1 \""2 3\""'
+exit");
             p.WaitForExit();
-            Assert.AreEqual($"# ./gsudo 'echo 1 \\\"\"2 3\\\"\"'\r\n1\r\n2 3\r\n# exit\r\n", FixAppVeyor(p.GetStdOut()));
-            Assert.AreEqual(0, p.Process.ExitCode);
+            p.GetStdOut()
+                .AssertHasLine("1")
+                .AssertHasLine("2 3")
+                ;
+            Assert.AreEqual(0, p.ExitCode);
         }
-
-        string FixAppVeyor(string input)
-        {
-            // AppVeyor's powershell displays a warning message because it uses PSReadLine that does not support Process Rediretion.
-            // Remove the message.
-            var ret = Regex.Replace(input, "((\r\n|\r|\n)Oops.*?-{71}.*?-{71}(\r\n|\r|\n))", string.Empty, RegexOptions.Singleline);
-            return ret;
-        }
-
     }
 }

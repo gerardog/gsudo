@@ -56,7 +56,7 @@ namespace gsudo.ProcessRenderers
 
                 _ = ProcessApi.ResumeThread(_processInformation.hThread);
 
-                if (!_elevationRequest.NewWindow || _elevationRequest.Wait)
+                if (_elevationRequest.Wait)
                 {
                     _process.GetProcessWaitHandle().WaitOne();
                     if (ProcessApi.GetExitCodeProcess(_process, out int exitCode))

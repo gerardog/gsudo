@@ -11,7 +11,7 @@ namespace gsudo.Native
     /// PInvoke signatures for win32 process api
     /// </summary>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1060:Move pinvokes to native methods class", Justification = "Done")]
-    static class ProcessApi
+    public static class ProcessApi
     {
         internal const uint EXTENDED_STARTUPINFO_PRESENT = 0x00080000;
 
@@ -82,7 +82,7 @@ namespace gsudo.Native
             out PROCESS_INFORMATION lpProcessInformation);
 
         [Flags]
-        internal enum CreateProcessFlags : uint
+        public enum CreateProcessFlags : uint
         {
             DEBUG_PROCESS = 0x00000001,
             DEBUG_ONLY_THIS_PROCESS = 0x00000002,
@@ -199,21 +199,6 @@ namespace gsudo.Native
 
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern Boolean OpenProcessToken(IntPtr hProcess, UInt32 dwDesiredAccess, out IntPtr hToken);
-
-        [DllImport("advapi32", CharSet = CharSet.Auto, SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool OpenProcessToken(
-            IntPtr hProcess,
-            UInt32 desiredAccess,
-            out SafeTokenHandle hToken);
-
-        [DllImport("Wtsapi32.dll")]
-        public static extern bool WTSQuerySessionInformationW(
-            IntPtr hServer,
-            int SessionId,
-            int WTSInfoClass,
-            out IntPtr ppBuffer,
-            out IntPtr pBytesReturned);
         #endregion
 
         /// <summary>Checks whether a process is being debugged.</summary>
@@ -230,18 +215,6 @@ namespace gsudo.Native
         internal static extern bool CheckRemoteDebuggerPresent(
             SafeHandle hProcess,
             [MarshalAs(UnmanagedType.Bool)] ref bool isDebuggerPresent);
-
-        [DllImport("kernel32.dll", CharSet = CharSet.Ansi, SetLastError = true)]
-        public static extern bool DuplicateHandle(IntPtr hSourceProcessHandle, SafeHandle hSourceHandle,
-            IntPtr hTargetProcess, out SafeFileHandle targetHandle, int dwDesiredAccess,
-            bool bInheritHandle, int dwOptions);
-
-        [Flags]
-        public enum DuplicateOptions : uint
-        {
-            DUPLICATE_CLOSE_SOURCE = (0x00000001),// Closes the source handle. This occurs regardless of any error status returned.
-            DUPLICATE_SAME_ACCESS = (0x00000002), //Ignores the dwDesiredAccess parameter. The duplicate handle has the same access as the source handle.
-        }
 
         [DllImport("kernel32.dll", CharSet = CharSet.Ansi, SetLastError = true)]
         public static extern IntPtr GetCurrentProcess();

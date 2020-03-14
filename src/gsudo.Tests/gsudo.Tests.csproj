@@ -50,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ArgumentParsingTests.cs" />
+    <Compile Include="AssertExtensions.cs" />
     <Compile Include="PowerShellTests.cs" />
     <Compile Include="TestProcess.cs" />
     <Compile Include="CmdTests.cs" />

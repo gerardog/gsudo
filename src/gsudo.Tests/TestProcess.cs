@@ -2,48 +2,70 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
+using gsudo.Helpers;
+using Microsoft.Win32.SafeHandles;
 
 namespace gsudo.Tests
 {
     class TestProcess
     {
-        public Process Process { get; private set; }
-        public int ExitCode => Process.ExitCode;
-        string StdOut = null;
-        string StdErr = null;
+        public uint ProcessId { get; set; }
+        public int ExitCode;
 
-        public TestProcess(string exename, string arguments)
+        readonly string _testId = DateTime.Now.ToString("yyyyMMddHHmmssff");
+        string _sIn => $"in{_testId}";
+        string _sOut => $"out{_testId}";
+        string _sErr => $"err{_testId}";
+        string _batchFile => $"test{_testId}.bat";
+
+        string _stdOut = null;
+        string _stdErr = null;
+
+        private SafeProcessHandle _testProcessHandle;
+        private Process _process;
+
+        public TestProcess(string inputScript)
         {
-            this.Process = new Process();
-            this.Process.StartInfo = new ProcessStartInfo()
+            string arguments = $"";
+
+            File.WriteAllText(_batchFile, 
+                $"@echo off \r\n" +
+//                "Prompt $g\r\n" +
+                $"gsudo -i medium cmd /k < \"{_sIn}\" > \"{_sOut}\" 2> \"{_sErr}\" \r\n" +
+                "exit %errorlevel%\r\n");
+
+            File.WriteAllText($"{_sIn}", inputScript + "\r\nExit /b %errorlevel%\r\n");
+
+            _process = ProcessFactory.StartDetached(_batchFile, arguments, Environment.CurrentDirectory, false);
+            _testProcessHandle = new SafeProcessHandle(_process.Handle, false);
+
+            ProcessId = (uint) _process.Id;
+
+            Debug.WriteLine($"Process invoked: {_batchFile} {arguments}");
+        }
+
+        public string GetStdOut() => _stdOut ?? (_stdOut = ReadAllText($"{_sOut}"));
+        public string GetStdErr() => _stdErr ?? (_stdErr = ReadAllText($"{_sErr}"));
+
+        private string ReadAllText(string fileName)
+        {
+            try
             {
-                FileName = exename,
-                Arguments = arguments,
-                RedirectStandardInput = true,
-                RedirectStandardError = true,
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                WindowStyle = ProcessWindowStyle.Minimized,
-                CreateNoWindow = false
-            };
-            this.Process.Start();
-
-            Debug.WriteLine($"Process invoked: {Process.StartInfo.FileName} {Process.StartInfo.Arguments}");
+                return File.ReadAllText(fileName);
+            }
+            catch (Exception e) 
+            {
+                return e.ToString();
+            }
         }
 
-        internal void WriteInput(string input)
-        {
-            Process.StandardInput.Write(input);
-        }
-
-        public string GetStdOut() => StdOut ?? (StdOut = Process.StandardOutput.ReadToEnd());
-        public string GetStdErr() => StdErr ?? (StdErr = Process.StandardError.ReadToEnd());
 
         public void WaitForExit(int waitMilliseconds = 10000)
         {
-            if (!Process.WaitForExit(waitMilliseconds))
+            if (!_testProcessHandle.GetProcessWaitHandle().WaitOne(waitMilliseconds))
             {
-                Process.Kill();
+                NativeMethods.TerminateProcess(_testProcessHandle.DangerousGetHandle(), 0);
                 Debug.WriteLine($"Process Std Output:\n{GetStdOut()}");
                 Debug.WriteLine($"Process Std Error:\n{GetStdErr()}");
 
@@ -51,7 +73,28 @@ namespace gsudo.Tests
             }
             Debug.WriteLine($"Process Std Output:\n{GetStdOut()}");
             Debug.WriteLine($"Process Std Error:\n{GetStdErr()}");
+            //NativeMethods.GetExitCodeProcess(_testProcessHandle, out ExitCode);
+            ExitCode = _process?.ExitCode ?? ExitCode;
+            _testProcessHandle.Close();
         }
 
+        public void Kill()
+        {
+            Process.Start("taskkill.exe", "/PID " + ProcessId).WaitForExit();
+        }
+    }
+
+    internal class NativeMethods
+    {
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool TerminateProcess(IntPtr hProcess, uint uExitCode);
+
+        [DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto, SetLastError = true)]
+        //[ResourceExposure(ResourceScope.None)]
+        public static extern bool GetExitCodeProcess(Microsoft.Win32.SafeHandles.SafeProcessHandle processHandle, out int exitCode);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern uint GetProcessId(IntPtr handle);
     }
 }
