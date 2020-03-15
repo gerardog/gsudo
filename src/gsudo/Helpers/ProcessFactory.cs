@@ -181,90 +181,31 @@ namespace gsudo.Helpers
             if (integrityLevel.In(IntegrityLevel.Medium, IntegrityLevel.MediumPlus) && 
                 ProcessHelper.IsAdministrator()) // Unelevation request.
             {
-                    TokenManager.OpenCurrentProcessToken().EnablePrivilege(Privilege.SeIncreaseQuotaPrivilege, true);
-
-                    return TokenManager
-                        .CreateFromSystemAccount()
-                        .Impersonate(() =>
-                        {
-                            newToken = TokenManager.CreateFromCurrentProcessToken().GetLinkedToken()
-                                .SetIntegrity(integrityLevel)
-                                .GetToken();
-
-                            //newToken = TokenManager.CreateFromSaferApi(IntegrityLevel.Medium.ToSaferLevel())
-                            //    .SetIntegrity(integrityLevel)
-                            //    .GetToken();
-
-
-                            if (newWindow)
-                            {
-                                newToken = TokenManager.CreateFromCurrentProcessToken().GetLinkedToken()
-                                    .SetIntegrity(integrityLevel)
-                                    .GetToken();
-                            }
-                            else
-                            {
-                                newToken = TokenManager.CreateFromCurrentProcessToken().GetLinkedToken()
-                                    .SetIntegrity(ProcessHelper.GetCurrentIntegrityLevel())
-                                    .GetToken();
-
-                                args = $"-i {integrityLevel.ToString()} AttachRun {appToRun} {args}";
-                                appToRun = ProcessHelper.GetOwnExeName();
-                                hidden = !InputArguments.Debug;
-                            }
-
-                            using (newToken)
-                            {
-
-                                return new SafeProcessHandle(
-                                    CreateProcessWithToken(newToken.DangerousGetHandle(), appToRun, args,
-                                        startupFolder,
-                                        hidden).Handle, true);
-
-//                            return CreateProcessAsUser(newToken, appToRun, args, startupFolder, newWindow, hidden);
-                            }
-                        });
-
-                    //return TokenManager
-                //    .CreateFromSystemAccount()
-                //    .Impersonate(() =>
-                //    {
-                // Impersonate system to manipulate token.
-                SafeTokenHandle nonElevatedToken = null;
+                return TokenManager
+                    .CreateFromSystemAccount()
+                    .EnablePrivilege(Privilege.SeIncreaseQuotaPrivilege, false)
+                    .EnablePrivilege(Privilege.SeAssignPrimaryTokenPrivilege, false)
+                    .Impersonate(() =>
+                    {
                         try
                         {
-                            //var nonElevatedTokenManger = TokenManager.CreateUnelevated();
-                            var nonElevatedTokenManger = TokenManager
-                                .CreateFromSaferApi(SaferLevels.Constrained);
-
-                            if (newWindow)
-                            {
-                                nonElevatedToken = nonElevatedTokenManger
-                                    .SetIntegrity(InputArguments.GetIntegrityLevel())
-                                    .GetToken();
-                            }
-                            else
-                            {
-                                // Use gsudo AttachRun helper:
-                                // Launch unelevated with same integrity process so it can attach to current console
-                                // then the child gsudo will set the desired integrity.
-                                nonElevatedToken = nonElevatedTokenManger
-                                        .SetIntegrity(ProcessHelper.GetCurrentIntegrityLevel())
-                                        .GetToken();
-
-
-                                args = $"-i {integrityLevel.ToString()} AttachRun {appToRun} {args}";
-                                appToRun = ProcessHelper.GetOwnExeName();
-
-                                hidden = !InputArguments.Debug;
-                            }
-                            
+                        newToken = TokenManager.CreateFromCurrentProcessToken().GetLinkedToken()
+                            .SetIntegrity(integrityLevel)
+                            .GetToken();
                         }
-                        finally
+                        catch (Exception e)
                         {
-                            nonElevatedToken?.Close();
+                            Logger.Instance.Log("Unable to get unelevated token, will try SaferApi Token. " + e.ToString(), LogLevel.Warning);
+                            newToken = TokenManager.CreateFromSaferApi(SaferLevels.NormalUser)
+                                .SetIntegrity(integrityLevel)
+                                .GetToken();
                         }
-                 //   });
+
+                        using (newToken)
+                        {
+                            return CreateProcessAsUser(newToken, appToRun, args, startupFolder, newWindow, hidden);
+                        }
+                    });
             }
             else
             {
