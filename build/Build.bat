@@ -11,19 +11,26 @@ set version=%1
 
 del ..\src\gsudo\bin\*.* /q
 %msbuild% /t:Restore,Rebuild /p:Configuration=Release /p:WarningLevel=0 %~dp0..\src\gsudo.sln /p:Version=%version%
-
 if errorlevel 1 goto badend
-@echo Building Succeded.
+@echo Build Succeded.
+@pushd ..\src\gsudo\bin
+
+@echo Running ILMerge
+mkdir ilmerge
+ilmerge gsudo.exe System.Security.Claims.dll System.Security.Principal.Windows.dll /out:ilmerge\gsudo.exe /target:exe /targetplatform:v4,"C:\Windows\Microsoft.NET\Framework\v4.0.30319" /ndebug
+if errorlevel 1 echo ILMerge Failed & pause & popd & goto badend
+
 @echo Signing exe.
 
-%SignToolPath%signtool.exe sign /n "Open Source Developer, Gerardo Grignoli" /fd SHA256 /tr "http://time.certum.pl" ..\src\gsudo\bin\gsudo.exe
+%SignToolPath%signtool.exe sign /n "Open Source Developer, Gerardo Grignoli" /fd SHA256 /tr "http://time.certum.pl" ilmerge\gsudo.exe
+popd
 
 if errorlevel 1 echo Sign Failed & pause & goto badend
 @echo Sign successfull
 
+del Releases\gsudo.v%version%.zip
 :skipbuild
-
-7z a Releases\gsudo.v%version%.zip ..\src\gsudo\bin\*.*
+7z a Releases\gsudo.v%version%.zip ..\src\gsudo\bin\ilmerge\*.*
 powershell (Get-FileHash Releases\gsudo.v%version%.zip).hash > Releases\gsudo.v%version%.zip.sha256
 
 :: Chocolatey
