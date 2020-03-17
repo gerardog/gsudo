@@ -346,6 +346,46 @@ namespace gsudo.Tokens
             return this;
         }
 
+        public TokenManager SetSessionId(int sessionId)
+        {
+            int size = Marshal.SizeOf<Int32>();
+            IntPtr pValue = Marshal.AllocHGlobal(size);
+            try
+            {
+                Marshal.WriteInt32(pValue, sessionId);
+
+                if (!SetTokenInformation(
+                    Token.DangerousGetHandle(), TOKEN_INFORMATION_CLASS.TokenSessionId,
+                    pValue, (uint) size))
+                    throw new Win32Exception();
+
+                return this;
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(pValue);
+            }
+        }
+
+        public int GetSessionId()
+        {
+            int size = Marshal.SizeOf<Int32>();
+            IntPtr pValue = Marshal.AllocHGlobal(size);
+            try
+            {
+                if (!GetTokenInformation(
+                    Token.DangerousGetHandle(),
+                    TOKEN_INFORMATION_CLASS.TokenSessionId, pValue, size, out size))
+                throw new Win32Exception();
+
+                return Marshal.ReadInt32(pValue);
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(pValue);
+            }
+        }
+
 
         public void Dispose()
         {

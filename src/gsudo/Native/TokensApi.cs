@@ -321,11 +321,8 @@ namespace gsudo.Native
 
         [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool SetTokenInformation(
-    SafeTokenHandle hToken,
-    TOKEN_INFORMATION_CLASS tokenInfoClass,
-    IntPtr pTokenInfo,
-    Int32 tokenInfoLength);
+        public static extern bool SetTokenInformation(SafeTokenHandle hToken, TOKEN_INFORMATION_CLASS tokenInfoClass,
+            IntPtr pTokenInfo, Int32 tokenInfoLength);
 
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool ConvertStringSidToSid(
@@ -466,5 +463,13 @@ namespace gsudo.Native
             public IntPtr Token;
             public IntPtr Thread;
         }
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        static extern bool GetTokenInformation(
+            IntPtr tokenHandle,
+            TOKEN_INFORMATION_CLASS tokenInformationClass,
+            IntPtr tokenInformation,
+            uint tokenInformationLength,
+            out uint returnLength);
     }
 }
