@@ -346,7 +346,8 @@ namespace gsudo.Helpers
             tSec.nLength = Marshal.SizeOf(tSec);
 
             var command = $"{lpApplicationName} {args}";
-
+            
+            Logger.Instance.Log($"{nameof(CreateProcessAsUser)}: {lpApplicationName} {args}", LogLevel.Debug);
             if (!ProcessApi.CreateProcess(null, command, ref pSec, ref tSec, false, dwCreationFlags, IntPtr.Zero, null, ref sInfoEx, out pInfo))
                 throw new Win32Exception();
 

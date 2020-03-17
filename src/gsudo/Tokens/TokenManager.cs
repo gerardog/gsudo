@@ -13,7 +13,7 @@ namespace gsudo.Tokens
 {
     internal class TokenManager : IDisposable
     {
-        const uint MAXIMUM_ALLOWED = 0x02000000;
+        public const uint MAXIMUM_ALLOWED = 0x02000000;
 
         private SafeTokenHandle Token;
         public SafeTokenHandle GetToken() => Token;
@@ -105,7 +105,6 @@ namespace gsudo.Tokens
                 | TOKEN_ADJUST_GROUPS)
         {
             var tm = OpenCurrentProcessToken(access);
-            const uint MAXIMUM_ALLOWED = 0x02000000;
             return tm.Duplicate(MAXIMUM_ALLOWED);
         }
 

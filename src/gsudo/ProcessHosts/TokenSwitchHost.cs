@@ -92,7 +92,7 @@ namespace gsudo.ProcessHosts
             }
             else
             {
-                tm = TokenManager.CreateFromCurrentProcessToken(TokensApi.TOKEN_ALL_ACCESS);
+                tm = TokenManager.CreateFromCurrentProcessToken(TokenManager.MAXIMUM_ALLOWED);
                 if (ProcessHelper.GetCurrentIntegrityLevel() != (int)elevationRequest.IntegrityLevel)
                 {
                     tm.SetIntegrity(elevationRequest.IntegrityLevel);

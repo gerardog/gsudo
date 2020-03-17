@@ -33,7 +33,25 @@ namespace gsudo.ProcessRenderers
                 dwCreationFlags |= ProcessApi.CreateProcessFlags.CREATE_NEW_CONSOLE;
 
             Environment.SetEnvironmentVariable("prompt", Environment.ExpandEnvironmentVariables(elevationRequest.Prompt));
-            _process = ProcessFactory.CreateProcessWithFlags(elevationRequest.FileName, elevationRequest.Arguments, dwCreationFlags, out _processInformation);
+
+            // Now, we have an issue with this methodÑ The process launched with the new token throws Access Denied if it tries to read its own token.
+            // Kind of dirty workaround is to wrap the call with a "CMD.exe /c ".. this intermediate process will then
+            // launching the command with a fresh new (desired) token and we know cmd wont try to read it's substitute token (throwing Access Denied).  
+
+            string exeName, args;
+            if (ArgumentsHelper.UnQuote(elevationRequest.FileName.ToUpperInvariant()) != Environment.GetEnvironmentVariable("COMSPEC").ToUpperInvariant())
+            {
+                exeName = Environment.GetEnvironmentVariable("COMSPEC");
+                args = $"/s /c \"{elevationRequest.FileName} {elevationRequest.Arguments}\"";
+            }
+            else
+            {
+                // Hack not needed if we are already calling CMD
+                exeName = elevationRequest.FileName;
+                args = elevationRequest.Arguments;
+            }
+
+            _process = ProcessFactory.CreateProcessWithFlags(exeName, args, dwCreationFlags, out _processInformation);
 
             elevationRequest.TargetProcessId = _processInformation.dwProcessId;
             if (!elevationRequest.NewWindow)
