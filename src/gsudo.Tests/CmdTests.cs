@@ -137,7 +137,7 @@ namespace gsudo.Tests
             }
             finally
             {
-                Process.Start("taskkill.exe", "/IM Wordpad.exe").WaitForExit();
+                Process.Start("gsudo", "taskkill.exe /IM Wordpad.exe").WaitForExit();
             }
         }
 
@@ -170,7 +170,7 @@ namespace gsudo.Tests
             var callingSid = WindowsIdentity.GetCurrent().User.Value;
 
             // start elevated service (to prevent uac popups).
-            Process.Start($"gsudo", $@" gsudoservice 0 {callingSid} All");
+            Process.Start($"gsudo", $@"-n gsudo gsudoservice 0 {callingSid} All").WaitForExit();
         }
     }
 }

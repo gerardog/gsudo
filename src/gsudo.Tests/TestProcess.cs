@@ -80,7 +80,7 @@ namespace gsudo.Tests
 
         public void Kill()
         {
-            Process.Start("taskkill.exe", "/PID " + ProcessId).WaitForExit();
+            Process.Start("gsudo", "taskkill.exe /PID " + ProcessId).WaitForExit();
         }
     }
 
