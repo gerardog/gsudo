@@ -58,7 +58,7 @@ namespace gsudo.Commands
                 IntegrityLevel = InputArguments.GetIntegrityLevel(),
             };
 
-            if (!isRunningAsDesiredUser && Settings.SecurityEnforceUacIsolation)
+            if (isElevationRequired && Settings.SecurityEnforceUacIsolation)
                 AdjustUacIsolationRequest(elevationRequest, isShellElevation);
 
             SetRequestPrompt(elevationRequest);

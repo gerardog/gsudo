@@ -24,6 +24,9 @@ namespace gsudo.ProcessRenderers
 
         public TokenSwitchRenderer(Connection connection, ElevationRequest elevationRequest)
         {
+            if (Settings.SecurityEnforceUacIsolation && !elevationRequest.NewWindow)
+                throw new Exception("TokenSwitch mode not supported when SecurityEnforceUacIsolation is set.");
+
             _connection = connection;
             _elevationRequest = elevationRequest;
 

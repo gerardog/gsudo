@@ -198,8 +198,7 @@ namespace gsudo.Tokens
                 {
                     try
                     {
-                        Logger.Instance.Log("que trucaso", LogLevel.Warning);
-                        return CreateFromCurrentProcessToken();//.GetLinkedToken().Duplicate();
+                        return CreateFromCurrentProcessToken().GetLinkedToken().Duplicate();
                     }
                     catch (Exception e)
                     {

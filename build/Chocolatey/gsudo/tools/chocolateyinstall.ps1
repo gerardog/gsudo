@@ -4,9 +4,16 @@
 }
 
 if (Get-Process gsudo -ErrorAction SilentlyContinue) {
-	$ErrorActionPreference = "Stop"
-	Write-Output '##### Please close gsudo before installing. ##### '
-	throw "Unable to install/uninstall if gsudo is running"
+	gsudo.exe -k
+	Start-Sleep -Milliseconds 500
+	if (Get-Process gsudo -ErrorAction SilentlyContinue) {
+		$ErrorActionPreference = "Stop"
+		Write-Output '##### Please close gsudo before installing.             #####'
+		Write-Output '##### Or run in new window with "-n" to let gsudo exit: #####'
+		Write-Output '        gsudo -n cmd /k choco upgrade gsudo'
+		
+		throw "Unable to install/uninstall if gsudo is running"
+	}
 }
 
 $bin = "$env:ChocolateyInstall\lib\gsudo\bin\"
@@ -26,5 +33,5 @@ if (Test-Path "$env:ChocolateyInstall\bin\gsudo.exe")  # Previous installers cre
   }
 }
 
-Write-Host "Done."
+Write-Output "Done."
 

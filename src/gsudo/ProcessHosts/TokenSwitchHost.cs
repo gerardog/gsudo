@@ -1,7 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 using gsudo.Helpers;
 using gsudo.Native;
@@ -18,7 +17,7 @@ namespace gsudo.ProcessHosts
     {
         public async Task Start(Connection connection, ElevationRequest elevationRequest)
         {
-            if (Settings.SecurityEnforceUacIsolation)
+            if (Settings.SecurityEnforceUacIsolation && !elevationRequest.NewWindow)
                 throw new Exception("TokenSwitch mode not supported when SecurityEnforceUacIsolation is set.");
 
             try
