@@ -16,7 +16,7 @@ if errorlevel 1 goto badend
 @pushd ..\src\gsudo\bin
 
 @echo Running ILMerge
-mkdir ilmerge
+mkdir ilmerge 2> nul
 ilmerge gsudo.exe System.Security.Claims.dll System.Security.Principal.Windows.dll /out:ilmerge\gsudo.exe /target:exe /targetplatform:v4,"C:\Windows\Microsoft.NET\Framework\v4.0.30319" /ndebug
 if errorlevel 1 echo ILMerge Failed & pause & popd & goto badend
 
@@ -35,8 +35,8 @@ powershell (Get-FileHash Releases\gsudo.v%version%.zip).hash > Releases\gsudo.v%
 
 :: Chocolatey
 git clean Chocolatey\gsudo\Bin -xf
-md Chocolatey\gsudo\Bin
-copy ..\src\gsudo\bin\*.* Chocolatey\gsudo\Bin\
+@md Chocolatey\gsudo\Bin 2> nul
+copy ..\src\gsudo\bin\ilmerge\*.* Chocolatey\gsudo\Bin\
 copy Chocolatey\verification.txt.template Chocolatey\gsudo\Tools\VERIFICATION.txt
 
 @pushd %~dp0\Chocolatey\gsudo

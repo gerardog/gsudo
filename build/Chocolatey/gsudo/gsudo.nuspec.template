@@ -34,7 +34,7 @@
     <docsUrl>https://github.com/gerardog/gsudo/blob/master/README.md</docsUrl>
     <!--<mailingListUrl></mailingListUrl>-->
     <bugTrackerUrl>https://github.com/gerardog/gsudo/issues</bugTrackerUrl>
-    <tags>gsudo portable sudo for windows elevate elevated user command runas</tags>
+    <tags>sudo for windows run elevated user command runas powershell wsl</tags>
     <summary>gsudo is a `sudo` for Windows with a similar user-experience as *nix sudo.</summary>
     <description>
 `gsudo` allows to run commands with elevated permissions within the current console. 

@@ -1,5 +1,8 @@
 ﻿$ErrorActionPreference = "SilentlyContinue"
 
-Write-Output "Terminating running gsudo instances..."
-taskkill /IM "gsudo.exe" /F
-taskkill /IM "sudo.exe" /F
+$running = Get-Process gsudo -ErrorAction SilentlyContinue
+
+if ($running) {	
+	gsudo.exe -k
+	Start-Sleep -Milliseconds 500
+}
