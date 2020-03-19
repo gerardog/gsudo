@@ -37,17 +37,17 @@ namespace gsudo.Tokens
             try
             {
                 if (!ProcessApi.OpenProcessToken(existingProcessHandle,
-                    TOKEN_DUPLICATE
-                    //TOKEN_ALL_ACCESS,
-//                        TOKEN_DUPLICATE
-//                        // TokensApi.TOKEN_ADJUST_DEFAULT |
-//                        | TokensApi.TOKEN_QUERY 
-//                        | TokensApi.TOKEN_ASSIGN_PRIMARY
-//                    | TOKEN_QUERY_SOURCE
-//                    | TOKEN_IMPERSONATE
-//                    | TOKEN_READ
-////                    | TOKEN_ALL_ACCESS ==> access denied
-////                    | STANDARD_RIGHTS_REQUIRED ==> access denied.
+                    MAXIMUM_ALLOWED
+                    //| TOKEN_ALL_ACCESS,
+                    //| TOKEN_DUPLICATE
+                    //| TokensApi.TOKEN_ADJUST_DEFAULT |
+                    //| TokensApi.TOKEN_QUERY
+                    //| TokensApi.TOKEN_ASSIGN_PRIMARY
+                    //| TOKEN_QUERY_SOURCE
+                    //| TOKEN_IMPERSONATE
+                    //| TOKEN_READ
+                    //| TOKEN_ALL_ACCESS ==> access denied
+                    //| STANDARD_RIGHTS_REQUIRED ==> access denied.
                     ,
                     out existingProcessToken))
                 {
@@ -68,8 +68,11 @@ namespace gsudo.Tokens
 
             if (!TokensApi.DuplicateTokenEx(existingProcessToken, desiredAccess, IntPtr.Zero, SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation, TOKEN_TYPE.TokenPrimary, out newToken))
             {
+                CloseHandle(existingProcessToken);
                 throw new Win32Exception();
             }
+            
+            CloseHandle(existingProcessToken);
 
             return new TokenManager()
             {
@@ -190,20 +193,26 @@ namespace gsudo.Tokens
         {
             if (ProcessHelper.IsAdministrator())
             {
-                //try
-                //{
-                //    return TokenManager.CreateFromCurrentProcessToken().GetLinkedToken().Duplicate();
-                //}
-                //catch (Exception ex)
-                //{
-                //    Logger.Instance.Log(ex.ToString(), LogLevel.Warning);
-                //}
-
-                //if (WindowsIdentity.GetCurrent().IsSystem)
+                // Have you impersonated system first?
+                if (WindowsIdentity.GetCurrent().IsSystem)
+                {
+                    try
+                    {
+                        Logger.Instance.Log("que trucaso", LogLevel.Warning);
+                        return CreateFromCurrentProcessToken();//.GetLinkedToken().Duplicate();
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Instance.Log("Unable to get unelevated token, will try SaferApi Token. " + e.ToString(),
+                            LogLevel.Warning);
+                        return TokenManager.CreateFromSaferApi(SaferLevels.NormalUser);
+                    }
+                }
+                else
                 {
                     IntPtr hwnd = ConsoleApi.GetShellWindow();
                     _ = ConsoleApi.GetWindowThreadProcessId(hwnd, out uint pid);
-                    return TokenManager.CreateFromProcessToken((int) pid);
+                    return TokenManager.CreateFromProcessToken((int)pid);
                 }
             }
             else
