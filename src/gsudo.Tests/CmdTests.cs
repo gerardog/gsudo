@@ -27,7 +27,6 @@ namespace gsudo.Tests
         {
             var p = new TestProcess("gsudo cmd /c dir");
             p.WaitForExit();
-            Assert.AreEqual(string.Empty, p.GetStdErr());
             Assert.IsTrue(p.GetStdOut().Contains(" bytes free"));
             Assert.AreEqual(0, p.ExitCode);
         }
@@ -35,7 +34,6 @@ namespace gsudo.Tests
         [TestMethod]
         public void Cmd_ChangeDirTest()
         {
-
             // TODO: Test --raw, --vt, --attached
             var testDir = Environment.CurrentDirectory;
             var p1 = new TestProcess(
@@ -46,8 +44,6 @@ namespace gsudo.Tests
             p1.WaitForExit();
 
             var otherDir = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory,".."));
-
-            Assert.AreEqual(string.Empty, p1.GetStdErr());
 
             p1.GetStdOut()
                 .AssertHasLine($"{testDir}")
@@ -74,13 +70,16 @@ namespace gsudo.Tests
         }
 
         [TestMethod]
-        public void Cmd_ExitCodeTest()
+        public void Cmd_ExitCodeTest_1()
         {
             var p = new TestProcess("gsudo exit 12345");
             p.WaitForExit();
             Assert.AreEqual(12345, p.ExitCode);
-            
-            p = new TestProcess("gsudo exit 0");
+        }
+        [TestMethod]
+        public void Cmd_ExitCodeTest_2()
+        {
+            var p = new TestProcess("gsudo exit 0");
             p.WaitForExit();
             Assert.AreEqual(0, p.ExitCode);
         }
@@ -156,7 +155,6 @@ namespace gsudo.Tests
 
             var p = new TestProcess("gsudo HelloWorld");
             p.WaitForExit();
-            Assert.AreEqual(string.Empty, p.GetStdErr());
             Assert.IsTrue(p.GetStdOut().Contains("Hello\r\n"));
             Assert.AreEqual(0, p.ExitCode);
         }
@@ -169,7 +167,7 @@ namespace gsudo.Tests
             // Start elevated service.
             var callingSid = WindowsIdentity.GetCurrent().User.Value;
 
-            // start elevated service (to prevent uac popups).
+            // start elevated service (to prevent uac popups or just have one).
             Process.Start($"gsudo", $@"-n gsudo gsudoservice 0 {callingSid} All").WaitForExit();
         }
     }

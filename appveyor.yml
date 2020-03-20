@@ -2,6 +2,7 @@ image: Visual Studio 2019
 
 init:
   - git config --global core.autocrlf true
+  - powershell -noprofile -command "Install-Module PSReadLine -Force -SkipPublisherCheck -AllowPrerelease"
 #  - ps: $blockRdp = $false; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 before_build:
