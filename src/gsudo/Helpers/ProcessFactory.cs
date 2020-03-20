@@ -177,35 +177,36 @@ namespace gsudo.Helpers
             {
                 return new SafeProcessHandle(StartAttached(appToRun, args).Handle, true);
             }
-            
-            if (integrityLevel.In(IntegrityLevel.Medium, IntegrityLevel.MediumPlus) && 
+
+            if (integrityLevel.In(IntegrityLevel.Medium, IntegrityLevel.MediumPlus) &&
                 ProcessHelper.IsAdministrator()) // Unelevation request.
             {
-                return TokenManager
-                    .CreateFromSystemAccount()
-                    .EnablePrivilege(Privilege.SeIncreaseQuotaPrivilege, false)
-                    .EnablePrivilege(Privilege.SeAssignPrimaryTokenPrivilege, false)
-                    .Impersonate(() =>
-                    {
-                        try
+                try
+                {
+                    newToken = TokenManager
+                        .CreateFromSystemAccount()
+                        .EnablePrivilege(Privilege.SeIncreaseQuotaPrivilege, false)
+                        .EnablePrivilege(Privilege.SeAssignPrimaryTokenPrivilege, false)
+                        .Impersonate(() =>
                         {
-                        newToken = TokenManager.CreateFromCurrentProcessToken().GetLinkedToken()
-                            .SetIntegrity(integrityLevel)
-                            .GetToken();
-                        }
-                        catch (Exception e)
-                        {
-                            Logger.Instance.Log("Unable to get unelevated token, will try SaferApi Token. " + e.ToString(), LogLevel.Warning);
-                            newToken = TokenManager.CreateFromSaferApi(SaferLevels.NormalUser)
+                            return TokenManager.CreateFromCurrentProcessToken().GetLinkedToken()
                                 .SetIntegrity(integrityLevel)
                                 .GetToken();
-                        }
+                        });
+                }
+                catch (Exception e)
+                {
+                    Logger.Instance.Log("Unable to get unelevated token, will try SaferApi Token. " + e.ToString(),
+                        LogLevel.Warning);
+                    newToken = TokenManager.CreateFromSaferApi(SaferLevels.NormalUser)
+                        .SetIntegrity(integrityLevel)
+                        .GetToken();
+                }
 
-                        using (newToken)
-                        {
-                            return CreateProcessAsUser(newToken, appToRun, args, startupFolder, newWindow, hidden);
-                        }
-                    });
+                using (newToken)
+                {
+                    return CreateProcessAsUser(newToken, appToRun, args, startupFolder, newWindow, hidden);
+                }
             }
             else
             {
