@@ -28,7 +28,7 @@ namespace gsudo.Tests
         [TestMethod]
         public void Arguments_NoQuotesTests()
         {
-            var input = "HEllo I Am my params OtherParam1 OtherParam2 OtherParam3";
+            var input = "HEllo I  Am my params OtherParam1 OtherParam2 OtherParam3";
             var expected = new string[] { "HEllo", "I", "Am", "my", "params", "OtherParam1", "OtherParam2", "OtherParam3" };
 
             var actual = ArgumentsHelper.SplitArgs(input).ToArray();

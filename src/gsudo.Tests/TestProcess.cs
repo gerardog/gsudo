@@ -26,14 +26,14 @@ namespace gsudo.Tests
         private SafeProcessHandle _testProcessHandle;
         private Process _process;
 
-        public TestProcess(string inputScript)
+        public TestProcess(string inputScript, string shell = "cmd /k") 
         {
             string arguments = $"";
 
-            File.WriteAllText(_batchFile, 
+            File.WriteAllText(_batchFile,
                 $"@echo off \r\n" +
 //                "Prompt $g\r\n" +
-                $"gsudo -i medium cmd /k < \"{_sIn}\" > \"{_sOut}\" 2> \"{_sErr}\" \r\n" +
+                $"gsudo -i medium  {shell} < \"{_sIn}\" > \"{_sOut}\" 2> \"{_sErr}\" \r\n" +
                 "exit %errorlevel%\r\n");
 
             File.WriteAllText($"{_sIn}", inputScript + "\r\nExit /b %errorlevel%\r\n");

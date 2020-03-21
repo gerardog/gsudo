@@ -66,10 +66,9 @@ namespace gsudo.Tests
         public void PS_EchoNoQuotesTest()
         {
             var p = new TestProcess(
-                $@"{PS_FILENAME} {PS_ARGS}
-./gsudo 'echo 1 2 3'
+                $@"./gsudo 'echo 1 2 3'
 exit
-");
+", $"{PS_FILENAME} {PS_ARGS}");
             p.WaitForExit();
 
             p.GetStdOut()

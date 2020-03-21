@@ -10,7 +10,7 @@ namespace gsudo.Helpers
 {
     public static class ArgumentsHelper
     {
-        static readonly HashSet<string> CMD_COMMANDS = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "ASSOC", "ATTRIB", "BREAK", "BCDEDIT", "CACLS", "CALL", "CD", "CHCP", "CHDIR", "CHKDSK", "CHKNTFS", "CLS", /*"CMD",*/ "COLOR", "COMP", "COMPACT", "CONVERT", "COPY", "DATE", "DEL", "DIR", "DISKPART", "DOSKEY", "DRIVERQUERY", "ECHO", "ENDLOCAL", "ERASE", "EXIT", "FC", "FIND", "FINDSTR", "FOR", "FORMAT", "FSUTIL", "FTYPE", "GOTO", "GPRESULT", "GRAFTABL", "HELP", "ICACLS", "IF", "LABEL", "MD", "MKDIR", "MKLINK", "MODE", "MORE", "MOVE", "OPENFILES", "PATH", "PAUSE", "POPD", "PRINT", "PROMPT", "PUSHD", "RD", "RECOVER", "REM", "REN", "RENAME", "REPLACE", "RMDIR", "ROBOCOPY", "SET", "SETLOCAL", "SC", "SCHTASKS", "SHIFT", "SHUTDOWN", "SORT", "START", "SUBST", "SYSTEMINFO", "TASKLIST", "TASKKILL", "TIME", "TITLE", "TREE", "TYPE", "VER", "VERIFY", "VOL", "XCOPY", "WMIC" };
+        static readonly HashSet<string> CmdCommands = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "ASSOC", "ATTRIB", "BREAK", "BCDEDIT", "CACLS", "CALL", "CD", "CHCP", "CHDIR", "CHKDSK", "CHKNTFS", "CLS", /*"CMD",*/ "COLOR", "COMP", "COMPACT", "CONVERT", "COPY", "DATE", "DEL", "DIR", "DISKPART", "DOSKEY", "DRIVERQUERY", "ECHO", "ENDLOCAL", "ERASE", "EXIT", "FC", "FIND", "FINDSTR", "FOR", "FORMAT", "FSUTIL", "FTYPE", "GOTO", "GPRESULT", "GRAFTABL", "HELP", "ICACLS", "IF", "LABEL", "MD", "MKDIR", "MKLINK", "MODE", "MORE", "MOVE", "OPENFILES", "PATH", "PAUSE", "POPD", "PRINT", "PROMPT", "PUSHD", "RD", "RECOVER", "REM", "REN", "RENAME", "REPLACE", "RMDIR", "ROBOCOPY", "SET", "SETLOCAL", "SC", "SCHTASKS", "SHIFT", "SHUTDOWN", "SORT", "START", "SUBST", "SYSTEMINFO", "TASKLIST", "TASKKILL", "TIME", "TITLE", "TREE", "TYPE", "VER", "VERIFY", "VOL", "XCOPY", "WMIC" };
 
         internal static string[] AugmentCommand(string[] args)
         {
@@ -61,6 +61,15 @@ namespace gsudo.Helpers
                 return newArgs.ToArray();
             }
 
+            if (currentShell == Shell.Yori)
+            {
+                if (args.Length == 0)
+                    return new[] {currentShellExeName};
+                else
+                    return new[] {currentShellExeName, "-c"}
+                        .Concat(args).ToArray();
+            }
+
             // Not Powershell, or Powershell Core, assume CMD.
             if (args.Length == 0)
             {
@@ -69,7 +78,7 @@ namespace gsudo.Helpers
             }
             else
             {
-                if (CMD_COMMANDS.Contains(args[0]))
+                if (CmdCommands.Contains(args[0])) 
                     return new string[]
                         { Environment.GetEnvironmentVariable("COMSPEC"), "/c" }
                         .Concat(args).ToArray();
@@ -77,16 +86,15 @@ namespace gsudo.Helpers
                 var exename = ProcessFactory.FindExecutableInPath(UnQuote(args[0]));
                 if (exename == null)
                 {
-                    // add "CMD /C" prefix to commands such as MD, CD, DIR..
-                    // We are sure this will not be an interactive experience, 
-
+                    // We don't know what command are we executing. It may be an invalid program...
+                    // But let CMD decide that... Invoke using "CMD /C" prefix ..
                     return new string[]
                         { Environment.GetEnvironmentVariable("COMSPEC"), "/c" }
                         .Concat(args).ToArray();
                 }
                 else
                 {
-                    args[0] = $"\"{exename}\""; // Batch files not started by create process if no extension is specified.
+                    args[0] = $"\"{exename}\""; // replace command name with full+absolute+quoted path to resolve many issues, like "Batch files not started by create process if no extension is specified."
                     return args;
                 }
             }
@@ -105,7 +113,8 @@ namespace gsudo.Helpers
                     insideQuotes = !insideQuotes;
                 else if (args[curr] == ' ' && !insideQuotes)
                 {
-                    results.Add(args.Substring(pushed, curr - pushed));
+                    if ((curr - pushed) > 0)
+                        results.Add(args.Substring(pushed, curr - pushed));
                     pushed = curr + 1;
                 }
                 curr++;
@@ -120,7 +129,7 @@ namespace gsudo.Helpers
         {
             // Parse Options
             var args = new LinkedList<string>(argsEnumerable);
-            Func<string> Dequeue = () =>
+            Func<string> dequeue = () =>
             {
                 if (args.Count == 0) throw new ApplicationException("Missing argument");
                 var ret = args.First.Value;
@@ -131,7 +140,7 @@ namespace gsudo.Helpers
             string arg;
             while (args.Count>0)
             {
-                arg = Dequeue();
+                arg = dequeue();
 
                 if (
                 SetTrueIf(arg, () => InputArguments.NewWindow = true, "-n", "--new") ||
@@ -162,7 +171,7 @@ namespace gsudo.Helpers
                 }
                 else if (arg.In("--loglevel"))
                 {
-                    arg = Dequeue();
+                    arg = dequeue();
                     if (!Enum.TryParse<LogLevel>(arg, true, out var val))
                         throw new ApplicationException($"\"{arg}\" is not a valid LogLevel. Valid values are: All, Debug, Info, Warning, Error, None");
 
@@ -170,7 +179,7 @@ namespace gsudo.Helpers
                 }
                 else if (arg.In("-i", "--integrity"))
                 {
-                    arg = Dequeue();
+                    arg = dequeue();
                     if (!Enum.TryParse<IntegrityLevel>(arg, true, out var val))
                         throw new ApplicationException($"\"{arg}\" is not a valid IntegrityLevel. Valid values are: \n" +
                             $"Untrusted, Low, Medium, MediuPlus, High, System, Protected (unsupported), Secure (unsupported)");
@@ -198,7 +207,7 @@ namespace gsudo.Helpers
             }
             
             // Parse Command
-            arg = Dequeue();
+            arg = dequeue();
             if (arg.Equals("help", StringComparison.OrdinalIgnoreCase))
                 return new HelpCommand();
 
@@ -206,9 +215,9 @@ namespace gsudo.Helpers
             {
                     return new ServiceCommand()
                     {
-                        allowedPid = int.Parse(Dequeue(), CultureInfo.InvariantCulture),
-                        allowedSid = Dequeue(),
-                        LogLvl = ExtensionMethods.ParseEnum<LogLevel>(Dequeue()),
+                        allowedPid = int.Parse(dequeue(), CultureInfo.InvariantCulture),
+                        allowedSid = dequeue(),
+                        LogLvl = ExtensionMethods.ParseEnum<LogLevel>(dequeue()),
                     };
             }
 
@@ -216,17 +225,17 @@ namespace gsudo.Helpers
             {
                 return new ServiceHopCommand()
                 {
-                    allowedPid = int.Parse(Dequeue(), CultureInfo.InvariantCulture),
-                    allowedSid = Dequeue(),
-                    LogLvl = ExtensionMethods.ParseEnum<LogLevel>(Dequeue()),
+                    allowedPid = int.Parse(dequeue(), CultureInfo.InvariantCulture),
+                    allowedSid = dequeue(),
+                    LogLvl = ExtensionMethods.ParseEnum<LogLevel>(dequeue()),
                 };
             }
 
             if (arg.In("gsudoctrlc"))
                 return new CtrlCCommand() 
                 { 
-                    Pid = int.Parse(Dequeue(), CultureInfo.InvariantCulture), 
-                    sendSigBreak = bool.Parse(Dequeue()) 
+                    Pid = int.Parse(dequeue(), CultureInfo.InvariantCulture), 
+                    sendSigBreak = bool.Parse(dequeue()) 
                 };
 
             if (arg.In("config"))

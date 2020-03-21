@@ -11,7 +11,7 @@ namespace gsudo.Tests
     public class CmdTests : TestBase
     {
         [TestMethod]
-        public void Cmd_DebugTests()
+        public void Cmd_DebugTestHelper()
         {
             var p = new TestProcess("start cmd");
         }
@@ -162,6 +162,8 @@ namespace gsudo.Tests
 
     public class TestBase
     {
+        public TestContext TestContext { get; set; }
+
         static TestBase()
         {
             // Start elevated service.

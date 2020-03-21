@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.IO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace gsudo.Tests
@@ -20,7 +15,7 @@ namespace gsudo.Tests
                     return sr.ReadToEnd();
             }
 
-            Assert.Fail($"Input does not contain \"{lineToFind}\"");
+            Assert.Fail($"Input does not contain \"{lineToFind}\"\r\nInput was:\r\n{input}");
             return null;
         }
     }
