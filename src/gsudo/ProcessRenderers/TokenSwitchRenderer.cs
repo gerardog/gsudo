@@ -71,10 +71,16 @@ namespace gsudo.ProcessRenderers
 
                 if (!tokenSwithSuccessEvent.IsSet)
                 {
+                    if (!_connection.IsAlive)
+                        Logger.Instance.Log($"Failed to substitute token. Connection from server lost.", LogLevel.Error);
+                    else
+                        Logger.Instance.Log($"Failed to substitute token.", LogLevel.Error);
+
                     ProcessApi.TerminateProcess(_process.DangerousGetHandle(), 0);
                     return Task.FromResult(Constants.GSUDO_ERROR_EXITCODE);
                 }
 
+                Logger.Instance.Log("Process token successfully substituted.", LogLevel.Debug);
                 _ = ProcessApi.ResumeThread(_processInformation.hThread);
 
                 if (_elevationRequest.Wait)
@@ -111,7 +117,6 @@ namespace gsudo.ProcessRenderers
                 if (token == Constants.TOKEN_SUCCESS)
                 {
                     tokenSwithSuccessEvent.Set();
-                    Logger.Instance.Log("Process token successfully substituted.", LogLevel.Debug);
                     continue;
                 }
                 if (token == Constants.TOKEN_ERROR)

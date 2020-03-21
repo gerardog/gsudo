@@ -1,9 +1,11 @@
-﻿using System;
+﻿using gsudo.Helpers;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Security.Principal;
-using gsudo.Helpers;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Threading;
 
 namespace gsudo.Tests
 {
@@ -100,7 +102,7 @@ namespace gsudo.Tests
             var p = new TestProcess("gsudo -w notepad");
             try
             {
-                p.WaitForExit(2000);
+                p.WaitForExit(3000);
             }
             catch (Exception)
             {
@@ -108,7 +110,8 @@ namespace gsudo.Tests
             }
 
             Assert.IsTrue(stillWaiting);
-            p.Kill();
+            Process.Start("gsudo", "taskkill.exe /FI \"WINDOWTITLE eq Untitled - Notepad\" ").WaitForExit();
+            p.WaitForExit();
         }
 
         [TestMethod]
@@ -121,7 +124,8 @@ namespace gsudo.Tests
             }
             finally
             {
-                p.Kill();
+                Process.Start("gsudo", "taskkill.exe /FI \"WINDOWTITLE eq Untitled - Notepad\" ").WaitForExit();
+                p.WaitForExit();
             }
         }
 
@@ -132,7 +136,7 @@ namespace gsudo.Tests
             try
             {
                 p.WaitForExit();
-                Assert.AreEqual(0, p.ExitCode);
+                Assert.AreEqual(0, p.ExitCode, $"Output was: {p.GetStdOut()}");
             }
             finally
             {
@@ -143,9 +147,10 @@ namespace gsudo.Tests
         [TestMethod]
         public void Cmd_UnexistentAppTest()
         {
-            var p = new TestProcess("gsudo qaqswswdewfwerferfwe");
+            var p = new TestProcess("gsudo --debug qaqswswdewfwerferfwe");
             p.WaitForExit();
             Assert.AreNotEqual(0, p.ExitCode, p.GetStdOut());
+            Assert.AreNotEqual(0, 999, p.GetStdOut());
         }
 
         [TestMethod]
@@ -153,24 +158,34 @@ namespace gsudo.Tests
         {
             File.WriteAllText("HelloWorld.bat", "@echo Hello");
 
-            var p = new TestProcess("gsudo HelloWorld");
+            var p = new TestProcess("gsudo --debug HelloWorld");
             p.WaitForExit();
             Assert.IsTrue(p.GetStdOut().Contains("Hello\r\n"), p.GetStdOut());
             Assert.AreEqual(0, p.ExitCode);
         }
     }
 
+    [TestClass]
     public class TestBase
     {
         public TestContext TestContext { get; set; }
 
-        static TestBase()
+        [AssemblyInitialize]
+        public static void AssemblyInitialize(TestContext context)
         {
             // Start elevated service.
             var callingSid = WindowsIdentity.GetCurrent().User.Value;
-
+            var gsudoPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "gsudo.exe");
             // start elevated service (to prevent uac popups or just have one).
-            Process.Start($"gsudo", $@"-n gsudo gsudoservice 0 {callingSid} All").WaitForExit();
+            Process.Start(
+                new ProcessStartInfo()
+                {
+                    FileName = "cmd",
+                    Arguments = $" /c start \"gsudo Service\" \"{gsudoPath}\" --debug gsudoservice 0 {callingSid} All",
+                    Verb = "RunAs"
+                }
+            )?.WaitForExit();
+            Thread.Sleep(500);
         }
     }
 }

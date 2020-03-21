@@ -196,8 +196,7 @@ namespace gsudo.Helpers
                 }
                 catch (Exception e)
                 {
-                    Logger.Instance.Log("Unable to get unelevated token, will try SaferApi Token. " + e.ToString(),
-                        LogLevel.Warning);
+                    Logger.Instance.Log("Unable to get unelevated token. (Is UAC enabled?) Fallback to SaferApi Token but this process won't be able to elevate." + e.Message, LogLevel.Debug);
                     newToken = TokenManager.CreateFromSaferApi(SaferLevels.NormalUser)
                         .SetIntegrity(integrityLevel)
                         .GetToken();

@@ -33,8 +33,8 @@ namespace gsudo.Tests
             File.WriteAllText(_batchFile,
                 $"@echo off \r\n" +
 //                "Prompt $g\r\n" +
-                $"gsudo -i medium  {shell} < \"{_sIn}\" 2>&1 > \"{_sOut}\" \r\n" +
-                "exit %errorlevel%\r\n");
+                $"gsudo -i medium  {shell} < \"{_sIn}\" > \"{_sOut}\" 2>&1\r\n" +
+                "exit /b %errorlevel%\r\n");
 
             File.WriteAllText($"{_sIn}", inputScript + "\r\nExit /b %errorlevel%\r\n");
 
@@ -81,7 +81,7 @@ namespace gsudo.Tests
 
         public void Kill()
         {
-            Process.Start("gsudo", "taskkill.exe /PID " + ProcessId).WaitForExit();
+            Process.Start("gsudo", "--debug taskkill.exe /PID " + ProcessId).WaitForExit();
         }
     }
 
