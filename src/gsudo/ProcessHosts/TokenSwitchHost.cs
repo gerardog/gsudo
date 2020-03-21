@@ -50,6 +50,7 @@ namespace gsudo.ProcessHosts
                     });
                 
                 await connection.ControlStream.WriteAsync(Constants.TOKEN_SUCCESS).ConfigureAwait(false);
+                connection.DisconnectedWaitHandle.WaitOne(); // Wait until client receives the response before closing.
             }
             catch (Exception ex)
             {
@@ -89,6 +90,7 @@ namespace gsudo.ProcessHosts
             {
                 tm = TokenManager.CreateUnelevated().SetIntegrity(elevationRequest.IntegrityLevel);
             }
+
             else
             {
                 tm = TokenManager.CreateFromCurrentProcessToken(TokenManager.MAXIMUM_ALLOWED);
