@@ -29,7 +29,7 @@ namespace gsudo.Helpers
             try
             {
                 exeName = process.ProcessName;
-                exeName = process.MainModule.FileName;
+                exeName = process.MainModule?.FileName ?? exeName;
             }
             catch {}
             return exeName;
