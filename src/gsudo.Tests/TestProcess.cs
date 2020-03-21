@@ -17,11 +17,11 @@ namespace gsudo.Tests
         private readonly string _testId = TestNumber++.ToString();// DateTime.Now.ToString("yyyyMMddHHmmssff");
         string _sIn => $"in{_testId}";
         string _sOut => $"out{_testId}";
-        string _sErr => $"err{_testId}";
+//       string _sErr => $"err{_testId}";
         string _batchFile => $"test{_testId}.bat";
 
         string _stdOut = null;
-        string _stdErr = null;
+//        string _stdErr = null;
 
         private SafeProcessHandle _testProcessHandle;
         private Process _process;
@@ -33,7 +33,7 @@ namespace gsudo.Tests
             File.WriteAllText(_batchFile,
                 $"@echo off \r\n" +
 //                "Prompt $g\r\n" +
-                $"gsudo -i medium  {shell} < \"{_sIn}\" > \"{_sOut}\" 2> \"{_sErr}\" \r\n" +
+                $"gsudo -i medium  {shell} < \"{_sIn}\" 2>&1 > \"{_sOut}\" \r\n" +
                 "exit %errorlevel%\r\n");
 
             File.WriteAllText($"{_sIn}", inputScript + "\r\nExit /b %errorlevel%\r\n");
@@ -47,7 +47,7 @@ namespace gsudo.Tests
         }
 
         public string GetStdOut() => _stdOut ?? (_stdOut = ReadAllText($"{_sOut}"));
-        public string GetStdErr() => _stdErr ?? (_stdErr = ReadAllText($"{_sErr}"));
+//        public string GetStdErr() => _stdErr ?? (_stdErr = ReadAllText($"{_sErr}"));
 
         private string ReadAllText(string fileName)
         {
@@ -68,12 +68,12 @@ namespace gsudo.Tests
             {
                 NativeMethods.TerminateProcess(_testProcessHandle.DangerousGetHandle(), 0);
                 Debug.WriteLine($"Process Std Output:\n{GetStdOut()}");
-                Debug.WriteLine($"Process Std Error:\n{GetStdErr()}");
+                //Debug.WriteLine($"Process Std Error:\n{GetStdErr()}");
 
                 Assert.Fail("Process still active!");
             }
             Debug.WriteLine($"Process Std Output:\n{GetStdOut()}");
-            Debug.WriteLine($"Process Std Error:\n{GetStdErr()}");
+            //Debug.WriteLine($"Process Std Error:\n{GetStdErr()}");
             //NativeMethods.GetExitCodeProcess(_testProcessHandle, out ExitCode);
             ExitCode = _process?.ExitCode ?? ExitCode;
             _testProcessHandle.Close();

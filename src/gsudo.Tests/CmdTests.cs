@@ -145,7 +145,7 @@ namespace gsudo.Tests
         {
             var p = new TestProcess("gsudo qaqswswdewfwerferfwe");
             p.WaitForExit();
-            Assert.AreNotEqual(0, p.ExitCode);
+            Assert.AreNotEqual(0, p.ExitCode, p.GetStdOut());
         }
 
         [TestMethod]
@@ -155,7 +155,7 @@ namespace gsudo.Tests
 
             var p = new TestProcess("gsudo HelloWorld");
             p.WaitForExit();
-            Assert.IsTrue(p.GetStdOut().Contains("Hello\r\n"));
+            Assert.IsTrue(p.GetStdOut().Contains("Hello\r\n"), p.GetStdOut());
             Assert.AreEqual(0, p.ExitCode);
         }
     }
