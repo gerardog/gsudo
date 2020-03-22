@@ -33,9 +33,19 @@ namespace gsudo.Rpc
             _singleUse = singleUse;
 
             _allowedExe = SymbolicLinkSupport.ResolveSymbolicLink(ProcessHelper.GetOwnExeName());
-            var fileInfo = new System.IO.FileInfo(_allowedExe);
-            _allowedExeTimeStamp = fileInfo.LastWriteTimeUtc;
-            _allowedExeLength = fileInfo.Length;
+            if (new Uri(_allowedExe).IsUnc)
+            {
+                _allowedExeLength = -1; // Workaround for #27: Running gsudo from mapped drive. (see IsAuthorized)
+                // If we were invoked from a network drive, once elevated we won't be able to read the network drive because is not connected on the elevated session,
+                // therefore this protection is disabled, or else it always fails.
+            }
+            else
+            {
+                var fileInfo = new System.IO.FileInfo(_allowedExe);
+                _allowedExeTimeStamp = fileInfo.LastWriteTimeUtc;
+                _allowedExeLength = fileInfo.Length;
+            }
+
 #if !DEBUG
             _exeLock = File.Open(ProcessHelper.GetOwnExeName(), FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 #endif
@@ -129,20 +139,23 @@ namespace gsudo.Rpc
             clientProcess = Process.GetProcessById(clientPid);
             clientProcessMainModule = clientProcess.MainModule;
 
-            var callingExe = SymbolicLinkSupport.ResolveSymbolicLink(clientProcessMainModule.FileName);
-            var fileInfo = new System.IO.FileInfo(callingExe);
-            var callingExeTimeStamp = fileInfo.LastWriteTimeUtc;
-            var callingExeLength = fileInfo.Length;
-
-            if (callingExe != _allowedExe || callingExeLength != _allowedExeLength ||
-                callingExeTimeStamp != _allowedExeTimeStamp)
+            if (_allowedExeLength != -1)
             {
-                // I'm not checking the SHA because it would be too slow.
+                var callingExe = SymbolicLinkSupport.ResolveSymbolicLink(clientProcessMainModule.FileName);
+                var fileInfo = new System.IO.FileInfo(callingExe);
+                var callingExeTimeStamp = fileInfo.LastWriteTimeUtc;
+                var callingExeLength = fileInfo.Length;
 
-                Logger.Instance.Log(
-                    $"Invalid Client. Rejecting Connection. \nAllowed: {_allowedExe}\nActual:  {callingExe}",
-                    LogLevel.Error);
-                return false;
+                if (callingExe != _allowedExe || callingExeLength != _allowedExeLength ||
+                    callingExeTimeStamp != _allowedExeTimeStamp)
+                {
+                    // I'm not checking the SHA because it would be too slow.
+
+                    Logger.Instance.Log(
+                        $"Invalid Client. Rejecting Connection. \nAllowed: {_allowedExe}\nActual:  {callingExe}",
+                        LogLevel.Error);
+                    return false;
+                }
             }
 #if !DEBUG
             if (clientProcessMainModule != null) 

@@ -39,7 +39,10 @@ namespace gsudo.Helpers
 
         public static string ResolveSymbolicLink(string symLinkFullPath)
         {
-            return GetFinalPathName(symLinkFullPath).Replace("\\\\?\\", "");
+            return GetFinalPathName(symLinkFullPath)
+                    .Replace("\\\\?\\UNC\\", "\\\\")
+                    .Replace("\\\\?\\", "")
+                ;
         }
         public static string GetFinalPathName(string path)
         {
@@ -50,8 +53,9 @@ namespace gsudo.Helpers
                 FileMode.Open,
                 Native.FileApi.FILE_FLAG_BACKUP_SEMANTICS,
                 IntPtr.Zero);
+
             if (h == Native.FileApi.INVALID_HANDLE_VALUE)
-                throw new Win32Exception();
+                return path;
 
             try
             {
