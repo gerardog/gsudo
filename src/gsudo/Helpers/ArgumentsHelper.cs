@@ -147,7 +147,7 @@ namespace gsudo.Helpers
                 SetTrueIf(arg, () => InputArguments.Wait = true, "-w", "--wait") ||
 
                 // Legacy, now undocumented features.
-                SetTrueIf(arg, () => Settings.ForceRawConsole.Value = true, "--piped", "--raw" /*--raw for backward compat*/) ||
+                SetTrueIf(arg, () => Settings.ForcePipedConsole.Value = true, "--piped", "--raw" /*--raw for backward compat*/) ||
                 SetTrueIf(arg, () => Settings.ForceAttachedConsole.Value = true, "--attached") ||
                 SetTrueIf(arg, () => Settings.ForceVTConsole.Value = true, "--vt") ||
                 SetTrueIf(arg, () => Settings.CopyEnvironmentVariables.Value = true, "--copyEV") ||
@@ -155,8 +155,6 @@ namespace gsudo.Helpers
 
                 SetTrueIf(arg, () => InputArguments.RunAsSystem = true, "-s", "--system") ||
                 SetTrueIf(arg, () => InputArguments.Global = true, "--global") ||
-                SetTrueIf(arg, () => InputArguments.NoCache = true, "--nocache") ||
-                SetTrueIf(arg, () => InputArguments.UnsafeCache = true, "--unsafe") ||
                 SetTrueIf(arg, () => InputArguments.KillCache = true, "-k", "--reset-timestamp")
                    )
                 { }
@@ -201,7 +199,14 @@ namespace gsudo.Helpers
             if (args.Count == 0)
             {
                 if (InputArguments.KillCache)
-                    return null; // support for "-k" as command
+                {
+                    // support for "-k" as command
+                    // return a verbose command, instead of a silent argument.
+                    // this is overly complicated because it supports a sudo-like experience like 'sudo -k' (kill as a verb/command)
+                    // or 'sudo -k command' (kill as an argument)
+                    InputArguments.KillCache = false; 
+                    return new KillCacheCommand(verbose: true); 
+                }
 
                 return new RunCommand() { CommandToRun = Array.Empty<string>() };
             }
@@ -215,12 +220,14 @@ namespace gsudo.Helpers
             {
                     return new ServiceCommand()
                     {
-                        allowedPid = int.Parse(dequeue(), CultureInfo.InvariantCulture),
-                        allowedSid = dequeue(),
+                        AllowedPid = int.Parse(dequeue(), CultureInfo.InvariantCulture),
+                        AllowedSid = dequeue(),
                         LogLvl = ExtensionMethods.ParseEnum<LogLevel>(dequeue()),
+                        CacheDuration = Settings.TimeSpanParseWithInfinite(dequeue())
                     };
             }
 
+            /*
             if (arg.In("gsudoservicehop"))
             {
                 return new ServiceHopCommand()
@@ -230,6 +237,7 @@ namespace gsudo.Helpers
                     LogLvl = ExtensionMethods.ParseEnum<LogLevel>(dequeue()),
                 };
             }
+            */
 
             if (arg.In("gsudoctrlc"))
                 return new CtrlCCommand() 
@@ -244,8 +252,48 @@ namespace gsudo.Helpers
             if (arg.In("status"))
                 return new StatusCommand();
 
+            /* Obsolete since TokenSwitch Mode
             if (arg.In("AttachRun"))
                 return new AttachRun() { CommandToRun = args };
+            */
+
+            if (arg.In("Cache"))
+            {
+                var cmd = new CacheCommand();
+                while (args.Count > 0)
+                {
+                    arg = dequeue();
+
+                    if (arg.In("ON"))
+                        cmd.Action = CacheCommandAction.On;
+                    else if (arg.In("OFF"))
+                        cmd.Action = CacheCommandAction.Off;
+                    else if (arg.In("-h", "/h" ,"--help", "help"))
+                        cmd.Action = CacheCommandAction.Help;
+                    else if (arg.In("-p", "--pid"))
+                        cmd.AllowedPid = int.Parse(dequeue(), CultureInfo.InvariantCulture);
+                    else if (arg.In("-d", "--duration"))
+                        cmd.CacheDuration = Settings.TimeSpanParseWithInfinite(dequeue());
+                    else 
+                        throw new ApplicationException($"Unknown argument: {arg}");
+                }
+
+                return cmd;
+            }
+
+            if (arg.In("gsudoelevate"))
+            {
+                var cmd = new ElevateCommand();
+                while (args.Count > 0)
+                {
+                    arg = dequeue();
+
+                    if (arg.In("--pid"))
+                        cmd.ProcessId = int.Parse(dequeue(), CultureInfo.InvariantCulture);
+                }
+
+                return cmd;
+            }
 
             if (arg.In("run"))
                 return new RunCommand() { CommandToRun = args };

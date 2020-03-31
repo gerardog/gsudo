@@ -58,7 +58,6 @@ namespace gsudo.Helpers
             }
         }
 
-
         public static Process GetParentProcessExcludingShim(this Process process)
         {
             try
@@ -119,7 +118,14 @@ namespace gsudo.Helpers
             }
             return -1;
         }
-
+        
+        internal static int GetCallerPid()
+        {
+            var currentProcess= Process.GetCurrentProcess();
+            var parent = currentProcess.GetParentProcessExcludingShim();
+            if (parent == null) return ProcessHelper.GetParentProcessId(currentProcess.Id);
+            return parent.Id;
+        }
         public static bool IsHighIntegrity()
         {
             return ProcessHelper.GetCurrentIntegrityLevel() >= (int)IntegrityLevel.High;

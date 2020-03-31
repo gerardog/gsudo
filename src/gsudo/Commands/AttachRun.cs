@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if TO_BE_REMOVED_10
+using System;
 using gsudo.Helpers;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -13,8 +14,9 @@ namespace gsudo.Commands
     /// <summary>
     /// This command attaches to the parent console, then executes the command.
     /// This works even if the parent has higher integrity level than us.
-    /// This can't be launched by the elevated service, because the parent id must match
+    /// This must be launched by the non-elevated gsudo and not the elevated service, because the parent id must match.
     /// </summary>
+    [Obsolete("No longer needed since TokenSwitch was added.")] // TODO: Remove in 1.0
     class AttachRun : ICommand
     {
         public IEnumerable<string> CommandToRun { get; set; }
@@ -54,3 +56,4 @@ namespace gsudo.Commands
         }
     }
 }
+#endif

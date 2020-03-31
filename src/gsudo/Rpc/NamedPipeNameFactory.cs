@@ -9,7 +9,7 @@ namespace gsudo.Rpc
         {
             if (connectingPid < 0) connectingPid = 0;
             string integrity = InputArguments.GetIntegrityLevel().ToString();
-            var data = $"{connectingUser}_{connectingPid}_{(InputArguments.RunAsSystem?"S":"")}";
+            var data = $"{connectingUser}_{connectingPid}";
 #if !DEBUG
             data = GetHash(data);
 #endif

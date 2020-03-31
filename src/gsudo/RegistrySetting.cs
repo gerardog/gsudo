@@ -1,5 +1,7 @@
 ﻿using Microsoft.Win32;
 using System;
+using System.ComponentModel;
+using System.Linq;
 
 namespace gsudo
 {
@@ -17,23 +19,26 @@ namespace gsudo
         public abstract bool HasGlobalValue();
         public abstract bool HasLocalValue();
         public abstract void ClearRunningValue();
-
+        public abstract object Parse(string serialized);
     }
 
     class RegistrySetting<T> : RegistrySetting
     {
-        private T defaultValue { get; }
+        private readonly T defaultValue;
         private T runningValue;
-        bool hasValue = false;
-        private Func<string, T> deserializer;
+        private bool hasValue = false;
+        private readonly Func<string, T> deserializer;
+        private readonly Func<T, string> serializer;
 
-        public RegistrySetting(string name, T defaultValue, Func<string, T> deserializer, RegistrySettingScope scope = RegistrySettingScope.Any)
+        public RegistrySetting(string name, T defaultValue, Func<string, T> deserializer, RegistrySettingScope scope = RegistrySettingScope.Any, Func<T,string> serializer = null)
         {
             Name = name;
             this.defaultValue = defaultValue;
             this.deserializer = deserializer;
             this.Scope = scope;
+            this.serializer = serializer;
         }
+
 
         public T Value
         {
@@ -96,10 +101,15 @@ namespace gsudo
 
             return false;
         }
-        public override object GetStringValue() => Value.ToString();
+        public override object GetStringValue() => serializer != null ? serializer(Value) : Value.ToString();
 
         public override void Save(string newValue, bool global)
         {
+            Value = deserializer(newValue);
+            var warning = GetAttributeOfType<DescriptionAttribute>(Value)?.Description;
+            if (!string.IsNullOrEmpty(warning))
+                Logger.Instance.Log(warning, LogLevel.Warning);
+
             if (!global && HasGlobalValue())
                 Logger.Instance.Log($"A global value exists and it overrides the user value. \r\nUse 'gsudo config {Name} --global --reset' to clear it.", LogLevel.Warning);
 
@@ -114,7 +124,6 @@ namespace gsudo
             if (subkey == null)
                 subkey = key.CreateSubKey(REGKEY, true);
 
-            Value = deserializer(newValue);
             subkey.SetValue(Name, GetStringValue());
             subkey.Dispose();
         }
@@ -143,5 +152,15 @@ namespace gsudo
         public static implicit operator T(RegistrySetting<T> t) => t.Value;
 
         public override void ClearRunningValue() => hasValue = false;
+        public override object Parse(string serialized) => deserializer(serialized);
+
+        public static TAttributte GetAttributeOfType<TAttributte>(T enumVal) where TAttributte : System.Attribute
+        {
+            var type = enumVal.GetType();
+            var memInfo = type.GetMember(enumVal.ToString());
+            if ((memInfo?.Any() ?? false) == false) return null;
+            var attributes = memInfo[0].GetCustomAttributes(typeof(TAttributte), false);
+            return (attributes.Length > 0) ? (TAttributte)attributes[0] : null;
+        }
     }
 }

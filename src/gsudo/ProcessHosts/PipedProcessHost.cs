@@ -14,7 +14,7 @@ namespace gsudo.ProcessHosts
     /// Hosts a console process with redirected StdIn/Out/Err.
     /// Sends all I/O thru the connection.
     /// </summary>
-    [Obsolete("Superseded by TokenSwitch mode")]
+    [Obsolete("Superseded by TokenSwitch mode")] // TODO: Possible remove in 1.0
     class PipedProcessHost : IProcessHost
     {
         private string lastInboundMessage = null;

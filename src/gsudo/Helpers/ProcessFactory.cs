@@ -114,7 +114,6 @@ namespace gsudo.Helpers
 
             try
             {
-
                 if (File.Exists(exe))
                 {
                     return Path.GetFullPath(exe);
@@ -159,8 +158,13 @@ namespace gsudo.Helpers
         public static SafeProcessHandle StartAsSystem(string appToRun, string args, string startupFolder, bool hidden)
         {
             Logger.Instance.Log($"{nameof(StartAsSystem)}: {appToRun} {args}", LogLevel.Debug);
-            var winlogon = Process.GetProcesses().Where(p => p.ProcessName.In("winlogon")).FirstOrDefault();
-            return StartAsProcess(winlogon.Id, appToRun, args, startupFolder, hidden).SafeHandle;
+            using (var tm = TokenProvider.CreateFromSystemAccount())
+            {
+                using (var token = tm.GetToken())
+                {
+                    return CreateProcessWithToken(token.DangerousGetHandle() , appToRun, args, startupFolder, hidden);
+                }
+            }
         }
 
         /// <summary>
@@ -178,26 +182,30 @@ namespace gsudo.Helpers
                 return new SafeProcessHandle(StartAttached(appToRun, args).Handle, true);
             }
 
-            if (integrityLevel.In(IntegrityLevel.Medium, IntegrityLevel.MediumPlus) &&
-                ProcessHelper.IsAdministrator()) // Unelevation request.
+            if (integrityLevel >= IntegrityLevel.Medium ) // Unelevation request.
             {
                 try
                 {
-                    newToken = TokenManager
+                    return TokenProvider
                         .CreateFromSystemAccount()
                         .EnablePrivilege(Privilege.SeIncreaseQuotaPrivilege, false)
                         .EnablePrivilege(Privilege.SeAssignPrimaryTokenPrivilege, false)
                         .Impersonate(() =>
                         {
-                            return TokenManager.CreateFromCurrentProcessToken().GetLinkedToken()
+                            newToken = TokenProvider.CreateFromCurrentProcessToken().GetLinkedToken()
                                 .SetIntegrity(integrityLevel)
                                 .GetToken();
+
+                            using (newToken)
+                            {
+                                return CreateProcessAsUser(newToken, appToRun, args, startupFolder, newWindow, hidden);
+                            }
                         });
                 }
                 catch (Exception e)
                 {
                     Logger.Instance.Log("Unable to get unelevated token. (Is UAC enabled?) Fallback to SaferApi Token but this process won't be able to elevate." + e.Message, LogLevel.Debug);
-                    newToken = TokenManager.CreateFromSaferApi(SaferLevels.NormalUser)
+                    newToken = TokenProvider.CreateFromSaferApi(SaferLevels.NormalUser)
                         .SetIntegrity(integrityLevel)
                         .GetToken();
                 }
@@ -210,73 +218,16 @@ namespace gsudo.Helpers
             else
             {
                 // Lower integrity
-                if (true || ProcessHelper.IsAdministrator() )
-                {
-                    var tf = TokenManager.CreateFromSaferApi(integrityLevel.ToSaferLevel())
-                        .SetIntegrity(integrityLevel);
+                var tf = TokenProvider.CreateFromSaferApi(integrityLevel.ToSaferLevel())
+                    .SetIntegrity(integrityLevel);
 
-                    newToken = tf.GetToken();
-                }
-                else
-                {
-                    var tf = TokenManager.CreateFromCurrentProcessToken()
-                        .SetIntegrity(integrityLevel)
-                        .RestrictTokenMaxPrivilege();
-
-                    newToken = tf.GetToken();
-                }
+                newToken = tf.GetToken();
             }
 
             using (newToken)
             {
                 return CreateProcessAsUser(newToken, appToRun, args, startupFolder, newWindow, hidden);
             }
-        }
-
-        private static Process StartAsProcess(int pidWithToken, string appToRun, string args, string startupFolder, bool hidden)
-        {
-            IntPtr existingProcessHandle = OpenProcess(PROCESS_QUERY_INFORMATION, true, (uint)pidWithToken);
-            if (existingProcessHandle == IntPtr.Zero)
-            {
-                return null;
-            }
-
-            IntPtr existingProcessToken, newToken;
-            try
-            {
-                if (!OpenProcessToken(existingProcessHandle, TOKEN_DUPLICATE, out existingProcessToken))
-                {
-                    return null;
-                }
-            }
-            finally
-            {
-                CloseHandle(existingProcessHandle);
-            }
-            if (existingProcessToken == IntPtr.Zero) return null;
-
-            var sa = new SECURITY_ATTRIBUTES();
-            const uint MAXIMUM_ALLOWED = 0x02000000;
-
-            if (!TokensApi.DuplicateTokenEx(existingProcessToken, MAXIMUM_ALLOWED, ref sa, SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation, TOKEN_TYPE.TokenPrimary, out newToken))
-            {
-                return null;
-            }
-
-            var STARTF_USESHOWWINDOW = 0x00000001;
-            var startupInfo = new STARTUPINFO()
-            {
-                cb = (int)Marshal.SizeOf(typeof(STARTUPINFO)),
-                dwFlags = STARTF_USESHOWWINDOW,
-                wShowWindow = (short)(hidden ? 0 : 1),
-            };
-
-            PROCESS_INFORMATION processInformation;
-            if (!CreateProcessWithTokenW(newToken, 0, appToRun, $"{appToRun} {args}", (UInt32) 0, IntPtr.Zero, startupFolder, ref startupInfo, out processInformation))
-            {
-                return null;
-            }
-            return Process.GetProcessById(processInformation.dwProcessId);
         }
 
         private static SafeProcessHandle CreateProcessAsUser(SafeTokenHandle newToken, string appToRun, string args, string startupFolder, bool newWindow, bool hidden)
@@ -305,7 +256,7 @@ namespace gsudo.Helpers
             return new SafeProcessHandle(pi.hProcess, true);
         }
         
-        private static Process CreateProcessWithToken(IntPtr newToken, string appToRun, string args, string startupFolder, bool hidden)
+        private static SafeProcessHandle CreateProcessWithToken(IntPtr newToken, string appToRun, string args, string startupFolder, bool hidden)
         {
             var STARTF_USESHOWWINDOW = 0x00000001;
             var STARTF_USESTDHANDLES = 0x00000100;
@@ -331,10 +282,10 @@ namespace gsudo.Helpers
             {
                 throw new Win32Exception();
             }
-            return Process.GetProcessById(processInformation.dwProcessId);
+            return new SafeProcessHandle(processInformation.hProcess, true);
         }
 
-        internal static SafeProcessHandle CreateProcessWithFlags(string lpApplicationName, string args, ProcessApi.CreateProcessFlags dwCreationFlags, out PROCESS_INFORMATION pInfo)
+        internal static SafeProcessHandle CreateProcessAsUserWithFlags(string lpApplicationName, string args, ProcessApi.CreateProcessFlags dwCreationFlags, out PROCESS_INFORMATION pInfo)
         {
             var sInfoEx = new ProcessApi.STARTUPINFOEX();
             sInfoEx.StartupInfo.cb = Marshal.SizeOf(sInfoEx);
@@ -351,7 +302,7 @@ namespace gsudo.Helpers
             if (!ProcessApi.CreateProcess(null, command, ref pSec, ref tSec, false, dwCreationFlags, IntPtr.Zero, null, ref sInfoEx, out pInfo))
                 throw new Win32Exception();
 
-            return new Microsoft.Win32.SafeHandles.SafeProcessHandle(pInfo.hProcess, true);
+            return new SafeProcessHandle(pInfo.hProcess, true);
         }
 
     }

@@ -14,7 +14,7 @@ namespace gsudo.Commands
     {
         public Task<int> Execute()
         {
-            Console.WriteLine($"Caller Pid: {RunCommand.GetCallingPid(Process.GetCurrentProcess())}");
+            Console.WriteLine($"Caller Pid: {ProcessHelper.GetCallerPid()}");
 
             var id = WindowsIdentity.GetCurrent();
             bool isAdmin = ProcessHelper.IsAdministrator();
@@ -47,15 +47,14 @@ namespace gsudo.Commands
             Console.WriteLine($"{integrityString} ({integrity})");
             Console.ResetColor();
 
-            Console.WriteLine($"\nActive {nameof(gsudo)} sessions (Credentials Cache):");
-
+            Console.WriteLine($"\nCredentials Cache:\n  Mode: {Settings.CacheMode.Value.ToString()}\n  Available for this process: {NamedPipeClient.IsServiceAvailable()}");
             var pipes = NamedPipeUtils.ListNamedPipes();
+            Console.WriteLine($"  Total active cache sessions: {pipes.Count}");
+
             foreach (string s in pipes)
             {
-                Console.WriteLine($"  {s}");
+                Console.WriteLine($"    {s}");
             }
-            if (pipes.Count == 0)
-                Console.WriteLine($"  No active gsudo credentials cache");
 
             if (Console.IsInputRedirected || Console.IsOutputRedirected || Console.IsErrorRedirected)
                 Console.WriteLine($"\nProcesses attached to the current **REDIRECTED** console:");
@@ -84,15 +83,8 @@ namespace gsudo.Commands
                 try
                 {
                     p = Process.GetProcessById((int)pid);
-
-                    try
-                    {
-                        name = p.ProcessName;
-                        name = p.MainModule.FileName;
-                    }
-                    catch
-                    { }
-
+                    name = p.GetExeName();
+                    
                     try
                     {
                         var i = ProcessHelper.GetProcessIntegrityLevel(p.Handle);

@@ -20,7 +20,7 @@ namespace gsudo.ProcessRenderers
         private readonly ElevationRequest _elevationRequest;
         private readonly SafeProcessHandle _process;
         private readonly ProcessApi.PROCESS_INFORMATION _processInformation;
-        private readonly ManualResetEventSlim tokenSwithSuccessEvent = new ManualResetEventSlim(false);
+        private readonly ManualResetEventSlim tokenSwitchSuccessEvent = new ManualResetEventSlim(false);
 
         public TokenSwitchRenderer(Connection connection, ElevationRequest elevationRequest)
         {
@@ -29,21 +29,21 @@ namespace gsudo.ProcessRenderers
 
             _connection = connection;
             _elevationRequest = elevationRequest;
+            Environment.SetEnvironmentVariable("prompt", Environment.ExpandEnvironmentVariables(elevationRequest.Prompt));
 
             ProcessApi.CreateProcessFlags dwCreationFlags = ProcessApi.CreateProcessFlags.CREATE_SUSPENDED;
 
             if (elevationRequest.NewWindow)
                 dwCreationFlags |= ProcessApi.CreateProcessFlags.CREATE_NEW_CONSOLE;
 
-            Environment.SetEnvironmentVariable("prompt", Environment.ExpandEnvironmentVariables(elevationRequest.Prompt));
-
-            // Now, we have an issue with this methodÑ The process launched with the new token throws Access Denied if it tries to read its own token.
-            // Kind of dirty workaround is to wrap the call with a "CMD.exe /c ".. this intermediate process will then
-            // launching the command with a fresh new (desired) token and we know cmd wont try to read it's substitute token (throwing Access Denied).  
-
             string exeName, args;
-            if (ArgumentsHelper.UnQuote(elevationRequest.FileName.ToUpperInvariant()) != Environment.GetEnvironmentVariable("COMSPEC").ToUpperInvariant())
+            if (elevationRequest.IntegrityLevel == IntegrityLevel.MediumPlus
+                    && ArgumentsHelper.UnQuote(elevationRequest.FileName.ToUpperInvariant()) != Environment.GetEnvironmentVariable("COMSPEC").ToUpperInvariant())
             {
+                // Now, we have an issue with this method: The process launched with the new token throws Access Denied if it tries to read its own token.
+                // Kind of dirty workaround is to wrap the call with a "CMD.exe /c ".. this intermediate process will then
+                // launching the command with a fresh new (desired) token and we know cmd wont try to read it's substitute token (throwing Access Denied).  
+
                 exeName = Environment.GetEnvironmentVariable("COMSPEC");
                 args = $"/s /c \"{elevationRequest.FileName} {elevationRequest.Arguments}\"";
             }
@@ -54,7 +54,7 @@ namespace gsudo.ProcessRenderers
                 args = elevationRequest.Arguments;
             }
 
-            _process = ProcessFactory.CreateProcessWithFlags(exeName, args, dwCreationFlags, out _processInformation);
+            _process = ProcessFactory.CreateProcessAsUserWithFlags(exeName, args, dwCreationFlags, out _processInformation);
 
             elevationRequest.TargetProcessId = _processInformation.dwProcessId;
             if (!elevationRequest.NewWindow)
@@ -67,22 +67,43 @@ namespace gsudo.ProcessRenderers
             {
                 var t1 = new StreamReader(_connection.ControlStream).ConsumeOutput(HandleControlStream);
 
-                WaitHandle.WaitAny(new WaitHandle[] { tokenSwithSuccessEvent.WaitHandle, _process.GetProcessWaitHandle(), _connection.DisconnectedWaitHandle });
+                WaitHandle.WaitAny(new WaitHandle[] { tokenSwitchSuccessEvent.WaitHandle, _process.GetProcessWaitHandle(), _connection.DisconnectedWaitHandle });
 
-                if (!tokenSwithSuccessEvent.IsSet)
+                if (!tokenSwitchSuccessEvent.IsSet)
                 {
-                    if (!_connection.IsAlive)
-                        Logger.Instance.Log($"Failed to substitute token. Connection from server lost.", LogLevel.Error);
-                    else
-                        Logger.Instance.Log($"Failed to substitute token.", LogLevel.Error);
+                    Logger.Instance.Log(
+                        _connection?.IsAlive ?? true
+                            ? $"Failed to substitute token."
+                            : $"Failed to substitute token. Connection from server lost."
+                        , LogLevel.Error);
 
-                    ProcessApi.TerminateProcess(_process.DangerousGetHandle(), 0);
+                    TerminateProcess();
+
                     return Task.FromResult(Constants.GSUDO_ERROR_EXITCODE);
                 }
 
                 Logger.Instance.Log("Process token successfully substituted.", LogLevel.Debug);
-                _ = ProcessApi.ResumeThread(_processInformation.hThread);
+                _ = _connection.FlushAndCloseAll();
 
+                return GetResult();
+            }
+            finally
+            {
+                ConsoleApi.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, false);
+            }
+        }
+
+        public void TerminateProcess()
+        {
+            ProcessApi.TerminateProcess(_process.DangerousGetHandle(), 0);
+        }
+
+        public Task<int> GetResult()
+        {
+            try
+            {
+                _ = ProcessApi.ResumeThread(_processInformation.hThread);
+                
                 if (_elevationRequest.Wait)
                 {
                     _process.GetProcessWaitHandle().WaitOne();
@@ -97,6 +118,7 @@ namespace gsudo.ProcessRenderers
                 ConsoleApi.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, false);
             }
         }
+
 
         enum Mode { Normal, Error};
         Mode CurrentMode = Mode.Normal;
@@ -116,7 +138,7 @@ namespace gsudo.ProcessRenderers
                 if (token == "\0") continue; // session keep alive
                 if (token == Constants.TOKEN_SUCCESS)
                 {
-                    tokenSwithSuccessEvent.Set();
+                    tokenSwitchSuccessEvent.Set();
                     continue;
                 }
                 if (token == Constants.TOKEN_ERROR)

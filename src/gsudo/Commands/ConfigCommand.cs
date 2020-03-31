@@ -29,7 +29,7 @@ namespace gsudo.Commands
 
             if (setting == null)
             {
-                Console.WriteLine($"Invalid Setting '{key}'.", LogLevel.Error);
+                Logger.Instance.Log($"Invalid Setting '{key}'.", LogLevel.Error);
                 return Task.FromResult(Constants.GSUDO_ERROR_EXITCODE);
             }
 
@@ -41,25 +41,29 @@ namespace gsudo.Commands
                     value = value.Where(v => !v.In("--global"));
                 }
 
+                bool reset = value.Any(v => v.In("--reset"));
+                value = value.Where(v => !v.In("--reset"));
+
                 string unescapedValue =
                     (value.Count() == 1)
                     ? ArgumentsHelper.UnQuote(value.FirstOrDefault()).Replace("\\%", "%")
                     : string.Join(" ", value.ToArray());
 
+                if (!reset) _ = setting.Parse(unescapedValue);
+
                 if (!InputArguments.Global && setting.Scope == RegistrySettingScope.GlobalOnly)
                 {
-                    Logger.Instance.Log($"Config Setting for '{setting.Name}' will be set as global system setting.", LogLevel.Warning);
+                    Logger.Instance.Log($"Config Setting for '{setting.Name}' will be set as global system setting.", LogLevel.Info);
                     InputArguments.Global = true;
                 }
 
-                bool reset = value.Any(v => v.In("--reset"));
                 if (InputArguments.Global && !ProcessHelper.IsAdministrator())
                 {
                     Logger.Instance.Log($"Global system settings requires elevation. Elevating...", LogLevel.Info);
                     return new RunCommand()
                     {
                         CommandToRun = new string[]
-                            { ProcessHelper.GetOwnExeName(), "--piped", "--global", "config", key, reset ? "--reset" : $"\"{unescapedValue}\""}
+                            { ProcessHelper.GetOwnExeName(), "--global", "config", key, reset ? "--reset" : $"\"{unescapedValue}\""}
                     }.Execute();
                 }
 
@@ -68,8 +72,8 @@ namespace gsudo.Commands
                 else 
                     setting.Save(unescapedValue, InputArguments.Global);
 
-                if (setting.Name == Settings.CredentialsCacheDuration.Name)
-                    return new KillCacheCommand().Execute();
+                if (setting.Name == Settings.CacheDuration.Name)
+                    new KillCacheCommand().Execute();
             }
 
             // READ

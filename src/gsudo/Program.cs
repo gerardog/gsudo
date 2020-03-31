@@ -50,7 +50,7 @@ namespace gsudo
             {
                 if (InputArguments.KillCache)
                 {
-                    await new KillCacheCommand().Execute().ConfigureAwait(false);
+                    await new KillCacheCommand(verbose: false).Execute().ConfigureAwait(false);
                 }
 
                 try
@@ -59,7 +59,7 @@ namespace gsudo
                     Console.CursorVisible = true;
                     Console.ResetColor();
 
-                    if (InputArguments.Debug && !Console.IsInputRedirected && (cmd as ServiceCommand) != null)
+                    if (InputArguments.Debug && !Console.IsInputRedirected && cmd.GetType().In(typeof(ServiceCommand), typeof(ElevateCommand)))
                     {
                         Console.WriteLine("Press any key to exit.");
                         Console.ReadKey();

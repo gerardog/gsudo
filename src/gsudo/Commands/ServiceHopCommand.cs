@@ -1,15 +1,16 @@
-﻿using System;
-using System.ComponentModel;
+﻿#if TO_BE_REMOVED_10
+using System;
 using System.Threading.Tasks;
 using gsudo.Helpers;
 
 namespace gsudo.Commands
 {
     /// <summary>
-    /// Intermediate command to be used as intermediary when two process jumps are needed.
-    /// For example from non-admin to system: non-admin -> admin -> system.
-    /// or from non-admin medium integrity to MediumPlus: mediun -> admin(high) -> MediumPlus
+    /// Intermediate command to be used when two process jumps are needed.
+    /// For example from non-admin to system: non-admin 'elevates' -> gsudo as admin 'CreatesAsUser' -> System.
+    /// or from non-admin medium integrity to MediumPlus: Medium -> Admin(high) -> MediumPlus
     /// </summary>
+    [Obsolete("No longer needed since TokenSwitch was added.")] // TODO: Remove in 1.0
     class ServiceHopCommand : ICommand
     {
         public int allowedPid { get; set; }
@@ -57,3 +58,4 @@ namespace gsudo.Commands
         }
     }
 }
+#endif

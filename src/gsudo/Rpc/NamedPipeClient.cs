@@ -76,5 +76,26 @@ namespace gsudo.Rpc
                 throw;
             }
         }
+
+        public static bool IsServiceAvailable()
+        {
+            string pipeName = null;
+            var callerProcessId = Process.GetCurrentProcess().Id;
+            string user = System.Security.Principal.WindowsIdentity.GetCurrent().User.Value;
+
+            while (callerProcessId > 0)
+            {
+                callerProcessId = ProcessHelper.GetParentProcessId(callerProcessId);
+                pipeName = NamedPipeNameFactory.GetPipeName(user, callerProcessId);
+                // Does the pipe exists?
+                if (NamedPipeUtils.ExistsNamedPipe(pipeName))
+                    break;
+
+                pipeName = null;
+                // try grandfather.
+            }
+
+            return pipeName != null ;
+        }
     }
 }

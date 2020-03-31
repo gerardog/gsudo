@@ -69,7 +69,7 @@ namespace gsudo.Rpc
             var pipeName = NamedPipeNameFactory.GetPipeName(_allowedSid, _allowedPid);
             Logger.Instance.Log($"Listening on named pipe {pipeName}.", LogLevel.Debug);
 
-            Logger.Instance.Log($"Access allowed only for ProcessID {_allowedPid} and childs", LogLevel.Debug);
+            Logger.Instance.Log($"Access allowed only for ProcessID {_allowedPid} and children", LogLevel.Debug);
 
             do
             {
@@ -174,14 +174,14 @@ namespace gsudo.Rpc
 
             if (allowedPid == 0) return true;
 
-            // TODO: Decide if I want to allow all childs and grandsons, or only direct childs.
+            // TODO: Decide if I want to allow all children and grandsons, or only direct children.
             // It's trivial on Windows to fake a your parent PID.
             // So this "security" check is easily avoidable for advanced hackers.
             
             // Only allow direct child.
             /*
             clientPid = ProcessHelper.GetParentProcessIdExcludingShim(clientPid);
-            if (allowedPid == clientPid)
+            if (AllowedPid == clientPid)
                 return true;
                 */
 

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.IO;
 
 namespace gsudo
 {
@@ -14,6 +16,7 @@ namespace gsudo
 
     class Logger
     {
+        public static int ProcessId = System.Diagnostics.Process.GetCurrentProcess().Id;
         public static readonly Logger Instance = new Logger();
 
         private Logger() { }
@@ -28,6 +31,8 @@ namespace gsudo
                     Console.Error.WriteLine($"{level.ToString()}: {message}");
                     Console.ResetColor();
                 }
+
+                //File.AppendAllText("C:\\test\\gsudolog.txt", $"{ProcessId}\t{level.ToString()}: {message}\r\n");
             }
             catch { }
         }

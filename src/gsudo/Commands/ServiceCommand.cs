@@ -10,15 +10,16 @@ namespace gsudo.Commands
 {
     class ServiceCommand : ICommand, IDisposable
     {
-        public int allowedPid { get; set; }
-        public string allowedSid { get; set; }
+        public int AllowedPid { get; set; }
+        public string AllowedSid { get; set; }
         public LogLevel? LogLvl { get; set; }
+        public TimeSpan CacheDuration { get; set; }
 
         Timer ShutdownTimer;
         void EnableTimer()
         {
-            if (allowedPid != 0) // allowedPid == 0 is flag for --fullcache
-                ShutdownTimer.Change((int)Settings.CredentialsCacheDuration.Value.TotalMilliseconds, Timeout.Infinite);
+            if (CacheDuration != TimeSpan.MaxValue) 
+                ShutdownTimer.Change((int)Settings.CacheDuration.Value.TotalMilliseconds, Timeout.Infinite);
         }
 
         void DisableTimer() => ShutdownTimer.Change(Timeout.Infinite, Timeout.Infinite);
@@ -37,7 +38,8 @@ namespace gsudo.Commands
                 try
                 {
                     cacheLifetime.OnCacheClear += server.Close;
-                    ShutdownTimer = new Timer((o) => server.Close(), null, 10000, Timeout.Infinite); // 10 seconds for initial connection or die.
+                    ShutdownTimer = new Timer((o) => server.Close(), null, Timeout.Infinite, Timeout.Infinite); // 10 seconds for initial connection or die.
+                    EnableTimer();
                     server.ConnectionAccepted += (o, connection) => AcceptConnection(connection).ConfigureAwait(false).GetAwaiter().GetResult();
                     server.ConnectionClosed += (o, cònnection) => EnableTimer();
 
@@ -67,9 +69,6 @@ namespace gsudo.Commands
                     Environment.SetEnvironmentVariable("PROMPT", Environment.ExpandEnvironmentVariables(request.Prompt));
 
                 await applicationHost.Start(connection, request).ConfigureAwait(false);
-
-                if (request.NoCache)
-                    CredentialsCacheLifetimeManager.ClearCredentialsCache();
             }
             catch (Exception e)
             {
@@ -94,9 +93,9 @@ namespace gsudo.Commands
 
         private IRpcServer CreateServer()
         {
-            // No credentials cache when CredentialsCacheDuration = 0
-            bool singleUse = Settings.CredentialsCacheDuration.Value.TotalSeconds < 1;
-            return new NamedPipeServer(allowedPid, allowedSid, singleUse);
+            // No credentials cache when CacheDuration = 0
+            bool singleUse = Settings.CacheDuration.Value.TotalSeconds < 1;
+            return new NamedPipeServer(AllowedPid, AllowedSid, singleUse);
         }
 
         private async static Task<ElevationRequest> ReadElevationRequest(Stream dataPipe)
