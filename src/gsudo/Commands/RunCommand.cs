@@ -301,7 +301,6 @@ namespace gsudo.Commands
             var callingSid = System.Security.Principal.WindowsIdentity.GetCurrent().User.Value;
             var callingPid = allowedPid ?? ProcessHelper.GetCallerPid();
 
-            Logger.Instance.Log($"Caller PID: {callingPid}", LogLevel.Debug);
             Logger.Instance.Log($"Caller SID: {callingSid}", LogLevel.Debug);
 
             var @params = InputArguments.Debug ? "--debug " : string.Empty;

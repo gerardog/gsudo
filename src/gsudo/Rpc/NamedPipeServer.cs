@@ -71,6 +71,9 @@ namespace gsudo.Rpc
 
             Logger.Instance.Log($"Access allowed only for ProcessID {_allowedPid} and children", LogLevel.Debug);
 
+            _ = Task.Factory.StartNew(CancelIfAllowedProcessEnds, _cancellationTokenSource.Token,
+                TaskCreationOptions.LongRunning, TaskScheduler.Current);
+
             do
             {
                 using (NamedPipeServerStream dataPipe = new NamedPipeServerStream(pipeName, PipeDirection.InOut, MAX_SERVER_INSTANCES,
@@ -123,12 +126,21 @@ namespace gsudo.Rpc
                             ConnectionClosed?.Invoke(this, connection);
                             Logger.Instance.Log("Connection Closed.", LogLevel.Info);
                         }
-
                     }
                 }
             } while (!_singleUse && !_cancellationTokenSource.IsCancellationRequested);
             Logger.Instance.Log("Listener Closed.", LogLevel.Debug);
             _exeLock?.Close();
+        }
+
+        private void CancelIfAllowedProcessEnds()
+        {
+            var p = Process.GetProcessById(_allowedPid);
+            if (!p.HasExited) p.WaitForExit();
+
+            Logger.Instance.Log($"Allowed Process (Pid {_allowedPid}) has exited. Ending cache session.)", LogLevel.Info);
+
+            _cancellationTokenSource.Cancel();
         }
 
         private bool IsAuthorized(int clientPid, int allowedPid)
