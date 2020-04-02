@@ -83,7 +83,8 @@ namespace gsudo.Commands
             }
 
             if (Settings.CacheMode.Value.In(CacheMode.Disabled) ||
-                Math.Abs(Settings.CacheDuration.Value.TotalSeconds) < 1)
+                Math.Abs(Settings.CacheDuration.Value.TotalSeconds) < 1 ||
+                (InputArguments.KillCache && !IsServiceAvailable()))
             {
                 exitCode = await RunUsingSingleUseElevation(elevationRequest).ConfigureAwait(false);
             }

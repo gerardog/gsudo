@@ -17,7 +17,10 @@ namespace gsudo.Tokens
 
         private SafeTokenHandle Token;
         public SafeTokenHandle GetToken() => Token;
-        private TokenProvider() { }
+
+        private TokenProvider()
+        {
+        }
 
         public static TokenProvider CreateFromSystemAccount()
         {
@@ -27,7 +30,7 @@ namespace gsudo.Tokens
 
         public static TokenProvider CreateFromProcessToken(int pidWithToken, uint tokenAccess = MAXIMUM_ALLOWED)
         {
-            IntPtr existingProcessHandle = OpenProcess(PROCESS_QUERY_INFORMATION, true, (uint)pidWithToken);
+            IntPtr existingProcessHandle = OpenProcess(PROCESS_QUERY_INFORMATION, true, (uint) pidWithToken);
             if (existingProcessHandle == IntPtr.Zero)
             {
                 throw new Win32Exception();
@@ -58,6 +61,7 @@ namespace gsudo.Tokens
             {
                 CloseHandle(existingProcessHandle);
             }
+
             if (existingProcessToken == IntPtr.Zero) return null;
 
             var sa = new SECURITY_ATTRIBUTES();
@@ -66,12 +70,13 @@ namespace gsudo.Tokens
 
             SafeTokenHandle newToken;
 
-            if (!TokensApi.DuplicateTokenEx(existingProcessToken, desiredAccess, IntPtr.Zero, SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation, TOKEN_TYPE.TokenPrimary, out newToken))
+            if (!TokensApi.DuplicateTokenEx(existingProcessToken, desiredAccess, IntPtr.Zero,
+                SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation, TOKEN_TYPE.TokenPrimary, out newToken))
             {
                 CloseHandle(existingProcessToken);
                 throw new Win32Exception();
             }
-            
+
             CloseHandle(existingProcessToken);
 
             return new TokenProvider()
@@ -90,7 +95,8 @@ namespace gsudo.Tokens
 
             try
             {
-                if (!TokensApi.SaferComputeTokenFromLevel(hSaferLevel, IntPtr.Zero, out hToken, TokensApi.SaferComputeTokenFlags.None, IntPtr.Zero))
+                if (!TokensApi.SaferComputeTokenFromLevel(hSaferLevel, IntPtr.Zero, out hToken,
+                    TokensApi.SaferComputeTokenFlags.None, IntPtr.Zero))
                     throw new Win32Exception();
             }
             finally
@@ -98,14 +104,14 @@ namespace gsudo.Tokens
                 SaferCloseLevel(hSaferLevel);
             }
 
-            return new TokenProvider() { Token = hToken };        
+            return new TokenProvider() {Token = hToken};
         }
 
-        public static TokenProvider CreateFromCurrentProcessToken(uint access = 
-                TOKEN_DUPLICATE | TOKEN_ADJUST_DEFAULT |
-                TOKEN_QUERY | TOKEN_ASSIGN_PRIMARY
-                | TOKEN_ADJUST_PRIVILEGES
-                | TOKEN_ADJUST_GROUPS)
+        public static TokenProvider CreateFromCurrentProcessToken(uint access =
+            TOKEN_DUPLICATE | TOKEN_ADJUST_DEFAULT |
+            TOKEN_QUERY | TOKEN_ASSIGN_PRIMARY
+            | TOKEN_ADJUST_PRIVILEGES
+            | TOKEN_ADJUST_GROUPS)
         {
             var tm = OpenCurrentProcessToken(access);
             return tm.Duplicate(MAXIMUM_ALLOWED);
@@ -113,7 +119,8 @@ namespace gsudo.Tokens
 
         public TokenProvider Duplicate(uint desiredAccess = 0x02000000)
         {
-            if (!TokensApi.DuplicateTokenEx(Token.DangerousGetHandle(), desiredAccess, IntPtr.Zero, SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation, TOKEN_TYPE.TokenPrimary, out var newToken))
+            if (!TokensApi.DuplicateTokenEx(Token.DangerousGetHandle(), desiredAccess, IntPtr.Zero,
+                SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation, TOKEN_TYPE.TokenPrimary, out var newToken))
                 throw new Win32Exception();
 
             Token.Close();
@@ -122,10 +129,10 @@ namespace gsudo.Tokens
         }
 
         public static TokenProvider OpenCurrentProcessToken(uint access =
-                TOKEN_DUPLICATE | TOKEN_ADJUST_DEFAULT |
-                TOKEN_QUERY | TOKEN_ASSIGN_PRIMARY
-                | TOKEN_ADJUST_PRIVILEGES
-                | TOKEN_ADJUST_GROUPS)
+            TOKEN_DUPLICATE | TOKEN_ADJUST_DEFAULT |
+            TOKEN_QUERY | TOKEN_ASSIGN_PRIMARY
+            | TOKEN_ADJUST_PRIVILEGES
+            | TOKEN_ADJUST_GROUPS)
         {
             IntPtr existingProcessToken;
 
@@ -139,7 +146,7 @@ namespace gsudo.Tokens
             if (existingProcessToken == IntPtr.Zero)
                 throw new Win32Exception();
 
-            return new TokenProvider() { Token = new SafeTokenHandle(existingProcessToken) };
+            return new TokenProvider() {Token = new SafeTokenHandle(existingProcessToken)};
         }
 
         public TokenProvider GetLinkedToken(uint desiredAccess = MAXIMUM_ALLOWED)
@@ -173,7 +180,8 @@ namespace gsudo.Tokens
 
                 SafeTokenHandle newToken;
 
-                if (!TokensApi.DuplicateTokenEx(linkedTokenStruct.LinkedToken, desiredAccess, IntPtr.Zero, SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation, TOKEN_TYPE.TokenPrimary, out newToken))
+                if (!TokensApi.DuplicateTokenEx(linkedTokenStruct.LinkedToken, desiredAccess, IntPtr.Zero,
+                    SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation, TOKEN_TYPE.TokenPrimary, out newToken))
                 {
                     throw new Win32Exception();
                 }
@@ -186,6 +194,7 @@ namespace gsudo.Tokens
             {
                 Marshal.FreeHGlobal(pLinkedToken);
             }
+
             return this;
         }
 
@@ -203,9 +212,10 @@ namespace gsudo.Tokens
                             .EnablePrivilege(Privilege.SeAssignPrimaryTokenPrivilege, true)
                             .Impersonate(() =>
                             {
-                                return CreateFromCurrentProcessToken().GetLinkedToken().Duplicate().SetIntegrity(level);
+                                return CreateFromCurrentProcessToken().GetLinkedToken().Duplicate()
+                                    .SetIntegrity(level);
                             });
-                        }
+                    }
                     catch (Exception e)
                     {
                         Logger.Instance.Log("Unable to get unelevated token, will try SaferApi Token. " + e.ToString(),
@@ -217,7 +227,7 @@ namespace gsudo.Tokens
                 {
                     IntPtr hwnd = ConsoleApi.GetShellWindow();
                     _ = ConsoleApi.GetWindowThreadProcessId(hwnd, out uint pid);
-                    return TokenProvider.CreateFromProcessToken((int)pid);
+                    return TokenProvider.CreateFromProcessToken((int) pid);
                 }
             }
             else
@@ -228,12 +238,13 @@ namespace gsudo.Tokens
 
         public TokenProvider SetIntegrity(IntegrityLevel integrityLevel)
         {
-            return SetIntegrity((int)integrityLevel);
+            return SetIntegrity((int) integrityLevel);
         }
 
         public TokenProvider SetIntegrity(int integrityLevel)
         {
-            string integritySid = "S-1-16-" + integrityLevel.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            string integritySid =
+                "S-1-16-" + integrityLevel.ToString(System.Globalization.CultureInfo.InvariantCulture);
             IntPtr pIntegritySid;
             if (!ConvertStringSidToSid(integritySid, out pIntegritySid))
                 throw new Win32Exception();
@@ -246,9 +257,9 @@ namespace gsudo.Tokens
             Marshal.StructureToPtr(TIL, pTIL, false);
 
             if (!SetTokenInformation(Token.DangerousGetHandle(),
-               TOKEN_INFORMATION_CLASS.TokenIntegrityLevel,
-               pTIL,
-               (uint)(Marshal.SizeOf<TOKEN_MANDATORY_LABEL>() + GetLengthSid(pIntegritySid))))
+                TOKEN_INFORMATION_CLASS.TokenIntegrityLevel,
+                pTIL,
+                (uint) (Marshal.SizeOf<TOKEN_MANDATORY_LABEL>() + GetLengthSid(pIntegritySid))))
                 throw new Win32Exception();
 
             return this;
@@ -281,16 +292,16 @@ namespace gsudo.Tokens
             Marshal.StructureToPtr(sa, pSA, false);
             */
             if (!TokensApi.CreateRestrictedToken(
-              Token,
-              LUA_TOKEN | DISABLE_MAX_PRIVILEGE,
-              //WRITE_RESTRICTED,
-              0,
-              IntPtr.Zero, //pSA,
-              0,
-              IntPtr.Zero,
-              0,
-              IntPtr.Zero,
-              out result) && !ignoreErrors)
+                Token,
+                LUA_TOKEN | DISABLE_MAX_PRIVILEGE,
+                //WRITE_RESTRICTED,
+                0,
+                IntPtr.Zero, //pSA,
+                0,
+                IntPtr.Zero,
+                0,
+                IntPtr.Zero,
+                out result) && !ignoreErrors)
                 throw new Win32Exception();
 
             Token.Close();
@@ -311,16 +322,17 @@ namespace gsudo.Tokens
                     ctx.Undo();
                 }
             }
+
             return this;
         }
 
-        public T Impersonate<T> (Func<T> ActionImpersonated)
+        public T Impersonate<T>(Func<T> ActionImpersonated)
 
         {
             using (var ctx = System.Security.Principal.WindowsIdentity.Impersonate(GetToken().DangerousGetHandle()))
             {
                 try
-                { 
+                {
                     return ActionImpersonated();
                 }
                 finally
@@ -331,7 +343,7 @@ namespace gsudo.Tokens
         }
 
         public TokenProvider EnablePrivileges(bool throwOnFailure, params Privilege[] priviledgesList)
-        {   
+        {
             // todo: rewrite to use just 1 api call, handle exceptions,  
             foreach (var priv in priviledgesList)
                 EnablePrivilege(priv, throwOnFailure);
@@ -352,7 +364,8 @@ namespace gsudo.Tokens
             TOKEN_PRIVILEGES.Attributes = NativeMethods.SE_PRIVILEGE_ENABLED;
             TOKEN_PRIVILEGES.Luid = locallyUniqueIdentifier;
 
-            if (!NativeMethods.AdjustTokenPrivileges(Token.DangerousGetHandle(), false, ref TOKEN_PRIVILEGES, 1024, IntPtr.Zero, IntPtr.Zero))
+            if (!NativeMethods.AdjustTokenPrivileges(Token.DangerousGetHandle(), false, ref TOKEN_PRIVILEGES, 1024,
+                IntPtr.Zero, IntPtr.Zero))
                 if (throwOnFailure)
                     throw new Win32Exception();
 
@@ -400,7 +413,6 @@ namespace gsudo.Tokens
 
         public void Dispose()
         {
-        //    Token?.Close();
         }
     }
 }

@@ -6,8 +6,8 @@ namespace gsudo
     {
         Untrusted = 0,
         Low = 4096,
-        MediumRestricted = 8190, // Experimental, like medium but with a token flagged as elevated. It can't elevate again using RunAs.
         Medium = 8192,
+        MediumRestricted = 8193, // Experimental, like medium but with a token flagged as elevated. It can't elevate again using RunAs.
         MediumPlus = 8448,
         High = 12288,
         System = 16384,

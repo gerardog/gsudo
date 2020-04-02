@@ -1,5 +1,4 @@
 ﻿using System;
-using System.CodeDom;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using gsudo.Enums;
@@ -92,7 +91,7 @@ gsudo config CacheMode {{mode}}  Change the cache mode. Current Cache Mode is: {
 Available Cache Modes:
   * Disabled: Every elevation request shows a UAC popup. 
   * Explicit: (default) Every elevation shows a UAC popup, unless a cache session is started with `gsudo cache on`
-  * Auto: Simil-unix-sudo. The first elevation shows a UAC Popup and starts a cache session. Following elevations don't show UAC until 'cache duration' is reached.");
+  * Auto: Simil-unix-sudo. The first elevation shows a UAC Popup and starts a cache session automatically.");
 
             return Task.FromResult(0);
         }
