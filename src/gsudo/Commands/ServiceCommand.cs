@@ -19,7 +19,7 @@ namespace gsudo.Commands
         void EnableTimer()
         {
             if (CacheDuration != TimeSpan.MaxValue) 
-                ShutdownTimer.Change((int)Settings.CacheDuration.Value.TotalMilliseconds, Timeout.Infinite);
+                ShutdownTimer.Change((int)CacheDuration.TotalMilliseconds, Timeout.Infinite);
         }
 
         void DisableTimer() => ShutdownTimer.Change(Timeout.Infinite, Timeout.Infinite);
@@ -28,7 +28,7 @@ namespace gsudo.Commands
         {
             // service mode
             if (LogLvl.HasValue) Settings.LogLevel.Value = LogLvl.Value;
-
+            
             Console.Title = "gsudo Service";
             var cacheLifetime = new CredentialsCacheLifetimeManager();
             Logger.Instance.Log("Service started", LogLevel.Info);
@@ -39,12 +39,12 @@ namespace gsudo.Commands
                 {
                     cacheLifetime.OnCacheClear += server.Close;
                     ShutdownTimer = new Timer((o) => server.Close(), null, Timeout.Infinite, Timeout.Infinite); // 10 seconds for initial connection or die.
-                    EnableTimer();
                     server.ConnectionAccepted += (o, connection) => AcceptConnection(connection).ConfigureAwait(false).GetAwaiter().GetResult();
-                    server.ConnectionClosed += (o, cònnection) => EnableTimer();
+                    server.ConnectionClosed += (o, connection) => EnableTimer();
 
-                    await server.Listen().ConfigureAwait(false);
+                    Logger.Instance.Log($"Service will shutdown if idle for {CacheDuration}", LogLevel.Debug);
                     EnableTimer();
+                    await server.Listen().ConfigureAwait(false);
                 }
                 catch (System.OperationCanceledException) { }
                 finally
@@ -98,7 +98,7 @@ namespace gsudo.Commands
             return new NamedPipeServer(AllowedPid, AllowedSid, singleUse);
         }
 
-        private async static Task<ElevationRequest> ReadElevationRequest(Stream dataPipe)
+        private static async Task<ElevationRequest> ReadElevationRequest(Stream dataPipe)
         {
             byte[] dataSize = new byte[sizeof(int)];
             await dataPipe.ReadAsync(dataSize, 0, sizeof(int)).ConfigureAwait(false);
