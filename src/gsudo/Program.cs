@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 namespace gsudo
 {
     class Program
-    {   
+    {
         async static Task<int> Main()
         {
             SymbolicLinkSupport.EnableAssemblyLoadFix();
@@ -18,7 +18,7 @@ namespace gsudo
         {
             ICommand cmd = null;
 
-            var args = ArgumentsHelper.SplitArgs(ArgumentsHelper.GetRealCommandLine());              
+            var args = ArgumentsHelper.SplitArgs(ArgumentsHelper.GetRealCommandLine());
 
             try
             {
@@ -34,6 +34,7 @@ namespace gsudo
                         (cmd as IDisposable)?.Dispose();
                     }
                 }
+
                 return 0;
             }
             catch (ApplicationException ex)
@@ -59,13 +60,22 @@ namespace gsudo
                     Console.CursorVisible = true;
                     Console.ResetColor();
 
-                    if (InputArguments.Debug && !Console.IsInputRedirected && cmd.GetType().In(typeof(ServiceCommand), typeof(ElevateCommand)))
+                    if (InputArguments.Debug && !Console.IsInputRedirected)
                     {
-                        Console.WriteLine("Press any key to exit.");
-                        Console.ReadKey();
+                        if (cmd.GetType() == typeof(ServiceCommand))
+                        {
+                            Console.WriteLine("Press any key to exit.");
+                            Console.ReadKey();
+                        }
+                        else if (cmd.GetType() == typeof(ElevateCommand))
+                        {
+                            await Task.Delay(1000).ConfigureAwait(false);
+                        }
                     }
                 }
-                catch { }
+                catch
+                {
+                }
             }
         }
     }

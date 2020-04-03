@@ -27,8 +27,7 @@ namespace gsudo.Commands
             int? exitCode;
             bool isRunningAsDesiredUser = IsRunningAsDesiredUser();
             bool isElevationRequired = IsElevationRequired();
-
-            bool isShellElevation = string.IsNullOrEmpty(CommandToRun.FirstOrDefault()); // are we auto elevating the current shell?
+            bool isShellElevation = !CommandToRun.Any(); // are we auto elevating the current shell?
 
             if (isElevationRequired & ProcessHelper.GetCurrentIntegrityLevel() < (int)IntegrityLevel.Medium)
                 throw new ApplicationException("Sorry, gsudo doesn't allow to elevate from low integrity level."); // This message is not a security feature, but a nicer error message. It would have failed anyway since the named pipe's ACL restricts it.
@@ -190,7 +189,7 @@ namespace gsudo.Commands
                 InputArguments.RunAsSystem = true;
             }
 
-            IRpcClient rpcClient = new NamedPipeClient();
+            IRpcClient rpcClient = GetClient();
 
             Connection connection = null;
             try
@@ -206,7 +205,6 @@ namespace gsudo.Commands
 
             if (connection == null) // service is not running or listening.
             {
-                // Start elevated service instance
                 if (!StartElevatedService(callingPid, cacheDuration: null))
                     return null;
 
@@ -309,25 +307,14 @@ namespace gsudo.Commands
             if (!cacheDuration.HasValue) cacheDuration = Settings.CacheDuration;
 
             bool isAdmin = ProcessHelper.IsHighIntegrity();
-            string proxy = string.Empty;
-            string ownExe = ProcessHelper.GetOwnExeName();
 
-            string commandLine = $"{@params}{proxy}gsudoservice {callingPid} {callingSid} {Settings.LogLevel} {Settings.TimeSpanWithInfiniteToString(cacheDuration.Value)}";
-
-#if TO_BE_REMOVED_10
-            if ( // unfortunate combinations that requires two jumps
-                (!isAdmin && InputArguments.RunAsSystem) // First Admin, then System.
-                // || (!isAdmin && InputArguments.GetIntegrityLevel() < IntegrityLevel.High)  // First admin, then MediumPlus
-            )
-            {
-                commandLine = $"{@params}{proxy}gsudoservicehop {allowedPid} {callingSid} {Settings.LogLevel} {cacheDuration}";
-            }
-#endif
+            string commandLine = $"{@params}gsudoservice {callingPid} {callingSid} {Settings.LogLevel} {Settings.TimeSpanWithInfiniteToString(cacheDuration.Value)}";
 
             bool success = false;
 
             try
             {
+                string ownExe = ProcessHelper.GetOwnExeName();
                 if (InputArguments.RunAsSystem && isAdmin)
                 {
                     success = null != ProcessFactory.StartAsSystem(ownExe, commandLine, Environment.CurrentDirectory, !InputArguments.Debug);
@@ -360,7 +347,6 @@ namespace gsudo.Commands
             if (InputArguments.Debug)
             {
                 @params = "--debug ";
-                @params += "--loglevel {Settings.LogLevel} ";
                 if (InputArguments.IntegrityLevel.HasValue) @params += $"-i {InputArguments.IntegrityLevel.Value} ";
             }
 
@@ -425,7 +411,7 @@ namespace gsudo.Commands
             return (int)integrityLevel > ProcessHelper.GetCurrentIntegrityLevel();
         }
 
-        private async static Task WriteElevationRequest(ElevationRequest elevationRequest, Connection connection)
+        private static async Task WriteElevationRequest(ElevationRequest elevationRequest, Connection connection)
         {
             // Using Binary instead of Newtonsoft.JSON to reduce load times.
             var ms = new System.IO.MemoryStream();
