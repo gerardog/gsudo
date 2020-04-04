@@ -17,6 +17,7 @@ namespace gsudo
         public ConsoleMode Mode { get; set; }
         public int ConsoleProcessId { get; set; }
         public int TargetProcessId { get; set; }
+        public bool KillCache { get; set; }
         public IntegrityLevel IntegrityLevel { get; set; }
 
         [Serializable]

@@ -30,7 +30,7 @@ namespace gsudo.Commands
             if (LogLvl.HasValue) Settings.LogLevel.Value = LogLvl.Value;
             
             Console.Title = "gsudo Service";
-            var cacheLifetime = new CredentialsCacheLifetimeManager();
+            var cacheLifetime = new CredentialsCacheLifetimeManager(AllowedPid);
             Logger.Instance.Log("Service started", LogLevel.Info);
 
             using (IRpcServer server = CreateServer())
@@ -63,12 +63,20 @@ namespace gsudo.Commands
             {
                 DisableTimer();
                 var request = await ReadElevationRequest(connection.ControlStream).ConfigureAwait(false);
+
+                if (request.KillCache) throw new OperationCanceledException();
+
                 IProcessHost applicationHost = CreateProcessHost(request);
 
                 if (!string.IsNullOrEmpty(request.Prompt))
-                    Environment.SetEnvironmentVariable("PROMPT", Environment.ExpandEnvironmentVariables(request.Prompt));
+                    Environment.SetEnvironmentVariable("PROMPT",
+                        Environment.ExpandEnvironmentVariables(request.Prompt));
 
                 await applicationHost.Start(connection, request).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception e)
             {

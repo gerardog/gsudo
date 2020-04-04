@@ -164,7 +164,7 @@ namespace gsudo.Commands
                 }
 
                 var renderer = GetRenderer(connection, elevationRequest);
-                await WriteElevationRequest(elevationRequest, connection).ConfigureAwait(false);
+                await connection.WriteElevationRequest(elevationRequest).ConfigureAwait(false);
                 ConnectionKeepAliveThread.Start(connection);
 
                 var exitCode = await renderer.Start().ConfigureAwait(false);
@@ -409,23 +409,6 @@ namespace gsudo.Commands
                 return true;
 
             return (int)integrityLevel > ProcessHelper.GetCurrentIntegrityLevel();
-        }
-
-        private static async Task WriteElevationRequest(ElevationRequest elevationRequest, Connection connection)
-        {
-            // Using Binary instead of Newtonsoft.JSON to reduce load times.
-            var ms = new System.IO.MemoryStream();
-            new BinaryFormatter()
-            { TypeFormat = System.Runtime.Serialization.Formatters.FormatterTypeStyle.TypesAlways, Binder = new MySerializationBinder() }
-                .Serialize(ms, elevationRequest);
-            ms.Seek(0, System.IO.SeekOrigin.Begin);
-
-            byte[] lengthArray = BitConverter.GetBytes(ms.Length);
-            Logger.Instance.Log($"ElevationRequest length {ms.Length}", LogLevel.Debug);
-
-            await connection.ControlStream.WriteAsync(lengthArray, 0, sizeof(int)).ConfigureAwait(false);
-            await connection.ControlStream.WriteAsync(ms.ToArray(), 0, (int)ms.Length).ConfigureAwait(false);
-            await connection.ControlStream.FlushAsync().ConfigureAwait(false);
         }
 
         /// <summary>

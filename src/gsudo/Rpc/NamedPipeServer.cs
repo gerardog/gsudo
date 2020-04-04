@@ -143,8 +143,9 @@ namespace gsudo.Rpc
             _cancellationTokenSource.Cancel();
         }
 
-        private bool IsAuthorized(int clientPid, int allowedPid)
+        private bool IsAuthorized(int originalClientPid, int allowedPid)
         {
+            int clientPid = originalClientPid;
             Process clientProcess = null;
             ProcessModule clientProcessMainModule = null;
 
@@ -206,7 +207,7 @@ namespace gsudo.Rpc
             //--* /
 
             Logger.Instance.Log(
-                $"Invalid Client Credentials. Rejecting Connection. \nAllowed Pid: {allowedPid}\nActual Pid:  {clientPid}",
+                $"Invalid Client Credentials. Rejecting Connection. \nAllowed Pid: {allowedPid}\nActual Pid:  {originalClientPid}",
                 LogLevel.Error);
             return false;
         }

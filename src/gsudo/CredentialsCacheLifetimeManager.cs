@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Threading;
@@ -28,7 +29,7 @@ namespace gsudo
         public delegate void CacheEventHandler();
         public event CacheEventHandler OnCacheClear;
 
-        public CredentialsCacheLifetimeManager()
+        public CredentialsCacheLifetimeManager(int pid)
         {
             var security = new EventWaitHandleSecurity();
 
@@ -53,14 +54,24 @@ namespace gsudo
                 eventWaitHandle = new EventWaitHandle(false, EventResetMode.ManualReset, GLOBAL_WAIT_HANDLE_NAME, out var created, security);
             }
 
+            if (!EventWaitHandle.TryOpenExisting(
+                GLOBAL_WAIT_HANDLE_NAME + pid.ToString(CultureInfo.InvariantCulture),
+                EventWaitHandleRights.Synchronize | EventWaitHandleRights.Modify,
+                out var eventWaitHandleSpecific))
+            {
+                eventWaitHandleSpecific = new EventWaitHandle(false, EventResetMode.ManualReset, GLOBAL_WAIT_HANDLE_NAME + pid.ToString(CultureInfo.InvariantCulture), out var created, security);
+            }
+
             var credentialsResetThread = new Thread(() =>
             {
-                if (eventWaitHandle.WaitOne())
+                if (WaitHandle.WaitAny(new WaitHandle[] {eventWaitHandle, eventWaitHandleSpecific}) >= 0)
                 {
                     Logger.Instance.Log("Credentials Cache termination received", LogLevel.Info);
                     OnCacheClear?.Invoke();
                     eventWaitHandle.Close();
                     eventWaitHandle.Dispose();
+                    eventWaitHandleSpecific.Close();
+                    eventWaitHandleSpecific.Dispose();
                 }
             });
 
@@ -68,12 +79,12 @@ namespace gsudo
             credentialsResetThread.Start();
         }
 
-        public static bool ClearCredentialsCache()
+        public static bool ClearCredentialsCache(int? pid = null)
         {
             try
             {
                 using (var eventWaitHandle = EventWaitHandle.OpenExisting(
-                    GLOBAL_WAIT_HANDLE_NAME,
+                    GLOBAL_WAIT_HANDLE_NAME + (pid?.ToString(CultureInfo.InvariantCulture) ?? ""),
                     EventWaitHandleRights.Synchronize | EventWaitHandleRights.Modify))
                 {
                     eventWaitHandle.Set();
@@ -85,5 +96,6 @@ namespace gsudo
                 return false;
             }
         }
+
     }
 }

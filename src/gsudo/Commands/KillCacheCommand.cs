@@ -27,7 +27,7 @@ namespace gsudo.Commands
                 if (CredentialsCacheLifetimeManager.ClearCredentialsCache())
                 {
                     if (Verbose)
-                        Logger.Instance.Log("Credentials cache invalidated.", LogLevel.Info);
+                        Logger.Instance.Log("All credentials cache were invalidated.", LogLevel.Info);
                 }
                 else
                 {

@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO.Pipes;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 using gsudo.Enums;
 using gsudo.Helpers;
+using gsudo.Rpc;
 
 namespace gsudo.Commands
 {
@@ -19,39 +23,71 @@ namespace gsudo.Commands
         public int? AllowedPid { get; set; }
         public TimeSpan? CacheDuration { get; set; }
 
-        public Task<int> Execute()
+        public async Task<int> Execute()
         {
+            if (!AllowedPid.HasValue)
+            {
+                AllowedPid = Process.GetCurrentProcess().GetParentProcessExcludingShim().Id;
+            }
+
             if (!Action.HasValue || Action == CacheCommandAction.Help)
             {
-                return CacheHelp();
+                return await CacheHelp().ConfigureAwait(false);
             }
             else if (Action == CacheCommandAction.Off)
             {
-                return new KillCacheCommand().Execute();
+                if (InputArguments.KillCache)
+                    return await new KillCacheCommand(true).Execute().ConfigureAwait(false);
+                if (CredentialsCacheLifetimeManager.ClearCredentialsCache(AllowedPid))
+                    Logger.Instance.Log("Cache session closed.", LogLevel.Info);
+                else
+                {
+                    Logger.Instance.Log(
+                        "No cache session available for this process. (Use `-k' to close all sessions)`",
+                        LogLevel.Info);
+                }
+
+                return 0;
             }
             else // CacheCommandAction.On
             {
-                if (Settings.CacheMode.Value == CacheMode.Disabled || Math.Abs(Settings.CacheDuration.Value.TotalSeconds) < 1)
-                    throw new ApplicationException(
-                        "Unable to start a gsudo Cache session because CacheMode setting is 'Disabled' or CacheDuration is 0. Run `gsudo cache help` for more information.");
-
-                if (!AllowedPid.HasValue)
-                    AllowedPid = Process.GetCurrentProcess().GetParentProcessExcludingShim().Id;
-
-                if (!RunCommand.StartElevatedService(AllowedPid.Value, CacheDuration))
+                if (Settings.CacheMode.Value == CacheMode.Disabled ||
+                    Math.Abs(Settings.CacheDuration.Value.TotalSeconds) < 1)
                 {
-                    return Task.FromResult(Constants.GSUDO_ERROR_EXITCODE);
+                    Logger.Instance.Log("Unable to start a gsudo Cache session because CacheMode setting is 'Disabled' or CacheDuration is 0. Run `gsudo cache help` for more information.", LogLevel.Error);
+                    return 1;
                 }
 
-                if (AllowedPid.Value != 0)
-                    Logger.Instance.Log($"Elevation allowed for process Id {AllowedPid.Value} and children.",
-                        LogLevel.Info);
-                else
-                    Logger.Instance.Log($"Elevation allowed for any process from same-user.", LogLevel.Warning);
 
-                Logger.Instance.Log("Cache is a security risk. Use `gsudo cache off` (or `-k`) to go back to safety.",
-                    LogLevel.Warning);
-                return Task.FromResult(0);
+                if (!ProcessHelper.IsAdministrator() && NamedPipeClient.IsServiceAvailable())
+                {
+                    var commandToRun = new List<string>();
+                    commandToRun.Add(ProcessHelper.GetOwnExeName());
+                    if (InputArguments.Debug) commandToRun.Add("--debug");
+
+                    commandToRun.AddRange(new[]
+                        {"cache", "on", "--pid", AllowedPid.ToString()});
+
+                    return await new RunCommand() {CommandToRun = commandToRun}
+                        .Execute().ConfigureAwait(false);
+                }
+                else
+                {
+                    if (!RunCommand.StartElevatedService(AllowedPid.Value, CacheDuration))
+                    {
+                        return Constants.GSUDO_ERROR_EXITCODE;
+                    }
+                    if (AllowedPid.Value != 0)
+                        Logger.Instance.Log($"Elevation allowed for process Id {AllowedPid.Value} and children.",
+                            LogLevel.Info);
+                    else
+                        Logger.Instance.Log($"Elevation allowed for any process from same-user.", LogLevel.Warning);
+
+                    Logger.Instance.Log("Cache is a security risk. Use `gsudo cache off` (or `-k`) to go back to safety.",
+                        LogLevel.Warning);
+                }
+
+                return 0;
             }
         }
 

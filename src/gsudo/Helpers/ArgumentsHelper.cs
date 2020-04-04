@@ -268,13 +268,15 @@ namespace gsudo.Helpers
                         cmd.Action = CacheCommandAction.On;
                     else if (arg.In("OFF"))
                         cmd.Action = CacheCommandAction.Off;
-                    else if (arg.In("-h", "/h" ,"--help", "help"))
+                    else if (arg.In("-h", "/h", "--help", "help"))
                         cmd.Action = CacheCommandAction.Help;
                     else if (arg.In("-p", "--pid"))
                         cmd.AllowedPid = int.Parse(dequeue(), CultureInfo.InvariantCulture);
                     else if (arg.In("-d", "--duration"))
                         cmd.CacheDuration = Settings.TimeSpanParseWithInfinite(dequeue());
-                    else 
+                    else if (arg.In("-k"))
+                        InputArguments.KillCache = true;
+                    else
                         throw new ApplicationException($"Unknown argument: {arg}");
                 }
 
