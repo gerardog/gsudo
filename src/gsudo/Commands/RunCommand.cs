@@ -344,13 +344,10 @@ namespace gsudo.Commands
         {
             var @params = string.Empty;
 
-            if (InputArguments.Debug)
-            {
-                @params = "--debug ";
-                if (InputArguments.IntegrityLevel.HasValue) @params += $"-i {InputArguments.IntegrityLevel.Value} ";
-            }
-
+            if (InputArguments.Debug) @params = "--debug ";
+            if (InputArguments.IntegrityLevel.HasValue) @params += $"-i {InputArguments.IntegrityLevel.Value} ";
             if (InputArguments.RunAsSystem) @params += "-s ";
+
             bool isAdmin = ProcessHelper.IsHighIntegrity();
             string ownExe = ProcessHelper.GetOwnExeName();
 
