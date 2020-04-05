@@ -17,12 +17,15 @@ if (Get-Process gsudo -ErrorAction SilentlyContinue) {
 }
 
 $bin = "$env:ChocolateyInstall\lib\gsudo\bin\"
+
+if (Test-Path "$bin\sudo.exe")
+{
+  Remove-Item "$bin\sudo.exe"
+}
+
 Install-ChocolateyPath -PathToInstall $bin -PathType 'User'
 
-if (!(Test-Path "$bin\sudo.exe"))
-{
-  cmd /c mklink "$bin\sudo.exe" "$bin\gsudo.exe"
-}
+cmd /c mklink "$bin\sudo.exe" "$bin\gsudo.exe"
 
 if (Test-Path "$env:ChocolateyInstall\bin\gsudo.exe")  # Previous installers created symlinks on chocolatey\bin, we no longer need them.
 { 
