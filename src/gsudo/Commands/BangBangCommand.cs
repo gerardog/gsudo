@@ -28,24 +28,25 @@ namespace gsudo.Commands
             if (ret == 0)
                 throw new ApplicationException($"Failed to find last invoked command (GetConsoleCommandHistory=0; LastErr={Marshal.GetLastWin32Error()})");
 
-            var commandHistory = Marshal.PtrToStringAuto(CommandBuffer, length / 2).Split(new char[] { '\0' }, StringSplitOptions.RemoveEmptyEntries);
-
             string commandToElevate;
+
+            var commandHistory = Marshal.PtrToStringAuto(CommandBuffer, length / 2)
+                .Split(new char[] { '\0' }, StringSplitOptions.RemoveEmptyEntries)
+                .Reverse() // look for last commands first
+                .Skip(1) // skip gsudo call
+                ;
 
             if (Pattern=="!!")
             { 
-                commandToElevate = commandHistory
-                    .Reverse() // look for last commands first
-                    .Skip(1) // skip gsudo call
-                    .FirstOrDefault();
+                commandToElevate = commandHistory.FirstOrDefault();
             }
-            else
+            else if (Pattern.StartsWith ("!?",StringComparison.OrdinalIgnoreCase))
             {
-                var lookup = Pattern.Substring(1);
-                commandToElevate = commandHistory
-                    .Reverse() // look for last commands first
-                    .Skip(1) // skip gsudo call
-                    .FirstOrDefault(s => s.StartsWith(lookup));
+                commandToElevate = commandHistory.FirstOrDefault(s => s.Contains(Pattern.Substring(2)));
+            }
+            else // Pattern.StartsWith ("!command")
+            {
+                commandToElevate = commandHistory.FirstOrDefault(s => s.StartsWith(Pattern.Substring(1), StringComparison.OrdinalIgnoreCase));
             }
 
             if (commandToElevate == null)
