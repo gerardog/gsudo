@@ -300,6 +300,9 @@ namespace gsudo.Helpers
             if (arg.In("run"))
                 return new RunCommand() { CommandToRun = args };
 
+            if (arg == "!!" || arg.StartsWith("!"))
+                return new BangBangCommand() { Pattern = arg };
+
             args.AddFirst(arg);
             return new RunCommand() { CommandToRun = args };
         }
