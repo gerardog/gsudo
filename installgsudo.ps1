@@ -10,13 +10,19 @@ Write-Output "Extracting to $destdir"
 Expand-Archive -Path $zipfile -DestinationPath $destdir -Force
 Remove-Item -Path $zipfile
 
-if (!$Env:Path.ToLower().Contains($destdir.ToLower()))
+$p = [System.Environment]::GetEnvironmentVariable('Path', [System.EnvironmentVariableTarget]::User);
+if (!$p.ToLower().Contains($destdir.ToLower()))
 {
 	Write-Output "Adding $destdir to your Path"
-	$Env:Path += ";$destdir"
-	[System.Environment]::SetEnvironmentVariable('Path',$Env:Path,[System.EnvironmentVariableTarget]::User);
-	Write-Output "Restart your console to refresh the Path env var."
+	
+	$p += ";$destdir";
+	[System.Environment]::SetEnvironmentVariable('Path',$p,[System.EnvironmentVariableTarget]::User);
+	
+	$Env:Path = [System.Environment]::GetEnvironmentVariable('Path', [System.EnvironmentVariableTarget]::Machine) + ";" + $p
+	
+	Write-Output "Restart your consoles to refresh the Path env var."
 }
+
 $ans = Read-host "Do you want to alias ""sudo"" to ""gsudo""? (may show UAC elevation popup.) (y/n)"
 if ($ans -eq "y") 
 {
