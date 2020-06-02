@@ -41,7 +41,7 @@ namespace gsudo.Native
         internal static extern bool SetConsoleCtrlHandler(ConsoleEventDelegate callback, bool add);
 
         [DllImport("kernel32.dll")]
-        internal static extern uint GetLastError();
+        public static extern uint GetLastError();
 
         [DllImport("kernel32.dll")]
         internal static extern bool SetConsoleCursorPosition(IntPtr hConsoleOutput, PseudoConsoleApi.COORD CursorPosition);

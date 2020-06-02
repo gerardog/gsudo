@@ -123,8 +123,18 @@ namespace gsudo.Commands
         private async Task<int> RunUsingSingleUseElevation(ElevationRequest elevationRequest)
         {
             Logger.Instance.Log($"Using Console mode {ElevationRequest.ConsoleMode.TokenSwitch}", LogLevel.Debug);
+            TokenSwitchRenderer renderer = null;
 
-            var renderer = new TokenSwitchRenderer(null, elevationRequest);
+            try
+            {
+                renderer = new TokenSwitchRenderer(null, elevationRequest);
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"TokenSwitchRenderer mode failed with {ex.ToString()}", LogLevel.Debug);
+                elevationRequest.Mode = ElevationRequest.ConsoleMode.Attached; // fallback to attached mode.
+                return await RunUsingElevatedService(elevationRequest);
+            }
 
             if (StartSingleUseElevatedService(elevationRequest.TargetProcessId))
                 return await renderer.GetResult().ConfigureAwait(false);
@@ -436,7 +446,18 @@ namespace gsudo.Commands
         private static IProcessRenderer GetRenderer(Connection connection, ElevationRequest elevationRequest)
         {
             if (elevationRequest.Mode == ElevationRequest.ConsoleMode.TokenSwitch)
-                return new TokenSwitchRenderer(connection, elevationRequest);
+            {
+                try
+                {
+                    return new TokenSwitchRenderer(connection, elevationRequest);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Instance.Log($"TokenSwitchRenderer mode failed with {ex.ToString()}. Fallback to Attached Mode", LogLevel.Debug);
+                    elevationRequest.Mode = ElevationRequest.ConsoleMode.Attached; // fallback to attached mode.
+                    return new AttachedConsoleRenderer(connection);
+                }
+            }
             if (elevationRequest.Mode == ElevationRequest.ConsoleMode.Attached)
                 return new AttachedConsoleRenderer(connection);
             if (elevationRequest.Mode == ElevationRequest.ConsoleMode.Piped)

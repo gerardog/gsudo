@@ -300,7 +300,9 @@ namespace gsudo.Helpers
             
             Logger.Instance.Log($"{nameof(CreateProcessAsUser)}: {lpApplicationName} {args}", LogLevel.Debug);
             if (!ProcessApi.CreateProcess(null, command, ref pSec, ref tSec, false, dwCreationFlags, IntPtr.Zero, null, ref sInfoEx, out pInfo))
-                throw new Win32Exception();
+            {
+                throw new Win32Exception((int)ConsoleApi.GetLastError());
+            }
 
             return new SafeProcessHandle(pInfo.hProcess, true);
         }
