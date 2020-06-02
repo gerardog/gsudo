@@ -32,7 +32,7 @@ namespace gsudo.Rpc
             _allowedSid = allowedSid;
             _singleUse = singleUse;
 
-            _allowedExe = SymbolicLinkSupport.ResolveSymbolicLink(ProcessHelper.GetOwnExeName());
+            _allowedExe = ProcessHelper.GetOwnExeName();
             if (new Uri(_allowedExe).IsUnc)
             {
                 _allowedExeLength = -1; // Workaround for #27: Running gsudo from mapped drive. (see IsAuthorized)

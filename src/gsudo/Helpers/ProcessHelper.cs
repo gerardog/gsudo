@@ -19,8 +19,7 @@ namespace gsudo.Helpers
 
         public static string GetOwnExeName()
         {
-            return System.Reflection.Assembly.GetEntryAssembly().Location;
-            //return Process.GetCurrentProcess().MainModule.FileName;
+            return SymbolicLinkSupport.ResolveSymbolicLink(System.Reflection.Assembly.GetEntryAssembly().Location);
         }
 
         public static string GetExeName(this Process process)
