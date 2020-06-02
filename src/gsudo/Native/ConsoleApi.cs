@@ -18,13 +18,13 @@ namespace gsudo.Native
         internal const uint DISABLE_NEWLINE_AUTO_RETURN = 0x0008;
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        internal static extern SafeFileHandle GetStdHandle(int nStdHandle);
+        internal static extern IntPtr GetStdHandle(int nStdHandle);
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        internal static extern bool SetConsoleMode(SafeFileHandle hConsoleHandle, uint mode);
+        internal static extern bool SetConsoleMode(IntPtr hConsoleHandle, uint mode);
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        internal static extern bool GetConsoleMode(SafeFileHandle handle, out uint mode);
+        internal static extern bool GetConsoleMode(IntPtr handle, out uint mode);
 
         internal delegate bool ConsoleEventDelegate(CtrlTypes ctrlType);
 

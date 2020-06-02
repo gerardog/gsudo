@@ -272,9 +272,9 @@ namespace gsudo.Helpers
             if (Console.IsErrorRedirected | Console.IsInputRedirected | Console.IsOutputRedirected)
             {
                 startupInfo.dwFlags |= STARTF_USESTDHANDLES;
-                startupInfo.hStdOutput = ConsoleApi.GetStdHandle(ConsoleApi.STD_OUTPUT_HANDLE).DangerousGetHandle();
-                startupInfo.hStdInput = ConsoleApi.GetStdHandle(ConsoleApi.STD_INPUT_HANDLE).DangerousGetHandle();
-                startupInfo.hStdError = ConsoleApi.GetStdHandle(ConsoleApi.STD_ERROR_HANDLE).DangerousGetHandle();
+                startupInfo.hStdOutput = ConsoleApi.GetStdHandle(ConsoleApi.STD_OUTPUT_HANDLE);
+                startupInfo.hStdInput = ConsoleApi.GetStdHandle(ConsoleApi.STD_INPUT_HANDLE);
+                startupInfo.hStdError = ConsoleApi.GetStdHandle(ConsoleApi.STD_ERROR_HANDLE);
             }
 
             PROCESS_INFORMATION processInformation;
