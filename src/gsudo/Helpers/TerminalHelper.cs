@@ -28,7 +28,7 @@ namespace gsudo.Helpers
             return !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WT_SESSION"));
         }
 
-        public static byte[] GetSequenceFromConsoleKey(ConsoleKeyInfo key, bool debug = false)
+        public static char[] GetSequenceFromConsoleKey(ConsoleKeyInfo key, bool debug = false)
         {
             var res = new List<char>(15);
             const char ESC = '\x1B';
@@ -158,7 +158,7 @@ namespace gsudo.Helpers
                     res.Add(key.KeyChar);
             }
 
-            return res.Select(c => (byte)c).ToArray();
+            return res.ToArray();
         }
 
     }

@@ -9,8 +9,7 @@ namespace gsudo
     class Settings
     {
         public const int BufferSize = 10240;
-        public static readonly Encoding Encoding = System.Text.Encoding.Unicode;
-        
+        public static readonly Encoding Encoding = new System.Text.UTF8Encoding(false);
         public static RegistrySetting<CacheMode> CacheMode { get; set; }
             = new RegistrySetting<CacheMode>(nameof(CacheMode), Enums.CacheMode.Explicit,
                 (s) => (CacheMode) Enum.Parse(typeof(CacheMode), s, true), RegistrySettingScope.GlobalOnly);

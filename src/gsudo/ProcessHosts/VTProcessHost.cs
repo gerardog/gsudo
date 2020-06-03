@@ -5,6 +5,7 @@ using Microsoft.Win32.SafeHandles;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using static gsudo.Native.ProcessApi;
@@ -20,6 +21,7 @@ namespace gsudo.ProcessHosts
     class VTProcessHost : IProcessHost
     {
         private Connection _connection;
+        private static Encoding PseudoConsoleEncoding = new System.Text.UTF8Encoding(false);
 
         public async Task Start(Connection connection, ElevationRequest request)
         {
@@ -47,7 +49,7 @@ namespace gsudo.ProcessHosts
                             // prompt for stdin input and send the result to the pseudoconsole
                             t2 = Task.Run(() => CopyInputToPipe(inputPipe.WriteSide));
                             // discard Control stream
-                            t3 = new StreamReader(_connection.ControlStream).ConsumeOutput((s) => Task.CompletedTask);
+                            t3 = new StreamReader(_connection.ControlStream, Settings.Encoding).ConsumeOutput((s) => Task.CompletedTask);
 
                             Logger.Instance.Log($"Process ({process.ProcessInfo.dwProcessId}) started: {request.FileName} {request.Arguments}", LogLevel.Debug);
                             // free resources in case the console is ungracefully closed (e.g. by the 'x' in the window titlebar)
@@ -90,7 +92,7 @@ namespace gsudo.ProcessHosts
         private async Task CopyInputToPipe(SafeFileHandle inputWriteSide)
         {
             using (var inputWriteStream = new FileStream(inputWriteSide, FileAccess.Write))
-            using (var writer = new StreamWriter(inputWriteStream))
+            using (var writer = new StreamWriter(inputWriteStream, PseudoConsoleEncoding))
             {
                 writer.AutoFlush = true;
                 while (true)
@@ -140,7 +142,7 @@ namespace gsudo.ProcessHosts
 
                     while ((cch = await pseudoConsoleOutput.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false)) > 0)
                     {
-                        var s = Settings.Encoding.GetString(buffer, 0, cch);
+                        var s = PseudoConsoleEncoding.GetString(buffer, 0, cch);
                         await _connection.DataStream.WriteAsync(s).ConfigureAwait(false);
 
                         streamWriter?.Write(s);
