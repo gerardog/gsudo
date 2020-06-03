@@ -12,10 +12,6 @@ namespace gsudo.Helpers
     { 
         public static bool EnableVT()
         {
-            // If we are using ConEmu or Cmder, we can safely use their VT implementation.
-            // which is much more stable than Windows 10, at least before 21H1.
-          //  if (TerminalHelper.TerminalHasBuiltInVTSupport()) return true;
-
             var hStdOut = Native.ConsoleApi.GetStdHandle(Native.ConsoleApi.STD_OUTPUT_HANDLE);
             if (!Native.ConsoleApi.GetConsoleMode(hStdOut, out uint outConsoleMode))
             {

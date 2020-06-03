@@ -8,26 +8,6 @@ namespace gsudo.Helpers
 {
     class TerminalHelper
     {
-        public static bool TerminalHasBuiltInVTSupport()
-        {
-            return (IsWindowsTerminal()
-                || IsConEmu())
-                && !Console.IsOutputRedirected;                
-        }
-
-        public static bool IsConEmu() // or Cmder
-        {
-            return (Environment.GetEnvironmentVariable("ConEmuANSI") ?? string.Empty)
-                .Equals("ON", StringComparison.OrdinalIgnoreCase);
-        }
-
-        public static bool IsWindowsTerminal()
-        {
-            // the new Windows Terminal, not to be confused with old ConHost.
-            // https://github.com/microsoft/terminal/issues/1040#issuecomment-496691842
-            return !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WT_SESSION"));
-        }
-
         public static char[] GetSequenceFromConsoleKey(ConsoleKeyInfo key, bool debug = false)
         {
             var res = new List<char>(15);

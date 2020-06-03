@@ -65,9 +65,6 @@ namespace gsudo.Commands
             {
                 elevationRequest.ConsoleWidth = Console.WindowWidth;
                 elevationRequest.ConsoleHeight = Console.WindowHeight;
-
-                if (TerminalHelper.IsConEmu())
-                    elevationRequest.ConsoleWidth--; // weird ConEmu/Cmder fix
             }
 
             if (isRunningAsDesiredUser && isShellElevation && !InputArguments.NewWindow)
