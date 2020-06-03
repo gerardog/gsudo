@@ -56,9 +56,9 @@ namespace gsudo.ProcessRenderers
                             consecutiveCancelKeys = 0;
                             // send input character-by-character to the pipe
                             var key = Console.ReadKey(intercept: true);
-                            byte[] sequence = TerminalHelper.GetSequenceFromConsoleKey(key, InputArguments.Debug && _elevationRequest.FileName.EndsWith("KeyPressTester.exe", StringComparison.OrdinalIgnoreCase));
+                            char[] sequence = TerminalHelper.GetSequenceFromConsoleKey(key, InputArguments.Debug && _elevationRequest.FileName.EndsWith("KeyPressTester.exe", StringComparison.OrdinalIgnoreCase));
 
-                            _connection.DataStream.Write(sequence, 0, sequence.Length);
+                            await _connection.DataStream.WriteAsync(new string(sequence)).ConfigureAwait(false);
                         }
                     }
                     catch (ObjectDisposedException)
@@ -189,12 +189,6 @@ namespace gsudo.ProcessRenderers
             }
 
             return Task.CompletedTask;
-        }
-
-        private async Task IncomingKey(string s, NamedPipeClientStream pipe)
-        {
-            consecutiveCancelKeys = 0;
-            await pipe.WriteAsync(s).ConfigureAwait(false);
         }
     }
 }
