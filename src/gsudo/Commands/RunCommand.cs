@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
@@ -128,9 +127,9 @@ namespace gsudo.Commands
             }
             catch (Exception ex)
             {
-                Logger.Instance.Log($"TokenSwitchRenderer mode failed with {ex.ToString()}", LogLevel.Debug);
+                Logger.Instance.Log($"TokenSwitchRenderer mode failed with {ex.ToString()}. Fallback to Attached Mode", LogLevel.Debug);
                 elevationRequest.Mode = ElevationRequest.ConsoleMode.Attached; // fallback to attached mode.
-                return await RunUsingElevatedService(elevationRequest);
+                return await RunUsingElevatedService(elevationRequest).ConfigureAwait(false);
             }
 
             if (StartSingleUseElevatedService(elevationRequest.TargetProcessId))

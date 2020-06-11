@@ -108,45 +108,50 @@ namespace gsudo.Helpers
             return retval;
         }
 
-        public static string FindExecutableInPath(string exe)
+        public static string FindExecutableInPath(string input)
         {
-            exe = Environment.ExpandEnvironmentVariables(exe);
+            input = Environment.ExpandEnvironmentVariables(input);
 
             try
             {
-                if (File.Exists(exe))
+                if (File.Exists(input))
                 {
-                    return Path.GetFullPath(exe);
+                    return Path.GetFullPath(input);
                 }
 
-                if (string.IsNullOrEmpty(Path.GetDirectoryName(exe)))
+                var inputFolder = Path.GetDirectoryName(input);
+                var inputFileName = Path.GetFileName(input);
+
+                var validExtensions = Environment.GetEnvironmentVariable("PATHEXT", EnvironmentVariableTarget.Process)
+                    .Split(';');
+
+                var possibleNames = new List<string>();
+
+                possibleNames.Add(inputFileName);
+                possibleNames.AddRange(validExtensions.Select((ext) => inputFileName + ext));
+
+                var pathsToSearch = new List<string>();
+
+                if (!string.IsNullOrEmpty(inputFolder))
                 {
-                    exe = Path.GetFileName(exe);
+                    pathsToSearch.Add(Path.Combine(Environment.CurrentDirectory, inputFolder));
+                }
+                else
+                {
+                    pathsToSearch.Add(Environment.CurrentDirectory);
+                    pathsToSearch.AddRange((Environment.GetEnvironmentVariable("PATH") ?? "").Split(';'));
+                }
 
-                    var validExtensions = Environment.GetEnvironmentVariable("PATHEXT", EnvironmentVariableTarget.Process)
-                        .Split(';');
-
-                    var possibleNames = new List<string>();
-
-                    if (Path.GetExtension(exe).In(validExtensions))
-                        possibleNames.Add(exe);
-
-                    possibleNames.AddRange(validExtensions.Select((ext) => exe + ext));
-
-                    var paths = new List<string>();
-                    paths.Add(Environment.CurrentDirectory);
-                    paths.AddRange((Environment.GetEnvironmentVariable("PATH") ?? "").Split(';'));
-
-                    foreach (string test in paths)
+                foreach (string pathCandidate in pathsToSearch)
+                {
+                    foreach (string fileNameCandidate in possibleNames)
                     {
-                        foreach (string file in possibleNames)
-                        {
-                            string path = Path.Combine(test, file);
-                            if (!String.IsNullOrEmpty(path) && File.Exists(path))
-                                return Path.GetFullPath(path);
-                        }
+                        string path = Path.Combine(pathCandidate, fileNameCandidate);
+                        if (!String.IsNullOrEmpty(path) && File.Exists(path))
+                            return Path.GetFullPath(path);
                     }
                 }
+
                 return null;
             }
             catch
