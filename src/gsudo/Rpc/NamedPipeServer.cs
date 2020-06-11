@@ -59,10 +59,11 @@ namespace gsudo.Rpc
                 new SecurityIdentifier(_allowedSid),
                 PipeAccessRights.ReadWrite | PipeAccessRights.CreateNewInstance,
                 AccessControlType.Allow));
-
+            
+            var networkSid = new SecurityIdentifier("S-1-5-2");
             // deny remote connections.
             ps.AddAccessRule(new PipeAccessRule(
-                @"NT AUTHORITY\NETWORK", 
+                networkSid, 
                 PipeAccessRights.FullControl, 
                 System.Security.AccessControl.AccessControlType.Deny));
 
