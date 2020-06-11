@@ -3,6 +3,7 @@ using gsudo.Native;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 
@@ -11,6 +12,7 @@ namespace gsudo.Helpers
     public static class ArgumentsHelper
     {
         static readonly HashSet<string> CmdCommands = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "ASSOC", "ATTRIB", "BREAK", "BCDEDIT", "CACLS", "CALL", "CD", "CHCP", "CHDIR", "CHKDSK", "CHKNTFS", "CLS", /*"CMD",*/ "COLOR", "COMP", "COMPACT", "CONVERT", "COPY", "DATE", "DEL", "DIR", "DISKPART", "DOSKEY", "DRIVERQUERY", "ECHO", "ENDLOCAL", "ERASE", "EXIT", "FC", "FIND", "FINDSTR", "FOR", "FORMAT", "FSUTIL", "FTYPE", "GOTO", "GPRESULT", "GRAFTABL", "HELP", "ICACLS", "IF", "LABEL", "MD", "MKDIR", "MKLINK", "MODE", "MORE", "MOVE", "OPENFILES", "PATH", "PAUSE", "POPD", "PRINT", "PROMPT", "PUSHD", "RD", "RECOVER", "REM", "REN", "RENAME", "REPLACE", "RMDIR", "ROBOCOPY", "SET", "SETLOCAL", "SC", "SCHTASKS", "SHIFT", "SHUTDOWN", "SORT", "START", "SUBST", "SYSTEMINFO", "TASKLIST", "TASKKILL", "TIME", "TITLE", "TREE", "TYPE", "VER", "VERIFY", "VOL", "XCOPY", "WMIC" };
+        static readonly HashSet<string> CreateProcessSupportedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ".CMD", ".EXE", ".BAT", ".COM" };
 
         internal static string[] AugmentCommand(string[] args)
         {
@@ -84,10 +86,11 @@ namespace gsudo.Helpers
                         .Concat(args).ToArray();
 
                 var exename = ProcessFactory.FindExecutableInPath(UnQuote(args[0]));
-                if (exename == null)
+                if (exename == null || !CreateProcessSupportedExtensions.Contains(Path.GetExtension(exename)))
                 {
                     // We don't know what command are we executing. It may be an invalid program...
-                    // But let CMD decide that... Invoke using "CMD /C" prefix ..
+                    // Or a non-executable file with a valid file association..
+                    // Let CMD decide that... Invoke using "CMD /C" prefix ..
                     return new string[]
                         { Environment.GetEnvironmentVariable("COMSPEC"), "/c" }
                         .Concat(args).ToArray();
