@@ -28,7 +28,7 @@ namespace gsudo.Tokens
                         NtDllApi.PROCESS_INFORMATION_CLASS processInformationClass =
                             NtDllApi.PROCESS_INFORMATION_CLASS.ProcessAccessToken;
 
-                        int res = NtDllApi.NtSetInformationProcess(hProcess, processInformationClass,
+                        int res = NtDllApi.NativeMethods.NtSetInformationProcess(hProcess, processInformationClass,
                             ref tokenInfo,
                             Marshal.SizeOf<NtDllApi.PROCESS_ACCESS_TOKEN>());
                         Logger.Instance.Log($"NtSetInformationProcess returned {res}", LogLevel.Debug);

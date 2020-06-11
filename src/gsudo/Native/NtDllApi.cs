@@ -5,11 +5,14 @@ namespace gsudo.Native
 {
     internal static class NtDllApi
     {
-        [DllImport("ntdll.dll", SetLastError = true)]
-        public static extern int NtSetInformationProcess(IntPtr hProcess, PROCESS_INFORMATION_CLASS processInformationClass, ref PROCESS_ACCESS_TOKEN processInformation, int processInformationLength);
+        internal class NativeMethods
+        {
+            [DllImport("ntdll.dll", SetLastError = true)]
+            public static extern int NtSetInformationProcess(IntPtr hProcess, PROCESS_INFORMATION_CLASS processInformationClass, ref PROCESS_ACCESS_TOKEN processInformation, int processInformationLength);
 
-        [DllImport("ntdll.dll", SetLastError = true)]
-        public static extern int NtQueryInformationProcess(IntPtr processHandle, int processInformationClass, ref PROCESS_BASIC_INFORMATION processInformation, int processInformationLength, out int returnLength);
+            [DllImport("ntdll.dll", SetLastError = true)]
+            public static extern int NtQueryInformationProcess(IntPtr processHandle, int processInformationClass, ref PROCESS_BASIC_INFORMATION processInformation, int processInformationLength, out int returnLength);
+        }
 
         public enum PROCESS_INFORMATION_CLASS
         {

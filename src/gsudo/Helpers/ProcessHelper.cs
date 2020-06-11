@@ -3,8 +3,6 @@ using Microsoft.Win32.SafeHandles;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Globalization;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Threading;
@@ -104,7 +102,7 @@ namespace gsudo.Helpers
                 var pbi = new NtDllApi.PROCESS_BASIC_INFORMATION();
                 int returnLength;
 
-                if (NtDllApi.NtQueryInformationProcess(hProcess, 0, ref pbi, Marshal.SizeOf(pbi), out returnLength) != 0)
+                if (NtDllApi.NativeMethods.NtQueryInformationProcess(hProcess, 0, ref pbi, Marshal.SizeOf(pbi), out returnLength) != 0)
                     return 0;
 
                 return (int)pbi.InheritedFromUniqueProcessId;
