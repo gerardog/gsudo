@@ -93,29 +93,26 @@ namespace gsudo.Helpers
             return parentId;
         }
 
-        public static int GetParentProcessId(int Id)
+        public static int GetParentProcessId(int pid)
         {
-            PROCESSENTRY32 pe32 = new PROCESSENTRY32 { };
-            pe32.dwSize = (uint)Marshal.SizeOf(typeof(PROCESSENTRY32));
-            using (var hSnapshot = CreateToolhelp32Snapshot(SnapshotFlags.Process, (uint)Id))
-            {
-                if (hSnapshot.IsInvalid)
-                    throw new Win32Exception();
+            IntPtr hProcess = ProcessApi.OpenProcess(ProcessApi.PROCESS_QUERY_INFORMATION, true, (uint)pid);
 
-                if (!Process32First(hSnapshot, ref pe32))
-                {
-                    int errno = Marshal.GetLastWin32Error();
-                    if (errno == ERROR_NO_MORE_FILES)
-                        return -1;
-                    throw new Win32Exception(errno);
-                }
-                do
-                {
-                    if (pe32.th32ProcessID == (uint)Id)
-                        return (int)pe32.th32ParentProcessID;
-                } while (Process32Next(hSnapshot, ref pe32));
+            try
+            {
+                if (hProcess == IntPtr.Zero) return 0;
+
+                var pbi = new NtDllApi.PROCESS_BASIC_INFORMATION();
+                int returnLength;
+
+                if (NtDllApi.NtQueryInformationProcess(hProcess, 0, ref pbi, Marshal.SizeOf(pbi), out returnLength) != 0)
+                    return 0;
+
+                return (int)pbi.InheritedFromUniqueProcessId;
             }
-            return -1;
+            finally
+            {
+                CloseHandle(hProcess);
+            }
         }
         
         internal static int GetCallerPid()

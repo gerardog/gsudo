@@ -1,5 +1,4 @@
-﻿using Microsoft.Win32.SafeHandles;
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 using static gsudo.Native.ProcessApi;
 
@@ -425,44 +424,6 @@ namespace gsudo.Native
         public static extern bool LookupPrivilegeValue(string lpSystemName, string lpName, ref LUID lpLuid);
 
         #endregion
-
-        [DllImport("ntdll.dll", SetLastError = true)]
-        public static extern int NtSetInformationProcess(IntPtr hProcess, _PROCESS_INFORMATION_CLASS processInformationClass, ref PROCESS_ACCESS_TOKEN processInformation, int processInformationLength);
-
-        public enum _PROCESS_INFORMATION_CLASS
-        {
-            ProcessBasicInformation,
-            ProcessQuotaLimits,
-            ProcessIoCounters,
-            ProcessVmCounters,
-            ProcessTimes,
-            ProcessBasePriority,
-            ProcessRaisePriority,
-            ProcessDebugPort,
-            ProcessExceptionPort,
-            ProcessAccessToken,
-            ProcessLdtInformation,
-            ProcessLdtSize,
-            ProcessDefaultHardErrorMode,
-            ProcessIoPortHandlers,
-            ProcessPooledUsageAndLimits,
-            ProcessWorkingSetWatch,
-            ProcessUserModeIOPL,
-            ProcessEnableAlignmentFaultFixup,
-            ProcessPriorityClass,
-            ProcessWx86Information,
-            ProcessHandleCount,
-            ProcessAffinityMask,
-            ProcessPriorityBoost,
-            MaxProcessInfoClass
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        internal struct PROCESS_ACCESS_TOKEN
-        {
-            public IntPtr Token;
-            public IntPtr Thread;
-        }
 
         [DllImport("advapi32.dll", SetLastError = true)]
         static extern bool GetTokenInformation(

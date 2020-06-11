@@ -14,7 +14,7 @@ namespace gsudo.Tokens
             desiredToken = GetDesiredToken(elevationRequest);
             try
             {
-                var tokenInfo = new TokensApi.PROCESS_ACCESS_TOKEN();
+                var tokenInfo = new NtDllApi.PROCESS_ACCESS_TOKEN();
                 tokenInfo.Token = desiredToken.DangerousGetHandle();
                 tokenInfo.Thread = IntPtr.Zero;
 
@@ -25,12 +25,12 @@ namespace gsudo.Tokens
                     {
                         IntPtr hProcess = ProcessApi.OpenProcess(ProcessApi.PROCESS_SET_INFORMATION, true,
                             (uint)elevationRequest.TargetProcessId);
-                        TokensApi._PROCESS_INFORMATION_CLASS processInformationClass =
-                            TokensApi._PROCESS_INFORMATION_CLASS.ProcessAccessToken;
+                        NtDllApi.PROCESS_INFORMATION_CLASS processInformationClass =
+                            NtDllApi.PROCESS_INFORMATION_CLASS.ProcessAccessToken;
 
-                        int res = TokensApi.NtSetInformationProcess(hProcess, processInformationClass,
+                        int res = NtDllApi.NtSetInformationProcess(hProcess, processInformationClass,
                             ref tokenInfo,
-                            Marshal.SizeOf<TokensApi.PROCESS_ACCESS_TOKEN>());
+                            Marshal.SizeOf<NtDllApi.PROCESS_ACCESS_TOKEN>());
                         Logger.Instance.Log($"NtSetInformationProcess returned {res}", LogLevel.Debug);
                         if (res < 0)
                             throw new Win32Exception();
