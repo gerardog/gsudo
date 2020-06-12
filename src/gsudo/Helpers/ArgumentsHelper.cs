@@ -303,10 +303,11 @@ namespace gsudo.Helpers
             if (arg.In("run"))
                 return new RunCommand() { CommandToRun = args };
 
-            if (arg == "!!" || arg.StartsWith("!", StringComparison.InvariantCulture))
-                return new BangBangCommand() { Pattern = arg };
-
             args.AddFirst(arg);
+            
+            if (arg == "!!" || arg.StartsWith("!", StringComparison.InvariantCulture))
+                return new BangBangCommand() { Pattern = string.Join(" ", args) };
+
             return new RunCommand() { CommandToRun = args };
         }
 

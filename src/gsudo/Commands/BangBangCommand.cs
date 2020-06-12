@@ -36,17 +36,17 @@ namespace gsudo.Commands
                 .Skip(1) // skip gsudo call
                 ;
 
-            if (Pattern=="!!")
-            { 
+            if (Pattern == "!!")
+            {
                 commandToElevate = commandHistory.FirstOrDefault();
             }
-            else if (Pattern.StartsWith ("!?",StringComparison.OrdinalIgnoreCase))
+            else if (Pattern.StartsWith("!?", StringComparison.OrdinalIgnoreCase))
             {
-                commandToElevate = commandHistory.FirstOrDefault(s => s.Contains(Pattern.Substring(2)));
+                commandToElevate = commandHistory.FirstOrDefault(s => s.Contains(Pattern.Substring(2).Trim()));
             }
             else // Pattern.StartsWith ("!command")
             {
-                commandToElevate = commandHistory.FirstOrDefault(s => s.StartsWith(Pattern.Substring(1), StringComparison.OrdinalIgnoreCase));
+                commandToElevate = commandHistory.FirstOrDefault(s => s.StartsWith(Pattern.Substring(1).Trim(), StringComparison.OrdinalIgnoreCase));
             }
 
             if (commandToElevate == null)
@@ -55,7 +55,7 @@ namespace gsudo.Commands
             Logger.Instance.Log("Command to run: " + commandToElevate, LogLevel.Info);
 
             return new RunCommand()
-            { CommandToRun = ArgumentsHelper.SplitArgs(commandToElevate) }
+                { CommandToRun = ArgumentsHelper.SplitArgs(commandToElevate) }
             .Execute();
         }
 
@@ -67,7 +67,7 @@ namespace gsudo.Commands
             [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
             public static extern UInt32 GetConsoleCommandHistoryLength(string ExeName);
 
-            [DllImport("kernel32.dll", SetLastError = true, CharSet =CharSet.Unicode)]
+            [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
             public static extern UInt32 GetConsoleCommandHistory(
                                  IntPtr CommandBuffer,
                                  int CommandBufferLength,
