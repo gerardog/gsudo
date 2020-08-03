@@ -22,7 +22,7 @@ namespace gsudo
             = new RegistrySetting<string>(nameof(PipedPrompt), "$P# ", (s) => s);
 
         public static RegistrySetting<string> Prompt { get; set; }
-            = new RegistrySetting<string>(nameof(Prompt), "$p$e[1;31;40m# $e[0;37;40m", (s) => s);
+            = new RegistrySetting<string>(nameof(Prompt), "$p$e[1;31;40m# $e[0m", (s) => s);
 
         public static RegistrySetting<LogLevel> LogLevel { get; set; }
             = new RegistrySetting<LogLevel>(nameof(LogLevel), gsudo.LogLevel.Info,
