@@ -30,7 +30,9 @@ namespace gsudo.Helpers
             return true;
         }
 
-        internal static bool IgnoreConsoleCancelKeyPress(CtrlTypes ctrlType)
+        internal static SetConsoleCtrlEventHandler IgnoreConsoleCancelKeyPress;
+
+        private static bool IgnoreConsoleCancelKeyPressMethod(CtrlTypes ctrlType)
         {
             if (ctrlType.In(CtrlTypes.CTRL_C_EVENT, CtrlTypes.CTRL_BREAK_EVENT))
                 return true;
@@ -38,6 +40,9 @@ namespace gsudo.Helpers
             return false;
         }
 
-
+        static ConsoleHelper()
+        {
+            IgnoreConsoleCancelKeyPress += IgnoreConsoleCancelKeyPressMethod;
+        }
     }
 }

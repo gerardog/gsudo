@@ -37,8 +37,9 @@ namespace gsudo.Native
             CTRL_SHUTDOWN_EVENT
         }
 
+        internal delegate bool SetConsoleCtrlEventHandler(CtrlTypes sig);
         [DllImport("kernel32.dll", SetLastError = true)]
-        internal static extern bool SetConsoleCtrlHandler(ConsoleEventDelegate callback, bool add);
+        internal static extern bool SetConsoleCtrlHandler(SetConsoleCtrlEventHandler callback, bool add);
 
         [DllImport("kernel32.dll")]
         public static extern uint GetLastError();
