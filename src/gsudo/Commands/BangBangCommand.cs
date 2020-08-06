@@ -1,11 +1,8 @@
 ﻿using gsudo.Helpers;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace gsudo.Commands
@@ -42,7 +39,7 @@ namespace gsudo.Commands
             }
             else if (Pattern.StartsWith("!?", StringComparison.OrdinalIgnoreCase))
             {
-                commandToElevate = commandHistory.FirstOrDefault(s => s.Contains(Pattern.Substring(2).Trim()));
+                commandToElevate = commandHistory.FirstOrDefault(s => s.ToUpperInvariant().Contains(Pattern.Substring(2).Trim().ToUpperInvariant()));
             }
             else // Pattern.StartsWith ("!command")
             {
