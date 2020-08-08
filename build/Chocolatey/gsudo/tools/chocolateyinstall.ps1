@@ -23,7 +23,7 @@ if (Test-Path "$bin\sudo.exe")
   Remove-Item "$bin\sudo.exe"
 }
 
-Install-ChocolateyPath -PathToInstall $bin -PathType 'User'
+Install-ChocolateyPath -PathToInstall $bin -PathType 'Machine'
 
 cmd /c mklink "$bin\sudo.exe" "$bin\gsudo.exe"
 
