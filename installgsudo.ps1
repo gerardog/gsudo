@@ -1,3 +1,4 @@
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $release = Invoke-RestMethod -Method Get -Uri "https://api.github.com/repos/gerardog/gsudo/releases/latest"
 $asset = $release.assets | Where-Object name -like *.zip
 $destdir = "$home\apps\gsudo"
