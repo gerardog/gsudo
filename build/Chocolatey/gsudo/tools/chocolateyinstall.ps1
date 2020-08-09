@@ -23,6 +23,15 @@ if (Test-Path "$bin\sudo.exe")
   Remove-Item "$bin\sudo.exe"
 }
 
+# Remove from User Path on previous versions ( <= 0.7.1 )
+$toolsPath = Split-Path -parent $MyInvocation.MyCommand.Definition
+$unScriptPath = Join-Path $toolsPath "Uninstall-ChocolateyPath.psm1"
+$installPath = "$env:ChocolateyInstall\lib\gsudo\bin\"
+Import-Module $unScriptPath
+
+Uninstall-ChocolateyPath $installPath 'User' | Out-Null
+
+# Add to System Path
 Install-ChocolateyPath -PathToInstall $bin -PathType 'Machine'
 
 cmd /c mklink "$bin\sudo.exe" "$bin\gsudo.exe"
