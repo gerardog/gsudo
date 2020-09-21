@@ -99,11 +99,10 @@ namespace gsudo.Commands
 
             if (exitCode.HasValue && exitCode.Value != Constants.GSUDO_ERROR_EXITCODE)
             {
-                Logger.Instance.Log($"Process exited with code {exitCode}", exitCode == 0 ? LogLevel.Debug : LogLevel.Info);
+                Logger.Instance.Log($"Process exited with code {exitCode}", LogLevel.Debug);
             }
 
             return exitCode ?? 0;
-
         }
 
         private bool IsServiceAvailable()
