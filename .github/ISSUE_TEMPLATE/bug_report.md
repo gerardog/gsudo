@@ -9,19 +9,20 @@ assignees: ''
 
 ## Issue Description
 
-<!-- If you are using the 'sudo' alias: Please test with `gsudo` to let me know if the problem only ocurrs with the alias. -->
+<!-- 
+If you are calling gsudo using the 'sudo' alias: We can save time if you test without the alias (use `gsudo` instead) to let me know if the problem only occurs with the alias. 
+-->
 
 ## Steps to Reproduce
-1. 
+<!-- please describe how did you run gsudo. Where you using Cmd or PowerShell, which version? -->
+1.  
 2. 
 3. 
 
 ## Screenshots
 <!-- You can capture a screenshot with Ctrl+PrintScreen and paste it here with Ctrl-V. -->
-<!-- It's really helpful if you use the --debug flag: 
-For example instead of "gsudo notepad" do "gsudo --debug notepad"  -->
+<!-- Really helps if you use the "gsudo --debug" flag: For example instead of "gsudo notepad" do "gsudo --debug notepad"  -->
 
 ## Context:
- - Windows version:    (Start -> winver)
- - Windows language: 
- - gudo version:  (gsudo -v)
+ - Windows version: (Start -> winver)
+ - gsudo version:      (gsudo -v)
