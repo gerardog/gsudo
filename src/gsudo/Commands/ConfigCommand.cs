@@ -63,7 +63,7 @@ namespace gsudo.Commands
                     return new RunCommand()
                     {
                         CommandToRun = new string[]
-                            { ProcessHelper.GetOwnExeName(), "--global", "config", key, reset ? "--reset" : $"\"{unescapedValue}\""}
+                            { $"\"{ProcessHelper.GetOwnExeName()}\"", "--global", "config", key, reset ? "--reset" : $"\"{unescapedValue}\""}
                     }.Execute();
                 }
 
