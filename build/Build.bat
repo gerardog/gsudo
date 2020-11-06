@@ -31,13 +31,14 @@ if errorlevel 1 echo Sign Failed & pause & goto badend
 del Releases\gsudo.v%version%.zip
 :skipbuild
 Set PSModulePath=
-7z a Releases\gsudo.v%version%.zip ..\src\gsudo\bin\ilmerge\*.*
+7z a Releases\gsudo.v%version%.zip ..\src\gsudo\bin\ilmerge\*.* ..\src\gsudo.extras\*.*
 powershell -Command ECHO (Get-FileHash Releases\gsudo.v%version%.zip).hash > Releases\gsudo.v%version%.zip.sha256
 
 :: Chocolatey
 git clean Chocolatey\gsudo\Bin -xf
 @md Chocolatey\gsudo\Bin 2> nul
 copy ..\src\gsudo\bin\ilmerge\*.* Chocolatey\gsudo\Bin\
+copy ..\src\gsudo.extras\*.* Chocolatey\gsudo\Bin\
 copy Chocolatey\verification.txt.template Chocolatey\gsudo\Tools\VERIFICATION.txt
 
 @pushd %~dp0\Chocolatey\gsudo
