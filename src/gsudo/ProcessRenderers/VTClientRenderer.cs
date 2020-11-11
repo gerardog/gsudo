@@ -36,6 +36,7 @@ namespace gsudo.ProcessRenderers
             if (Settings.SecurityEnforceUacIsolation)
                 throw new NotSupportedException("VT Mode not supported when SecurityEnforceUacIsolation=true");
 
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
             ConsoleHelper.EnableVT();
 
             try
