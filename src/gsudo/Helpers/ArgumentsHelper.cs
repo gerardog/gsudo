@@ -50,20 +50,7 @@ namespace gsudo.Helpers
             else if (currentShell.In(Shell.PowerShell, Shell.PowerShellCore))
             {
                 var newArgs = new List<string>();
-
-                // -- Workaround for https://github.com/gerardog/gsudo/issues/65
-                // ISSUE: Apps installed via Microsoft Store, need a special attribute in it's security token to work (WIN://SYSAPPID),
-                // That attrib is inserted by CreateProcess() Api, but gsudo replaces the special token with regular but elevated one
-                // which doesnt have the attribute. So the app fails to load.
-                // WORKAROUND: The CreateProcess(pwsh.exe) call must be already elevated so that Api can manipulate the final token, 
-                // and the easiest way I found is delegate the final CreateProcess to an elevated CMD instance: To elevate "cmd /c pwsh.exe" instead.
-                if (currentShellExeName.IndexOf("\\WindowsApps\\", StringComparison.OrdinalIgnoreCase) >= 0) // Terrible Microsoft Store App detection.
-                {
-                    Logger.Instance.Log("Workaround for Pwsh installed via MSStore.", LogLevel.Debug);
-                    newArgs.Add(Environment.GetEnvironmentVariable("COMSPEC"));
-                    newArgs.Add("/c");
-                }
-                // -- End of workaround.
+                DoFixIfIsMicrosoftStoreApp(currentShellExeName, newArgs);
 
                 newArgs.Add($"\"{currentShellExeName}\"");
                 newArgs.Add("-NoLogo");
@@ -74,10 +61,9 @@ namespace gsudo.Helpers
                     newArgs.Add("-Command");
                     newArgs.AddMany(args);
                 }
- 
+
                 return newArgs.ToArray();
             }
-
 
             if (currentShell == Shell.Yori)
             {
@@ -113,10 +99,34 @@ namespace gsudo.Helpers
                 }
                 else
                 {
-                    args[0] = $"\"{exename}\""; // replace command name with full+absolute+quoted path to resolve many issues, like "Batch files not started by create process if no extension is specified."
-                    return args;
+                    var newArgs = new List<string>();
+                    DoFixIfIsMicrosoftStoreApp(exename, newArgs);
+
+                    newArgs.Add($"\"{exename}\""); // replace command name with full+absolute+quoted path to resolve many issues, like "Batch files not started by create process if no extension is specified."
+                    newArgs.AddRange(args.Skip(1));
+                    return newArgs.ToArray();
                 }
             }
+        }
+
+        private static void DoFixIfIsMicrosoftStoreApp(string targetExe, List<string> newArgs)
+        {
+            // -- Workaround for https://github.com/gerardog/gsudo/issues/65
+
+            // ISSUE: Apps installed via Microsoft Store, need a special attribute in it's security token to work (WIN://SYSAPPID),
+            // That attrib is inserted by CreateProcess() Api, but gsudo replaces the special token with regular but elevated one
+            // which doesnt have the attribute. So the app fails to load.
+
+            // WORKAROUND: The CreateProcess(pwsh.exe) call must be already elevated so that Api can manipulate the final token, 
+            // and the easiest way I found is delegate the final CreateProcess to an elevated CMD instance: To elevate "cmd /c pwsh.exe" instead.
+
+            if (targetExe.IndexOf("\\WindowsApps\\", StringComparison.OrdinalIgnoreCase) >= 0) // Terrible but cheap Microsoft Store App detection.
+            {
+                Logger.Instance.Log("Workaround for target app installed via MSStore.", LogLevel.Debug);
+                newArgs.Add(Environment.GetEnvironmentVariable("COMSPEC"));
+                newArgs.Add("/c");
+            }
+            // -- End of workaround.
         }
 
         public static IEnumerable<string> SplitArgs(string args)
