@@ -61,8 +61,12 @@ namespace gsudo.Helpers
             {
                 var sb = new StringBuilder(1024);
                 var res = Native.FileApi.GetFinalPathNameByHandle(h, sb, 1024, 0);
+
                 if (res == 0)
-                    throw new Win32Exception();
+                {
+                    Logger.Instance.Log($"{nameof(SymbolicLinkSupport)}.{nameof(GetFinalPathName)} failed with: {new Win32Exception()}", LogLevel.Debug);
+                    return path; // Sad workaround: do not resolve the symlink.
+                }
 
                 return sb.ToString();
             }
