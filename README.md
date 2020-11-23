@@ -35,8 +35,6 @@ scoop install gsudo
 
 ``` batch
 choco install gsudo
-:: update Path environment variable
-refreshenv
 ```
 
 Manual installation: (no elevation required)
@@ -45,7 +43,7 @@ Manual installation: (no elevation required)
 PowerShell -Command "Set-ExecutionPolicy RemoteSigned -scope Process; iwr -useb https://raw.githubusercontent.com/gerardog/gsudo/master/installgsudo.ps1 | iex"
 ```
 
-Note: gsudo is portable. The installation consists of unzipping the release and adding `gsudo` to the path. No windows service required.
+Note: gsudo is portable. The installation consists of unzipping the latest release and adding `gsudo` to the path. No windows service required.
 
 ## Usage
 
@@ -198,7 +196,7 @@ The cache also ends when the allowed process ends or if no elevations requests a
 
 ## Known issues
 
-- Under some circunstances the `sudo` alias can misbehave while the `gsudo` command works well. Please fill an issue to let me know.
+- Under some circumstances the `sudo` alias can misbehave while the `gsudo` command works well. Please fill an issue to let me know.
 
 - The elevated instances do not have access to the network shares connected on the non-elevated space. This is not a `gsudo` issue but how Windows works. Use `--copyNS` to replicate Network Shares into the elevated session, but this is not bi-directional and it's interactive (may prompt for user/password).
 
