@@ -6,15 +6,14 @@
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>StrongName.snk</AssemblyOriginatorKeyFile>
     <Authors>Gerardo Grignoli</Authors>
-    <Description>gsudo allows to run commands with elevated permissions within the current console.
-It is a sudo equivalent for Windows, with a similar user-experience as the original *nix sudo.</Description>
+    <Description>gsudo is a sudo for Windows, allows to run commands with elevated permissions in the current console.</Description>
     <DelaySign>false</DelaySign>
     <OutputPath>bin\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
-    <Version>0.7.2</Version>
-    <Copyright>2019 Gerardo Grignoli</Copyright>
+    <Version>0.7.3</Version>
+    <Copyright>2020 Gerardo Grignoli</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/gerardog/gsudo</PackageProjectUrl>
     <RepositoryUrl>https://github.com/gerardog/gsudo</RepositoryUrl>
