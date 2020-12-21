@@ -51,8 +51,10 @@
 
           <Component Id="GSudoExe" Guid="a44b02d3-9d55-4e7e-b304-0c7f5ace8253">
             <File Id="GSudoExe" KeyPath="yes" Name="gsudo.exe" Source="..\gsudo\bin\ilmerge\gsudo.exe" />
+<!--
             <File Id="GSudoBash" KeyPath="no" Name="gsudo" Source="..\gsudo.extras\gsudo" />
             <File Id="GSudoPowerShell" KeyPath="no" Name="gsudo.ps1" Source="..\gsudo.extras\gsudo.ps1" />
+-->
           </Component>
 
         </Directory>
@@ -65,11 +67,13 @@
                   Directory="INSTALLFOLDER"
                   ExeCommand='cmd /c mklink sudo.exe "[INSTALLFOLDER]gsudo.exe"'
                   Execute="deferred"
+				  Return="ignore"
                   Impersonate="no" />
     <CustomAction Id="RemoveSudoExeLink"
                   Directory="INSTALLFOLDER"
                   ExeCommand='cmd /c DEL sudo.exe'
                   Execute="deferred"
+				  Return="ignore"
                   Impersonate="no" />
   </Fragment>
 

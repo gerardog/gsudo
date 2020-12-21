@@ -4,13 +4,13 @@
 set version=%1
 @if 'skipbuild'=='%2' goto skipbuild 
 
-@if '%msbuild%' == '' set msbuild="C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\MSBuild\Current\Bin\MSBuild.exe"
-@if '%SignToolPath%' == '' set SignToolPath="C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64\"
+@if NOT DEFINED msbuild set msbuild="C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\MSBuild\Current\Bin\MSBuild.exe"
+@if NOT DEFINED SignToolPath set SignToolPath="C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64\"
 
 @echo Building with version number v%version%
 
 del ..\src\gsudo\bin\*.* /q
-%msbuild% /t:Restore,Rebuild /p:Configuration=Release /p:WarningLevel=0 %~dp0..\src\gsudo.sln /p:Version=%version%
+"%msbuild%" /t:Restore,Rebuild /p:Configuration=Release /p:WarningLevel=0 %~dp0..\src\gsudo.sln /p:Version=%version%
 if errorlevel 1 goto badend
 @echo Build Succeded.
 @pushd ..\src\gsudo\bin
