@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+
+  <?include ./Constants.wxi ?>
+
+  <Product Id="*" Name="gsudo v$(var.Version)" Language="1033" Version="$(var.Version)"
+           UpgradeCode="b18a4797-0649-40a3-a6b3-d39ae7ee4523" Manufacturer="gerardog">
+
+    <Package InstallerVersion="200"
+             Compressed="yes"
+             InstallScope="perMachine"
+             Manufacturer="Silvenga"
+             Description="Provides packaging for the gsudo utility by @gerardog." />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Feature Id="ProductFeature" Title="gsudomsi" Level="1">
+      <ComponentGroupRef Id="GSudo" />
+    </Feature>
+
+    <UIRef Id="WixUI_InstallDir" />
+    <WixVariable Id="WixUILicenseRtf" Value="..\..\vendor\LICENSE.rtf" />
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+
+    <InstallExecuteSequence>
+      <Custom Action="CreateSudoExeLink" Before="InstallFinalize">NOT Installed</Custom>
+      <Custom Action="RemoveSudoExeLink" After="InstallInitialize">Installed AND NOT REINSTALL</Custom>
+    </InstallExecuteSequence>
+
+  </Product>
+
+  <Fragment>
+    <ComponentGroup Id="GSudo">
+      <ComponentRef Id="GSudoPath" />
+      <ComponentRef Id="GSudoExe" />
+    </ComponentGroup>
+  </Fragment>
+
+  <Fragment>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="gsudo">
+
+          <Component Id="GSudoPath" Guid="19906b1c-9a2c-4111-842b-3eaba410c0b7">
+            <CreateFolder />
+            <Environment Id="SET_ENV" Action="set" Name="PATH" Part="last" Permanent="no" System="yes"
+                         Value="[INSTALLFOLDER]" />
+          </Component>
+
+          <Component Id="GSudoExe" Guid="a44b02d3-9d55-4e7e-b304-0c7f5ace8253">
+            <File Id="GSudoExe" KeyPath="yes" Name="gsudo.exe" Source="..\gsudo\bin\ilmerge\gsudo.exe" />
+            <File Id="GSudoBash" KeyPath="no" Name="gsudo" Source="..\gsudo.extras\gsudo" />
+            <File Id="GSudoPowerShell" KeyPath="no" Name="gsudo.ps1" Source="..\gsudo.extras\gsudo.ps1" />
+          </Component>
+
+        </Directory>
+      </Directory>
+    </Directory>
+  </Fragment>
+
+  <Fragment>
+    <CustomAction Id="CreateSudoExeLink"
+                  Directory="INSTALLFOLDER"
+                  ExeCommand='cmd /c mklink sudo.exe "[INSTALLFOLDER]gsudo.exe"'
+                  Execute="deferred"
+                  Impersonate="no" />
+    <CustomAction Id="RemoveSudoExeLink"
+                  Directory="INSTALLFOLDER"
+                  ExeCommand='cmd /c DEL sudo.exe'
+                  Execute="deferred"
+                  Impersonate="no" />
+  </Fragment>
+
+</Wix>
