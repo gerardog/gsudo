@@ -24,17 +24,13 @@
     <WixVariable Id="WixUILicenseRtf" Value="..\..\vendor\LICENSE.rtf" />
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
 
-    <InstallExecuteSequence>
-      <Custom Action="CreateSudoExeLink" Before="InstallFinalize">NOT Installed</Custom>
-      <Custom Action="RemoveSudoExeLink" After="InstallInitialize">Installed AND NOT REINSTALL</Custom>
-    </InstallExecuteSequence>
-
   </Product>
 
   <Fragment>
     <ComponentGroup Id="GSudo">
       <ComponentRef Id="GSudoPath" />
       <ComponentRef Id="GSudoExe" />
+      <ComponentRef Id="GSudoExeAlias" />
     </ComponentGroup>
   </Fragment>
 
@@ -57,24 +53,13 @@
 -->
           </Component>
 
+          <Component Id="GSudoExeAlias" Guid="8724cb2b-8cbe-465e-b5c2-84edd50aa0ae">
+            <File Id="GSudoExeAlias" KeyPath="yes" Name="sudo.exe" Source="..\gsudo\bin\ilmerge\gsudo.exe" />
+          </Component>
+
         </Directory>
       </Directory>
     </Directory>
-  </Fragment>
-
-  <Fragment>
-    <CustomAction Id="CreateSudoExeLink"
-                  Directory="INSTALLFOLDER"
-                  ExeCommand='cmd /c mklink sudo.exe "[INSTALLFOLDER]gsudo.exe"'
-                  Execute="deferred"
-				  Return="ignore"
-                  Impersonate="no" />
-    <CustomAction Id="RemoveSudoExeLink"
-                  Directory="INSTALLFOLDER"
-                  ExeCommand='cmd /c DEL sudo.exe'
-                  Execute="deferred"
-				  Return="ignore"
-                  Impersonate="no" />
   </Fragment>
 
 </Wix>
