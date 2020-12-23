@@ -5,7 +5,7 @@
   <?include ./Constants.wxi ?>
 
   <Product Id="*" Name="gsudo v$(var.Version)" Language="1033" Version="$(var.Version)"
-           UpgradeCode="b18a4797-0649-40a3-a6b3-d39ae7ee4523" Manufacturer="gerardog">
+           UpgradeCode="567b5616-d362-484e-b6ff-7c1875cf0aee" Manufacturer="gerardog">
 
     <Package InstallerVersion="200"
              Compressed="yes"
@@ -43,19 +43,23 @@
       <Directory Id="ProgramFilesFolder">
         <Directory Id="INSTALLFOLDER" Name="gsudo">
 
-          <Component Id="GSudoPath" Guid="19906b1c-9a2c-4111-842b-3eaba410c0b7">
+          <Component Id="GSudoPath" Guid="923f225a-75cd-4fca-ad48-a4161187f7a4">
             <CreateFolder />
             <Environment Id="SET_ENV" Action="set" Name="PATH" Part="last" Permanent="no" System="yes"
                          Value="[INSTALLFOLDER]" />
           </Component>
 
-          <Component Id="GSudoExe" Guid="a44b02d3-9d55-4e7e-b304-0c7f5ace8253">
+          <Component Id="GSudoExe" Guid="22f27e91-98ef-4edb-8f6b-9ed48501185c">
             <File Id="GSudoExe" KeyPath="yes" Name="gsudo.exe" Source="..\gsudo\bin\ilmerge\gsudo.exe" />
-<!--
-            <File Id="GSudoBash" KeyPath="no" Name="gsudo" Source="..\gsudo.extras\gsudo" />
-            <File Id="GSudoPowerShell" KeyPath="no" Name="gsudo.ps1" Source="..\gsudo.extras\gsudo.ps1" />
--->
           </Component>
+
+          <!--<Component Id="GSudoBash" Guid="3d6047df-a14c-484d-9ded-77761d03197a">
+            <File Id="GSudoExe" KeyPath="yes" Name="gsudo" Source="..\gsudo.extras\gsudo" />
+          </Component>-->
+
+          <!--<Component Id="GSudoPowerShell" Guid="99d35b52-4b20-42d3-afad-11a98cab2fd3">
+            <File Id="GSudoPowerShell" KeyPath="yes" Name="gsudo.ps1" Source="..\gsudo.extras\gsudo.ps1" />
+          </Component>-->
 
         </Directory>
       </Directory>
@@ -67,13 +71,13 @@
                   Directory="INSTALLFOLDER"
                   ExeCommand='cmd /c mklink sudo.exe "[INSTALLFOLDER]gsudo.exe"'
                   Execute="deferred"
-				  Return="ignore"
+                  Return="ignore"
                   Impersonate="no" />
     <CustomAction Id="RemoveSudoExeLink"
                   Directory="INSTALLFOLDER"
                   ExeCommand='cmd /c DEL sudo.exe'
                   Execute="deferred"
-				  Return="ignore"
+                  Return="ignore"
                   Impersonate="no" />
   </Fragment>
 
