@@ -196,7 +196,7 @@ The cache also ends when the allowed process ends or if no elevations requests a
 
 ## Known issues
 
-- Under some circumstances the `sudo` alias can misbehave while the `gsudo` command works well. Please fill an issue to let me know.
+- Under some circumstances the `sudo` alias can misbehave while the `gsudo` command works well. Please file an issue to let me know.
 
 - The elevated instances do not have access to the network shares connected on the non-elevated space. This is not a `gsudo` issue but how Windows works. Use `--copyNS` to replicate Network Shares into the elevated session, but this is not bi-directional and it's interactive (may prompt for user/password).
 
@@ -220,4 +220,4 @@ The cache also ends when the allowed process ends or if no elevations requests a
 
 - Does it work in Windows Vista/7/8?
 
-  I've tested Windows 8.1 and it kinda worked. The hardest part is to install `.NET 4.6` there. Fill an issue with good reasons to spend time backporting to, say, `.NET 3.5`.
+  I've tested Windows 8.1 and it kinda worked. The hardest part is to install `.NET 4.6` there. File an issue with good reasons to spend time backporting to, say, `.NET 3.5`.
