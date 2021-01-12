@@ -3,16 +3,27 @@
   return [bool]($file.Attributes -band [IO.FileAttributes]::ReparsePoint)
 }
 
-if (Get-Process gsudo -ErrorAction SilentlyContinue) {
-	gsudo.exe -k
-	Start-Sleep -Milliseconds 500
+if (Test-Path "$bin\gsudo.exe.previous") {
+  Remove-Item "$bin\gsudo.exe.previous" | Out-Null
+}
+
+if (Test-Path "$bin\gsudo.exe") {
 	if (Get-Process gsudo -ErrorAction SilentlyContinue) {
-		$ErrorActionPreference = "Stop"
-		Write-Output '##### Please close gsudo before installing.             #####'
-		Write-Output '##### Or run in new window with "-n" to let gsudo exit: #####'
-		Write-Output '        gsudo -n cmd /k choco upgrade gsudo'
-		
-		throw "Unable to install/uninstall if gsudo is running"
+		gsudo.exe -k
+		Start-Sleep -Milliseconds 500
+			
+		if (Get-Process gsudo -ErrorAction SilentlyContinue) {
+			Rename-Item "$bin\gsudo.exe" "$bin\gsudo.exe.previous"
+
+			if(! ($?)) {
+				$ErrorActionPreference = "Stop"
+				Write-Output '##### Please close gsudo before installing.             #####'
+				Write-Output '##### Or run in new window with "-n" to let gsudo exit: #####'
+				Write-Output '        gsudo -n cmd /k choco upgrade gsudo'
+				
+				throw "Unable to install/uninstall if gsudo is running"
+			}
+		}
 	}
 }
 
