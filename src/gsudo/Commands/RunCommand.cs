@@ -239,7 +239,7 @@ namespace gsudo.Commands
                         {
                             process.WaitForExit();
                             var exitCode = process.ExitCode;
-                            Logger.Instance.Log($"Process exited with code {exitCode}", exitCode == 0 ? LogLevel.Debug : LogLevel.Info);
+                            Logger.Instance.Log($"Process exited with code {exitCode}", LogLevel.Debug);
                             return exitCode;
                         }
                         return 0;
@@ -251,7 +251,7 @@ namespace gsudo.Commands
                     {
                         process.WaitForExit();
                         var exitCode = process.ExitCode;
-                        Logger.Instance.Log($"Process exited with code {exitCode}", exitCode == 0 ? LogLevel.Debug : LogLevel.Info);
+                        Logger.Instance.Log($"Process exited with code {exitCode}", LogLevel.Debug);
                         return exitCode;
                     }
                 }
@@ -266,7 +266,7 @@ namespace gsudo.Commands
                 {
                     ProcessHelper.GetProcessWaitHandle(p.DangerousGetHandle()).WaitOne();
                     ProcessApi.GetExitCodeProcess(p, out var exitCode);
-                    Logger.Instance.Log($"Process exited with code {exitCode}", exitCode == 0 ? LogLevel.Debug : LogLevel.Info);
+                    Logger.Instance.Log($"Process exited with code {exitCode}", LogLevel.Debug);
                     return exitCode;
                 }
 
