@@ -175,7 +175,9 @@ The cache mode can be set with **`gsudo config CacheMode auto|explicit|disabled`
 An active credentials cache session is just an elevated instance of gsudo that stays running and allows the invoker process to elevate again. No windows service or setup involved.
 
 Use `gsudo cache on|off` to start/stop a cache session manually (i.e. allow/disallow elevation of the current process with no additionals UAC popups).
+
 Use `gsudo -k` to terminate all cache sessions. (Use this before leaving your computer unattended to someone else.) 
+
 The cache session ends automatically when the allowed process ends or if no elevations requests are received for 5 minutes (configurable via `gsudo config CacheDuration`).
 
 ## Demo
