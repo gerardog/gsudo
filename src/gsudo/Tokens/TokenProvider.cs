@@ -88,11 +88,10 @@ namespace gsudo.Tokens
         public static TokenProvider CreateFromSaferApi(SaferLevels saferLevel)
         {
             IntPtr hSaferLevel;
-            SafeTokenHandle hToken;
-
             if (!TokensApi.SaferCreateLevel(TokensApi.SaferScopes.User, saferLevel, 1, out hSaferLevel, IntPtr.Zero))
                 throw new Win32Exception();
 
+            SafeTokenHandle hToken;
             try
             {
                 if (!TokensApi.SaferComputeTokenFromLevel(hSaferLevel, IntPtr.Zero, out hToken,
@@ -273,24 +272,10 @@ namespace gsudo.Tokens
         /// <param name="newToken"></param>
         public TokenProvider RestrictTokenMaxPrivilege(bool ignoreErrors = false)
         {
-            //            System.Security.Principal.WellKnownSidType.WorldSid;
             uint DISABLE_MAX_PRIVILEGE = 0x1;
             uint LUA_TOKEN = 0x4;
-            uint WRITE_RESTRICTED = 0x8;
             SafeTokenHandle result;
-            /*
-            string adminSid = "S-1-5-32-544";
-            IntPtr pAdminSid;
-            if (!ConvertStringSidToSid(adminSid, out pAdminSid))
-                throw new Win32Exception();
 
-            SID_AND_ATTRIBUTES sa = new SID_AND_ATTRIBUTES();
-            sa.Sid = pAdminSid;
-            sa.Attributes = 0;
-
-            var pSA = Marshal.AllocHGlobal(Marshal.SizeOf<SID_AND_ATTRIBUTES>());
-            Marshal.StructureToPtr(sa, pSA, false);
-            */
             if (!TokensApi.CreateRestrictedToken(
                 Token,
                 LUA_TOKEN | DISABLE_MAX_PRIVILEGE,

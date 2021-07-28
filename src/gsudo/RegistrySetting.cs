@@ -5,7 +5,16 @@ using System.Linq;
 
 namespace gsudo
 {
-    public enum RegistrySettingScope { GlobalOnly, Any }
+    public enum RegistrySettingScope { 
+        /// <summary>
+        /// System-wide setting. Affects all users. Admin Privilege required to write it.
+        /// </summary>
+        GlobalOnly, 
+        /// <summary>
+        /// Can be set for the current user, or system-wide.
+        /// </summary>
+        Any 
+    }
 
     abstract class RegistrySetting
     {
@@ -38,7 +47,6 @@ namespace gsudo
             this.Scope = scope;
             this.serializer = serializer;
         }
-
 
         public T Value
         {

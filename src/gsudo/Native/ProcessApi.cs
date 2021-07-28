@@ -124,12 +124,10 @@ namespace gsudo.Native
         internal static extern bool CloseHandle(IntPtr hObject);
 
         [DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto, SetLastError = true)]
-        //[ResourceExposure(ResourceScope.None)]
-        public static extern bool GetExitCodeProcess(Microsoft.Win32.SafeHandles.SafeProcessHandle processHandle, out int exitCode);
-        public const int STILL_ACTIVE = 0x00000103;
+        internal static extern bool GetExitCodeProcess(Microsoft.Win32.SafeHandles.SafeProcessHandle processHandle, out int exitCode);
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool GetNamedPipeClientProcessId(IntPtr Pipe, out uint ClientProcessId);
+        internal static extern bool GetNamedPipeClientProcessId(IntPtr Pipe, out uint ClientProcessId);
 
         #region PID traversing
         internal const int ERROR_NO_MORE_FILES = 0x12;
@@ -195,10 +193,10 @@ namespace gsudo.Native
         public const UInt32 PROCESS_SET_INFORMATION = 0x0200;
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern IntPtr OpenProcess(UInt32 dwDesiredAccess, Boolean bInheritHandle, UInt32 dwProcessId);
+        internal static extern IntPtr OpenProcess(UInt32 dwDesiredAccess, Boolean bInheritHandle, UInt32 dwProcessId);
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern Boolean OpenProcessToken(IntPtr hProcess, UInt32 dwDesiredAccess, out IntPtr hToken);
+        internal static extern Boolean OpenProcessToken(IntPtr hProcess, UInt32 dwDesiredAccess, out IntPtr hToken);
         #endregion
 
         /// <summary>Checks whether a process is being debugged.</summary>
@@ -217,10 +215,10 @@ namespace gsudo.Native
             [MarshalAs(UnmanagedType.Bool)] ref bool isDebuggerPresent);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Ansi, SetLastError = true)]
-        public static extern IntPtr GetCurrentProcess();
+        internal static extern IntPtr GetCurrentProcess();
 
         [DllImport("kernel32.dll")]
-        public static extern int GetCurrentProcessId();
+        internal static extern int GetCurrentProcessId();
 
 
 

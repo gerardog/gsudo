@@ -12,7 +12,8 @@ using System.Threading.Tasks;
 namespace gsudo.ProcessRenderers
 {
     /// <summary>
-    /// This renderer starts the process in suspended status, and the elevated TokenSwitchHost will apply a different token to us.
+    /// This renderer starts the process in suspended status, and the TokenSwitchHost 
+    /// (running on the elevated gsudo instance) will apply a different token to it.
     /// </summary>
     class TokenSwitchRenderer : IProcessRenderer
     {
@@ -22,7 +23,7 @@ namespace gsudo.ProcessRenderers
         private readonly ProcessApi.PROCESS_INFORMATION _processInformation;
         private readonly ManualResetEventSlim tokenSwitchSuccessEvent = new ManualResetEventSlim(false);
 
-        public TokenSwitchRenderer(Connection connection, ElevationRequest elevationRequest)
+        internal TokenSwitchRenderer(Connection connection, ElevationRequest elevationRequest)
         {
             if (Settings.SecurityEnforceUacIsolation && !elevationRequest.NewWindow)
                 throw new Exception("TokenSwitch mode not supported when SecurityEnforceUacIsolation is set.");

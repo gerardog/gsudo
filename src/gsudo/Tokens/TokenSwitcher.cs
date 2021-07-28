@@ -74,7 +74,7 @@ namespace gsudo.Tokens
                 // but with the elevation flag set.
                 // A process using this flag that tries to elevate/use the RunAs Verb, will get a "success"
                 // but the process will be ran without real elevation.
-                // Therefore we can use this to run software with a manifest with "requireAdministrator"
+                // Therefore we can use this to run unelevated with a manifest with "requireAdministrator"
                 // that tipically can only be run elevated
                 tm = TokenProvider.CreateFromSaferApi(TokensApi.SaferLevels.NormalUser)
                     .SetIntegrity(elevationRequest.IntegrityLevel);

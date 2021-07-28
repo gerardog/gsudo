@@ -265,7 +265,6 @@ namespace gsudo.Helpers
         {
             var STARTF_USESHOWWINDOW = 0x00000001;
             var STARTF_USESTDHANDLES = 0x00000100;
-            const uint DETACHED_PROCESS = 0x00000008;
 
             var startupInfo = new STARTUPINFO()
             {
