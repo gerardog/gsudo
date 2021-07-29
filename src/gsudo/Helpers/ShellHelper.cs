@@ -10,6 +10,7 @@ namespace gsudo.Helpers
         PowerShellCore,
         PowerShellCore623BuggedGlobalInstall,
         Cmd,
+        Cmd32,
         Yori,
     }
 
@@ -18,11 +19,11 @@ namespace gsudo.Helpers
         public static Shell DetectInvokingShell(out string shellFullPath)
         {
             var parentProcess = Process.GetCurrentProcess().GetParentProcessExcludingShim();
+
             if (parentProcess != null)
             {
-                string parentExeName = null;
                 shellFullPath = parentProcess.GetExeName();
-                parentExeName = Path.GetFileName(shellFullPath).ToUpperInvariant();
+                string parentExeName = Path.GetFileName(shellFullPath).ToUpperInvariant();
 
                 if (parentExeName == "POWERSHELL.EXE")
                 {
@@ -36,7 +37,18 @@ namespace gsudo.Helpers
                 {
                     return Shell.Yori;
                 }
-                else if (parentExeName != "CMD.EXE")
+                else if (parentExeName == "CMD.EXE")
+                {
+                    // CMD.EXE can be
+                    //   %windir%\System32\cmd.exe => 64-bit CMD.
+                    // or 
+                    //   %windir%\SysWoW64\cmd.exe => 32-bit CMD
+
+                    // So lets keep shellFullPath = ParentProcess.FullPath
+                    // in order to keep the same bitness.
+                    return Shell.Cmd;
+                }
+                else 
                 {
                     // Depending on how pwsh was installed, Pwsh.exe -calls-> dotnet -calls-> gsudo.
                     var grandParentProcess = parentProcess.GetParentProcessExcludingShim();
@@ -60,6 +72,9 @@ namespace gsudo.Helpers
                 }
             }
 
+            // Unknown Shell. 
+            // (We couldnt get info about caller process).
+            // => Assume CMD.
             shellFullPath = Environment.GetEnvironmentVariable("COMSPEC");
             return Shell.Cmd;
         }

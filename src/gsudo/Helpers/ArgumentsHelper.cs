@@ -78,13 +78,13 @@ namespace gsudo.Helpers
             if (args.Length == 0)
             {
                 return new string[]
-                    { Environment.GetEnvironmentVariable("COMSPEC"), "/k" };
+                    { currentShellExeName, "/k" };
             }
             else
             {
                 if (CmdCommands.Contains(args[0])) 
                     return new string[]
-                        { Environment.GetEnvironmentVariable("COMSPEC"), "/c" }
+                        { currentShellExeName, "/c" }
                         .Concat(args).ToArray();
 
                 var exename = ProcessFactory.FindExecutableInPath(UnQuote(args[0]));
@@ -94,7 +94,7 @@ namespace gsudo.Helpers
                     // Or a non-executable file with a valid file association..
                     // Let CMD decide that... Invoke using "CMD /C" prefix ..
                     return new string[]
-                        { Environment.GetEnvironmentVariable("COMSPEC"), "/c" }
+                        { currentShellExeName, "/c" }
                         .Concat(args).ToArray();
                 }
                 else
