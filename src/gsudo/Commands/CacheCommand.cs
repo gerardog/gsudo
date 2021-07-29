@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO.Pipes;
-using System.Net.Sockets;
 using System.Threading.Tasks;
 using gsudo.Enums;
 using gsudo.Helpers;
@@ -115,19 +113,21 @@ An active credentials cache session, is a running elevated instance of gsudo tha
             Console.WriteLine($@"
 Usage:
 ------
-gsudo cache on [-p {{pid}}] [-d {{time}}]  Starts a gsudo cache session.
+gsudo cache {{on | off}} [-p {{pid}}] [-d {{time}}]   Start/stop a gsudo cache session.
   -p | --pid {{pid}}            Specify which process can use the cache. (Use 0 for any, Default=caller pid)
   -d | --duration {{hh:mm:ss}}  Max time the cache can stay idle before closing. 
-                              Use '-1' to keep open until logoff, or `cache off`, or `-k`.
+                              Use '-1' to keep open until logoff (or `cache off`, or `-k`).
+                              Current idle duration is: {Settings.CacheDuration.GetStringValue()}
 
-gsudo cache off                Stops all cache sessions. (Same as `gsudo -k`)
+gsudo -k                       Stops all active cache sessions.
 gsudo status                   Shows info regarding the user, elevation, and cache status
-gsudo config CacheMode {{mode}}  Change the cache mode. Current Cache Mode is: {Settings.CacheMode.ToString()}
+gsudo config CacheMode {{mode}}  Change the cache mode. 
 
 Available Cache Modes:
-  * Disabled: Every elevation request shows a UAC popup. 
+  * Disabled: Every elevation shows a UAC popup. 
   * Explicit: (default) Every elevation shows a UAC popup, unless a cache session is started with `gsudo cache on`
-  * Auto: Simil-unix-sudo. The first elevation shows a UAC Popup and starts a cache session automatically.");
+  * Auto: Simil-unix-sudo. The first elevation shows a UAC Popup and starts a cache session automatically.
+Current Cache Mode is: {Settings.CacheMode.ToString()}");
 
             return Task.FromResult(0);
         }
