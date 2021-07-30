@@ -50,8 +50,7 @@ namespace gsudo.Helpers
             else if (currentShell.In(Shell.PowerShell, Shell.PowerShellCore))
             {
                 var newArgs = new List<string>();
-                DoFixIfIsMicrosoftStoreApp(currentShellExeName, newArgs);
-
+                
                 newArgs.Add($"\"{currentShellExeName}\"");
                 newArgs.Add("-NoLogo");
 
@@ -62,7 +61,7 @@ namespace gsudo.Helpers
                     newArgs.AddMany(args);
                 }
 
-                return newArgs.ToArray();
+                return DoFixIfIsMicrosoftStoreApp(currentShellExeName, newArgs.ToArray());
             }
 
             if (currentShell == Shell.Yori)
@@ -99,17 +98,14 @@ namespace gsudo.Helpers
                 }
                 else
                 {
-                    var newArgs = new List<string>();
-                    DoFixIfIsMicrosoftStoreApp(exename, newArgs);
-
-                    newArgs.Add($"\"{exename}\""); // replace command name with full+absolute+quoted path to resolve many issues, like "Batch files not started by create process if no extension is specified."
-                    newArgs.AddRange(args.Skip(1));
+                    args[0] = $"\"{exename}\"";
+                    var newArgs = DoFixIfIsMicrosoftStoreApp(exename, args);
                     return newArgs.ToArray();
                 }
             }
         }
 
-        private static void DoFixIfIsMicrosoftStoreApp(string targetExe, List<string> newArgs)
+        private static string[] DoFixIfIsMicrosoftStoreApp(string targetExe, string[] args)
         {
             // -- Workaround for https://github.com/gerardog/gsudo/issues/65
 
@@ -122,10 +118,14 @@ namespace gsudo.Helpers
 
             if (targetExe.IndexOf("\\WindowsApps\\", StringComparison.OrdinalIgnoreCase) >= 0) // Terrible but cheap Microsoft Store App detection.
             {
-                Logger.Instance.Log("Workaround for target app installed via MSStore.", LogLevel.Debug);
-                newArgs.Add(Environment.GetEnvironmentVariable("COMSPEC"));
-                newArgs.Add("/c");
+                Logger.Instance.Log("Applying workaround for target app installed via MSStore.", LogLevel.Debug);
+                return new string[] {
+                    Environment.GetEnvironmentVariable("COMSPEC"),
+                    "/s /c" ,
+                    $"\"{string.Join(" ", args)}\""};
             }
+            else
+                return args;
             // -- End of workaround.
         }
 
