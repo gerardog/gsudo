@@ -60,6 +60,7 @@ namespace gsudo.Commands
                 if (InputArguments.Global && !ProcessHelper.IsAdministrator())
                 {
                     Logger.Instance.Log($"Global system settings requires elevation. Elevating...", LogLevel.Info);
+                    InputArguments.Direct = true;
                     return new RunCommand()
                     {
                         CommandToRun = new string[]
