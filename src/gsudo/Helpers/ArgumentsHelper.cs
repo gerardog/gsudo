@@ -19,60 +19,69 @@ namespace gsudo.Helpers
             string currentShellExeName;
             Shell currentShell = ShellHelper.DetectInvokingShell(out currentShellExeName);
 
-            if (currentShell == Shell.PowerShellCore623BuggedGlobalInstall)
+            if (!InputArguments.Direct)
             {
-                // PowerShell Core 6.0.0 to 6.2.3 does not supports command line arguments.
-
-                // See:
-                // https://github.com/PowerShell/PowerShell/pull/10461#event-2959890147
-                // https://github.com/gerardog/gsudo/issues/10
-
-                /*                 
-                Running ./gsudo from powershell should elevate the current shell, which means:
-                    => On PowerShell, run => powershell -NoLogo 
-                    => On PowerShellCore => pwsh -NoLogo 
-                    => On PowerShellCore623BuggedGlobalInstall => pwsh 
-
-                Running ./gsudo {command}   should elevate the powershell command.
-                    => On PowerShell => powershell -NoLogo -NoProfile -Command {command} 
-                    => On PowerShellCore => pwsh -NoLogo -NoProfile -Command {command}
-                    => On PowerShellCore623BuggedGlobalInstall => pwsh {command}
-                 */
-
-                Logger.Instance.Log("Please update to PowerShell Core >= 6.2.4 to avoid profile loading.", LogLevel.Warning);
-                
-                var newArgs = new List<string>();
-                newArgs.Add($"\"{currentShellExeName}\"");
-                newArgs.AddMany(args);
-
-                return newArgs.ToArray();
-            }
-            else if (currentShell.In(Shell.PowerShell, Shell.PowerShellCore))
-            {
-                var newArgs = new List<string>();
-                
-                newArgs.Add($"\"{currentShellExeName}\"");
-                newArgs.Add("-NoLogo");
-
-                if (args.Length > 0)
+                if (currentShell == Shell.PowerShellCore623BuggedGlobalInstall)
                 {
-                    newArgs.Add("-NoProfile");
-                    newArgs.Add("-Command");
+                    // PowerShell Core 6.0.0 to 6.2.3 does not supports command line arguments.
+
+                    // See:
+                    // https://github.com/PowerShell/PowerShell/pull/10461#event-2959890147
+                    // https://github.com/gerardog/gsudo/issues/10
+
+                    /*                 
+                    Running ./gsudo from powershell should elevate the current shell, which means:
+                        => On PowerShell, run => powershell -NoLogo 
+                        => On PowerShellCore => pwsh -NoLogo 
+                        => On PowerShellCore623BuggedGlobalInstall => pwsh 
+
+                    Running ./gsudo {command}   should elevate the powershell command.
+                        => On PowerShell => powershell -NoLogo -NoProfile -Command {command} 
+                        => On PowerShellCore => pwsh -NoLogo -NoProfile -Command {command}
+                        => On PowerShellCore623BuggedGlobalInstall => pwsh {command}
+                     */
+
+                    Logger.Instance.Log("Please update to PowerShell Core >= 6.2.4 to avoid profile loading.", LogLevel.Warning);
+
+                    var newArgs = new List<string>();
+                    newArgs.Add($"\"{currentShellExeName}\"");
                     newArgs.AddMany(args);
+
+                    return newArgs.ToArray();
+                }
+                else if (currentShell.In(Shell.PowerShell, Shell.PowerShellCore))
+                {
+                    var newArgs = new List<string>();
+
+                    newArgs.Add($"\"{currentShellExeName}\"");
+                    newArgs.Add("-NoLogo");
+
+                    if (args.Length > 0)
+                    {
+                        newArgs.Add("-NoProfile");
+                        newArgs.Add("-Command");
+                        newArgs.Add($"\"{string.Join(" ", args).Replace("\"", "\\\"")}\"");
+                    }
+
+                    return DoFixIfIsMicrosoftStoreApp(currentShellExeName, newArgs.ToArray());
                 }
 
-                return DoFixIfIsMicrosoftStoreApp(currentShellExeName, newArgs.ToArray());
+                if (currentShell == Shell.Yori)
+                {
+                    if (args.Length == 0)
+                        return new[] { currentShellExeName };
+                    else
+                        return new[] { currentShellExeName, "-c" }
+                            .Concat(args).ToArray();
+                }
+
             }
 
-            if (currentShell == Shell.Yori)
+            if (InputArguments.Direct && currentShell != Shell.Cmd)
             {
-                if (args.Length == 0)
-                    return new[] {currentShellExeName};
-                else
-                    return new[] {currentShellExeName, "-c"}
-                        .Concat(args).ToArray();
+                currentShellExeName = Environment.GetEnvironmentVariable("COMSPEC");
             }
-
+                
             // Not Powershell, or Powershell Core, assume CMD.
             if (args.Length == 0)
             {
@@ -184,6 +193,7 @@ namespace gsudo.Helpers
 
                 SetTrueIf(arg, () => InputArguments.RunAsSystem = true, "-s", "--system") ||
                 SetTrueIf(arg, () => InputArguments.Global = true, "--global") ||
+                SetTrueIf(arg, () => InputArguments.Direct = true, "-d", "--direct") ||
                 SetTrueIf(arg, () => InputArguments.KillCache = true, "-k", "--reset-timestamp")
                    )
                 { }
@@ -351,6 +361,9 @@ namespace gsudo.Helpers
         {
             System.IntPtr ptr = ConsoleApi.GetCommandLine();
             string commandLine = Marshal.PtrToStringAuto(ptr).TrimStart();
+
+            // Since input args not yet parsed, this log can only be seen with:
+            //   gsudo config LogLevel Debug
             Logger.Instance.Log($"Command Line: {commandLine}", LogLevel.Debug);
 
             if (commandLine[0] == '"')
