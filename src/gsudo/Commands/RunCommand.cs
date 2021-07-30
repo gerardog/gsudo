@@ -112,6 +112,7 @@ namespace gsudo.Commands
 
         /// <summary>
         /// Single elevation mode means no service is kept running. Also the command line shown in UAC is a little bit more explicit.
+        // Unfortunatelly its implementation is coupled with TokenSwitchRenderer.
         /// </summary>
         /// <param name="elevationRequest"></param>
         /// <returns></returns>
@@ -126,8 +127,12 @@ namespace gsudo.Commands
             }
             catch (Exception ex)
             {
-                Logger.Instance.Log($"TokenSwitchRenderer mode failed with {ex.ToString()}. Fallback to Attached Mode", LogLevel.Debug);
-                elevationRequest.Mode = ElevationRequest.ConsoleMode.Attached; // fallback to attached mode.
+                ElevationRequest.ConsoleMode fallbackMode;
+                fallbackMode = Settings.SecurityEnforceUacIsolation ? ElevationRequest.ConsoleMode.Piped
+                                    : ElevationRequest.ConsoleMode.Attached;
+
+                Logger.Instance.Log($"TokenSwitchRenderer mode failed with {ex.ToString()}. Fallback to {fallbackMode} Mode", LogLevel.Debug);
+                elevationRequest.Mode = fallbackMode; // fallback to attached mode.
                 return await RunUsingElevatedService(elevationRequest).ConfigureAwait(false);
             }
 
@@ -293,7 +298,7 @@ namespace gsudo.Commands
                     {
                         // force raw mode (that disables user input with SecurityEnforceUacIsolation)
                         elevationRequest.Mode = ElevationRequest.ConsoleMode.Piped;
-                        Logger.Instance.Log("User Input disabled because of SecurityEnforceUacIsolation. Press Ctrl-C three times to abort. Or use -n argument to elevate in new window.", LogLevel.Warning);
+                        Logger.Instance.Log("User Input disabled because of SecurityEnforceUacIsolation. Press Ctrl-C three times to abort. Or use -n argument to elevate in new window.", LogLevel.Info);
                     }
                 }
             }
@@ -526,7 +531,7 @@ namespace gsudo.Commands
 
                 return new string[] {
                     Environment.GetEnvironmentVariable("COMSPEC"),
-                    "/c" ,
+                    "/s /c" ,
                     $"\"{tempBatName} & del /q {tempBatName} & {string.Join(" ",args)}\""
                 };
             }

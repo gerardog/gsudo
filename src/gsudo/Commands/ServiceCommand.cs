@@ -102,7 +102,7 @@ namespace gsudo.Commands
         private IRpcServer CreateServer()
         {
             // No credentials cache when CacheDuration = 0
-            bool singleUse = Settings.CacheDuration.Value.TotalSeconds < 1;
+            bool singleUse = Settings.CacheDuration.Value.TotalSeconds < 1 || Settings.CacheMode.Value == Enums.CacheMode.Disabled;
             return new NamedPipeServer(AllowedPid, AllowedSid, singleUse);
         }
 
