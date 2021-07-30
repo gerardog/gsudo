@@ -10,7 +10,6 @@ namespace gsudo.Helpers
         PowerShellCore,
         PowerShellCore623BuggedGlobalInstall,
         Cmd,
-        Cmd32,
         Yori,
     }
 
