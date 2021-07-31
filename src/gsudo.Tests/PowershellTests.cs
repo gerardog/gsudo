@@ -15,12 +15,6 @@ namespace gsudo.Tests
         {
             PS_FILENAME = "pwsh.exe";
         }
-
-        [Ignore]
-        public override void PS_EchoDoubleQuotesTest()
-        {
-            base.PS_EchoDoubleQuotesTest(); // not working on pwsh core. 
-        }
     }
 
     [TestClass]
@@ -101,7 +95,7 @@ exit
         {
             var p = new TestProcess(
 $@"{PS_FILENAME} {PS_ARGS}
-./gsudo 'echo 1 \""2 3\""'
+./gsudo 'echo 1 ""2 3""'
 exit");
             p.WaitForExit();
             p.GetStdOut()
