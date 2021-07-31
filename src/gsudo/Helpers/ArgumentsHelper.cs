@@ -60,7 +60,20 @@ namespace gsudo.Helpers
                     {
                         newArgs.Add("-NoProfile");
                         newArgs.Add("-Command");
-                        newArgs.Add($"\"{string.Join(" ", args).Replace("\"", "\\\"")}\"");
+
+                        string pscommand = string.Join(" ", args);
+
+                        if (args[0].StartsWith("\"", StringComparison.Ordinal) &&
+                            args.Last().EndsWith("\"", StringComparison.Ordinal))
+                        {
+                            // We got a string literal, already quoted.
+                            pscommand = pscommand.UnQuote();
+                        }
+
+                        pscommand = pscommand
+                                        .Replace("\"", "\\\"")
+                                        .Quote();
+                        newArgs.Add(pscommand);
                     }
 
                     return DoFixIfIsMicrosoftStoreApp(currentShellExeName, newArgs.ToArray());
@@ -374,7 +387,7 @@ namespace gsudo.Helpers
                 return string.Empty;
         }
 
-        public static string UnQuote(string v)
+        public static string UnQuote(this string v)
         {
             if (string.IsNullOrEmpty(v))
                 return v;
@@ -386,6 +399,11 @@ namespace gsudo.Helpers
                 return v.Substring(1);
             else
                 return v;
+        }
+
+        public static string Quote(this string v)
+        {
+            return $"\"{v}\"";
         }
     }
 }
