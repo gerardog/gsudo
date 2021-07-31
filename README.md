@@ -101,10 +101,13 @@ gsudo config CacheMode Auto
 
 ### Usage from PowerShell / PowerShell Core
 
-`gsudo` detects if it's invoked from PowerShell and allows the following syntax to elevate PS commands: You can pass a string literal with the command that needs to be elevated. [PowerShell Quoting Rules](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_quoting_rules) apply. 
+`gsudo` detects if it's invoked from PowerShell (unless skipped with `-d`) and allows to elevate PS commands. For simple commands, without parentheses `()` or the pipeline operator `|`, just prepend `gsudo`. 
+
+For more complex commands, you can pass a string literal with the command to be elevate:  `PS C:\> gsudo 'powershell string command'`
+
 Note that `gsudo` returns a string that can be captured, not powershell objects.
 
-`PS C:\> gsudo 'powershell string command'`
+**BREAKING CHANGE v0.8:** It is no longer needed to additionally escape `"` with `\\"`. Now standard [PowerShell Quoting Rules](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_quoting_rules) apply exactly. 
 
 **Examples:**
 
@@ -115,12 +118,15 @@ PS C:\> gsudo Remove-Item ProtectedFile.txt
 or
 PS C:\> gsudo 'Remove-Item ProtectedFile.txt'
 
-# On strings enclosed in single quotation marks ('), escape " with \"
-$hash = gsudo '(Get-FileHash \"C:\My Secret.txt\").Hash'
+# On strings enclosed in single quotation marks (')
+$hash = gsudo '(Get-FileHash "C:\My Secret.txt").Hash'
+
+$file='C:\My Secret.txt'
+$algorithm='md5'
 # For variable substitutions, use double-quoted strings with single-quotation marks inside
 $hash = gsudo "(Get-FileHash '$file' -Algorithm $algorithm).Hash"
-# or escape " with \""
-$hash = gsudo "(Get-FileHash \""$file\"" -Algorithm $algorithm).Hash"
+# or 
+$hash = gsudo "(Get-FileHash ""$file"" -Algorithm $algorithm).Hash"
 
 # Test gsudo success (optional):
 if ($LastExitCode -eq 999 ) {
@@ -128,11 +134,15 @@ if ($LastExitCode -eq 999 ) {
 } elseif ($LastExitCode) {
     'Command failed!'
 } else { 'Success!' }
+
+# Cross-boundary object serialization
+$item = [System.Management.Automation.PSSerializer]::Deserialize((gsudo.exe '[System.Management.Automation.PSSerializer]::Serialize(( get-item "C:\My Secret.txt" ))' ))
+Write-Host $item.CreationDate
 ```
 
 ### Usage from WSL (Windows Subsystem for Linux)
 
-On WSL, elevation and `root` are different concepts. WSL is a user application,`root` allows full administation of WSL but not the windows system. Use WSL's native `su` or `sudo` to gain `root` access. To get admin priviledge on the Windows box you need to elevate the WSL process. `gsudo.exe` allows that (UAC popup will appear).
+On WSL, elevation and `root` are different concepts. `root` allows full administation of WSL but not the windows system. Use WSL's native `su` or `sudo` to gain `root` access. To get admin priviledge on the Windows box you need to elevate the WSL.EXE process. `gsudo.exe` allows that (UAC popup will appear).
 
 Use `gsudo.exe` or `sudo.exe` alias...(add `.exe`)
 
@@ -161,19 +171,21 @@ fi;
 
 ## Credentials Cache
 
-By default (since v0.7) `gsudo` shows a UAC popup each time it's called. But it has a feature called `Credentials Cache` that allows several elevations with only one UAC pop-up. The user must opt-in to use this cache.
+By default `gsudo` shows a UAC popup each time it's called. But it has a feature called `Credentials Cache` that allows several elevations with only one UAC pop-up. The user must opt-in to use this cache.
 
-It is convenient, but it's safe only if you are not already hosting a virus/malicious process: The cache allows your process to elevate again silently (no-popup), but a malicious process could [inject it's code](https://en.wikipedia.org/wiki/DLL_injection#Approaches_on_Microsoft_Windows) into the allowed process and trick `gsudo` to elevate with no popup.
+An active credentials cache session is just an elevated instance of gsudo that stays running and allows the invoker process to elevate again. No windows service or setup involved.
 
-Available Cache Modes:
+The cache allows your process to elevate again silently (no-popup), 
 
-The cache mode can be set with **`gsudo config CacheMode auto|explicit|disabled`**
+It is convenient, but it's safe only if you are not already hosting a virus/malicious process: No matter how secure gsudo itself is, a malicious process could [trick](https://en.wikipedia.org/wiki/DLL_injection#Approaches_on_Microsoft_Windows) the allowed process (Cmd/Powershell) and force it to request `gsudo` to elevate silenty.
 
-- Explicit: (default) Every elevation shows a UAC popup, unless a cache session is started with `gsudo cache on`, which shows one UAC popup and allows several elevations until 5 minutes without elevation requests or `gsudo cache off` or `gsudo -k` is called. 
+**Cache Modes:**
+
+- Explicit: (default) Every elevation shows a UAC popup, unless a cache session is started with `gsudo cache on`, which shows one UAC popup and allows several elevations (until 5 minutes without elevation requests or `gsudo cache off` or `gsudo -k` is called). 
 - Auto: Simil-unix-sudo. The first elevation shows a UAC Popup and starts a cache session automatically.
 - Disabled: Every elevation request shows a UAC popup.
 
-An active credentials cache session is just an elevated instance of gsudo that stays running and allows the invoker process to elevate again. No windows service or setup involved.
+The cache mode can be set with **`gsudo config CacheMode auto|explicit|disabled`**
 
 Use `gsudo cache on/off` to allow/disallow elevation of the current process with no UAC popup.
 Use `gsudo -k` to terminate all cache sessions.
@@ -181,16 +193,14 @@ The cache also ends when the allowed process ends or if no elevations requests a
 
 ## Demo
 
-(with CacheMode=Auto)
+(with `gsudo config CacheMode auto`)
 ![gsudo demo](demo.gif)
 
 ## Known issues
 
-- Under some circumstances the `sudo` alias can misbehave while the `gsudo` command works well. Please file an issue to let me know.
-
 - The elevated instances do not have access to the network shares connected on the non-elevated space. This is not a `gsudo` issue but how Windows works. Use `--copyNS` to replicate Network Shares into the elevated session, but this is not bi-directional and it's interactive (may prompt for user/password).
 
-- Given the previous item, `gsudo.exe` can be placed on a network share and invoked as `\\server\share\gsudo {command}` but doesn't work if your current folder is a network drive. For example do not map `\\server\share\` to `Z:` and then `Z:\>gsudo do-something`.  
+- `gsudo.exe` can be placed on a network share and invoked as `\\server\share\gsudo {command}` but doesn't work if your **current** folder is a network drive. For example do not map `\\server\share\` to `Z:` and then `Z:\>gsudo do-something`.
 
 - Please report issues in the [Issues](https://github.com/gerardog/gsudo/issues) section.
 
@@ -210,4 +220,4 @@ The cache also ends when the allowed process ends or if no elevations requests a
 
 - Does it work in Windows Vista/7/8?
 
-  I've tested Windows 8.1 and it kinda worked. The hardest part is to install `.NET 4.6` there. File an issue with good reasons to spend time backporting to, say, `.NET 3.5`.
+  The elevation works, not the credentials cache. The hardest part is to install `.NET 4.6` there, Try `choco install DotNet4.6.1`.
