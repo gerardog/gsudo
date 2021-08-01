@@ -78,8 +78,7 @@ namespace gsudo.Helpers
 
                     return DoFixIfIsMicrosoftStoreApp(currentShellExeName, newArgs.ToArray());
                 }
-
-                if (currentShell == Shell.Yori)
+                else if (currentShell == Shell.Yori)
                 {
                     if (args.Length == 0)
                         return new[] { currentShellExeName };
@@ -87,11 +86,33 @@ namespace gsudo.Helpers
                         return new[] { currentShellExeName, "-c" }
                             .Concat(args).ToArray();
                 }
+                else if (currentShell == Shell.Wsl)
+                {
+                    // these variables should come from WSL, via gsudo.extras\gsudo bash script
+                    string wsl_distro = Environment.GetEnvironmentVariable("WSL_DISTRO_NAME");
+                    string wsl_user = Environment.GetEnvironmentVariable("USER");
 
+                    if (!string.IsNullOrEmpty(wsl_user) && !string.IsNullOrEmpty(wsl_distro))
+                    {
+                        return new[] { currentShellExeName, // wsl.exe
+                                        "-d", wsl_distro,
+                                        "-u", wsl_user,
+                                        "--" }
+                                        .Concat(args).ToArray();
+                    }
+                }
+                else if (currentShell == Shell.Bash)
+                {
+                    if (args.Length == 0)
+                        return new[] { currentShellExeName };
+                    else
+                        return args;
+                }
             }
 
-            if (InputArguments.Direct && currentShell != Shell.Cmd)
+            if (currentShell != Shell.Cmd)
             {
+                // Fall back to CMD.
                 currentShellExeName = Environment.GetEnvironmentVariable("COMSPEC");
             }
                 

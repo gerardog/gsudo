@@ -4,26 +4,16 @@
 #	Usage: gsudo bash-command
 #	   eg: gsudo mkdir /mnt/c/Windows/TestFolder
 #
-#	To elevate windows commands add '.exe',
-# 	  Use: gsudo.exe windows-command
-#	   eg: gsudo.exe notepad "C:\windows\system32\drivers\etc\hosts"
+#	You can also use 'gsudo.exe [command]' syntax (avoids this wrapper),
 if ! ( grep -qi Microsoft /proc/version ); then
-#	echo [gsudo bash script] invoked from: MinGW or cygwin
-	if [ $# -eq 0 ]; then #no args
-		gsudo.exe
-	else
-		# https://stackoverflow.com/a/8723305/97471
-		C=''
-		for i in "$@"; do 
-			i="${i/\//\\\/}" # Replace "/" with "\/"
-			C="$C $i"
-		done
-#		echo Running: gsudo.exe $C
-		gsudo.exe $C
+	if [[ $@ == *--debug* ]]; then
+	  echo [gsudo bash script] invoked from: MinGW or Cygwin with args: "$@"
 	fi
+	gsudo.exe "$@"
 else
-	#echo [gsudo bash script] invoked from: WSL
-	export WSLENV=WSL_DISTRO_NAME:$WSLENV
-	#echo [gsudo bash script] Running: gsudo.exe "$@"
+	export WSLENV=WSL_DISTRO_NAME:USER:$WSLENV
+	if [[ $@ == *--debug* ]]; then
+	  echo [gsudo bash script] invoked from WSL. Running: gsudo.exe "$@"
+	fi
 	gsudo.exe "$@"
 fi

@@ -11,6 +11,8 @@ namespace gsudo.Helpers
         PowerShellCore623BuggedGlobalInstall,
         Cmd,
         Yori,
+        Wsl,
+        Bash,
     }
 
     static class ShellHelper
@@ -35,6 +37,14 @@ namespace gsudo.Helpers
                 else if (parentExeName == "YORI.EXE")
                 {
                     return Shell.Yori;
+                }
+                else if (parentExeName == "WSL.EXE")
+                {
+                    return Shell.Wsl;
+                }
+                else if (parentExeName == "BASH.EXE")
+                {
+                    return Shell.Bash;
                 }
                 else if (parentExeName == "CMD.EXE")
                 {

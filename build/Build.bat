@@ -1,16 +1,16 @@
 @pushd %~dp0
 @if ''=='%1' echo Missing version number
 @if ''=='%1' goto end
-set version=%1
+@set version=%1
 @if 'skipbuild'=='%2' goto skipbuild 
 
-@if NOT DEFINED msbuild set msbuild="C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\MSBuild\Current\Bin\MSBuild.exe"
-@if NOT DEFINED SignToolPath set SignToolPath="C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64\"
+@if NOT DEFINED msbuild set msbuild="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe"
+@if NOT DEFINED SignToolPath set SignToolPath="C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\"
 
 @echo Building with version number v%version%
 
 del ..\src\gsudo\bin\*.* /q
-"%msbuild%" /t:Restore,Rebuild /p:Configuration=Release /p:WarningLevel=0 %~dp0..\src\gsudo.sln /p:Version=%version%
+%msbuild% /t:Restore,Rebuild /p:Configuration=Release /p:WarningLevel=0 %~dp0..\src\gsudo.sln /p:Version=%version%
 if errorlevel 1 goto badend
 @echo Build Succeded.
 @pushd ..\src\gsudo\bin
@@ -18,7 +18,7 @@ if errorlevel 1 goto badend
 @echo Running ILMerge
 mkdir ilmerge 2> nul
 ilmerge gsudo.exe System.Security.Claims.dll System.Security.Principal.Windows.dll /out:ilmerge\gsudo.exe /target:exe /targetplatform:v4,"C:\Windows\Microsoft.NET\Framework\v4.0.30319" /ndebug
-if errorlevel 1 echo ILMerge Failed & pause & popd & goto badend
+@if errorlevel 1 echo ILMerge Failed - Try: choco install ilmerge & pause & popd & goto badend
 
 @echo Signing exe.
 
