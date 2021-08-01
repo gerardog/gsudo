@@ -263,6 +263,9 @@ namespace gsudo.Commands
             }
             else // lower integrity
             {
+                if (elevationRequest.IntegrityLevel<IntegrityLevel.High && !elevationRequest.NewWindow)
+                    RemoveAdminPrefixFromConsoleTitle();
+
                 var p = ProcessFactory.StartAttachedWithIntegrity(InputArguments.GetIntegrityLevel(), exeName, args, elevationRequest.StartFolder, InputArguments.NewWindow, !InputArguments.NewWindow);
                 if (p == null || p.IsInvalid)
                     return Constants.GSUDO_ERROR_EXITCODE;
@@ -538,5 +541,12 @@ namespace gsudo.Commands
             return args;
         }
 
+        private static void RemoveAdminPrefixFromConsoleTitle()
+        {
+            var title = Console.Title;
+            var colonPos = title.IndexOf(":", StringComparison.InvariantCulture);
+            if (colonPos > 1) // no accidental modifying of "C:\..."
+                Console.Title = title.Substring(colonPos+1).TrimStart();
+        }          
     }
 }

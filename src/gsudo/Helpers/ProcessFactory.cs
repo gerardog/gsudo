@@ -222,7 +222,7 @@ namespace gsudo.Helpers
             }
             else
             {
-                // Lower integrity
+                // Integrity < Medium
                 var tf = TokenProvider.CreateFromSaferApi(integrityLevel.ToSaferLevel())
                     .SetIntegrity(integrityLevel);
 
