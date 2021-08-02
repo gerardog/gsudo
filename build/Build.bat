@@ -39,6 +39,7 @@ git clean Chocolatey\gsudo\Bin -xf
 @md Chocolatey\gsudo\Bin 2> nul
 copy ..\src\gsudo\bin\ilmerge\*.* Chocolatey\gsudo\Bin\
 copy ..\src\gsudo.extras\*.* Chocolatey\gsudo\Bin\
+del Chocolatey\gsudo\Bin\.gitattributes
 copy Chocolatey\verification.txt.template Chocolatey\gsudo\Tools\VERIFICATION.txt
 
 @pushd %~dp0\Chocolatey\gsudo

@@ -17,7 +17,7 @@ Just prepend `gsudo` (or the `sudo` alias) to your command and it will run eleva
 - Elevated commands are shown in the current user-level console. No new window. (Unless you specify `-n` which opens a new window.)
 - [Credentials cache](#credentials-cache): `gsudo` can elevate many times showing only one UAC pop-up if the user opt-in to enable the cache.
 - Supports CMD commands: `gsudo md folder` (no need to use the longer form `gsudo cmd.exe /c md folder`)
-- Supports [PowerShell/PowerShell Core commands](#usage-from-powershell--powershell-core), and Yori shell.
+- Elevates [PowerShell/PowerShell Core commands](#usage-from-powershell--powershell-core), [WSL commands](#usage-from-wsl-windows-subsystem-for-linux), Git-Bash/MinGW/Cygwin (YMMV), or Yori shell commands.
 - Supports being used on scripts:
   - Outputs of the elevated commands can be interpreted: E.g. StdOut/StdErr can be piped or captured (e.g. `gsudo dir | findstr /c:"bytes free" > FreeSpace.txt`) and exit codes too (`%errorlevel%`). If `gsudo` fails to elevate, the exit code will be 999.
   - If `gsudo` is invoked from an already elevated console, it will just run the command (it won't fail). So, you don't have to worry if you run `gsudo` or a script that uses `gsudo` from an already elevated console. (The UAC popup will not appear, as no elevation is required)
@@ -106,7 +106,7 @@ For more complex commands, you can **pass a string literal** with the command to
 
 Note that `gsudo` returns a string that can be captured, not powershell objects.
 
-**BREAKING CHANGE v0.8:** It is no longer needed to additionally escape `"` with `\\"`. Now standard [PowerShell Quoting Rules](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_quoting_rules) apply exactly. 
+**BREAKING CHANGE v1.0:** It is no longer needed to additionally escape `"` with `\\"`. Now only standard [PowerShell Quoting Rules](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_quoting_rules) are neccesary. 
 
 **Examples:**
 
@@ -114,18 +114,20 @@ Note that `gsudo` returns a string that can be captured, not powershell objects.
 
 # Commands without () or quotes  
 PS C:\> gsudo Remove-Item ProtectedFile.txt
-or
 PS C:\> gsudo 'Remove-Item ProtectedFile.txt'
 
 # On strings enclosed in single quotation marks (')
 $hash = gsudo '(Get-FileHash "C:\My Secret.txt").Hash'
 
+# Variable substitutions example:
 $file='C:\My Secret.txt'
 $algorithm='md5'
-# For variable substitutions, use double-quoted strings with single-quotation marks inside
 $hash = gsudo "(Get-FileHash '$file' -Algorithm $algorithm).Hash"
 # or 
 $hash = gsudo "(Get-FileHash ""$file"" -Algorithm $algorithm).Hash"
+
+# Skip PowerShell wrapper (with -d): run an .EXE or a CMD command directly (optional, faster)
+gsudo -d notepad 
 
 # Test gsudo success (optional):
 if ($LastExitCode -eq 999 ) {
@@ -134,28 +136,31 @@ if ($LastExitCode -eq 999 ) {
     'Command failed!'
 } else { 'Success!' }
 
-# Cross-boundary object serialization
-$item = [System.Management.Automation.PSSerializer]::Deserialize((gsudo.exe '[System.Management.Automation.PSSerializer]::Serialize(( get-item "C:\My Secret.txt" ))' ))
-Write-Host $item.CreationDate
+# Cross-boundary object serialization example.
+$command = 'Get-Item "C:\My Secured Folder\My Secret.txt"'
+$result = [System.Management.Automation.PSSerializer]::Deserialize((gsudo "[System.Management.Automation.PSSerializer]::Serialize(( $command ))" ))
+Write-Host $result.CreationTime
 ```
 
 ### Usage from WSL (Windows Subsystem for Linux)
 
-On WSL, elevation and `root` are different concepts. `root` allows full administation of WSL but not the windows system. Use WSL's native `su` or `sudo` to gain `root` access. To get admin priviledge on the Windows box you need to elevate the WSL.EXE process. `gsudo.exe` allows that (UAC popup will appear).
+On WSL, elevation and `root` are different concepts. `root` allows full administation of WSL but not the windows system. Use WSL's native `su` or `sudo` to gain `root` access. To get admin priviledge on the Windows box you need to elevate the WSL.EXE process. `gsudo` allows that (a UAC popup will appear).
 
-Use `gsudo.exe` or `sudo.exe` alias...(add `.exe`)
+**BREAKING CHANGE v1.0:** now expects and elevates WSL commands!
+
+On WSL bash, prepend `gsudo` to elevate **WSL commands** or `gsudo -d` for **CMD commands**. 
 
 ``` bash
 # elevate default shell
-PC:~$ gsudo.exe wsl
+PC:~$ gsudo 
 
-# run elevated Linux command
-PC:~$ gsudo.exe wsl -e mkdir /mnt/c/Windows/MyFolder
+# run elevated WSL command
+PC:~$ gsudo mkdir /mnt/c/Windows/MyFolder
 
 # run elevated Windows command
-PC:~$ gsudo.exe notepad C:/Windows/System32/drivers/etc/hosts
-PC:~$ gsudo.exe "notepad C:\Windows\System32\drivers\etc\hosts"
-gsudo.exe cmd /c "echo 127.0.0.1 www.MyWeb.com >> %windir%\System32\drivers\etc\hosts"
+PC:~$ gsudo -d notepad C:/Windows/System32/drivers/etc/hosts   # bash won't take \ 
+PC:~$ gsudo -d "notepad C:\Windows\System32\drivers\etc\hosts"
+PC:~$ gsudo -d "echo 127.0.0.1 www.MyWeb.com >> %windir%\System32\drivers\etc\hosts"
 
 # test for gsudo and command success
 retval=$?;
