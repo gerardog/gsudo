@@ -1,19 +1,9 @@
 #!/bin/bash
-# This is a wrapper for gsudo intended to be used from WSL or MinGW/MSys. 
-# Allows to use bash syntax to elevate commands.
-#	Usage: gsudo bash-command
-#	   eg: gsudo mkdir /mnt/c/Windows/TestFolder
-#
-#	You can also use 'gsudo.exe [command]' syntax (avoids this wrapper),
-if ! ( grep -qi Microsoft /proc/version ); then
-	if [[ $@ == *--debug* ]]; then
-	  echo [gsudo bash script] invoked from: MinGW or Cygwin with args: "$@"
-	fi
-	gsudo.exe "$@"
-else
-	export WSLENV=WSL_DISTRO_NAME:USER:$WSLENV
-	if [[ $@ == *--debug* ]]; then
-	  echo [gsudo bash script] invoked from WSL. Running: gsudo.exe "$@"
-	fi
-	gsudo.exe "$@"
-fi
+# This is a wrapper for gsudo intended to be used from WSL. 
+# Ensures WSLENV is set before calling gsudo, to let gsudo know the WSL context.
+# Also allows `gsudo` usage, no need for `gsudo.exe`
+# Harmless on git-bash/cygwin.
+# You can also use 'gsudo.exe [command]' syntax (to avoids this wrapper),
+
+export WSLENV=WSL_DISTRO_NAME:USER:$WSLENV
+gsudo.exe "$@"
