@@ -1,11 +1,15 @@
 image: Visual Studio 2019
 
+install:
+  - choco install gitversion.portable -pre -y
+
 init:
   - git config --global core.autocrlf true
   - powershell -noprofile -command "Install-Module PSReadLine -Force -SkipPublisherCheck -AllowPrerelease"
 
 before_build:
   - nuget restore src\gsudo.sln
+  - ps: gitversion /l console /output buildserver /updateAssemblyInfo
 
 after_build:
   - 7z a gsudo.%CONFIGURATION%.%APPVEYOR_BUILD_VERSION%.Unsigned.zip %APPVEYOR_BUILD_FOLDER%\src\gsudo\bin\*.*
