@@ -47,6 +47,7 @@ Most relevant **`[options]`**:
 - **`-w | --wait`**       Force wait for the process to end (and return the exitcode).
 - **`-s | --system`**     Run As Local System account ("NT AUTHORITY\SYSTEM").
 - **`-i | --integrity {v}`**   Run command with a specific integrity level: `Low`, `Medium`, `MediumPlus`, `High` (default), `System`. For example, use `Low` to launch a restricted process, or use `Medium` from an Admin/Elevated window to run without Admin rights. 
+- **`-d | --direct`**     Execute {command} directly. Does not wrap it with your current shell (Pwsh/WSL/MinGw/Yori/etc). Assumes it is a `CMD` command (eg. an `.EXE` file).
 - **`--copyns `**         Reconnect current connected network shares on the elevated session. Warning! This is verbose, affects the elevated user system-wide (other processes), and can prompt for credentials interactively.
 - **`--debug `**          Debug mode (verbose).
 
