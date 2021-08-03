@@ -15,9 +15,12 @@ namespace gsudo.Commands
 
         internal static void ShowVersion()
         {
-            var asm = Assembly.GetExecutingAssembly().GetName();
+            var assembly = Assembly.GetExecutingAssembly();
+            var fileVersionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(assembly.Location);
+            var fileVersion = fileVersionInfo.ProductVersion;
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine($"{asm.Name} v{Regex.Replace(asm.Version.ToString(), "^(.*?)(\\.0)*$", "$1")}");
+            Console.WriteLine($"{assembly.GetName().Name} v{fileVersion}");
+
             Console.ResetColor();
             Console.WriteLine("Copyright(c) 2019-2020 Gerardo Grignoli and GitHub contributors");
         }
