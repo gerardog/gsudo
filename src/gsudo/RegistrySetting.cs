@@ -33,13 +33,17 @@ namespace gsudo
 
     class RegistrySetting<T> : RegistrySetting
     {
-        private readonly T defaultValue;
+        private readonly Func<T> defaultValue;
         private T runningValue;
         private bool hasValue = false;
         private readonly Func<string, T> deserializer;
         private readonly Func<T, string> serializer;
 
-        public RegistrySetting(string name, T defaultValue, Func<string, T> deserializer, RegistrySettingScope scope = RegistrySettingScope.Any, Func<T,string> serializer = null)
+        public RegistrySetting(string name, T defaultValue, Func<string, T> deserializer, RegistrySettingScope scope = RegistrySettingScope.Any, Func<T, string> serializer = null)
+            : this(name, () => defaultValue, deserializer, scope, serializer)
+        { }
+
+        public RegistrySetting(string name, Func<T> defaultValue, Func<string, T> deserializer, RegistrySettingScope scope = RegistrySettingScope.Any, Func<T,string> serializer = null)
         {
             Name = name;
             this.defaultValue = defaultValue;
@@ -70,12 +74,12 @@ namespace gsudo
                         if (subkey != null)
                         {
                             var currentValue = subkey.GetValue(Name, null) as string;
-                            if (currentValue == null) return defaultValue;
+                            if (currentValue == null) return defaultValue();
                             return deserializer(currentValue);
                         }
                     }
                 }
-                return defaultValue;
+                return defaultValue();
             }
             set
             {
@@ -138,7 +142,7 @@ namespace gsudo
 
         public override void Reset(bool global)
         {
-            Value = defaultValue;
+            Value = defaultValue();
 
             RegistryKey key;
             if (global)

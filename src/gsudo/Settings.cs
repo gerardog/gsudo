@@ -3,11 +3,15 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 using gsudo.Enums;
+using Microsoft.Win32;
 
 namespace gsudo
 {
     class Settings
     {
+        public const string DefaultAnsiPrompt = "$p$e[1;31m# $e[0m";
+        public const string DefaultAsciiPrompt = "$P# ";
+
         public const int BufferSize = 10240;
         public static readonly Encoding Encoding = new System.Text.UTF8Encoding(false);
         public static RegistrySetting<CacheMode> CacheMode { get; set; }
@@ -19,10 +23,10 @@ namespace gsudo
                 RegistrySettingScope.GlobalOnly, TimeSpanWithInfiniteToString);
 
         public static RegistrySetting<string> PipedPrompt { get; set; }
-            = new RegistrySetting<string>(nameof(PipedPrompt), "$P# ", (s) => s);
+            = new RegistrySetting<string>(nameof(PipedPrompt), DefaultAsciiPrompt, (s) => s);
 
         public static RegistrySetting<string> Prompt { get; set; }
-            = new RegistrySetting<string>(nameof(Prompt), "$p$e[1;31m# $e[0m", (s) => s);
+            = new RegistrySetting<string>(nameof(Prompt), GetPromptDefaultValue, (s) => s);
 
         public static RegistrySetting<LogLevel> LogLevel { get; set; }
             = new RegistrySetting<LogLevel>(nameof(LogLevel), gsudo.LogLevel.Info,
@@ -76,6 +80,24 @@ namespace gsudo
                 return "Infinite";
             else
                 return value.ToString();
+        }
+
+        internal static string GetPromptDefaultValue()
+        {
+            const string REGKEY = @"SOFTWARE\Microsoft\Windows NT\CurrentVersion";
+            const string Name = @"CurrentMajorVersionNumber";
+
+            using (var subkey = Registry.LocalMachine.OpenSubKey(REGKEY, false))
+            {
+                if (subkey != null)
+                {
+                    var currentValue = subkey.GetValue(Name, null);
+                    if (currentValue != null) // Key introduced in Windows 10 or later.
+                        return DefaultAnsiPrompt;
+                }
+            }
+            
+            return DefaultAsciiPrompt;
         }
     }
 
