@@ -19,7 +19,7 @@ namespace gsudo.Commands
             var fileVersionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(assembly.Location);
             var fileVersion = fileVersionInfo.ProductVersion;
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine($"{assembly.GetName().Name} v{fileVersion}");
+            Console.WriteLine($"{assembly.GetName().Name} v{GitVersionInformation.FullSemVer}");
 
             Console.ResetColor();
             Console.WriteLine("Copyright(c) 2019-2020 Gerardo Grignoli and GitHub contributors");
