@@ -1,5 +1,6 @@
 assembly-versioning-scheme: MajorMinorPatch
-mode: ContinuousDeployment
+assembly-file-versioning-scheme: MajorMinorPatchTag
+assembly-informational-format: '{InformationalVersion}'
 next-version: 1.0.0
 branches: {}
 ignore:

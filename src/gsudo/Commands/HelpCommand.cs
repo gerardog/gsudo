@@ -16,8 +16,6 @@ namespace gsudo.Commands
         internal static void ShowVersion()
         {
             var assembly = Assembly.GetExecutingAssembly();
-            var fileVersionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(assembly.Location);
-            var fileVersion = fileVersionInfo.ProductVersion;
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine($"{assembly.GetName().Name} v{GitVersionInformation.FullSemVer}");
 
