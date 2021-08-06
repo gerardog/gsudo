@@ -14,7 +14,7 @@ before_build:
 after_build:
   - 7z a gsudo.%CONFIGURATION%.%APPVEYOR_BUILD_VERSION%.Unsigned.zip %APPVEYOR_BUILD_FOLDER%\src\gsudo\bin\*.*
   - appveyor PushArtifact gsudo.%CONFIGURATION%.%APPVEYOR_BUILD_VERSION%.Unsigned.zip
-  - vstest.console /logger:Appveyor C:\git\gsudo\src\gsudo.Tests\bin\%CONFIGURATION%\gsudo.Tests.dll
+#  - vstest.console /logger:Appveyor C:\git\gsudo\src\gsudo.Tests\bin\%CONFIGURATION%\gsudo.Tests.dll
   
 on_finish:
   - ps: if($env:APPVEYOR_RDP_ENABLED -eq 'TRUE') { $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1')) }
