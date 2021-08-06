@@ -51,8 +51,8 @@ namespace gsudo.Commands
                 Mode = elevationMode,
                 ConsoleProcessId = Process.GetCurrentProcess().Id,
                 IntegrityLevel = InputArguments.GetIntegrityLevel(),
-                ConsoleWidth = Console.WindowWidth,
-                ConsoleHeight = Console.WindowHeight
+                ConsoleWidth = Console.IsOutputRedirected ? 0 : Console.WindowWidth,
+                ConsoleHeight = Console.IsOutputRedirected ? 0 : Console.WindowHeight
         };
 
             if (isElevationRequired && Settings.SecurityEnforceUacIsolation)
