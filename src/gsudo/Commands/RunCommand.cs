@@ -51,7 +51,9 @@ namespace gsudo.Commands
                 Mode = elevationMode,
                 ConsoleProcessId = Process.GetCurrentProcess().Id,
                 IntegrityLevel = InputArguments.GetIntegrityLevel(),
-            };
+                ConsoleWidth = Console.WindowWidth,
+                ConsoleHeight = Console.WindowHeight
+        };
 
             if (isElevationRequired && Settings.SecurityEnforceUacIsolation)
                 AdjustUacIsolationRequest(elevationRequest, isShellElevation);
@@ -59,12 +61,6 @@ namespace gsudo.Commands
             SetRequestPrompt(elevationRequest);
 
             Logger.Instance.Log($"Command to run: {elevationRequest.FileName} {elevationRequest.Arguments}", LogLevel.Debug);
-
-            if (elevationRequest.Mode == ElevationRequest.ConsoleMode.VT)
-            {
-                elevationRequest.ConsoleWidth = Console.WindowWidth;
-                elevationRequest.ConsoleHeight = Console.WindowHeight;
-            }
 
             if (isRunningAsDesiredUser && isShellElevation && !InputArguments.NewWindow)
             {

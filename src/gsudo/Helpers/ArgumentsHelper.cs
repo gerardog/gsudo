@@ -300,18 +300,6 @@ namespace gsudo.Helpers
                     };
             }
 
-            /*
-            if (arg.In("gsudoservicehop"))
-            {
-                return new ServiceHopCommand()
-                {
-                    allowedPid = int.Parse(dequeue(), CultureInfo.InvariantCulture),
-                    allowedSid = dequeue(),
-                    LogLvl = ExtensionMethods.ParseEnum<LogLevel>(dequeue()),
-                };
-            }
-            */
-
             if (arg.In("gsudoctrlc"))
                 return new CtrlCCommand() 
                 { 
@@ -324,11 +312,6 @@ namespace gsudo.Helpers
 
             if (arg.In("status"))
                 return new StatusCommand();
-
-            /* Obsolete since TokenSwitch Mode
-            if (arg.In("AttachRun"))
-                return new AttachRun() { CommandToRun = args };
-            */
 
             if (arg.In("Cache"))
             {

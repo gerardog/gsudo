@@ -30,6 +30,7 @@
     <DefineConstants>DEBUG</DefineConstants>
     <DebugType>pdbonly</DebugType>
     <DebugSymbols>true</DebugSymbols>
+    <NoWarn>1701;1702;CA1303;CA1707;CA1028;CA1001;CA1031</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

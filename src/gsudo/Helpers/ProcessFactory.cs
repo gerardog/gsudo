@@ -104,7 +104,6 @@ namespace gsudo.Helpers
             const int SHGFI_EXETYPE = 0x000002000;
             var fileInfo = Native.FileApi.SHGetFileInfo(path, 0, ref shinfo, (uint)Marshal.SizeOf(shinfo), SHGFI_EXETYPE);
             var retval = (fileInfo.ToInt64() & 0xFFFF0000) > 0;
-            Logger.Instance.Log($"IsWindowsApp(\"{exe}\") = {retval} (\"{path}\")", LogLevel.Debug);
             return retval;
         }
 
