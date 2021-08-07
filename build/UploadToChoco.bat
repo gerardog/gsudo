@@ -1,8 +1,16 @@
-@pushd %~dp0\Releases
-@if 'a'=='a%1' echo Missing version number
-@if 'a'=='a%1' goto end
-@echo Building with version number v%1
+@Echo off
 
-choco push gsudo.%1.nupkg
-:end
+pushd %~dp0\..
+
+:: Determine Version
+gitversion /showvariable LegacySemVer > "%temp%\version.tmp"
+SET /P version= < "%temp%\version.tmp"
+set OUTPUT_FOLDER=%REPO_ROOT_FOLDER%\Build\Releases\%version%
+
+popd
+@pushd %OUTPUT_FOLDER%
+
+@echo Uploading v%version% to chocolatey
+choco push gsudo.%version%.nupkg
+
 @popd

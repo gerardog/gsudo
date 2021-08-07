@@ -12,11 +12,11 @@ set OUTPUT_FOLDER=%REPO_ROOT_FOLDER%\Build\Releases\%version%
 
 popd
 
-if ''=='%version%' echo Missing version number & goto badend
-if 'skipbuild'=='%1' goto skipbuild 
-
 if NOT DEFINED msbuild set msbuild="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe"
 if NOT DEFINED SignToolPath set SignToolPath="C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\"
+
+if ''=='%version%' echo Missing version number & goto badend
+if 'skipbuild'=='%1' goto skipbuild 
 
 echo Building with version number v%version%
 
@@ -36,7 +36,6 @@ if errorlevel 1 goto badend
 echo Build Succeded.
 
 echo Running ILMerge
-
 pushd %BIN_FOLDER%
 
 ilmerge gsudo.exe System.Security.Claims.dll System.Security.Principal.Windows.dll /out:ilmerge\gsudo.exe /target:exe /targetplatform:v4,"C:\Windows\Microsoft.NET\Framework\v4.0.30319" /ndebug
@@ -46,19 +45,23 @@ if errorlevel 1 echo ILMerge Failed - Try: choco install ilmerge & pause & popd 
 popd
 
 :: Code Sign
-if 'skipsign'=='%1' goto skipbuild
+if 'skipsign'=='%1' goto skipsign
 
 echo Signing exe.
 pushd %BIN_FOLDER%
+
 %SignToolPath%signtool.exe sign /n "Open Source Developer, Gerardo Grignoli" /fd SHA256 /tr "http://time.certum.pl" ilmerge\gsudo.exe
 if errorlevel 1 echo Sign Failed & pause & popd & goto badend
-
-COPY ilmerge\gsudo.exe %OUTPUT_FOLDER%\bin
 echo Sign successfull
 
 popd
+:skipsign
+
+COPY %BIN_FOLDER%\ilmerge\gsudo.exe %OUTPUT_FOLDER%\bin
 
 %msbuild% /t:Restore,Rebuild /p:Configuration=Release %REPO_ROOT_FOLDER%\src\gsudo.Installer.sln /v:Minimal 
+
+if 'skipsign'=='%1' goto skipbuild
 %SignToolPath%signtool.exe sign /n "Open Source Developer, Gerardo Grignoli" /fd SHA256 /tr "http://time.certum.pl" %REPO_ROOT_FOLDER%\src\gsudo.Installer\bin\Release\gsudomsi.msi
 
 :skipbuild
