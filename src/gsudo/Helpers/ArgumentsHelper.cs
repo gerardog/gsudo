@@ -61,14 +61,29 @@ namespace gsudo.Helpers
                         newArgs.Add("-NoProfile");
                         newArgs.Add("-Command");
 
-                        string pscommand = string.Join(" ", args);
+                        int last = args.Length - 1;
 
                         if (args[0].StartsWith("\"", StringComparison.Ordinal) &&
-                            args.Last().EndsWith("\"", StringComparison.Ordinal))
+                            args[last].EndsWith("\"", StringComparison.Ordinal))
                         {
-                            // We got a string literal, already quoted.
-                            pscommand = pscommand.UnQuote();
+                            args[0] = args[0].Substring(1);
+                            args[last] = args[last].Substring(0, args[last].Length - 1);
                         }
+
+                        //-- Fix issue in powershell with commands ending in \" as in "C:\Windows\"
+                        if (args[last].EndsWith("\\", StringComparison.Ordinal))
+                            args[last] += "\\";
+
+                        if (currentShell == Shell.PowerShell) // Windows Powershell extra issues (not core)
+                        {
+                            //See https://stackoverflow.com/a/59960203/97471
+                            for (int i = 0; i < args.Length; i++)
+                                if (args[i].EndsWith("\\\"", StringComparison.Ordinal))
+                                    args[i] = args[i].Substring(0, args[i].Length - 2) + "\\\\\"";
+                        }
+                        // ----
+
+                        string pscommand = string.Join(" ", args);
 
                         pscommand = pscommand
                                         .Replace("\"", "\\\"")
