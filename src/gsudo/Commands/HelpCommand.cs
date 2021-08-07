@@ -17,10 +17,10 @@ namespace gsudo.Commands
         {
             var assembly = Assembly.GetExecutingAssembly();
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine($"{assembly.GetName().Name} v{GitVersionInformation.InformationalVersion}");
+            Console.WriteLine($"{assembly.GetName().Name} v{GitVersionInformation.FullSemVer} ({GitVersionInformation.FullBuildMetaData})");
 
             Console.ResetColor();
-            Console.WriteLine("Copyright(c) 2019-2020 Gerardo Grignoli and GitHub contributors");
+            Console.WriteLine("Copyright(c) 2019-2021 Gerardo Grignoli and GitHub contributors");
         }
 
         internal static void ShowHelp()

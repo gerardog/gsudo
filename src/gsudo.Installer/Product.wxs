@@ -2,9 +2,7 @@
 
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 
-  <?include ./Constants.wxi ?>
-
-  <Product Id="*" Name="gsudo v$(var.Version)" Language="1033" Version="$(var.Version)"
+  <Product Id="*" Name="gsudo v!(bind.FileVersion.GSudoExe)" Language="1033" Version="!(bind.FileVersion.GSudoExe)"
            UpgradeCode="567b5616-d362-484e-b6ff-7c1875cf0aee" Manufacturer="gerardog">
 
     <Package InstallerVersion="200"
@@ -35,7 +33,9 @@
     <ComponentGroup Id="GSudo">
       <ComponentRef Id="GSudoPath" />
       <ComponentRef Id="GSudoExe" />
-    </ComponentGroup>
+	  <ComponentRef Id="GSudoBash" />
+	  <ComponentRef Id="GSudoPowerShell" />
+	</ComponentGroup>
   </Fragment>
 
   <Fragment>
@@ -53,13 +53,13 @@
             <File Id="GSudoExe" KeyPath="yes" Name="gsudo.exe" Source="..\gsudo\bin\ilmerge\gsudo.exe" />
           </Component>
 
-          <!--<Component Id="GSudoBash" Guid="3d6047df-a14c-484d-9ded-77761d03197a">
-            <File Id="GSudoExe" KeyPath="yes" Name="gsudo" Source="..\gsudo.extras\gsudo" />
-          </Component>-->
+          <Component Id="GSudoBash" Guid="3d6047df-a14c-484d-9ded-77761d03197a">
+            <File Id="GSudoBash" KeyPath="yes" Name="gsudo" Source="..\gsudo.extras\gsudo" />
+          </Component>
 
-          <!--<Component Id="GSudoPowerShell" Guid="99d35b52-4b20-42d3-afad-11a98cab2fd3">
+          <Component Id="GSudoPowerShell" Guid="99d35b52-4b20-42d3-afad-11a98cab2fd3">
             <File Id="GSudoPowerShell" KeyPath="yes" Name="gsudo.ps1" Source="..\gsudo.extras\gsudo.ps1" />
-          </Component>-->
+          </Component>
 
         </Directory>
       </Directory>
