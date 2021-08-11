@@ -107,7 +107,7 @@ For more complex commands, you can **pass a string literal** with the command to
 
 Note that `gsudo` returns a string that can be captured, not powershell objects.
 
-**BREAKING CHANGE v1.0:** It is no longer needed to additionally escape `"` with `\\"`. Now only standard [PowerShell Quoting Rules](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_quoting_rules) are neccesary. 
+**BREAKING CHANGE v1.0:** It is no longer needed to additionally escape `"` with `\\"`. Now only standard [PowerShell Quoting Rules](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_quoting_rules) are necessary.
 
 **Examples:**
 
@@ -145,7 +145,7 @@ Write-Host $result.CreationTime
 
 ### Usage from WSL (Windows Subsystem for Linux)
 
-On WSL, elevation and `root` are different concepts. `root` allows full administation of WSL but not the windows system. Use WSL's native `su` or `sudo` to gain `root` access. To get admin priviledge on the Windows box you need to elevate the WSL.EXE process. `gsudo` allows that (a UAC popup will appear).
+On WSL, elevation and `root` are different concepts. `root` allows full administration of WSL but not the windows system. Use WSL's native `su` or `sudo` to gain `root` access. To get admin privilege on the Windows box you need to elevate the WSL.EXE process. `gsudo` allows that (a UAC popup will appear).
 
 **BREAKING CHANGE v1.0:** now expects and elevates WSL commands!
 
@@ -180,19 +180,19 @@ The `Credentials Cache` allows to elevate several times from a parent process wi
 
 An active credentials cache session is just an elevated instance of gsudo that stays running and allows the invoker process to elevate again. No windows service or setup involved.
 
-It is convenient, but it's safe only if you are not already hosting a virus/malicious process: No matter how secure gsudo itself is, a malicious process could [trick](https://en.wikipedia.org/wiki/DLL_injection#Approaches_on_Microsoft_Windows) the allowed process (Cmd/Powershell) and force it to request `gsudo` to elevate silenty.
+It is convenient, but it's safe only if you are not already hosting a virus/malicious process: No matter how secure gsudo itself is, a malicious process could [trick](https://en.wikipedia.org/wiki/DLL_injection#Approaches_on_Microsoft_Windows) the allowed process (Cmd/Powershell) and force it to request `gsudo` to elevate silently.
 
 **Cache Modes:**
 
 - Auto: Simil-unix-sudo. The first elevation shows a UAC Popup and starts a cache session automatically.
-- Explicit: (default) Every elevation shows a UAC popup, unless a cache session is started explictly with `gsudo cache on`.
+- Explicit: (default) Every elevation shows a UAC popup, unless a cache session is started explicitly with `gsudo cache on`.
 - Disabled: Every elevation request shows a UAC popup.
 
 The cache mode can be set with **`gsudo config CacheMode auto|explicit|disabled`**
 
-Use `gsudo cache on|off` to start/stop a cache session manually (i.e. allow/disallow elevation of the current process with no additionals UAC popups).
+Use `gsudo cache on|off` to start/stop a cache session manually (i.e. allow/disallow elevation of the current process with no additional UAC popups).
 
-Use `gsudo -k` to terminate all cache sessions. (Use this before leaving your computer unattended to someone else.) 
+Use `gsudo -k` to terminate all cache sessions. (Use this before leaving your computer unattended to someone else.)
 
 The cache session ends automatically when the allowed process ends or if no elevations requests are received for 5 minutes (configurable via `gsudo config CacheDuration`).
 
