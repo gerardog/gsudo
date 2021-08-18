@@ -10,7 +10,7 @@ if NOT DEFINED SignToolPath set SignToolPath="C:\Program Files (x86)\Windows Kit
 @echo Building with version number v%version%
 
 powershell -NoProfile -Command "(gc ..\src\gsudo.Installer\Constants.Template.wxi) -replace '#VERSION#', '%version%' | Out-File -encoding UTF8 ..\src\gsudo.Installer\Constants.wxi"
-"%msbuild%" /t:Rebuild /p:Configuration=Release /p:WarningLevel=0 ..\src\gsudo.Installer.sln /p:Version=%version%
+%msbuild% /t:Rebuild /p:Configuration=Release /p:WarningLevel=0 ..\src\gsudo.Installer.sln /p:Version=%version%
 %SignToolPath%signtool.exe sign /n "Open Source Developer, Gerardo Grignoli" /fd SHA256 /tr "http://time.certum.pl" ..\src\gsudo.Installer\bin\Release\gsudomsi.msi
 
 goto end
