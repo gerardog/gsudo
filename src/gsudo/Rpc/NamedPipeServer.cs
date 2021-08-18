@@ -107,7 +107,7 @@ namespace gsudo.Rpc
                             {
                                 Logger.Instance.Log($"Unauthorized access from PID {clientPid}", LogLevel.Warning);
 
-                                await controlPipe.WriteAsync($"{Constants.TOKEN_ERROR}Unauthorized.{Constants.TOKEN_ERROR}").ConfigureAwait(false);
+                                await controlPipe.WriteAsync($"{Constants.TOKEN_ERROR}Unauthorized. (Different gsudo.exe?) {Constants.TOKEN_ERROR}").ConfigureAwait(false);
                                 await controlPipe.FlushAsync().ConfigureAwait(false);
 
                                 controlPipe.WaitForPipeDrain();
