@@ -68,9 +68,8 @@ namespace gsudo.Commands
 
         private void PrintConsoleProcessList()
         {
-            var processIds = new uint[100];
             var ownPid = ProcessApi.GetCurrentProcessId();
-            processIds = GetConsoleAttachedPids(processIds);
+            var processIds = ConsoleHelper.GetConsoleAttachedPids();
             const string unknown = "(Unknown)";
             Console.WriteLine($"{"PID".PadLeft(9)} {"Integrity".PadRight(10)} {"UserName".PadRight(25)} {"Name"}");
 
@@ -107,18 +106,6 @@ namespace gsudo.Commands
 
                 Console.WriteLine($"{pid.ToString(CultureInfo.InvariantCulture).PadLeft(9)} {integrity.PadRight(10)} {username.PadRight(25)} {name}{((ownPid == pid) ? " (this gsudo status)" : null)}");
             }
-        }
-
-        private static uint[] GetConsoleAttachedPids(uint[] processIds)
-        {
-            var num = ConsoleApi.GetConsoleProcessList(processIds, 1);
-            if (num == 0) throw new System.ComponentModel.Win32Exception();
-
-            processIds = new UInt32[num];
-
-            num = ConsoleApi.GetConsoleProcessList(processIds, (uint)processIds.Length);
-            if (num == 0) throw new System.ComponentModel.Win32Exception();
-            return processIds;
         }
     }
 }
