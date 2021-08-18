@@ -224,6 +224,7 @@ namespace gsudo.Commands
             Logger.Instance.Log("Already running as the specified user/permission-level. Running in-process...", LogLevel.Debug);
             var sameIntegrity = (int)InputArguments.GetIntegrityLevel() == ProcessHelper.GetCurrentIntegrityLevel();
             // No need to escalate. Run in-process
+            Native.ConsoleApi.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, true);
 
             if (!string.IsNullOrEmpty(elevationRequest.Prompt))
             {
