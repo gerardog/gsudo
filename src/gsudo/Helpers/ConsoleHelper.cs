@@ -1,4 +1,5 @@
-﻿using System;
+﻿using gsudo.Native;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -43,6 +44,19 @@ namespace gsudo.Helpers
         static ConsoleHelper()
         {
             IgnoreConsoleCancelKeyPress += IgnoreConsoleCancelKeyPressMethod;
+        }
+
+        public static uint[] GetConsoleAttachedPids()
+        {
+            var processIds = new uint[1];
+            var num = ConsoleApi.GetConsoleProcessList(processIds, 1);
+            if (num == 0) throw new System.ComponentModel.Win32Exception();
+
+            processIds = new UInt32[num];
+
+            num = ConsoleApi.GetConsoleProcessList(processIds, (uint)processIds.Length);
+            if (num == 0) throw new System.ComponentModel.Win32Exception();
+            return processIds;
         }
     }
 }

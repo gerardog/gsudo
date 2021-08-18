@@ -59,7 +59,7 @@ namespace gsudo.Helpers
         {
             try
             {
-                var parentPid = ProcessHelper.GetParentProcessIdExcludingShim(process);
+                var parentPid = ProcessHelper.GetParentProcessIdExcludingShim(process.Id);
                 if (parentPid == 0)
                     return null;
                 return Process.GetProcessById(parentPid);
@@ -70,9 +70,9 @@ namespace gsudo.Helpers
             }
         }
 
-        public static int GetParentProcessIdExcludingShim(Process process) 
+        public static int GetParentProcessIdExcludingShim(int processId) 
         {
-            var parentId = GetParentProcessId(process.Id);
+            var parentId = GetParentProcessId(processId);
             Process parent;
             try
             {
@@ -80,12 +80,13 @@ namespace gsudo.Helpers
             }
             catch 
             {
+                // For example: System.ArgumentException: Process with an Id of 18312 is not running.
                 return parentId;
             }
 
-            if (IsShim(parent))
+            if (IsShimOrWrapper(parent))
             {
-                return GetParentProcessId(parentId);
+                return GetParentProcessIdExcludingShim(parentId);
             }
 
             return parentId;
@@ -113,13 +114,26 @@ namespace gsudo.Helpers
             }
         }
         
+        /// <summary>
+        /// Gets the PID that will be allowed in the cache.
+        /// </summary>
         internal static int GetCallerPid()
         {
             var currentProcess= Process.GetCurrentProcess();
             var parent = currentProcess.GetParentProcessExcludingShim();
-            if (parent == null) return ProcessHelper.GetParentProcessId(currentProcess.Id);
+
+            if (parent == null) 
+            {
+                // Unable to get a caller pid for the cache.
+                // This is common in MSYS/git-bash/cygwin
+                // Fallback to first process attached to the current console.
+                var pids = ConsoleHelper.GetConsoleAttachedPids();
+                return (int)pids[pids.Length - 1];
+            }
+
             return parent.Id;
         }
+
         public static bool IsHighIntegrity()
         {
             return ProcessHelper.GetCurrentIntegrityLevel() >= (int)IntegrityLevel.High;
@@ -307,14 +321,18 @@ namespace gsudo.Helpers
         /// </summary>
         /// <param name="parent"></param>
         /// <returns></returns>
-        public static bool IsShim(Process parent)
+        public static bool IsShimOrWrapper(Process parent)
         {
             try
             {
-                var fileName = parent.MainModule.FileName;
+                var fileName = parent.MainModule.FileName.ToUpperInvariant();
 
-                if (fileName.NotIn(ProcessHelper.GetOwnExeName())
-                    && fileName.In("sudo.exe", "gsudo.exe"))
+                if (!fileName.Equals(ProcessHelper.GetOwnExeName(), StringComparison.OrdinalIgnoreCase) && (
+                        fileName.EndsWith("\\SUDO.EXE", StringComparison.Ordinal) ||
+                        fileName.EndsWith("\\GSUDO.EXE", StringComparison.Ordinal) ||
+                        fileName.EndsWith("\\BASH.EXE", StringComparison.Ordinal) // MINGW64/MSYS wrapper
+                    )
+                   )
                 {
                     return true;
                 }
@@ -323,6 +341,5 @@ namespace gsudo.Helpers
 
             return false;
         }
-
     }
 }
