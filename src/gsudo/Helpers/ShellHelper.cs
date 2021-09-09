@@ -13,6 +13,7 @@ namespace gsudo.Helpers
         Yori,
         Wsl,
         Bash,
+        TakeCommand
     }
 
     static class ShellHelper
@@ -45,6 +46,10 @@ namespace gsudo.Helpers
                 else if (parentExeName == "BASH.EXE")
                 {
                     return Shell.Bash;
+                }
+                else if (parentExeName == "TCC.EXE")
+                {
+                    return Shell.TakeCommand;
                 }
                 else if (parentExeName == "CMD.EXE")
                 {
