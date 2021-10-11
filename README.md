@@ -26,7 +26,7 @@ Just prepend `gsudo` (or the `sudo` alias) to your command and it will run eleva
 
 * Using [Scoop](https://scoop.sh): `scoop install gsudo`
 * Or using [Chocolatey](https://chocolatey.org/install):  `choco install gsudo`
-* Or using [WinGet](https://github.com/microsoft/winget-cli/releases) `winget install gsudo`
+* Or using [WinGet](https://github.com/microsoft/winget-cli/releases) `winget install gerardog.gsudo`
 * Or manually: Unzip the latest release, and add to the path. Or let the following script do it for you:
 ``` batch
 PowerShell -Command "Set-ExecutionPolicy RemoteSigned -scope Process; iwr -useb https://raw.githubusercontent.com/gerardog/gsudo/master/installgsudo.ps1 | iex"
