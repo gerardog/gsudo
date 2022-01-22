@@ -31,7 +31,7 @@ PS> Get-Process notepad | Invoke-gsudo { Stop-Process }
 
 PS> Invoke-gsudo { return Get-Content 'C:\My Secret Folder\My Secret.txt'}
 
-PS> $a=1; $b = Invoke-gsudo { $using:a+10 }; Write-Host "Sum returned: $b"
+PS> $a=1; $b = Invoke-gsudo { $using:a+10 }; Write-Host "Sum returned: $b";
 Sum returned: 11
 
 .LINK
@@ -90,7 +90,7 @@ $debug = if ($PSBoundParameters['Debug']) {$true} else {$false};
 $userScriptBlock = Serialize-Scriptblock $ScriptBlock
 $InputArray = $Input
 
-# REMEMBER $remoteCmd must contain single-line statements/comands only to avoid problems with "PowerShell -Command -" 
+# REMEMBER $remoteCmd variable bellow must contain single-line statements/comands only to avoid problems with "PowerShell -Command -" 
 # ( See: https://stackoverflow.com/q/37417613/97471 & https://stackoverflow.com/a/42475326/97471 )
 
 $remoteCmd = Serialize-Scriptblock {
@@ -99,8 +99,7 @@ $InputObject = $using:InputArray;
 $argumentList = $using:ArgumentList;
 $sb = [Scriptblock]::Create($using:userScriptBlock).GetNewClosure();
 
-$result = $InputObject | Invoke-Command $sb -ArgumentList $using:argumentList;
-return $result
+try { ($InputObject | Invoke-Command $sb -ArgumentList $using:argumentList ) } catch { Write-Output $_ }
 
 }
 
@@ -121,7 +120,11 @@ if($NoElevate) {
 	# We could invoke using Invoke-Command:
 	#		$result = $InputObject | Invoke-Command (Deserialize-Scriptblock $remoteCmd) -ArgumentList $ArgumentList
 	# Or run in a Job to ensure same variable isolation:
-	$result = Start-Job -ScriptBlock (Deserialize-Scriptblock $remoteCmd) | Wait-Job | Receive-Job
+	#$result = Start-Job -ScriptBlock (Deserialize-Scriptblock $remoteCmd) | Wait-Job | Receive-Job 
+	
+	$job = Start-Job -ScriptBlock (Deserialize-Scriptblock $remoteCmd) | Wait-Job; 
+	try { $result = Receive-Job $job -ErrorAction Stop } catch { $result = @($null, $_) } 2> $null
+
 } else {
 	$pwsh = ("""$([System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName)""") # Get same running powershell EXE.
 	
@@ -134,4 +137,15 @@ if($NoElevate) {
 
 	$result = $remoteCmd | & gsudo.exe --LogLevel Error -d $pwsh -NoProfile -OutputFormat Xml -InputFormat Text -Command - 2>&1
 }
-return $result;
+
+ForEach ($item in $result)
+{
+	if ($item -is [System.Management.Automation.ErrorRecord] -or $item.PsObject.Properties.name -match "InvocationInfo")
+	{ 
+		Write-Error $item -ErrorAction Stop
+	}
+	else 
+	{ 
+		Write-Output $item; 
+	}
+}
