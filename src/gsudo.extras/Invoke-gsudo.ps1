@@ -89,6 +89,7 @@ Function Deserialize-Scriptblock
 $debug = if ($PSBoundParameters['Debug']) {$true} else {$false};
 $userScriptBlock = Serialize-Scriptblock $ScriptBlock
 $InputArray = $Input
+$location = Get-Location;
 
 # REMEMBER $remoteCmd variable bellow must contain single-line statements/comands only to avoid problems with "PowerShell -Command -" 
 # ( See: https://stackoverflow.com/q/37417613/97471 & https://stackoverflow.com/a/42475326/97471 )
@@ -98,6 +99,7 @@ $remoteCmd = Serialize-Scriptblock {
 $InputObject = $using:InputArray;
 $argumentList = $using:ArgumentList;
 $sb = [Scriptblock]::Create($using:userScriptBlock).GetNewClosure();
+Set-Location $using:location;
 
 try { ($InputObject | Invoke-Command $sb -ArgumentList $using:argumentList ) } catch { Write-Output $_ }
 
