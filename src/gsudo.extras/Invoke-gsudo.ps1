@@ -107,7 +107,7 @@ $sb = [Scriptblock]::Create($using:userScriptBlock).GetNewClosure();
 
 Set-Location $using:location;
 
-try { ($InputObject | Invoke-Command $sb -ArgumentList $argumentList ) } catch { Write-Output $_ }
+if ($InputObject -eq $null) { try { (Invoke-Command $sb -ArgumentList $argumentList ) } catch { Write-Output $_ } } else { try { ($InputObject | Invoke-Command $sb -ArgumentList $argumentList ) } catch { Write-Output $_ } }
 }
 
 <#
