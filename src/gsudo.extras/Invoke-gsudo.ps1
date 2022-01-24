@@ -71,8 +71,12 @@ Function Serialize-Scriptblock
     $ssb = $Scriptblock.ToString()
     $cb = {
         $v = (Get-Variable -Name $args[0].Groups['var'] -ValueOnly)
-        $ser = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes([System.Management.Automation.PSSerializer]::Serialize($v)))
-        "`$([System.Management.Automation.PSSerializer]::Deserialize([System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String('{0}'))))" -f $ser
+		if ($v -eq $null)
+		{ '$null' }
+		else 
+		{ 
+			"`$([System.Management.Automation.PSSerializer]::Deserialize([System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String('{0}'))))" -f [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes([System.Management.Automation.PSSerializer]::Serialize($v)))
+		}		
     }
     $sb = [RegEx]::Replace($ssb, $rxp, $cb, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase);
 	return $sb;
@@ -95,14 +99,15 @@ $location = Get-Location;
 # ( See: https://stackoverflow.com/q/37417613/97471 & https://stackoverflow.com/a/42475326/97471 )
 
 $remoteCmd = Serialize-Scriptblock {
-
 $InputObject = $using:InputArray;
+
 $argumentList = $using:ArgumentList;
+
 $sb = [Scriptblock]::Create($using:userScriptBlock).GetNewClosure();
+
 Set-Location $using:location;
 
 try { ($InputObject | Invoke-Command $sb -ArgumentList $argumentList ) } catch { Write-Output $_ }
-
 }
 
 <#
