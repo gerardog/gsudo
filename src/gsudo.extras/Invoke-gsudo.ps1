@@ -90,37 +90,29 @@ Function Deserialize-Scriptblock
     [Scriptblock]::Create($sb).GetNewClosure()
 }
 
+$expectingInput = $myInvocation.expectingInput;
+
 $debug = if ($PSBoundParameters['Debug']) {$true} else {$false};
 $userScriptBlock = Serialize-Scriptblock $ScriptBlock
 $InputArray = $Input
-$location = Get-Location;
+$location = (Get-Location).Path;
 
-# REMEMBER $remoteCmd variable bellow must contain single-line statements/comands only to avoid problems with "PowerShell -Command -" 
+# $remoteCmd is the script that will effectively run elevated.
+# IMPORTANT: $remoteCmd scriptblock bellow must contain only single-line statements only, to avoid problems with "PowerShell -Command -" 
 # ( See: https://stackoverflow.com/q/37417613/97471 & https://stackoverflow.com/a/42475326/97471 )
 
 $remoteCmd = Serialize-Scriptblock {
-$InputObject = $using:InputArray;
-
-$argumentList = $using:ArgumentList;
-
-$sb = [Scriptblock]::Create($using:userScriptBlock).GetNewClosure();
-
-Set-Location $using:location;
-
-if ($InputObject -eq $null) { try { (Invoke-Command $sb -ArgumentList $argumentList ) } catch { Write-Output $_ } } else { try { ($InputObject | Invoke-Command $sb -ArgumentList $argumentList ) } catch { Write-Output $_ } }
+	$InputObject = $using:InputArray;
+	$argumentList = $using:ArgumentList;
+	$expectingInput = $using:expectingInput;
+	$sb = [Scriptblock]::Create($using:userScriptBlock).GetNewClosure();
+	Set-Location $using:location;
+	if ($expectingInput) { ($InputObject | Invoke-Command $sb -ArgumentList $argumentList *>&1) } else { (Invoke-Command $sb -ArgumentList $argumentList ) } 
 }
-
-<#
-if ($using:debug) { 
-	if ($InputObject) { Write-Host "[Elevated] `$input $($($InputObject).GetType().Name) = $InputObject" } else { Write-Debug "[Elevated] `$input = null " } 
-	if ($argumentList) { Write-Host "[Elevated] `$argumentList $($($argumentList).GetType().Name) = $argumentList" } else { Write-Debug "[Elevated] `$argumentList = null " } 
-	Write-Host "[Elevated]ScriptBlock = $sb"
-}
-#>
 
 if ($Debug) {
-	Write-Host "User ScriptBlock : $userScriptBlock"
-	Write-Host "Full Script to run on the isolated instance: { $remoteCmd }" 
+	Write-Debug "User ScriptBlock : $userScriptBlock"
+	Write-Debug "Full Script to run on the isolated instance: { $remoteCmd }" 
 } 
 
 if($NoElevate) { 
@@ -142,14 +134,23 @@ if($NoElevate) {
 			{ $pwsh = "pwsh.exe" }
 	} 
 
-	$result = $remoteCmd | & gsudo.exe --LogLevel Error -d $pwsh -NoProfile -OutputFormat Xml -InputFormat Text -Command - 2>&1
+	# Must Read: https://stackoverflow.com/questions/68136128/how-do-i-call-the-powershell-cli-robustly-with-respect-to-character-encoding-i?noredirect=1&lq=1
+	$result = $remoteCmd | & gsudo.exe --LogLevel Error -d $pwsh -NoProfile -NonInteractive -OutputFormat Xml -InputFormat Text -Command - *>&1
 }
 
 ForEach ($item in $result)
 {
-	if ($item -is [System.Management.Automation.ErrorRecord] -or $item.PsObject.Properties.name -match "InvocationInfo")
+	if (
+	$item.Exception.SerializedRemoteException.WasThrownFromThrowStatement -or
+	$item.Exception.WasThrownFromThrowStatement -or
+	($item.CategoryInfo.Category -eq "NotSpecified")
+	)
+	{
+		throw $item
+	}
+	if ($item -is [System.Management.Automation.ErrorRecord])
 	{ 
-		Write-Error $item -ErrorAction Stop
+		Write-Error $item
 	}
 	else 
 	{ 
