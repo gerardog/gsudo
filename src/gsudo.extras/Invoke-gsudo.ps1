@@ -91,11 +91,15 @@ Function Deserialize-Scriptblock
 }
 
 $expectingInput = $myInvocation.expectingInput;
-
 $debug = if ($PSBoundParameters['Debug']) {$true} else {$false};
 $userScriptBlock = Serialize-Scriptblock $ScriptBlock
 $InputArray = $Input
 $location = (Get-Location).Path;
+
+$errorAction = $PSBoundParameters["ErrorAction"]
+if(-not $errorAction){
+	$errorAction = $ErrorActionPreference
+}
 
 # $remoteCmd is the script that will effectively run elevated.
 # IMPORTANT: $remoteCmd scriptblock bellow must contain only single-line statements only, to avoid problems with "PowerShell -Command -" 
@@ -107,7 +111,7 @@ $remoteCmd = Serialize-Scriptblock {
 	$expectingInput = $using:expectingInput;
 	$sb = [Scriptblock]::Create($using:userScriptBlock).GetNewClosure();
 	Set-Location $using:location;
-	$ErrorActionPreference=$using:ErrorActionPreference;
+	$ErrorActionPreference=$using:errorAction;
 	if ($expectingInput) { try { ($InputObject | Invoke-Command $sb -ArgumentList $argumentList *>&1)} catch {throw $_} } else { try{(Invoke-Command $sb -ArgumentList $argumentList )} catch {throw $_} } 
 }
 
