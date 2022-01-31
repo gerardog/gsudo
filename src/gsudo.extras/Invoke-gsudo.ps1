@@ -107,6 +107,7 @@ $remoteCmd = Serialize-Scriptblock {
 	$expectingInput = $using:expectingInput;
 	$sb = [Scriptblock]::Create($using:userScriptBlock).GetNewClosure();
 	Set-Location $using:location;
+	$ErrorActionPreference=$using:ErrorActionPreference;
 	if ($expectingInput) { try { ($InputObject | Invoke-Command $sb -ArgumentList $argumentList *>&1)} catch {throw $_} } else { try{(Invoke-Command $sb -ArgumentList $argumentList )} catch {throw $_} } 
 }
 
