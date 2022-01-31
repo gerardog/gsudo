@@ -148,8 +148,7 @@ ForEach ($item in $result)
 {
 	if (
 	$item.Exception.SerializedRemoteException.WasThrownFromThrowStatement -or
-	$item.Exception.WasThrownFromThrowStatement -or
-	($item.CategoryInfo.Category -eq "NotSpecified")
+	$item.Exception.WasThrownFromThrowStatement
 	)
 	{
 		throw $item
