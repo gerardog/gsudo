@@ -141,7 +141,6 @@ if($NoElevate) {
 
 	# Must Read: https://stackoverflow.com/questions/68136128/how-do-i-call-the-powershell-cli-robustly-with-respect-to-character-encoding-i?noredirect=1&lq=1
 	$result = $remoteCmd | & gsudo.exe --LogLevel Error -d $pwsh -NoProfile -NonInteractive -OutputFormat Xml -InputFormat Text -Command - *>&1
-	$gsudoExitCode = $LASTEXITCODE
 }
 
 ForEach ($item in $result)
@@ -162,5 +161,3 @@ ForEach ($item in $result)
 		Write-Output $item; 
 	}
 }
-
-Exit $gsudoExitCode
