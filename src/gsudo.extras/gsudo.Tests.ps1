@@ -1,6 +1,6 @@
 Describe 'Gsudo' {
 	BeforeAll {
-		$Path = (Get-Item (Join-Path $PSScriptRoot "gsudo.psm1")).FullName
+		$Path = (Get-Item (Join-Path $PSScriptRoot "gsudoModule.psm1")).FullName
 		$Path | Should -not -BeNullOrEmpty
 		Import-Module $Path 
 	}

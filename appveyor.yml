@@ -12,7 +12,7 @@ before_build:
   - ps: gitversion /l console /output buildserver /updateAssemblyInfo
 
 after_build:
-  - 7z a gsudo.%CONFIGURATION%.%APPVEYOR_BUILD_VERSION%.Unsigned.zip %APPVEYOR_BUILD_FOLDER%\src\gsudo\bin\*.* %APPVEYOR_BUILD_FOLDER%\src\gsudo.extras\*.ps1 %APPVEYOR_BUILD_FOLDER%\src\gsudo.extras\gsudo
+  - 7z a gsudo.%CONFIGURATION%.%APPVEYOR_BUILD_VERSION%.Unsigned.zip %APPVEYOR_BUILD_FOLDER%\src\gsudo\bin\*.* %APPVEYOR_BUILD_FOLDER%\src\gsudo.extras\gsudoModule.* %APPVEYOR_BUILD_FOLDER%\src\gsudo.extras\Invoke-gsudo.ps1
   - appveyor PushArtifact gsudo.%CONFIGURATION%.%APPVEYOR_BUILD_VERSION%.Unsigned.zip
 #  - vstest.console /logger:Appveyor C:\git\gsudo\src\gsudo.Tests\bin\%CONFIGURATION%\gsudo.Tests.dll
   
@@ -29,7 +29,7 @@ build:
   verbosity: minimal
     
 test_script:
-  - ps: Invoke-Pester -EnableExit
+  - ps: $Env:Path+=";$($Env:APPVEYOR_BUILD_FOLDER)/src/gsudo/bin;"; Invoke-Pester -EnableExit
   
 cache:
   - src\packages -> **\packages.config  # preserve "packages" directory in the root of build folder but will reset it if packages.config is modified
