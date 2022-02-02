@@ -29,7 +29,8 @@ build:
   verbosity: minimal
     
 test_script:
-  - ps: $Env:Path+=";$($Env:APPVEYOR_BUILD_FOLDER)/src/gsudo/bin;"; Invoke-Pester -EnableExit
+  - ps: $Env:Path+=";$($Env:APPVEYOR_BUILD_FOLDER)/src/gsudo/bin;";
+  - powershell -c Invoke-Pester -EnableExit
   
 cache:
   - src\packages -> **\packages.config  # preserve "packages" directory in the root of build folder but will reset it if packages.config is modified

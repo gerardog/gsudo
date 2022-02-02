@@ -12,14 +12,13 @@ Describe 'Gsudo' {
 	}
 
 	It "When invoked as `gsudo !!`, It elevates the last command executed" {
-		$history = [PSCustomObject] @{
-			CommandLine        = "Write-Output 'Hello World'"
-			ExecutionStatus    = [Management.Automation.Runspaces.PipelineState]::Completed
-			StartExecutionTime = Get-Date
-			EndExecutionTime   = Get-Date
-		}
-		$history | Add-History
 
+		@"
+#TYPE Microsoft.PowerShell.Commands.HistoryInfo
+"Id","CommandLine","ExecutionStatus","StartExecutionTime","EndExecutionTime","Duration"
+"1","Write-Output 'Hello World'","Completed","2/2/2022 12:13:11 PM","2/2/2022 12:13:11 PM","00:00:00.0421414"
+"@ | ConvertFrom-Csv | Add-History -ErrorAction stop
+	
 		gsudo !! | Should -Be 'Hello World'
 	}
 }

@@ -1,5 +1,5 @@
 Describe 'Invoke-Gsudo' {
-	It "It serializes return values types mainting its type" {
+	It "It serializes return values maintaining its type" {
 		$result = invoke-gsudo { 1+1 }
 		$result | Should -Be 2
 		$result -is [System.Int32] | Should -Be $true
@@ -11,9 +11,13 @@ Describe 'Invoke-Gsudo' {
 	}
 
 	It "It returns an array of values mantaining its properties." {
-		$result = Invoke-Gsudo { Get-ChildItem C:\ }
-		$result.Count | Should -BeGreaterThan 1
-		$result[0].FullName | Should -Not -BeNullOrEmpty
+		$result = Invoke-Gsudo { @(
+			[PSCustomObject]@{ First = 'John' ;  Last = 'Smith' }
+			[PSCustomObject]@{ First = 'Peter' ;  Last = 'Smith' }
+		) }
+		$result.Count | Should -Be 2
+		$result[0].First | Should -Be 'John'
+		$result[1].First | Should -Be 'Peter'
 	}
 
 	It "It accepts objects from the pipeline." {
