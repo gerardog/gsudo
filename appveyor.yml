@@ -2,7 +2,7 @@ image: Visual Studio 2019
 
 install:
   - choco install gitversion.portable -pre -y
-
+  - ps: Install-Module Pester -Force -SkipPublisherCheck -Scope CurrentUser
 init:
   - git config --global core.autocrlf true
   - powershell -noprofile -command "Install-Module PSReadLine -Force -SkipPublisherCheck -AllowPrerelease"
