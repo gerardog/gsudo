@@ -1,4 +1,4 @@
-Describe 'Gsudo' {
+Describe "Gsudo with PowerShell v$($PSVersionTable.PSVersion.ToString())" {
 	BeforeAll {
 		$Path = (Get-Item (Join-Path $PSScriptRoot "gsudoModule.psm1")).FullName
 		$Path | Should -not -BeNullOrEmpty

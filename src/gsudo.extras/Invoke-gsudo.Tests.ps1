@@ -1,4 +1,4 @@
-Describe 'Invoke-Gsudo' {
+Describe "Invoke-Gsudo with PowerShell v$($PSVersionTable.PSVersion.ToString())" {
 	It "It serializes return values maintaining its type" {
 		$result = invoke-gsudo { 1+1 }
 		$result | Should -Be 2
