@@ -28,6 +28,9 @@ build:
   project: src\gsudo.sln
   verbosity: minimal
     
+test_script:
+  - ps: Invoke-Pester -EnableExit
+  
 cache:
   - src\packages -> **\packages.config  # preserve "packages" directory in the root of build folder but will reset it if packages.config is modified
   - '%LocalAppData%\NuGet\Cache'    # NuGet < v3
