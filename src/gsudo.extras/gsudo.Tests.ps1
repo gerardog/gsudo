@@ -1,8 +1,12 @@
-Describe "Gsudo with PowerShell v$($PSVersionTable.PSVersion.ToString())" {
+Describe "PS Gsudo (v$($PSVersionTable.PSVersion.ToString()))" {
 	BeforeAll {
 		$Path = (Get-Item (Join-Path $PSScriptRoot "gsudoModule.psm1")).FullName
 		$Path | Should -not -BeNullOrEmpty
-		Import-Module $Path 
+		Import-Module $Path
+	}
+
+	BeforeEach {
+		$ErrorActionPreference='Continue'
 	}
 
 	It "It serializes return values as string." {

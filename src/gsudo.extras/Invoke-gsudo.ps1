@@ -96,23 +96,31 @@ $userScriptBlock = Serialize-Scriptblock $ScriptBlock
 $InputArray = $Input
 $location = (Get-Location).Path;
 
-$errorAction = $PSBoundParameters["ErrorAction"]
-if(-not $errorAction){
-	$errorAction = $ErrorActionPreference
+if($PSBoundParameters["ErrorAction"]) {
+	#Write-Verbose -verbose "Received ErrorAction $($PSBoundParameters["ErrorAction"])"
+	$errorAction = $PSBoundParameters["ErrorAction"] | Out-String
+} else {
+	#Write-Verbose -verbose "ErrorActionPreference is $ErrorActionPreference"
+	$errorAction = $ErrorActionPreference | Out-String
 }
-
-# $remoteCmd is the script that will effectively run elevated.
-# IMPORTANT: $remoteCmd scriptblock bellow must contain only single-line statements only, to avoid problems with "PowerShell -Command -" 
-# ( See: https://stackoverflow.com/q/37417613/97471 & https://stackoverflow.com/a/42475326/97471 )
 
 $remoteCmd = Serialize-Scriptblock {
 	$InputObject = $using:InputArray;
 	$argumentList = $using:ArgumentList;
 	$expectingInput = $using:expectingInput;
-	$sb = [Scriptblock]::Create($using:userScriptBlock).GetNewClosure();
+	$sb = [Scriptblock]::Create($using:userScriptBlock);
 	Set-Location $using:location;
 	$ErrorActionPreference=$using:errorAction;
-	if ($expectingInput) { try { ($InputObject | Invoke-Command $sb -ArgumentList $argumentList *>&1)} catch {throw $_} } else { try{(Invoke-Command $sb -ArgumentList $argumentList )} catch {throw $_} } 
+
+	if ($expectingInput) { 
+		try { 
+			($InputObject | Invoke-Command $sb -ArgumentList $argumentList)
+		} catch {throw $_} 
+	} else { 
+		try{
+			(Invoke-Command $sb -ArgumentList $argumentList)
+		} catch {throw $_} 
+	} 
 }
 
 if ($Debug) {
@@ -124,11 +132,9 @@ if($NoElevate) {
 	# We could invoke using Invoke-Command:
 	#		$result = $InputObject | Invoke-Command (Deserialize-Scriptblock $remoteCmd) -ArgumentList $ArgumentList
 	# Or run in a Job to ensure same variable isolation:
-	#$result = Start-Job -ScriptBlock (Deserialize-Scriptblock $remoteCmd) | Wait-Job | Receive-Job 
-	
-	$job = Start-Job -ScriptBlock (Deserialize-Scriptblock $remoteCmd) | Wait-Job; 
-	try { $result = Receive-Job $job -ErrorAction Stop } catch { $result = @($null, $_) } 2> $null
 
+	$job = Start-Job -ScriptBlock (Deserialize-Scriptblock $remoteCmd) -errorAction $errorAction | Wait-Job; 
+	$result = Receive-Job $job -errorAction $errorAction
 } else {
 	$pwsh = ("""$([System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName)""") # Get same running powershell EXE.
 	
@@ -140,7 +146,8 @@ if($NoElevate) {
 	} 
 
 	# Must Read: https://stackoverflow.com/questions/68136128/how-do-i-call-the-powershell-cli-robustly-with-respect-to-character-encoding-i?noredirect=1&lq=1
-	$result = $remoteCmd | & gsudo.exe --LogLevel Error -d $pwsh -NoProfile -NonInteractive -OutputFormat Xml -InputFormat Text -Command - *>&1
+	#$result = $remoteCmd | & gsudo.exe --LogLevel Error -d $pwsh -NoProfile -NonInteractive -OutputFormat Xml -InputFormat Text -Command - *>&1
+	$result = $remoteCmd | & gsudo.exe --LogLevel Error -d $pwsh -NoProfile -NonInteractive -OutputFormat Xml -InputFormat Text -encodedCommand IAAoACQAaQBuAHAAdQB0ACAAfAAgAE8AdQB0AC0AUwB0AHIAaQBuAGcAKQAgAHwAIABpAGUAeAAgAA== *>&1
 }
 
 ForEach ($item in $result)
