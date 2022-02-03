@@ -60,12 +60,13 @@ namespace gsudo.Commands
                 if (!ProcessHelper.IsAdministrator() && NamedPipeClient.IsServiceAvailable())
                 {
                     var commandToRun = new List<string>();
-                    commandToRun.Add(ProcessHelper.GetOwnExeName());
+                    commandToRun.Add($"\"{ProcessHelper.GetOwnExeName()}\"");
                     if (InputArguments.Debug) commandToRun.Add("--debug");
 
                     commandToRun.AddRange(new[]
                         {"cache", "on", "--pid", AllowedPid.ToString()});
 
+                    InputArguments.Direct = true;
                     return await new RunCommand() {CommandToRun = commandToRun}
                         .Execute().ConfigureAwait(false);
                 }

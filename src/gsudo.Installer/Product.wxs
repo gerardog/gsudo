@@ -34,7 +34,7 @@
       <ComponentRef Id="GSudoPath" />
       <ComponentRef Id="GSudoExe" />
 	  <ComponentRef Id="GSudoBash" />
-	  <ComponentRef Id="GSudoPowerShell" />
+	  <!--<ComponentRef Id="GSudoPowerShell" />-->
 	</ComponentGroup>
   </Fragment>
 
@@ -57,9 +57,9 @@
             <File Id="GSudoBash" KeyPath="yes" Name="gsudo" Source="..\gsudo.extras\gsudo" />
           </Component>
 
-          <Component Id="GSudoPowerShell" Guid="99d35b52-4b20-42d3-afad-11a98cab2fd3">
+          <!--<Component Id="GSudoPowerShell" Guid="99d35b52-4b20-42d3-afad-11a98cab2fd3">
             <File Id="GSudoPowerShell" KeyPath="yes" Name="gsudo.ps1" Source="..\gsudo.extras\gsudo.ps1" />
-          </Component>
+          </Component>-->
 
         </Directory>
       </Directory>
