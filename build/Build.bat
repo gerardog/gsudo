@@ -67,7 +67,9 @@ if 'skipsign'=='%1' goto skipbuild
 :skipbuild
 
 :: Collect build output
-copy %REPO_ROOT_FOLDER%\src\gsudo.extras\gsud*.* %OUTPUT_FOLDER%\bin\
+copy %REPO_ROOT_FOLDER%\src\gsudo.extras\Invoke-gsudo.ps1 %OUTPUT_FOLDER%\bin\
+copy %REPO_ROOT_FOLDER%\src\gsudo.extras\gsudoModule.* %OUTPUT_FOLDER%\bin\
+copy %REPO_ROOT_FOLDER%\src\gsudo.extras\gsudo %OUTPUT_FOLDER%\bin\
 copy %REPO_ROOT_FOLDER%\src\gsudo.Installer\bin\Release\gsudomsi.msi %OUTPUT_FOLDER%\gsudoSetup.msi
 pushd %REPO_ROOT_FOLDER%\Build
 

@@ -45,5 +45,24 @@ if (Test-Path "$env:ChocolateyInstall\bin\gsudo.exe")  # Previous installers cre
   }
 }
 
-Write-Output "Done."
+# gsudo powershell module banner.
+if (Get-Module gsudoModule) {
+	"Restart PowerShell Sessions to update PowerShell gsudo Module."
+} else {
+	& {
+	"PowerShell users: To use enhanced gsudo and Invoke-Gsudo cmdlet, add the following line to your `$PROFILE"
+	"  Import-Module '$bin\gsudoModule.psm1'"
+	"Or run: "
+	"  Write-Output `"``nImport-Module '$bin\gsudoModule.psm1'`" | Add-Content `$PROFILE"
 
+	if (@('AllSigned','Restricted') -contains (Get-ExecutionPolicy)) { 
+		""
+		"!! Running scripts is disabled on this system. For more information, "
+		"!! see about_Execution_Policies at https://go.microsoft.com/fwlink/?LinkID=135170"
+		"!! or run:"
+		"     Set-ExecutionPolicy RemoteSigned -Scope CurrentUser"		
+	}
+	} | Write-Warning
+}
+
+Write-Output "Done."
