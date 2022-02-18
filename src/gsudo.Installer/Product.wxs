@@ -50,17 +50,17 @@
           </Component>
 
           <Component Id="GSudoExe" Guid="22f27e91-98ef-4edb-8f6b-9ed48501185c">
-            <File Id="GSudoExe" KeyPath="yes" Name="gsudo.exe" Source="..\gsudo\bin\ilmerge\gsudo.exe" />
+            <File Id="GSudoExe" KeyPath="yes" Name="gsudo.exe" Source="..\gsudo\bin\package\gsudo.exe" />
           </Component>
 
           <Component Id="GSudoBash" Guid="3d6047df-a14c-484d-9ded-77761d03197a">
-            <File Id="GSudoBash" KeyPath="yes" Name="gsudo" Source="..\gsudo.extras\gsudo" />
+            <File Id="GSudoBash" KeyPath="yes" Name="gsudo" Source="..\gsudo\bin\package\gsudo" />
           </Component>
 
           <Component Id="GSudoPowerShell" Guid="99d35b52-4b20-42d3-afad-11a98cab2fd3">
-            <File Id="GSudoModuleDef" KeyPath="yes" Name="gsudo.ps1" Source="..\gsudo.extras\gsudoModule.psd1" />
-            <File Id="GSudoModule" KeyPath="yes" Name="gsudo.ps1" Source="..\gsudo.extras\gsudoModule.psm1" />
-            <File Id="InvokeGSudo" KeyPath="yes" Name="gsudo.ps1" Source="..\gsudo.extras\invoke-gsudo.ps1" />
+            <File Id="GSudoModuleDef" KeyPath="no" 	Name="gsudoModule.psd1" Source="..\gsudo\bin\package\gsudoModule.psd1" />
+            <File Id="GSudoModule" KeyPath="yes" 	Name="gsudoModule.psm1" Source="..\gsudo\bin\package\gsudoModule.psm1" />
+            <File Id="InvokeGSudo" KeyPath="no" 	Name="invoke-gsudo.ps1" Source="..\gsudo\bin\package\invoke-gsudo.ps1" />
           </Component>
 
         </Directory>

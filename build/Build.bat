@@ -1,4 +1,5 @@
 @Echo off
+:: Did you run InstallTools.cmd?
 
 pushd %~dp0\..
 
@@ -22,8 +23,8 @@ echo Building with version number v%version%
 
 :: Cleanup
 del %BIN_FOLDER%\*.* /q
-rd %BIN_FOLDER%\ilmerge /q /s 2>nul
-mkdir %BIN_FOLDER%\ilmerge 2> nul
+rd %BIN_FOLDER%\package /q /s 2>nul
+mkdir %BIN_FOLDER%\package 2> nul
 IF EXIST %OUTPUT_FOLDER% RD %OUTPUT_FOLDER% /q /s
 mkdir %OUTPUT_FOLDER% 2> nul
 mkdir %OUTPUT_FOLDER%\bin 2> nul
@@ -38,11 +39,14 @@ echo Build Succeded.
 echo Running ILMerge
 pushd %BIN_FOLDER%
 
-ilmerge gsudo.exe System.Security.Claims.dll System.Security.Principal.Windows.dll /out:ilmerge\gsudo.exe /target:exe /targetplatform:v4,"C:\Windows\Microsoft.NET\Framework\v4.0.30319" /ndebug
+ilmerge gsudo.exe System.Security.Claims.dll System.Security.Principal.Windows.dll /out:%BIN_FOLDER%\package\gsudo.exe /target:exe /targetplatform:v4,"C:\Windows\Microsoft.NET\Framework\v4.0.30319" /ndebug
 
 if errorlevel 1 echo ILMerge Failed - Try: choco install ilmerge & pause & popd & goto badend
 
 popd
+copy %REPO_ROOT_FOLDER%\src\gsudo.extras\gsudo %BIN_FOLDER%\package\
+copy %REPO_ROOT_FOLDER%\src\gsudo.extras\gsudoModule.* %BIN_FOLDER%\package\
+copy %REPO_ROOT_FOLDER%\src\gsudo.extras\invoke-gsudo.ps1 %BIN_FOLDER%\package\
 
 :: Code Sign
 if 'skipsign'=='%1' goto skipsign
@@ -50,33 +54,34 @@ if 'skipsign'=='%1' goto skipsign
 echo Signing exe.
 pushd %BIN_FOLDER%
 
-%SignToolPath%signtool.exe sign /n "Open Source Developer, Gerardo Grignoli" /fd SHA256 /tr "http://time.certum.pl" ilmerge\gsudo.exe
+%SignToolPath%signtool.exe sign /n "Open Source Developer, Gerardo Grignoli" /fd SHA256 /tr "http://time.certum.pl" %BIN_FOLDER%\package\gsudo.exe %BIN_FOLDER%\package\gsudoModule.psm1 %BIN_FOLDER%\package\gsudoModule.psd1 %BIN_FOLDER%\package\invoke-gsudo.ps1
 if errorlevel 1 echo Sign Failed & pause & popd & goto badend
 echo Sign successfull
 
 popd
 :skipsign
 
-COPY %BIN_FOLDER%\ilmerge\gsudo.exe %OUTPUT_FOLDER%\bin
+echo Building Installer
 
 %msbuild% /t:Restore,Rebuild /p:Configuration=Release %REPO_ROOT_FOLDER%\src\gsudo.Installer.sln /v:Minimal 
+if errorlevel 1 echo Buid Failed & pause & popd & goto badend
+echo Signing Installer
 
 if 'skipsign'=='%1' goto skipbuild
 %SignToolPath%signtool.exe sign /n "Open Source Developer, Gerardo Grignoli" /fd SHA256 /tr "http://time.certum.pl" %REPO_ROOT_FOLDER%\src\gsudo.Installer\bin\Release\gsudomsi.msi
 
 :skipbuild
 
-:: Collect build output
-copy %REPO_ROOT_FOLDER%\src\gsudo.extras\Invoke-gsudo.ps1 %OUTPUT_FOLDER%\bin\
-copy %REPO_ROOT_FOLDER%\src\gsudo.extras\gsudoModule.* %OUTPUT_FOLDER%\bin\
-copy %REPO_ROOT_FOLDER%\src\gsudo.extras\gsudo %OUTPUT_FOLDER%\bin\
-copy %REPO_ROOT_FOLDER%\src\gsudo.Installer\bin\Release\gsudomsi.msi %OUTPUT_FOLDER%\gsudoSetup.msi
+COPY %REPO_ROOT_FOLDER%\src\gsudo.Installer\bin\Release\gsudomsi.msi %OUTPUT_FOLDER%\gsudoSetup.msi
+COPY %BIN_FOLDER%\package\*.* %OUTPUT_FOLDER%\bin
+
 pushd %REPO_ROOT_FOLDER%\Build
 
 :: Create GitHub release ZIP + ZIP hash
 Set PSModulePath=
 7z a "%OUTPUT_FOLDER%\gsudo.v%version%.zip" %OUTPUT_FOLDER%\bin\*
 powershell -Command ECHO (Get-FileHash %OUTPUT_FOLDER%\gsudo.v%version%.zip).hash > %OUTPUT_FOLDER%\gsudo.v%version%.zip.sha256
+powershell -Command ECHO (Get-FileHash %OUTPUT_FOLDER%\gsudoSetup.msi).hash > %OUTPUT_FOLDER%\gsudoSetup.msi.sha256
 
 :: Chocolatey
 git clean %REPO_ROOT_FOLDER%\Build\Chocolatey\gsudo\Bin -xf
