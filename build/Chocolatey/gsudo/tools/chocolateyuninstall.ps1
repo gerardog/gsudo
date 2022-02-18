@@ -1,7 +1,6 @@
-﻿$toolsPath = Split-Path -parent $MyInvocation.MyCommand.Definition
-$unScriptPath = Join-Path $toolsPath "Uninstall-ChocolateyPath.psm1"
+﻿Import-Module (Join-Path (Split-Path -parent $MyInvocation.MyCommand.Definition) "Uninstall-ChocolateyPath.psm1")
 
-$installPath = "$env:ChocolateyInstall\lib\gsudo\bin\"
-
-. $unScriptPath
+$dir = "$(Get-ToolsLocation)\gsudo\Current"
 Uninstall-ChocolateyPath $installPath 'Machine'
+
+Remove-Item "$(Get-ToolsLocation)\gsudo"

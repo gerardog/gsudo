@@ -1,6 +1,4 @@
-﻿$ErrorActionPreference = "SilentlyContinue"
-
-$running = Get-Process gsudo -ErrorAction SilentlyContinue
+﻿$running = Get-Process gsudo -ErrorAction Ignore
 
 if ($running) {	
 	gsudo.exe -k
