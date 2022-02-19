@@ -5,17 +5,14 @@
 
 Import-Module (Join-Path (Split-Path -parent $MyInvocation.MyCommand.Definition) "Uninstall-ChocolateyPath.psm1")
 
-if (Get-Process gsudo -ErrorAction SilentlyContinue) {
-	gsudo.exe -k
-	Start-Sleep -Milliseconds 500
-}
+$ErrorActionPreference = 'Continue'
 
 $bin = "$env:ChocolateyInstall\lib\gsudo\bin\"
 
 ############ Clean-up previous versions
 if (Test-Path "$bin\sudo.exe")
 {
-  Remove-Item "$bin\sudo.exe"
+	Remove-Item "$bin\sudo.exe" 
 }
 
 # Remove from User Path on previous versions ( <= 0.7.1 )
@@ -44,14 +41,22 @@ copy "$bin\*.*" $TargetDir -Exclude *.ignore -Force
 Install-ChocolateyPath -PathToInstall $SymLinkDir -PathType 'Machine'
 
 cmd /c mklink "$TargetDir\sudo.exe" "$TargetDir\gsudo.exe" 2>$null
-(Get-Item $SymLinkDir -ErrorAction Ignore).Delete()
+
+$OldCurrentDir = Get-Item $SymLinkDir -ErrorAction ignore
+if ($OldCurrentDir) 
+{
+	$OldCurrentDir.Delete()
+}
+
 cmd /c mklink /d "$SymLinkDir" "$TargetDir\"
 
 # gsudo powershell module banner.
 "";
 
+Write-Output "gsudo successfully installed. Please restart your consoles to use gsudo."
+
 if (Get-Module gsudoModule) {
-	"Restart PowerShell Sessions to update PowerShell gsudo Module."
+	"Please restart PowerShell to update PowerShell gsudo Module."
 } else {
 	& { 
 	"PowerShell users: To use enhanced gsudo and Invoke-Gsudo cmdlet, add the following line to your `$PROFILE"
@@ -59,14 +64,5 @@ if (Get-Module gsudoModule) {
 	"Or run: "
 	"  Write-Output `"``nImport-Module '$SymLinkDir\gsudoModule.psm1'`" | Add-Content `$PROFILE"
 
-	if (@('AllSigned','Restricted') -contains (Get-ExecutionPolicy)) { 
-		""
-		"!! Running scripts is disabled on this system. For more information, "
-		"!! see about_Execution_Policies at https://go.microsoft.com/fwlink/?LinkID=135170"
-		"!! or run:"
-		"     Set-ExecutionPolicy RemoteSigned -Scope CurrentUser"		
-	 }
 	} 
 }
-
-Write-Output "Done."	
