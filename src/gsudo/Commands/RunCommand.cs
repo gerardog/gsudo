@@ -331,7 +331,17 @@ namespace gsudo.Commands
         private static ElevationRequest.ConsoleMode GetElevationMode(bool isWindowsApp)
         {
             if (Settings.ForceAttachedConsole)
+            {
+                if (Console.IsErrorRedirected
+                    || Console.IsInputRedirected
+                    || Console.IsOutputRedirected)
+                {
+                    // Attached mode doesnt supports redirection.
+                    return ElevationRequest.ConsoleMode.Piped; 
+                }
+
                 return ElevationRequest.ConsoleMode.Attached;
+            }
 
             if (Settings.ForcePipedConsole)
                 return ElevationRequest.ConsoleMode.Piped;
