@@ -123,6 +123,14 @@ namespace gsudo.Helpers
                     else
                         return args;
                 }
+                else if (currentShell == Shell.TakeCommand)
+                {
+                    if (args.Length == 0)
+                        return new[] { currentShellExeName, "/k" };
+                    else
+                        return new[] { currentShellExeName, "/c" }
+                            .Concat(args).ToArray();
+                }
             }
 
             if (currentShell != Shell.Cmd)
