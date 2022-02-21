@@ -23,11 +23,11 @@ namespace gsudo.ProcessHosts
 
             try
             {
-                Native.ConsoleApi.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, true);
                 Native.ConsoleApi.FreeConsole();
                 int pid = elevationRequest.ConsoleProcessId;
                 if (Native.ConsoleApi.AttachConsole(pid))
                 {
+                    Native.ConsoleApi.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, true);
                     System.Environment.CurrentDirectory = elevationRequest.StartFolder;
 
                     try
