@@ -46,7 +46,7 @@ namespace gsudo.Helpers
 
             if (connection == null) // service is not running or listening.
             {
-                if (!StartElevatedService(callingPid, cacheDuration: null))
+                if (!StartElevatedService(callingPid))
                     return null;
 
                 connection = await rpcClient.Connect(callingPid, false).ConfigureAwait(false);
@@ -54,21 +54,34 @@ namespace gsudo.Helpers
             return connection;
         }
 
-        internal static bool StartElevatedService(int? allowedPid, TimeSpan? cacheDuration)
+        internal static bool StartElevatedService(int? allowedPid, TimeSpan? cacheDuration = null)
         {
             var callingSid = System.Security.Principal.WindowsIdentity.GetCurrent().User.Value;
             var callingPid = allowedPid ?? ProcessHelper.GetCallerPid();
+            string verb;
 
             Logger.Instance.Log($"Caller SID: {callingSid}", LogLevel.Debug);
 
             var @params = InputArguments.Debug ? "--debug " : string.Empty;
             //            if (InputArguments.IntegrityLevel.HasValue) @params += $"-i {InputArguments.IntegrityLevel.Value} ";
             //            if (InputArguments.RunAsSystem) @params += "-s ";
-            if (!cacheDuration.HasValue) cacheDuration = Settings.CacheDuration;
+
+            verb = "gsudoservice";
+
+            if (!cacheDuration.HasValue)
+            {
+                if (!Settings.CacheMode.Value.In(Enums.CacheMode.Auto))
+                {
+                    verb = "gsudoelevate";
+                    cacheDuration = TimeSpan.Zero;
+                }
+                else
+                    cacheDuration = Settings.CacheDuration;
+            }
 
             bool isAdmin = ProcessHelper.IsHighIntegrity();
 
-            string commandLine = $"{@params}gsudoservice {callingPid} {callingSid} {Settings.LogLevel} {Settings.TimeSpanWithInfiniteToString(cacheDuration.Value)}";
+            string commandLine = $"{@params}{verb} {callingPid} {callingSid} {Settings.LogLevel} {Settings.TimeSpanWithInfiniteToString(cacheDuration.Value)}";
 
             bool success = false;
 

@@ -73,25 +73,7 @@ namespace gsudo.Commands
                 return RunWithoutService(exeName, GetArguments(), elevationRequest);
             }
 
-            if (Settings.CacheMode.Value.In(CacheMode.Disabled) ||
-                Math.Abs(Settings.CacheDuration.Value.TotalSeconds) < 1 ||
-                (InputArguments.KillCache && !ServiceHelper.IsServiceAvailable()))
-            {
-                exitCode = await RunUsingSingleUseElevation(elevationRequest).ConfigureAwait(false);
-            }
-            else if (Settings.CacheMode.Value.In(CacheMode.Auto)
-                || elevationRequest.Mode != ElevationRequest.ConsoleMode.TokenSwitch)
-            {
-                exitCode = await RunUsingElevatedService(elevationRequest).ConfigureAwait(false);
-            }
-            else if (Settings.CacheMode.Value == CacheMode.Explicit && ServiceHelper.IsServiceAvailable())
-            {
-                exitCode = await RunUsingElevatedService(elevationRequest).ConfigureAwait(false);
-            }
-            else
-            {
-                exitCode = await RunUsingSingleUseElevation(elevationRequest).ConfigureAwait(false);
-            }
+            exitCode = await RunUsingElevatedService(elevationRequest).ConfigureAwait(false);
 
             if (exitCode.HasValue && exitCode.Value != Constants.GSUDO_ERROR_EXITCODE)
             {
@@ -99,41 +81,6 @@ namespace gsudo.Commands
             }
 
             return exitCode ?? 0;
-        }
-
-        /// <summary>
-        /// Single elevation mode means no service is kept running. Also the command line shown in UAC is a little bit more explicit.
-        // Unfortunatelly its implementation is coupled with TokenSwitchRenderer.
-        /// </summary>
-        /// <param name="elevationRequest"></param>
-        /// <returns></returns>
-        private async Task<int> RunUsingSingleUseElevation(ElevationRequest elevationRequest)
-        {
-            Logger.Instance.Log($"Using Console mode {ElevationRequest.ConsoleMode.TokenSwitch}", LogLevel.Debug);
-            TokenSwitchRenderer renderer = null;
-
-            try
-            {
-                renderer = new TokenSwitchRenderer(null, elevationRequest);
-            }
-            catch (Exception ex)
-            {
-                ElevationRequest.ConsoleMode fallbackMode;
-                fallbackMode = Settings.SecurityEnforceUacIsolation ? ElevationRequest.ConsoleMode.Piped
-                                    : ElevationRequest.ConsoleMode.Attached;
-
-                Logger.Instance.Log($"TokenSwitchRenderer mode failed with {ex.ToString()}. Fallback to {fallbackMode} Mode", LogLevel.Debug);
-                elevationRequest.Mode = fallbackMode; // fallback to attached mode.
-                return await RunUsingElevatedService(elevationRequest).ConfigureAwait(false);
-            }
-
-            if (ServiceHelper.StartSingleUseElevatedService(elevationRequest.TargetProcessId))
-                return await renderer.GetResult().ConfigureAwait(false);
-            else
-            {
-                renderer.TerminateProcess();
-                return Constants.GSUDO_ERROR_EXITCODE;
-            }
         }
 
         private static void SetRequestPrompt(ElevationRequest elevationRequest)

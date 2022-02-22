@@ -67,10 +67,6 @@ namespace gsudo
                             Console.WriteLine("Press any key to exit.");
                             Console.ReadKey();
                         }
-                        else if (cmd.GetType() == typeof(ElevateCommand))
-                        {
-                            await Task.Delay(1000).ConfigureAwait(false);
-                        }
                     }
                 }
                 catch

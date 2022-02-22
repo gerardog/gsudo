@@ -14,6 +14,7 @@ namespace gsudo.Commands
         public string AllowedSid { get; set; }
         public LogLevel? LogLvl { get; set; }
         public TimeSpan CacheDuration { get; set; }
+        public bool SingleUse { get; set; }
 
         Timer ShutdownTimer;
         void EnableTimer()
@@ -32,6 +33,9 @@ namespace gsudo.Commands
             Console.Title = "gsudo Service";
             var cacheLifetime = new CredentialsCacheLifetimeManager(AllowedPid);
             Logger.Instance.Log("Service started", LogLevel.Info);
+
+            if (CacheDuration == TimeSpan.Zero)
+                CacheDuration = TimeSpan.FromSeconds(10);
 
             using (IRpcServer server = CreateServer())
             {
@@ -102,7 +106,7 @@ namespace gsudo.Commands
         private IRpcServer CreateServer()
         {
             // No credentials cache when CacheDuration = 0
-            bool singleUse = Settings.CacheDuration.Value.TotalSeconds < 1 || Settings.CacheMode.Value == Enums.CacheMode.Disabled;
+            bool singleUse = SingleUse || Settings.CacheMode.Value == Enums.CacheMode.Disabled;
             return new NamedPipeServer(AllowedPid, AllowedSid, singleUse);
         }
 

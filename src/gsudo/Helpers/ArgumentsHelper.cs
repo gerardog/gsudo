@@ -312,14 +312,15 @@ namespace gsudo.Helpers
             if (arg.Equals("help", StringComparison.OrdinalIgnoreCase))
                 return new HelpCommand();
 
-            if (arg.In("gsudoservice"))
+            if (arg.In("gsudoservice", "gsudoelevate"))
             {
                     return new ServiceCommand()
                     {
                         AllowedPid = int.Parse(dequeue(), CultureInfo.InvariantCulture),
                         AllowedSid = dequeue(),
                         LogLvl = ExtensionMethods.ParseEnum<LogLevel>(dequeue()),
-                        CacheDuration = Settings.TimeSpanParseWithInfinite(dequeue())
+                        CacheDuration = Settings.TimeSpanParseWithInfinite(dequeue()),
+                        SingleUse = arg.In("gsudoelevate")
                     };
             }
 
@@ -357,20 +358,6 @@ namespace gsudo.Helpers
                         InputArguments.KillCache = true;
                     else
                         throw new ApplicationException($"Unknown argument: {arg}");
-                }
-
-                return cmd;
-            }
-
-            if (arg.In("gsudoelevate"))
-            {
-                var cmd = new ElevateCommand();
-                while (args.Count > 0)
-                {
-                    arg = dequeue();
-
-                    if (arg.In("--pid"))
-                        cmd.ProcessId = int.Parse(dequeue(), CultureInfo.InvariantCulture);
                 }
 
                 return cmd;

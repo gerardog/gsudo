@@ -72,7 +72,7 @@ namespace gsudo.Commands
                 }
                 else
                 {
-                    if (!ServiceHelper.StartElevatedService(AllowedPid.Value, CacheDuration))
+                    if (!ServiceHelper.StartElevatedService(AllowedPid.Value, CacheDuration ?? Settings.CacheDuration))
                     {
                         return Constants.GSUDO_ERROR_EXITCODE;
                     }
