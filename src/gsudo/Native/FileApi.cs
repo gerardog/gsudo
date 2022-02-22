@@ -13,6 +13,9 @@ namespace gsudo.Native
         internal const uint FILE_READ_EA = 0x0008;
         internal const uint FILE_FLAG_BACKUP_SEMANTICS = 0x2000000;
 
+        public const uint GENERIC_READ = (0x80000000);
+        public const uint GENERIC_WRITE = (0x40000000);
+
         [DllImport("Kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         internal static extern uint GetFinalPathNameByHandle(IntPtr hFile, StringBuilder lpszFilePath, uint cchFilePath, uint dwFlags);
 

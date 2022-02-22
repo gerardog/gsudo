@@ -1,6 +1,7 @@
 ﻿using gsudo.Native;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -57,6 +58,39 @@ namespace gsudo.Helpers
             num = ConsoleApi.GetConsoleProcessList(processIds, (uint)processIds.Length);
             if (num == 0) throw new System.ComponentModel.Win32Exception();
             return processIds;
+        }
+
+        public static void GetConsoleSize(out int width, out int height)
+        {
+            if (Console.IsOutputRedirected && Console.IsErrorRedirected)
+            {
+                var hConsole = Native.FileApi.CreateFile("CONOUT$",
+                    FileApi.GENERIC_READ,
+                    0,
+                    IntPtr.Zero,
+                    FileMode.Open,
+                    0,
+                    IntPtr.Zero);
+
+                if (hConsole == Native.FileApi.INVALID_HANDLE_VALUE)
+                    throw new System.ComponentModel.Win32Exception();
+
+                var consoleScreenBufferInfoEx = new CONSOLE_SCREEN_BUFFER_INFO_EX();
+                consoleScreenBufferInfoEx.cbSize = Marshal.SizeOf<CONSOLE_SCREEN_BUFFER_INFO_EX>();
+
+                if (!GetConsoleScreenBufferInfoEx(hConsole, ref consoleScreenBufferInfoEx))
+                    throw new System.ComponentModel.Win32Exception();
+
+                width = consoleScreenBufferInfoEx.srWindow.Right - consoleScreenBufferInfoEx.srWindow.Left + 1;
+                height = consoleScreenBufferInfoEx.srWindow.Bottom - consoleScreenBufferInfoEx.srWindow.Top + 1;
+
+                FileApi.CloseHandle(hConsole);
+            }
+            else
+            {
+                width = Console.WindowWidth;
+                height = Console.WindowHeight;
+            }
         }
     }
 }

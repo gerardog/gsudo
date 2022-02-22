@@ -41,6 +41,9 @@ namespace gsudo.Commands
 
             var exeName = CommandToRun.FirstOrDefault();
 
+            int consoleHeight, consoleWidth;
+            ConsoleHelper.GetConsoleSize(out consoleWidth, out consoleHeight);
+
             var elevationRequest = new ElevationRequest()
             {
                 FileName = exeName,
@@ -51,8 +54,8 @@ namespace gsudo.Commands
                 Mode = elevationMode,
                 ConsoleProcessId = Process.GetCurrentProcess().Id,
                 IntegrityLevel = InputArguments.GetIntegrityLevel(),
-                ConsoleWidth = Console.IsOutputRedirected ? 0 : Console.WindowWidth,
-                ConsoleHeight = Console.IsOutputRedirected ? 0 : Console.WindowHeight
+                ConsoleWidth = consoleWidth,
+                ConsoleHeight = consoleHeight
         };
 
             if (isElevationRequired && Settings.SecurityEnforceUacIsolation)
