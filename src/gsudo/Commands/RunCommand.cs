@@ -156,7 +156,7 @@ namespace gsudo.Commands
             Rpc.Connection connection = null;
             try
             {
-                connection = await ConnectStartElevatedService().ConfigureAwait(false);
+                connection = await ServiceHelper.ConnectStartElevatedService().ConfigureAwait(false);
 
                 if (connection == null) // service is not running or listening.
                 {
@@ -176,42 +176,6 @@ namespace gsudo.Commands
             {
                 connection?.Dispose();
             }
-        }
-
-        private async Task<Connection> ConnectStartElevatedService()
-        {
-            var callingPid = ProcessHelper.GetCallerPid();
-
-            Logger.Instance.Log($"Caller PID: {callingPid}", LogLevel.Debug);
-
-            if (InputArguments.IntegrityLevel.HasValue && InputArguments.IntegrityLevel.Value == IntegrityLevel.System && !InputArguments.RunAsSystem)
-            {
-                Logger.Instance.Log($"Elevating as System because of IntegrityLevel=System parameter.", LogLevel.Warning);
-                InputArguments.RunAsSystem = true;
-            }
-
-            IRpcClient rpcClient = GetClient();
-
-            Connection connection = null;
-            try
-            {
-                connection = await rpcClient.Connect(null, true).ConfigureAwait(false);
-            }
-            catch (System.IO.IOException) { }
-            catch (TimeoutException) { }
-            catch (Exception ex)
-            {
-                Logger.Instance.Log(ex.ToString(), LogLevel.Warning);
-            }
-
-            if (connection == null) // service is not running or listening.
-            {
-                if (!ServiceHelper.StartElevatedService(callingPid, cacheDuration: null))
-                    return null;
-
-                connection = await rpcClient.Connect(callingPid, false).ConfigureAwait(false);
-            }
-            return connection;
         }
 
         private static int RunWithoutService(string exeName, string args, ElevationRequest elevationRequest)
@@ -350,12 +314,6 @@ namespace gsudo.Commands
                 return ElevationRequest.ConsoleMode.VT;
 
             return ElevationRequest.ConsoleMode.TokenSwitch;
-        }
-
-        private IRpcClient GetClient()
-        {
-            // future Tcp implementations should be plugged here.
-            return new NamedPipeClient();
         }
 
         private static IProcessRenderer GetRenderer(Connection connection, ElevationRequest elevationRequest)

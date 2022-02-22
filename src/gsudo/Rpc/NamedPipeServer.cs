@@ -72,8 +72,9 @@ namespace gsudo.Rpc
 
             Logger.Instance.Log($"Access allowed only for ProcessID {_allowedPid} and children", LogLevel.Debug);
 
-            _ = Task.Factory.StartNew(CancelIfAllowedProcessEnds, _cancellationTokenSource.Token,
-                TaskCreationOptions.LongRunning, TaskScheduler.Current);
+            if (_allowedPid>0)
+                _ = Task.Factory.StartNew(CancelIfAllowedProcessEnds, _cancellationTokenSource.Token,
+                    TaskCreationOptions.LongRunning, TaskScheduler.Current);
 
             do
             {

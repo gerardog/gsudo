@@ -1,6 +1,7 @@
 ﻿using gsudo.Rpc;
 using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace gsudo.Helpers
 {
@@ -9,6 +10,48 @@ namespace gsudo.Helpers
         internal static bool IsServiceAvailable()
         {
             return NamedPipeClient.IsServiceAvailable();
+        }
+
+        internal static IRpcClient GetRpcClient()
+        {
+            // future Tcp implementations should be plugged here.
+            return new NamedPipeClient();
+        }
+
+        internal static async Task<Connection> ConnectStartElevatedService()
+        {
+            var callingPid = ProcessHelper.GetCallerPid();
+
+            Logger.Instance.Log($"Caller PID: {callingPid}", LogLevel.Debug);
+
+            if (InputArguments.IntegrityLevel.HasValue && InputArguments.IntegrityLevel.Value == IntegrityLevel.System && !InputArguments.RunAsSystem)
+            {
+                Logger.Instance.Log($"Elevating as System because of IntegrityLevel=System parameter.", LogLevel.Warning);
+                InputArguments.RunAsSystem = true;
+            }
+
+            IRpcClient rpcClient = GetRpcClient();
+
+            Connection connection = null;
+            try
+            {
+                connection = await rpcClient.Connect(null, true).ConfigureAwait(false);
+            }
+            catch (System.IO.IOException) { }
+            catch (TimeoutException) { }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log(ex.ToString(), LogLevel.Warning);
+            }
+
+            if (connection == null) // service is not running or listening.
+            {
+                if (!StartElevatedService(callingPid, cacheDuration: null))
+                    return null;
+
+                connection = await rpcClient.Connect(callingPid, false).ConfigureAwait(false);
+            }
+            return connection;
         }
 
         internal static bool StartElevatedService(int? allowedPid, TimeSpan? cacheDuration)
@@ -100,5 +143,6 @@ namespace gsudo.Helpers
 
             return false;
         }
+
     }
 }
