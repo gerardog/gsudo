@@ -2,8 +2,8 @@
 using gsudo.Rpc;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
-using System.IO.Pipes;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -52,14 +52,30 @@ namespace gsudo.ProcessRenderers
                 {
                     try
                     {
-                        while (Console.KeyAvailable)
-                        {
-                            consecutiveCancelKeys = 0;
-                            // send input character-by-character to the pipe
-                            var key = Console.ReadKey(intercept: true);
-                            char[] sequence = TerminalHelper.GetSequenceFromConsoleKey(key, InputArguments.Debug && _elevationRequest.FileName.EndsWith("KeyPressTester.exe", StringComparison.OrdinalIgnoreCase));
+                        bool debugMode = InputArguments.Debug && _elevationRequest.FileName.EndsWith("KeyPressTester.exe", StringComparison.OrdinalIgnoreCase);
 
-                            await _connection.DataStream.WriteAsync(new string(sequence)).ConfigureAwait(false);
+                        if (Console.IsInputRedirected)
+                        {
+                            while (Console.In.Peek() != -1)
+                            {
+                                consecutiveCancelKeys = 0;
+                                // send input character-by-character to the pipe
+                                var key = (char)Console.In.Read();
+                                await _connection.DataStream.WriteAsync(key.ToString(CultureInfo.InvariantCulture)).ConfigureAwait(false);
+                            }
+                        }
+                        else
+                        {
+                            while (Console.KeyAvailable)
+                            {
+                                consecutiveCancelKeys = 0;
+                                // send input character-by-character to the pipe
+                                var key = Console.ReadKey(intercept: true);
+                                char[] sequence = TerminalHelper.GetSequenceFromConsoleKey(key, debugMode);
+
+                                await _connection.DataStream.WriteAsync(new string(sequence)).ConfigureAwait(false);
+                            }
+
                         }
                     }
                     catch (ObjectDisposedException)
@@ -136,9 +152,12 @@ namespace gsudo.ProcessRenderers
         {
             try
             {
-                if (s == "\x001B[6n") // Hosted app is asking the height and width of the terminal.
+                if (s == "\x001B[6n") // Hosted app is asking the cursor position of the terminal.
                 {
-                    await _connection.DataStream.WriteAsync($"\x001B[{Console.CursorTop};{Console.CursorLeft}R").ConfigureAwait(false);
+                    int left, top;
+                    ConsoleHelper.GetConsoleInfo(out _, out _, out left, out top);
+
+                    await _connection.DataStream.WriteAsync($"\x001B[{top};{left}R").ConfigureAwait(false);
                     return;
                 }
 
@@ -172,7 +191,7 @@ namespace gsudo.ProcessRenderers
                 }
                 if (CurrentMode == Mode.ExitCode)
                 {
-                    ExitCode = int.Parse(token, System.Globalization.CultureInfo.InvariantCulture);
+                    ExitCode = int.Parse(token, CultureInfo.InvariantCulture);
                     continue;
                 }
 

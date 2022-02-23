@@ -42,6 +42,9 @@ namespace gsudo.ProcessHosts
                     {
                         using (var process = StartPseudoConsole(command, PseudoConsole.PseudoConsole.PseudoConsoleThreadAttribute, pseudoConsole.Handle, request.StartFolder))
                         {
+                            inputPipe.ReadSide.Close(); //we don't need these
+                            outputPipe.WriteSide.Close();
+
                             runningProcess = System.Diagnostics.Process.GetProcessById(process.ProcessInfo.dwProcessId);
 
                             // copy all pseudoconsole output to stdout
@@ -187,17 +190,6 @@ namespace gsudo.ProcessHosts
             }
         }
 
-        private bool ShouldWait(StreamReader streamReader)
-        {
-            try
-            {
-                return !streamReader.EndOfStream;
-            }
-            catch
-            {
-                return false;
-            }
-        }
         #region PseudoConsole ConPty
         public static PseudoConsole.PseudoConsoleProcess StartPseudoConsole(string command, IntPtr attributes, IntPtr hPC, string startFolder)
         {

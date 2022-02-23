@@ -42,7 +42,7 @@ namespace gsudo.Commands
             var exeName = CommandToRun.FirstOrDefault();
 
             int consoleHeight, consoleWidth;
-            ConsoleHelper.GetConsoleSize(out consoleWidth, out consoleHeight);
+            ConsoleHelper.GetConsoleInfo(out consoleWidth, out consoleHeight, out _, out _);
 
             var elevationRequest = new ElevationRequest()
             {
@@ -56,7 +56,7 @@ namespace gsudo.Commands
                 IntegrityLevel = InputArguments.GetIntegrityLevel(),
                 ConsoleWidth = consoleWidth,
                 ConsoleHeight = consoleHeight
-        };
+            };
 
             if (isElevationRequired && Settings.SecurityEnforceUacIsolation)
                 AdjustUacIsolationRequest(elevationRequest, isShellElevation);
@@ -261,7 +261,22 @@ namespace gsudo.Commands
                 return ElevationRequest.ConsoleMode.Piped;
 
             if (Settings.ForceVTConsole)
+            {
+                if (Console.IsErrorRedirected && Console.IsOutputRedirected)
+                {
+                    // VT mode (i.e. Windows Pseudoconsole) arguably is not a good fit
+                    // for redirection/capturing: output contains VT codes, which means:
+                    // cursor positioning, colors, etc.
+
+                    // Nonetheless I will allow redirection of one of Err/Out, for now.
+                    // (not if both are redirected it breaks badly because there are two
+                    // streams trying to use one single console.)
+
+                    return ElevationRequest.ConsoleMode.Piped;
+                }
+
                 return ElevationRequest.ConsoleMode.VT;
+            }
 
             return ElevationRequest.ConsoleMode.TokenSwitch;
         }

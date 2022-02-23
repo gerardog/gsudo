@@ -33,7 +33,7 @@ namespace gsudo.PseudoConsole
             
             if(createResult != 0)
             {
-                throw new InvalidOperationException("Could not create psuedo console. Error Code " + createResult);
+                throw new System.ComponentModel.Win32Exception();
             }
             return new PseudoConsole(hPC);
         }
