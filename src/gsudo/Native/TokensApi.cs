@@ -425,12 +425,16 @@ namespace gsudo.Native
 
         #endregion
 
-        [DllImport("advapi32.dll", SetLastError = true)]
-        static extern bool GetTokenInformation(
-            IntPtr tokenHandle,
-            TOKEN_INFORMATION_CLASS tokenInformationClass,
-            IntPtr tokenInformation,
-            uint tokenInformationLength,
-            out uint returnLength);
+        //[DllImport("advapi32.dll", SetLastError = true)]
+        //static extern bool GetTokenInformation(
+        //    IntPtr tokenHandle,
+        //    TOKEN_INFORMATION_CLASS tokenInformationClass,
+        //    IntPtr tokenInformation,
+        //    uint tokenInformationLength,
+        //    out uint returnLength);
+
+        [DllImport("Advapi32.dll", SetLastError = true)]
+        internal static extern bool ConvertStringSecurityDescriptorToSecurityDescriptor(string StringSecurityDescriptor, uint StringSDRevision, out IntPtr SecurityDescriptor, out UIntPtr SecurityDescriptorSize);
+
     }
 }

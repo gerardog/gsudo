@@ -292,12 +292,21 @@ namespace gsudo.Helpers
         {
             var sInfoEx = new ProcessApi.STARTUPINFOEX();
             sInfoEx.StartupInfo.cb = Marshal.SizeOf(sInfoEx);
-            IntPtr lpValue = IntPtr.Zero;
-
+            
             var pSec = new ProcessApi.SECURITY_ATTRIBUTES();
             var tSec = new ProcessApi.SECURITY_ATTRIBUTES();
             pSec.nLength = Marshal.SizeOf(pSec);
             tSec.nLength = Marshal.SizeOf(tSec);
+
+            // Set more restrictive Security Descriptor
+            string sddl = "D:(D;;GAFAWD;;;S-1-1-0)"; // Deny Generic-All, File-All, and Write-Dac to everyone.
+
+            IntPtr sd_ptr = new IntPtr();
+            UIntPtr sd_size_ptr = new UIntPtr();
+            Native.TokensApi.ConvertStringSecurityDescriptorToSecurityDescriptor(sddl, StringSDRevision: 1, out sd_ptr, out sd_size_ptr);
+
+            pSec.lpSecurityDescriptor = sd_ptr;
+            tSec.lpSecurityDescriptor = sd_ptr;
 
             var command = $"{lpApplicationName} {args}";
             
