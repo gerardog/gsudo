@@ -104,12 +104,15 @@ namespace gsudo.ProcessRenderers
             try
             {
                 _ = ProcessApi.ResumeThread(_processInformation.hThread);
-                
+                Native.FileApi.CloseHandle(_processInformation.hThread);
+
                 if (_elevationRequest.Wait)
                 {
                     _process.GetProcessWaitHandle().WaitOne();
                     if (ProcessApi.GetExitCodeProcess(_process, out int exitCode))
                         return Task.FromResult(exitCode);
+
+                    Native.FileApi.CloseHandle(_processInformation.hProcess);
                 }
 
                 return Task.FromResult(0);
