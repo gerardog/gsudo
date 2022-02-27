@@ -14,7 +14,7 @@ Just prepend `gsudo` (or the `sudo` alias) to your command and it will run eleva
 
 ## 💵 Please support gsudo 💵
 
-> If you are more productive thanks to gsudo, please consider [sponsoring gsudo](https://github.com/gerardog/gsudo/wiki/Sponsor). I dedicated my free time for months making this project.
+> If you are more productive thanks to gsudo, please consider [sponsoring gsudo](https://github.com/gerardog/gsudo/wiki/Sponsor-gsudo). I dedicated my free time for months making this project.
 > Also to provide a signed application, I have paid each year for an Open-Source code-signing certificate.
 
 ## Features
