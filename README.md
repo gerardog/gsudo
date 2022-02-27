@@ -12,6 +12,11 @@ Just prepend `gsudo` (or the `sudo` alias) to your command and it will run eleva
 
 `gsudo` is very easy to install and use, and has more features. Its similarities with Unix/Linux sudo make the experience a breeze.
 
+## 💵 Please support gsudo 💵
+
+> If you are more productive thanks to gsudo, please consider [sponsoring gsudo](https://github.com/gerardog/gsudo/wiki/Sponsor). I dedicated my free time for months making this project.
+> Also to provide a signed application, I have paid each year for an Open-Source code-signing certificate.
+
 ## Features
 
 - Elevated commands are shown in the current user-level console. No new window. (Unless you specify `-n` which opens a new window.)
@@ -102,7 +107,7 @@ gsudo !!
 
 ## Usage from PowerShell / PowerShell Core
 
-`gsudo` detects if it's invoked from PowerShell and elevates PS commands (unless `-d` is used to elevate CMD commands). For commands without special operators `()|&<>`, just prepend `gsudo`. Otherwise you can **pass a string literal** with the command to be elevate:  
+`gsudo` detects if it's invoked from PowerShell and elevates PS commands (unless `-d` is used to elevate CMD commands). For commands without special operators `()|&<>`, just prepend `gsudo`. Otherwise you can **pass a string literal** with the command to be elevate:    
 
 `PS C:\> gsudo 'powershell string command'`
 
@@ -155,6 +160,9 @@ Invoke-gsudo { Remove-Item $using:folder }
 
 # The result is serialized (PSObject) with properties.
 (Invoke-gsudo { Get-ChildItem $using:folder }).LastWriteTime
+
+# Create an custom alias for Invoke-gsudo (add this line to your $PROFILE)
+Set-Alias 'sudo' 'Invoke-gsudo'
 ```
 
 ### Bang Bang (!!)
@@ -163,13 +171,12 @@ Invoke-gsudo { Remove-Item $using:folder }
 
 ``` Powershell
 # Add the following line to your $PROFILE (replace with full path)
-  Import-Module 'C:\FullPathTo\gsudoModule.psm1'
+   Import-Module 'C:\FullPathTo\gsudoModule.psm1'
 # Or run the following
-  Get-Command gsudoModule.psm1 | % { Write-Output "`nImport-Module `"$($_.Source)`"" | Add-Content $PROFILE }
-
+   Get-Command gsudoModule.psm1 | % { Write-Output "`nImport-Module `"$($_.Source)`"" | Add-Content $PROFILE }
 # Then (after PS restart)
-Get-ChildItem 'C:\ProtectedFolder' | Remove-Item # => Access Denied
-gsudo !! # => Repeat last command, elevated.
+   Get-ChildItem 'C:\ProtectedFolder' | Remove-Item # => Access Denied
+   gsudo !! # => Repeat last command, elevated.
 ```
 
 ## Usage from WSL (Windows Subsystem for Linux)
