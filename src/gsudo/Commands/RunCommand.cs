@@ -76,14 +76,7 @@ namespace gsudo.Commands
                 return RunWithoutService(exeName, GetArguments(), elevationRequest);
             }
 
-            exitCode = await RunUsingElevatedService(elevationRequest).ConfigureAwait(false);
-
-            if (exitCode.HasValue && exitCode.Value != Constants.GSUDO_ERROR_EXITCODE)
-            {
-                Logger.Instance.Log($"Process exited with code {exitCode}", LogLevel.Debug);
-            }
-
-            return exitCode ?? 0;
+            return await RunUsingElevatedService(elevationRequest).ConfigureAwait(false);
         }
 
         private static void SetRequestPrompt(ElevationRequest elevationRequest)
@@ -119,6 +112,7 @@ namespace gsudo.Commands
                 ConnectionKeepAliveThread.Start(connection);
 
                 var exitCode = await renderer.Start().ConfigureAwait(false);
+                Logger.Instance.Log($"Process exited with code {exitCode}", LogLevel.Debug);
 
                 return exitCode;
             }
