@@ -17,18 +17,19 @@ Just prepend `gsudo` (or the `sudo` alias) to your command and it will run eleva
 - Elevated commands are shown in the current user-level console. No new window. (Unless you specify `-n` which opens a new window.)
 - [Credentials cache](#credentials-cache): `gsudo` can elevate many times showing only one UAC pop-up if the user opt-in to enable the cache.
 - Supports CMD commands: `gsudo md folder` (no need to use the longer form `gsudo cmd.exe /c md folder`)
-- Elevates [PowerShell/PowerShell Core commands](#usage-from-powershell--powershell-core), [WSL commands](#usage-from-wsl-windows-subsystem-for-linux), Git-Bash/MinGW/Cygwin (YMMV), or Yori shell commands.
+- Elevates [PowerShell/PowerShell Core commands](#usage-from-powershell--powershell-core), [WSL commands](#usage-from-wsl-windows-subsystem-for-linux), Git-Bash/MinGW/Cygwin (YMMV), Yori or Take Command shell commands.
 - Supports being used on scripts:
   - Outputs of the elevated commands can be interpreted: E.g. StdOut/StdErr can be piped or captured (e.g. `gsudo dir | findstr /c:"bytes free" > FreeSpace.txt`) and exit codes too (`%errorlevel%`). If `gsudo` fails to elevate, the exit code will be 999.
   - If `gsudo` is invoked from an already elevated console, it will just run the command (it won't fail). So, you don't have to worry if you run `gsudo` or a script that uses `gsudo` from an already elevated console. (The UAC popup will not appear, as no elevation is required)
 
 ## Installation
 
-* Using [Scoop](https://scoop.sh): `scoop install gsudo`
-* Or using [Chocolatey](https://chocolatey.org/install):  `choco install gsudo`
-* Or using [WinGet](https://github.com/microsoft/winget-cli/releases) `winget install gerardog.gsudo`
-* Or manually: Unzip the latest release, and add to the path. Or let the following script do it for you:
-``` batch
+- Using [Scoop](https://scoop.sh): `scoop install gsudo`
+- Or using [Chocolatey](https://chocolatey.org/install):  `choco install gsudo`
+- Or using [WinGet](https://github.com/microsoft/winget-cli/releases) `winget install gerardog.gsudo`
+- Or manually: Unzip the latest release, and add to the path. Or let the following script do it for you:
+  
+``` PowerShell
 PowerShell -Command "Set-ExecutionPolicy RemoteSigned -scope Process; iwr -useb https://raw.githubusercontent.com/gerardog/gsudo/master/installgsudo.ps1 | iex"
 ```
 
@@ -48,8 +49,8 @@ Most relevant **`[options]`**:
 - **`-s | --system`**     Run As Local System account ("NT AUTHORITY\SYSTEM").
 - **`-i | --integrity {v}`**   Run command with a specific integrity level: `Low`, `Medium`, `MediumPlus`, `High` (default), `System`. For example, use `Low` to launch a restricted process, or use `Medium` from an Admin/Elevated window to run without Admin rights. 
 - **`-d | --direct`**     Execute {command} directly. Does not wrap it with your current shell (Pwsh/WSL/MinGw/Yori/etc). Assumes it is a `CMD` command (eg. an `.EXE` file).
-- **`--copyns `**         Reconnect current connected network shares on the elevated session. Warning! This is verbose, affects the elevated user system-wide (other processes), and can prompt for credentials interactively.
-- **`--debug `**          Debug mode (verbose).
+- **`--copyns`**         Reconnect current connected network shares on the elevated session. Warning! This is verbose, affects the elevated user system-wide (other processes), and can prompt for credentials interactively.
+- **`--debug`**          Debug mode (verbose).
 
 ```gsudo config```
 Show current user-settings.
@@ -64,8 +65,8 @@ Show status information about current user, security, integrity level or other g
 
 **Examples:**
 
-``` batch
-# elevate the current shell in the current console window (Cmd/PowerShell/Pwsh Core/Yori)
+``` powershell
+# elevate the current shell in the current console window (Cmd/PowerShell/Pwsh Core/Yori/Take Command/git-bash/cygwin)
 gsudo
 
 # launch the current shell elevated in a new console window
@@ -76,8 +77,6 @@ gsudo -n -w powershell ./Do-Something.ps1
 
 # launch windows app
 gsudo notepad %windir%\system32\drivers\etc\hosts
-# launch windows app and wait for exit
-gsudo -w notepad %windir%\system32\drivers\etc\hosts
 
 # sudo alias built-in with choco/scoop/manual installers: 
 sudo notepad %windir%\system32\drivers\etc\hosts
@@ -97,23 +96,25 @@ gsudo config Prompt "$P [elevated]$G "
 gsudo config Prompt --reset
 # Enable credentials cache (less UAC popups):
 gsudo config CacheMode Auto
+# Elevate last command (bang bang)
+gsudo !!
 ```
 
-### Usage from PowerShell / PowerShell Core
+## Usage from PowerShell / PowerShell Core
 
-`gsudo` detects if it's invoked from PowerShell (unless skipped with `-d`) and allows to elevate PS commands. For simple commands, without parentheses `()` or the pipeline operator `|`, just prepend `gsudo`. 
+`gsudo` detects if it's invoked from PowerShell and elevates PS commands (unless `-d` is used to elevate CMD commands). For commands without special operators `()|&<>`, just prepend `gsudo`. Otherwise you can **pass a string literal** with the command to be elevate:  
 
-For more complex commands, you can **pass a string literal** with the command to be elevate:  `PS C:\> gsudo 'powershell string command'`
+`PS C:\> gsudo 'powershell string command'`
 
-Note that `gsudo` returns a string that can be captured, not powershell objects.
-
-**BREAKING CHANGE v1.0:** It is no longer needed to additionally escape `"` with `\\"`. Now only standard [PowerShell Quoting Rules](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_quoting_rules) are necessary.
+Note that the `gsudo` command returns a string that can be captured, not powershell objects. It will ran elevated, in a different process and lexical scope, so it can't access your existing `$variables`, so use literal values instead of `$vars`
 
 **Examples:**
 
 ``` PowerShell
+# Elevate PowerShell itself
+PS C:\> gsudo
 
-# Commands without () or quotes  
+# Elevate Commands without ()|&<> 
 PS C:\> gsudo Remove-Item ProtectedFile.txt
 PS C:\> gsudo 'Remove-Item ProtectedFile.txt'
 
@@ -136,18 +137,44 @@ if ($LastExitCode -eq 999 ) {
 } elseif ($LastExitCode) {
     'Command failed!'
 } else { 'Success!' }
-
-# Cross-boundary object serialization example.
-$command = 'Get-Item "C:\My Secured Folder\My Secret.txt"'
-$result = [System.Management.Automation.PSSerializer]::Deserialize((gsudo "[System.Management.Automation.PSSerializer]::Serialize(( $command ))" ))
-Write-Host $result.CreationTime
 ```
 
-### Usage from WSL (Windows Subsystem for Linux)
+### **NEW in v1.1:** `Invoke-gsudo` CmdLet
+
+ Use **`Invoke-gsudo` CmdLet** to elevate a ScriptBlock (allowing better PowerShell syntax validation and auto-complete), with auto serialization of inputs and outputs.
+
+The ScriptBlock will ran elevated in a different process and lexical scope, so it can't access your existing `$variables`, but if you use `$using:variableName` syntax, it´s serialized value will be applied. The result object is serialized and returned (as an object).
+
+``` PowerShell
+# Accepts pipeline input.
+Get-process SpoolSv | Invoke-gsudo { Stop-Process -Force }
+
+# Variable usage
+$folder = "C:\ProtectedFolder"
+Invoke-gsudo { Remove-Item $using:folder }
+
+# The result is serialized (PSObject) with properties.
+(Invoke-gsudo { Get-ChildItem $using:folder }).LastWriteTime
+```
+
+### Bang Bang (!!)
+
+`gsudo !!` repeats the last command, elevated. Works in CMD out of the box. To enable it for PowerShell, import module `gsudoModule.psm1` into your Profile:
+
+``` Powershell
+# Add the following line to your $PROFILE (replace with full path)
+  Import-Module 'C:\FullPathTo\gsudoModule.psm1'
+# Or run the following
+  Get-Command gsudoModule.psm1 | % { Write-Output "`nImport-Module `"$($_.Source)`"" | Add-Content $PROFILE }
+
+# Then (after PS restart)
+Get-ChildItem 'C:\ProtectedFolder' | Remove-Item # => Access Denied
+gsudo !! # => Repeat last command, elevated.
+```
+
+## Usage from WSL (Windows Subsystem for Linux)
 
 On WSL, elevation and `root` are different concepts. `root` allows full administration of WSL but not the windows system. Use WSL's native `su` or `sudo` to gain `root` access. To get admin privilege on the Windows box you need to elevate the WSL.EXE process. `gsudo` allows that (a UAC popup will appear).
-
-**BREAKING CHANGE v1.0:** now expects and elevates WSL commands!
 
 On WSL bash, prepend `gsudo` to elevate **WSL commands** or `gsudo -d` for **CMD commands**. 
 
@@ -176,7 +203,7 @@ fi;
 
 ## Credentials Cache
 
-The `Credentials Cache` allows to elevate several times from a parent process with only one UAC pop-up. 
+The `Credentials Cache` allows to elevate several times from a parent process with only one UAC pop-up.  
 
 An active credentials cache session is just an elevated instance of gsudo that stays running and allows the invoker process to elevate again. No windows service or setup involved.
 
