@@ -167,13 +167,13 @@ Set-Alias 'sudo' 'Invoke-gsudo'
 
 ### Bang Bang (!!)
 
-`gsudo !!` repeats the last command, elevated. Works in CMD out of the box. To enable it for PowerShell, import module `gsudoModule.psm1` into your Profile:
+`gsudo !!` repeats the last command, elevated. Works in CMD out of the box. To enable it for PowerShell, import module `gsudoModule.psd1` into your Profile:
 
 ``` Powershell
 # Add the following line to your $PROFILE (replace with full path)
-   Import-Module 'C:\FullPathTo\gsudoModule.psm1'
+   Import-Module 'C:\FullPathTo\gsudoModule.psd1'
 # Or run the following
-   Get-Command gsudoModule.psm1 | % { Write-Output "`nImport-Module `"$($_.Source)`"" | Add-Content $PROFILE }
+   Get-Command gsudoModule.psd1 | % { Write-Output "`nImport-Module `"$($_.Source)`"" | Add-Content $PROFILE }
 # Then (after PS restart)
    Get-ChildItem 'C:\ProtectedFolder' | Remove-Item # => Access Denied
    gsudo !! # => Repeat last command, elevated.

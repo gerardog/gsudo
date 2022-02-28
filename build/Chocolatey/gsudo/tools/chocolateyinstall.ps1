@@ -60,9 +60,9 @@ if (Get-Module gsudoModule) {
 } else {
 	& { 
 	"PowerShell users: To use enhanced gsudo and Invoke-Gsudo cmdlet, add the following line to your `$PROFILE"
-	"  Import-Module '$SymLinkDir\gsudoModule.psm1'"
+	"  Import-Module '$SymLinkDir\gsudoModule.psd1'"
 	"Or run: "
-	"  Write-Output `"``nImport-Module '$SymLinkDir\gsudoModule.psm1'`" | Add-Content `$PROFILE"
+	"  Write-Output `"``nImport-Module '$SymLinkDir\gsudoModule.psd1'`" | Add-Content `$PROFILE"
 
 	} 
 }

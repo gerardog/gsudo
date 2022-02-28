@@ -7,6 +7,9 @@ pushd %~dp0\..
 gitversion /showvariable LegacySemVer > "%temp%\version.tmp"
 SET /P version= < "%temp%\version.tmp"
 
+gitversion /showvariable MajorMinorPatch > "%temp%\version.tmp"
+SET /P MajorMinorPatch= < "%temp%\version.tmp"
+
 set REPO_ROOT_FOLDER=%cd%
 set BIN_FOLDER=%cd%\src\gsudo\bin
 set OUTPUT_FOLDER=%REPO_ROOT_FOLDER%\Build\Releases\%version%
@@ -45,7 +48,7 @@ if errorlevel 1 echo ILMerge Failed - Try: choco install ilmerge & pause & popd 
 
 popd
 copy %REPO_ROOT_FOLDER%\src\gsudo.extras\gsudo %BIN_FOLDER%\package\
-copy %REPO_ROOT_FOLDER%\src\gsudo.extras\gsudoModule.* %BIN_FOLDER%\package\
+copy %REPO_ROOT_FOLDER%\src\gsudo.extras\gsudoModule.ps?1 %BIN_FOLDER%\package\
 copy %REPO_ROOT_FOLDER%\src\gsudo.extras\invoke-gsudo.ps1 %BIN_FOLDER%\package\
 
 :: Code Sign
@@ -74,6 +77,11 @@ if 'skipsign'=='%1' goto skipbuild
 
 COPY %REPO_ROOT_FOLDER%\src\gsudo.Installer\bin\Release\gsudomsi.msi %OUTPUT_FOLDER%\gsudoSetup.msi
 COPY %BIN_FOLDER%\package\*.* %OUTPUT_FOLDER%\bin
+
+:: Apply version number to gsudoModule.psd1
+pushd %OUTPUT_FOLDER%\bin
+powershell -NoProfile -Command "(gc gsudoModule.psd1) -replace 'ModuleVersion = \"0.1\"', 'ModuleVersion = \"%MajorMinorPatch%\"' | Out-File -encoding UTF8 gsudoModule.psd1"
+popd
 
 pushd %REPO_ROOT_FOLDER%\Build
 
