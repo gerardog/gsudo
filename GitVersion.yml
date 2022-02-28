@@ -8,3 +8,6 @@ continuous-delivery-fallback-tag: ""
 ignore:
   sha: []
 merge-message-formats: {}
+branches:
+  develop:
+    increment: Patch
