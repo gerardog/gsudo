@@ -238,7 +238,8 @@ namespace gsudo.Commands
         /// <returns></returns>
         private static ElevationRequest.ConsoleMode GetElevationMode(bool isWindowsApp)
         {
-            if (Settings.ForceAttachedConsole)
+            if (!ProcessHelper.IsMemberOfLocalAdmins() || // => Not local admin? Force attached mode, so the new process has admin user env vars. (See #113)
+                Settings.ForceAttachedConsole)
             {
                 if (Console.IsErrorRedirected
                     || Console.IsInputRedirected
