@@ -321,7 +321,7 @@ namespace gsudo.Commands
                 {
                     foreach (DictionaryEntry envVar in Environment.GetEnvironmentVariables())
                     {
-                        if (envVar.Key.ToString().In("prompt"))
+                        if (envVar.Key.ToString().In("prompt", "username"))
                             continue;
 
                         sb.AppendLine($"{silent}SET {envVar.Key}={envVar.Value}");

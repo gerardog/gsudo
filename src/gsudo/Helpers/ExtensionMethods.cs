@@ -51,6 +51,11 @@ namespace gsudo
             return !In(toSearch, list);
         }
 
+        public static bool In(this string toSearch, string list)
+        {
+            return list.Equals(toSearch, StringComparison.OrdinalIgnoreCase);
+        }
+
         public static bool In(this string toSearch, params string[] list)
         {
             return list.Contains(toSearch, StringComparer.OrdinalIgnoreCase);
