@@ -294,7 +294,7 @@ namespace gsudo.Helpers
 
             if (args.Count == 0)
             {
-                if (InputArguments.KillCache)
+                if (InputArguments.KillCache && !InputArguments.NewWindow)
                 {
                     // support for "-k" as command
                     // return a verbose command, instead of a silent argument.
