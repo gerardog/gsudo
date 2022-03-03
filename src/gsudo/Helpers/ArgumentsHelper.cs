@@ -232,6 +232,9 @@ namespace gsudo.Helpers
                 return ret;
             };
 
+            // syntax gsudo [gsudo options] [verb] [command to run]:
+
+            // Parse [gsudo options]:
             string arg;
             while (args.Count>0)
             {
@@ -292,6 +295,8 @@ namespace gsudo.Helpers
                 }
             }
 
+            // Parse [verb]:
+
             if (args.Count == 0)
             {
                 if (InputArguments.KillCache && !InputArguments.NewWindow)
@@ -307,7 +312,6 @@ namespace gsudo.Helpers
                 return new RunCommand() { CommandToRun = Array.Empty<string>() };
             }
             
-            // Parse Command
             arg = dequeue();
             if (arg.Equals("help", StringComparison.OrdinalIgnoreCase))
                 return new HelpCommand();
@@ -370,6 +374,8 @@ namespace gsudo.Helpers
             
             if (arg == "!!" || arg.StartsWith("!", StringComparison.InvariantCulture))
                 return new BangBangCommand() { Pattern = string.Join(" ", args) };
+
+            // Parse {command}:
 
             return new RunCommand() { CommandToRun = args };
         }

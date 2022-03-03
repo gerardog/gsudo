@@ -259,7 +259,7 @@ The cache session ends automatically when the allowed process ends or if no elev
 
 - Does it work in Windows Vista/7/8?
 
-  I've tested Windows 8.1 and it kinda worked. The hardest part is to install `.NET 4.6` there. File an issue with good reasons to spend time backporting to, say, `.NET 3.5`.  Almost: The elevation works, but the credentials cache and the special colored elevated prompt fails. The hardest part is to install `.NET 4.6` there. Try `choco install dotnetfx` and `gsudo config Prompt "$P# "`.
+  Almost: The elevation works, but the credentials cache and the special colored prompt fails. The hardest part is to install `.NET 4.6` there. Try `choco install dotnetfx` and `gsudo config Prompt "$P# "`.
 
 - How do I return to the previous security level after using gsudo?
 
