@@ -6,6 +6,7 @@
 Import-Module (Join-Path (Split-Path -parent $MyInvocation.MyCommand.Definition) "Uninstall-ChocolateyPath.psm1")
 
 $ErrorActionPreference = 'Continue'
+$ToolsLocation = Get-ToolsLocation 
 
 $bin = "$env:ChocolateyInstall\lib\gsudo\bin\"
 
@@ -29,9 +30,13 @@ if (Test-Path "$env:ChocolateyInstall\bin\gsudo.exe")  # Previous installers cre
     Remove-Item "$env:ChocolateyInstall\bin\sudo.exe"
   }
 }
+
+if ([System.Environment]::CurrentDirectory -like "$ToolsLocation*") {
+	Write-Output -Verbose "Changing directory to $ToolsLocation to ensure successfull install/upgrade."
+	Set-Location $ToolsLocation
+}
 ############
 
-$ToolsLocation = Get-ToolsLocation 
 $TargetDir = "$ToolsLocation\gsudo\v" + (Get-Item "$bin\gsudo.exe").VersionInfo.FileVersion
 $SymLinkDir = "$ToolsLocation\gsudo\Current"
 
