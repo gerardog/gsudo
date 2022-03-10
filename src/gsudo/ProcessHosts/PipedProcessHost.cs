@@ -30,12 +30,12 @@ namespace gsudo.ProcessHosts
             try
             {
                 process = ProcessFactory.StartRedirected(request.FileName, request.Arguments, request.StartFolder);
-                
+
                 Logger.Instance.Log($"Process ({process.Id}) started: {request.FileName} {request.Arguments}", LogLevel.Debug);
 
-                var t1 = process.StandardOutput.ConsumeOutput(WriteToPipe);
-                var t2 = process.StandardError.ConsumeOutput(WriteToErrorPipe);
-                var t3 = new StreamReader(connection.DataStream, Settings.Encoding).ConsumeOutput((s) => WriteToProcessStdIn(s, process));
+                var t1 = process.StandardOutput.ConsumeOutput((s) => WriteToPipe(s));
+                var t2 = process.StandardError.ConsumeOutput((s) => WriteToErrorPipe(s));
+                var t3 = new StreamReader(connection.DataStream, Settings.Encoding).ConsumeOutput((s) => WriteToProcessStdIn(s, process), CloseProcessStdIn);
                 var t4 = new StreamReader(connection.ControlStream, Settings.Encoding).ConsumeOutput((s) => HandleControl(s, process));
 
                 if (Settings.SecurityEnforceUacIsolation)
@@ -46,7 +46,7 @@ namespace gsudo.ProcessHosts
                 if (process.HasExited && connection.IsAlive)
                 {
                     // we need to ensure that all process output is read.
-                    while(ShouldWait(process.StandardError) || ShouldWait(process.StandardOutput))
+                    while (ShouldWait(process.StandardError) || ShouldWait(process.StandardOutput))
                         await Task.Delay(1).ConfigureAwait(false);
 
                     await Task.WhenAll(t1, t2).ConfigureAwait(false);
@@ -106,7 +106,7 @@ namespace gsudo.ProcessHosts
             }
         }
 
-        static readonly string[] TOKENS = new string[] { "\0", Constants.TOKEN_KEY_CTRLBREAK, Constants.TOKEN_KEY_CTRLC};
+        static readonly string[] TOKENS = new string[] { "\0", Constants.TOKEN_KEY_CTRLBREAK, Constants.TOKEN_KEY_CTRLC, Constants.TOKEN_EOF };
         private Task HandleControl(string s, Process process)
         {
             var tokens = new Stack<string>(StringTokenizer.Split(s, TOKENS));
@@ -128,6 +128,24 @@ namespace gsudo.ProcessHosts
                 {
                     Commands.CtrlCCommand.Invoke(process.Id, true);
                     lastInboundMessage = null;
+                    continue;
+                }
+
+                if (token == Constants.TOKEN_EOF)
+                {
+                    Logger.Instance.Log("Incoming StdIn EOF", LogLevel.Debug);
+                    bool done = false;
+                    while (!done)
+                    {
+                        try
+                        {
+                            process.StandardInput.Flush();
+                            process.StandardInput.Close();
+                            done = true;
+                            Logger.Instance.Log("StdIn Closed", LogLevel.Debug);
+                        }
+                        catch (InvalidOperationException) { }
+                    }
                     continue;
                 }
             }
@@ -156,7 +174,7 @@ namespace gsudo.ProcessHosts
                     lastInboundMessage = lastInboundMessage.Substring(c);
                 }
                 //if (InputArguments.Debug && !string.IsNullOrEmpty(s)) Logger.Instance.Log($"Last input command was: {s}", LogLevel.Debug);
-                
+
             }
             if (string.IsNullOrEmpty(s)) return; // suppress chars n s;
 
@@ -173,9 +191,15 @@ namespace gsudo.ProcessHosts
         private static int EqualCharsCount(string s1, string s2)
         {
             int i = 0;
-            for (; i < s1.Length && i < s2.Length && s1[i] == s2[i]; i++)   
+            for (; i < s1.Length && i < s2.Length && s1[i] == s2[i]; i++)
             { }
             return i;
+        }
+
+        private Task CloseProcessStdIn()
+        {
+            process.StandardInput.Close();
+            return Task.CompletedTask;
         }
     }
 }

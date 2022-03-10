@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.IO.Pipes;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -34,7 +35,7 @@ namespace gsudo.ProcessRenderers
                 if(!Settings.SecurityEnforceUacIsolation)
                 {
                     var t1 = new StreamReader(Console.OpenStandardInput())
-                        .ConsumeOutput((s) => SendKeysToHost(s));
+                        .ConsumeOutput((s) => SendKeysToHost(s), CloseStdIn);
                 }
 
                 var t2 = new StreamReader(_connection.DataStream, Settings.Encoding)
@@ -188,6 +189,12 @@ namespace gsudo.ProcessRenderers
         {
             consecutiveCancelKeys = 0;
             await _connection.DataStream.WriteAsync(s).ConfigureAwait(false);
+        }
+
+        private async Task CloseStdIn()
+        {
+            (_connection.DataStream as NamedPipeClientStream)?.WaitForPipeDrain();
+            await _connection.ControlStream.WriteAsync(Constants.TOKEN_EOF).ConfigureAwait(false);
         }
     }
 }
