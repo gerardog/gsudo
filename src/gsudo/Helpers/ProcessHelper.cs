@@ -164,7 +164,6 @@ namespace gsudo.Helpers
             return claims.Any(c => c.Value == "S-1-5-32-544");
         }
 
-        [Obsolete]
         public static void Terminate(this Process process)
         {
             if (process.HasExited) return;

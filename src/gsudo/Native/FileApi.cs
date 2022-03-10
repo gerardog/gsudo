@@ -68,7 +68,7 @@ namespace gsudo.Native
             public string cAlternateFileName;
         }
 
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         public static extern IntPtr FindFirstFile(string lpFileName, out WIN32_FIND_DATA lpFindFileData);
 
 
@@ -82,7 +82,7 @@ namespace gsudo.Native
         #endregion
 
         #region Network Drives
-        [DllImport("mpr.dll")]
+        [DllImport("mpr.dll", CharSet = CharSet.Unicode)]
         public static extern uint WNetGetConnection(string lpLocalName, StringBuilder lpRemoteName, ref int lpnLength);
         #endregion
     }

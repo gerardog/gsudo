@@ -12,7 +12,6 @@ namespace gsudo.ProcessRenderers
     /// <summary>
     /// Receives raw I/O from a remote process from a connection and renders on the current console.
     /// </summary>
-    [Obsolete("Experimental. Superseded by TokenSwitch mode")]
     class PipedClientRenderer : IProcessRenderer
     {
         static readonly string[] TOKENS = new string[] { "\0", "\f", Constants.TOKEN_ERROR, Constants.TOKEN_EXITCODE, Constants.TOKEN_FOCUS, Constants.TOKEN_KEY_CTRLBREAK, Constants.TOKEN_KEY_CTRLC };

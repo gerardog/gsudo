@@ -19,7 +19,9 @@ namespace gsudo.Rpc
         private readonly DateTime _allowedExeTimeStamp;
         private readonly long _allowedExeLength;
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+#if !DEBUG
         private FileStream _exeLock;
+#endif
 
         public event EventHandler<Connection> ConnectionAccepted;
         public event EventHandler<Connection> ConnectionClosed;

@@ -11,7 +11,7 @@ namespace gsudo.ProcessHosts
     /// Hosts a process that uses Win32 'AttachConsole' Api so its i/o is natively attached to the
     /// client console. 
     /// </summary>
-    [Obsolete("Superseded by TokenSwitch mode")] // TODO: Possible remove in 1.0
+    // This mode is not enabled unless you use --attached.
     class AttachedConsoleHost : IProcessHost
     {
         public async Task Start(Connection connection, ElevationRequest elevationRequest)

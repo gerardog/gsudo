@@ -23,7 +23,6 @@ namespace gsudo.Commands
 
         public async Task<int> Execute()
         {
-            int? exitCode;
             bool isRunningAsDesiredUser = IsRunningAsDesiredUser();
             bool isElevationRequired = IsElevationRequired();
             bool isShellElevation = !CommandToRun.Any(); // are we auto elevating the current shell?
