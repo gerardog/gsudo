@@ -49,6 +49,8 @@ namespace gsudo.Helpers
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 RedirectStandardInput = true,
+                StandardOutputEncoding = Settings.Encoding,
+                StandardErrorEncoding = Settings.Encoding,
             };
             process.Start();
             return process;
