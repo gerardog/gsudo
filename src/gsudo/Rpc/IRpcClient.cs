@@ -30,20 +30,23 @@ namespace gsudo.Rpc
         public async Task FlushAndCloseAll()
         {
             IsAlive = false;
-            await FlushAndClose(DataStream).ConfigureAwait(false);
-            await FlushAndClose(ControlStream).ConfigureAwait(false);
+            await Flush(DataStream).ConfigureAwait(false);
+            await Flush(ControlStream).ConfigureAwait(false);
+            DataStream.Close();
+            ControlStream.Close();
         }
 
-        private static async Task FlushAndClose(Stream DataStream)
+        private static async Task Flush(Stream DataStream)
         {
             if (DataStream is NamedPipeServerStream)
             {
                 var npStream = DataStream as NamedPipeServerStream;
                 try
                 {
+                    await Task.Delay(1).ConfigureAwait(false);
                     await npStream.FlushAsync().ConfigureAwait(false);
                     npStream.WaitForPipeDrain();
-                    npStream.Disconnect();
+                    await Task.Delay(1).ConfigureAwait(false);
                 }
                 catch (Exception) { }
             }

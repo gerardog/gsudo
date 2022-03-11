@@ -20,12 +20,14 @@ namespace gsudo.ProcessHosts
         private string lastInboundMessage = null;
         private Process process;
         private Connection _connection;
+        private ElevationRequest _request;
 
         public async Task Start(Connection connection, ElevationRequest request)
         {
             Native.ConsoleApi.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, true);
 
             _connection = connection;
+            _request = request;
 
             try
             {
@@ -52,7 +54,6 @@ namespace gsudo.ProcessHosts
                     await Task.WhenAll(t1, t2).ConfigureAwait(false);
                     await connection.ControlStream.WriteAsync($"{Constants.TOKEN_EXITCODE}{process.ExitCode}{Constants.TOKEN_EXITCODE}").ConfigureAwait(false);
                 }
-
                 await connection.FlushAndCloseAll().ConfigureAwait(false);
             }
             catch (Exception ex)
@@ -165,19 +166,22 @@ namespace gsudo.ProcessHosts
 
         private async Task WriteToPipe(string s)
         {
-            if (!string.IsNullOrEmpty(lastInboundMessage)) // trick to avoid echoing the input command, as the client has already showed it.
+            if (!_request.IsInputRedirected)
             {
-                int c = EqualCharsCount(s, lastInboundMessage);
-                if (c > 0)
+                if (!string.IsNullOrEmpty(lastInboundMessage)) // trick to avoid echoing the input command, as the client has already showed it.
                 {
-                    s = s.Substring(c);
-                    lastInboundMessage = lastInboundMessage.Substring(c);
+                    int c = EqualCharsCount(s, lastInboundMessage);
+                    if (c > 0)
+                    {
+                        s = s.Substring(c);
+                        lastInboundMessage = lastInboundMessage.Substring(c);
+                    }
+                    //if (InputArguments.Debug && !string.IsNullOrEmpty(s)) Logger.Instance.Log($"Last input command was: {s}", LogLevel.Debug);
                 }
-                //if (InputArguments.Debug && !string.IsNullOrEmpty(s)) Logger.Instance.Log($"Last input command was: {s}", LogLevel.Debug);
 
+                if (string.IsNullOrEmpty(s)) return; // suppress chars n s;
             }
-            if (string.IsNullOrEmpty(s)) return; // suppress chars n s;
-
+            
             await _connection.DataStream.WriteAsync(s).ConfigureAwait(false);
             await _connection.DataStream.FlushAsync().ConfigureAwait(false);
 
