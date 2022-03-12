@@ -55,12 +55,7 @@ namespace gsudo.Rpc
 
                 Logger.Instance.Log($"Connected via Named Pipe {pipeName}.", LogLevel.Debug);
 
-                var conn = new Connection()
-                {
-                    ControlStream = controlPipe,
-                    DataStream = dataPipe,
-                };
-
+                var conn = new Connection(controlPipe, dataPipe);
                 return conn;
             }
             catch (System.TimeoutException)

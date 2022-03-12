@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.IO.Pipes;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -193,7 +192,8 @@ namespace gsudo.ProcessRenderers
 
         private async Task CloseStdIn()
         {
-            (_connection.DataStream as NamedPipeClientStream)?.WaitForPipeDrain();
+            // flush data before control command.
+            await _connection.FlushDataStream().ConfigureAwait(false);
             await _connection.ControlStream.WriteAsync(Constants.TOKEN_EOF).ConfigureAwait(false);
         }
     }

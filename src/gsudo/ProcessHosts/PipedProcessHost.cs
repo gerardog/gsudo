@@ -37,7 +37,7 @@ namespace gsudo.ProcessHosts
 
                 var t1 = process.StandardOutput.ConsumeOutput((s) => WriteToPipe(s));
                 var t2 = process.StandardError.ConsumeOutput((s) => WriteToErrorPipe(s));
-                var t3 = new StreamReader(connection.DataStream, Settings.Encoding).ConsumeOutput((s) => WriteToProcessStdIn(s, process), CloseProcessStdIn);
+                var t3 = new StreamReader(connection.DataStream, Settings.Encoding).ConsumeOutput((s) => WriteToProcessStdIn(s, process));
                 var t4 = new StreamReader(connection.ControlStream, Settings.Encoding).ConsumeOutput((s) => HandleControl(s, process));
 
                 if (Settings.SecurityEnforceUacIsolation)
@@ -108,7 +108,7 @@ namespace gsudo.ProcessHosts
         }
 
         static readonly string[] TOKENS = new string[] { "\0", Constants.TOKEN_KEY_CTRLBREAK, Constants.TOKEN_KEY_CTRLC, Constants.TOKEN_EOF };
-        private Task HandleControl(string s, Process process)
+        private async Task HandleControl(string s, Process process)
         {
             var tokens = new Stack<string>(StringTokenizer.Split(s, TOKENS));
 
@@ -134,9 +134,14 @@ namespace gsudo.ProcessHosts
 
                 if (token == Constants.TOKEN_EOF)
                 {
-                    Logger.Instance.Log("Incoming StdIn EOF", LogLevel.Debug);
+                    // Logger.Instance.Log("Incoming StdIn EOF", LogLevel.Debug);
+
+                    // There is a race condition here. Lets ensure StdIn is depleted before closing sending EOF.
+                    await _connection.FlushDataStream().ConfigureAwait(false);
+                    await Task.Delay(1).ConfigureAwait(false);
+
                     bool done = false;
-                    while (!done)
+                    while (!done) // Loop until process.StandardInput is not used by other thread.
                     {
                         try
                         {
@@ -150,7 +155,6 @@ namespace gsudo.ProcessHosts
                     continue;
                 }
             }
-            return Task.CompletedTask;
         }
 
         private async Task WriteToErrorPipe(string s)
@@ -198,12 +202,6 @@ namespace gsudo.ProcessHosts
             for (; i < s1.Length && i < s2.Length && s1[i] == s2[i]; i++)
             { }
             return i;
-        }
-
-        private Task CloseProcessStdIn()
-        {
-            process.StandardInput.Close();
-            return Task.CompletedTask;
         }
     }
 }
