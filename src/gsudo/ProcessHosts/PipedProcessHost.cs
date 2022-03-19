@@ -21,6 +21,7 @@ namespace gsudo.ProcessHosts
         private Process process;
         private Connection _connection;
         private ElevationRequest _request;
+        private bool _errorStreamActive;
 
         public async Task Start(Connection connection, ElevationRequest request)
         {
@@ -159,6 +160,7 @@ namespace gsudo.ProcessHosts
 
         private async Task WriteToErrorPipe(string s)
         {
+            _errorStreamActive = true;
             if (InputArguments.Debug)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -166,6 +168,8 @@ namespace gsudo.ProcessHosts
                 Console.ResetColor();
             }
             await _connection.ControlStream.WriteAsync(Constants.TOKEN_ERROR + s + Constants.TOKEN_ERROR).ConfigureAwait(false);
+            await _connection.ControlStream.FlushAsync().ConfigureAwait(false);
+            _errorStreamActive = false;
         }
 
         private async Task WriteToPipe(string s)
@@ -185,7 +189,12 @@ namespace gsudo.ProcessHosts
 
                 if (string.IsNullOrEmpty(s)) return; // suppress chars n s;
             }
-            
+
+            while (_errorStreamActive)
+            {
+                await _connection.FlushControlStream().ConfigureAwait(false);
+            }
+
             await _connection.DataStream.WriteAsync(s).ConfigureAwait(false);
             await _connection.DataStream.FlushAsync().ConfigureAwait(false);
 
