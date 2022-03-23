@@ -15,6 +15,7 @@ namespace gsudo.Helpers
     {
         private static int? _cacheGetCurrentIntegrityLevelCache;
         private static bool? _cacheIsAdmin;
+        private static WeakReference<Process> _parentProcess;
 
         public static string GetOwnExeName()
         {
@@ -54,6 +55,17 @@ namespace gsudo.Helpers
                     CloseHandle(processHandle);
                 }
             }
+        }
+
+        public static Process GetOwnParentProcessExcludingShim()
+        {
+            if (_parentProcess == null || !_parentProcess.TryGetTarget(out Process result))
+            {
+                result = Process.GetCurrentProcess().GetParentProcessExcludingShim();
+                _parentProcess = new WeakReference<Process>(result);
+                return result;
+            }
+            return result;
         }
 
         public static Process GetParentProcessExcludingShim(this Process process)

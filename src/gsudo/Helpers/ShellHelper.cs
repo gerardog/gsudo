@@ -20,7 +20,7 @@ namespace gsudo.Helpers
     {
         public static Shell DetectInvokingShell(out string shellFullPath)
         {
-            var parentProcess = Process.GetCurrentProcess().GetParentProcessExcludingShim();
+            var parentProcess = ProcessHelper.GetOwnParentProcessExcludingShim();
 
             if (parentProcess != null)
             {

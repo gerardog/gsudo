@@ -58,8 +58,10 @@ namespace gsudo.Commands
                 IsInputRedirected = Console.IsInputRedirected
             };
 
-            if (isElevationRequired && Settings.SecurityEnforceUacIsolation)
+            if (isElevationRequired)
+            {
                 AdjustUacIsolationRequest(elevationRequest, isShellElevation);
+            }
 
             SetRequestPrompt(elevationRequest);
 
@@ -185,23 +187,40 @@ namespace gsudo.Commands
         // Enforce SecurityEnforceUacIsolation
         private void AdjustUacIsolationRequest(ElevationRequest elevationRequest, bool isShellElevation)
         {
-            if ((int)(InputArguments.GetIntegrityLevel()) >= ProcessHelper.GetCurrentIntegrityLevel())
+            if (Settings.SecurityNewWindowFromExplorer && !elevationRequest.NewWindow)
             {
-                if (!elevationRequest.NewWindow)
+                var parentApp = ProcessHelper.GetOwnParentProcessExcludingShim()?.MainModule?.FileName;
+
+                if (parentApp.In(Path.Combine(Environment.GetEnvironmentVariable("SystemRoot"), "explorer.exe")))
                 {
-                    if (isShellElevation)
+                    Logger.Instance.Log($"Forced new window because invoked from Explorer. Run 'gsudo config {nameof(Settings.SecurityNewWindowFromExplorer)} false' to disable.", LogLevel.Info);
+                    // force auto shell elevation in new window
+                    elevationRequest.NewWindow = true;
+                    // do not wait by default on this scenario, only if user has requested it.
+                    elevationRequest.Wait = InputArguments.Wait;
+                }
+            }
+
+            if (Settings.SecurityEnforceUacIsolation)
+            {
+                if ((int)(InputArguments.GetIntegrityLevel()) >= ProcessHelper.GetCurrentIntegrityLevel())
+                {
+                    if (!elevationRequest.NewWindow)
                     {
-                        // force auto shell elevation in new window
-                        elevationRequest.NewWindow = true;
-                        // do not wait by default on this scenario, only if user has requested it.
-                        elevationRequest.Wait = InputArguments.Wait;
-                        Logger.Instance.Log("Elevating shell in a new console window because of SecurityEnforceUacIsolation", LogLevel.Info);
-                    }
-                    else
-                    {
-                        // force raw mode (that disables user input with SecurityEnforceUacIsolation)
-                        elevationRequest.Mode = ElevationRequest.ConsoleMode.Piped;
-                        Logger.Instance.Log("User Input disabled because of SecurityEnforceUacIsolation. Press Ctrl-C three times to abort. Or use -n argument to elevate in new window.", LogLevel.Info);
+                        if (isShellElevation)
+                        {
+                            // force auto shell elevation in new window
+                            elevationRequest.NewWindow = true;
+                            // do not wait by default on this scenario, only if user has requested it.
+                            elevationRequest.Wait = InputArguments.Wait;
+                            Logger.Instance.Log("Elevating shell in a new console window because of SecurityEnforceUacIsolation", LogLevel.Info);
+                        }
+                        else
+                        {
+                            // force raw mode (that disables user input with SecurityEnforceUacIsolation)
+                            elevationRequest.Mode = ElevationRequest.ConsoleMode.Piped;
+                            Logger.Instance.Log("User Input disabled because of SecurityEnforceUacIsolation. Press Ctrl-C three times to abort. Or use -n argument to elevate in new window.", LogLevel.Info);
+                        }
                     }
                 }
             }

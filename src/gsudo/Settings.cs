@@ -51,6 +51,10 @@ namespace gsudo
             new RegistrySetting<bool>(nameof(SecurityEnforceUacIsolation), false, bool.Parse,
                 RegistrySettingScope.GlobalOnly);
 
+        public static RegistrySetting<bool> SecurityNewWindowFromExplorer { get; internal set; } =
+            new RegistrySetting<bool>(nameof(SecurityNewWindowFromExplorer), true, bool.Parse,
+                RegistrySettingScope.GlobalOnly);
+
         public static IDictionary<string, RegistrySetting> AllKeys =>
             new Dictionary<string, RegistrySetting>(StringComparer.OrdinalIgnoreCase)
                 .Add(
@@ -64,7 +68,8 @@ namespace gsudo
                     ForceVTConsole,
                     CopyEnvironmentVariables,
                     CopyNetworkShares,
-                    SecurityEnforceUacIsolation);
+                    SecurityEnforceUacIsolation,
+                    SecurityNewWindowFromExplorer);
 
         internal static TimeSpan TimeSpanParseWithInfinite(string value)
         {
