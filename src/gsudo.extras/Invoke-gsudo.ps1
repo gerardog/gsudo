@@ -54,7 +54,12 @@ param
     [Parameter(ValueFromPipeline)]
     [pscustomobject]
     $InputObject,
+
+	[Parameter()]
+	[switch]
+	$LoadProfile = $false,
 	
+	#test mode
 	[Parameter()]
 	[switch]
 	$NoElevate = $false
@@ -148,7 +153,7 @@ if($NoElevate) {
 	$windowTitle = $host.ui.RawUI.WindowTitle;
 
 	$dbg = if ($debug) {"--debug "} else {" "}
-	$NoProfile = if ($gsudoLoadProfile) {""} else {"-NoProfile "}
+	$NoProfile = if ($gsudoLoadProfile -or $LoadProfile) {""} else {"-NoProfile "}
 	
 	$arguments = "-d $dbg--LogLevel Error $pwsh -nologo $NoProfile-NonInteractive -OutputFormat Xml -InputFormat Text -encodedCommand IAAoACQAaQBuAHAAdQB0ACAAfAAgAE8AdQB0AC0AUwB0AHIAaQBuAGcAKQAgAHwAIABpAGUAeAAgAA==".Split(" ")
 
