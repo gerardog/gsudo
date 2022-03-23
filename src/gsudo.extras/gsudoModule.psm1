@@ -32,6 +32,8 @@ function gsudo {
 
 $gsudoVerbose=$true;
 
-Export-ModuleMember -function Invoke-Gsudo
-Export-ModuleMember -function gsudo
-Export-ModuleMember -variable gsudoVerbose
+# On your $PROFILE set $gsudoLoadProfile=$true to make invoke-gsudo load your profile. 
+# Warning: If you do, then do not write to console/Out on your $profile or else that lines will appear in your Invoke-gsudo result.
+$gsudoLoadProfile=$false; 
+
+Export-ModuleMember -function Invoke-Gsudo, gsudo -Variable gsudoVerbose, gsudoLoadProfile

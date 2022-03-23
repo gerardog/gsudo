@@ -148,7 +148,9 @@ if($NoElevate) {
 	$windowTitle = $host.ui.RawUI.WindowTitle;
 
 	$dbg = if ($debug) {"--debug "} else {" "}
-	$arguments = "-d $dbg--LogLevel Error $pwsh -nologo -NoProfile -NonInteractive -OutputFormat Xml -InputFormat Text -encodedCommand IAAoACQAaQBuAHAAdQB0ACAAfAAgAE8AdQB0AC0AUwB0AHIAaQBuAGcAKQAgAHwAIABpAGUAeAAgAA==".Split(" ")
+	$NoProfile = if ($gsudoLoadProfile) {""} else {"-NoProfile "}
+	
+	$arguments = "-d $dbg--LogLevel Error $pwsh -nologo $NoProfile-NonInteractive -OutputFormat Xml -InputFormat Text -encodedCommand IAAoACQAaQBuAHAAdQB0ACAAfAAgAE8AdQB0AC0AUwB0AHIAaQBuAGcAKQAgAHwAIABpAGUAeAAgAA==".Split(" ")
 
 	# Must Read: https://stackoverflow.com/questions/68136128/how-do-i-call-the-powershell-cli-robustly-with-respect-to-character-encoding-i?noredirect=1&lq=1
 	$result = $remoteCmd | & gsudo.exe $arguments *>&1
