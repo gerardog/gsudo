@@ -16,9 +16,6 @@ namespace gsudo
 
         private static async Task<int> Start()
         {
-            Console.InputEncoding = Settings.Encoding;
-            Console.OutputEncoding = Settings.Encoding;
-
             ICommand cmd = null;
 
             var args = ArgumentsHelper.SplitArgs(ArgumentsHelper.GetRealCommandLine());
