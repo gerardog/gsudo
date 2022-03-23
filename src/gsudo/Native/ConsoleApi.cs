@@ -8,7 +8,6 @@ namespace gsudo.Native
     /// <summary>
     /// PInvoke signatures for win32 console api
     /// </summary>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1060:Move pinvokes to native methods class", Justification = "Done")]
     static class ConsoleApi
     {
         internal const int STD_INPUT_HANDLE = -10;

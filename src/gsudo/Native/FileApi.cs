@@ -5,7 +5,6 @@ using System.Text;
 
 namespace gsudo.Native
 {
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1060:Move pinvokes to native methods class", Justification = "Done")]
     static class FileApi
     {
         internal static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
