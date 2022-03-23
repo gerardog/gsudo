@@ -58,7 +58,8 @@ namespace gsudo.Helpers
 
                     if (args.Length > 0)
                     {
-                        newArgs.Add("-NoProfile");
+                        if (!Settings.PowerShellLoadProfile)
+                            newArgs.Add("-NoProfile");
                         newArgs.Add("-Command");
 
                         int last = args.Length - 1;
@@ -250,6 +251,7 @@ namespace gsudo.Helpers
                 SetTrueIf(arg, () => Settings.ForceVTConsole.Value = true, "--vt") ||
                 SetTrueIf(arg, () => Settings.CopyEnvironmentVariables.Value = true, "--copyEV") ||
                 SetTrueIf(arg, () => Settings.CopyNetworkShares.Value = true, "--copyNS") ||
+                SetTrueIf(arg, () => Settings.PowerShellLoadProfile.Value = true, "--loadProfile") ||
 
                 SetTrueIf(arg, () => InputArguments.RunAsSystem = true, "-s", "--system") ||
                 SetTrueIf(arg, () => InputArguments.Global = true, "--global") ||

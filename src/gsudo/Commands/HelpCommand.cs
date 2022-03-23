@@ -46,6 +46,7 @@ namespace gsudo.Commands
             Console.WriteLine(" -i | --integrity {v}   Specify integrity level: Untrusted, Low, Medium, MediumPlus, High (default), System");
             Console.WriteLine(" -k | --reset-timestamp Kills all cached credentials. The next time gsudo is run a UAC popup will be appear.");
             Console.WriteLine(" -d | --direct          Execute {command} directly. Bypass shell wrapper (Pwsh/Yori/etc).");
+            Console.WriteLine(" --loadProfile          When elevating PowerShell commands, do load profiles.");
             Console.WriteLine(" --copyns               Connect network drives to the elevated user. Warning: Verbose, interactive asks for credentials");
             Console.WriteLine();
             /*
