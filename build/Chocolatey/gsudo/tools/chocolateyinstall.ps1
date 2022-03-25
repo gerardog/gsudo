@@ -42,7 +42,7 @@ $SymLinkDir = "$ToolsLocation\gsudo\Current"
 
 # Add to System Path
 mkdir $TargetDir -ErrorAction Ignore
-copy "$bin\*.*" $TargetDir -Exclude *.ignore -Force
+copy "$bin\*" $TargetDir -Exclude *.ignore -Force
 Install-ChocolateyPath -PathToInstall $SymLinkDir -PathType 'Machine'
 
 cmd /c mklink "$TargetDir\sudo.exe" "$TargetDir\gsudo.exe" 2>$null
