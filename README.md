@@ -1,7 +1,10 @@
 # gsudo - a sudo for Windows
 
 [![Join the chat at https://gitter.im/gsudo/community](https://badges.gitter.im/gsudo/community.svg)](https://gitter.im/gsudo/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Build status](https://ci.appveyor.com/api/projects/status/nkd11bifhnqaxay9/branch/master?svg=true)](https://ci.appveyor.com/project/gerardog/gsudo)
+[![Build status](https://ci.appveyor.com/api/projects/status/nkd11bifhnqaxay9/branch/master?svg=true)](https://ci.appveyor.com/project/gerardog/gsudo) 
+[![Tests](https://img.shields.io/appveyor/tests/gerardog/gsudo/master)]()
+[![Chocolatey Downloads](https://img.shields.io/chocolatey/dt/gsudo?label=Chocolatey%20Downloads)]()
+[![GitHub Downloads](https://img.shields.io/github/downloads/gerardog/gsudo/total?label=GitHub%20Downloads)]()
 
 **gsudo** is a `sudo` equivalent for Windows, with a similar user-experience as the original *nix sudo.
 It allows to run commands with elevated permissions, or to elevate the current shell, in the current console window or a new one.
