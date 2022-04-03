@@ -105,6 +105,7 @@ echo Version Hashes for v%version% >> tools\verification.txt
 echo. >> tools\verification.txt
 powershell "Get-FileHash bin\*.* | Out-String -Width 200" >> tools\verification.txt
 echo. >> tools\verification.txt
+rm *.bak -Recurse 
 cd ..
 choco pack gsudo\gsudo.nuspec -outdir="%OUTPUT_FOLDER%"
 
