@@ -157,7 +157,7 @@ namespace gsudo.ProcessRenderers
                     int left, top;
                     ConsoleHelper.GetConsoleInfo(out _, out _, out left, out top);
 
-                    await _connection.DataStream.WriteAsync($"\x001B[{top};{left}R").ConfigureAwait(false);
+                    await _connection.DataStream.WriteAsync($"\x001B[{top+1};{left}R").ConfigureAwait(false);
                     return;
                 }
 
