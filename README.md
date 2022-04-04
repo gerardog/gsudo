@@ -167,13 +167,13 @@ Set-Alias 'sudo' 'Invoke-gsudo'
 
 ### Bang Bang (!!)
 
-`gsudo !!` repeats the last command, elevated. Works in CMD out of the box. To enable it for PowerShell, import module `gsudoModule.psm1` into your Profile:
+`gsudo !!` repeats the last command, elevated. Works in CMD out of the box. To enable it for PowerShell, import module `gsudoModule.psd1` into your Profile:
 
 ``` Powershell
 # Add the following line to your $PROFILE (replace with full path)
-   Import-Module 'C:\FullPathTo\gsudoModule.psm1'
+   Import-Module 'C:\FullPathTo\gsudoModule.psd1'
 # Or run the following
-   Get-Command gsudoModule.psm1 | % { Write-Output "`nImport-Module `"$($_.Source)`"" | Add-Content $PROFILE }
+   Get-Command gsudoModule.psd1 | % { Write-Output "`nImport-Module `"$($_.Source)`"" | Add-Content $PROFILE }
 # Then (after PS restart)
    Get-ChildItem 'C:\ProtectedFolder' | Remove-Item # => Access Denied
    gsudo !! # => Repeat last command, elevated.
@@ -259,7 +259,7 @@ The cache session ends automatically when the allowed process ends or if no elev
 
 - Does it work in Windows Vista/7/8?
 
-  I've tested Windows 8.1 and it kinda worked. The hardest part is to install `.NET 4.6` there. File an issue with good reasons to spend time backporting to, say, `.NET 3.5`.  Almost: The elevation works, but the credentials cache and the special colored elevated prompt fails. The hardest part is to install `.NET 4.6` there. Try `choco install dotnetfx` and `gsudo config Prompt "$P# "`.
+  Almost: The elevation works, but the credentials cache and the special colored prompt fails. The hardest part is to install `.NET 4.6` there. Try `choco install dotnetfx` and `gsudo config Prompt "$P# "`.
 
 - How do I return to the previous security level after using gsudo?
 

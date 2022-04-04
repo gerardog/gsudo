@@ -23,7 +23,6 @@ namespace gsudo.Commands
 
         public async Task<int> Execute()
         {
-            int? exitCode;
             bool isRunningAsDesiredUser = IsRunningAsDesiredUser();
             bool isElevationRequired = IsElevationRequired();
             bool isShellElevation = !CommandToRun.Any(); // are we auto elevating the current shell?
@@ -55,7 +54,8 @@ namespace gsudo.Commands
                 ConsoleProcessId = Process.GetCurrentProcess().Id,
                 IntegrityLevel = InputArguments.GetIntegrityLevel(),
                 ConsoleWidth = consoleWidth,
-                ConsoleHeight = consoleHeight
+                ConsoleHeight = consoleHeight,
+                IsInputRedirected = Console.IsInputRedirected
             };
 
             if (isElevationRequired && Settings.SecurityEnforceUacIsolation)
@@ -238,7 +238,8 @@ namespace gsudo.Commands
         /// <returns></returns>
         private static ElevationRequest.ConsoleMode GetElevationMode(bool isWindowsApp)
         {
-            if (Settings.ForceAttachedConsole)
+            if (!ProcessHelper.IsMemberOfLocalAdmins() || // => Not local admin? Force attached mode, so the new process has admin user env vars. (See #113)
+                Settings.ForceAttachedConsole)
             {
                 if (Console.IsErrorRedirected
                     || Console.IsInputRedirected
@@ -320,7 +321,7 @@ namespace gsudo.Commands
                 {
                     foreach (DictionaryEntry envVar in Environment.GetEnvironmentVariables())
                     {
-                        if (envVar.Key.ToString().In("prompt"))
+                        if (envVar.Key.ToString().In("prompt", "username"))
                             continue;
 
                         sb.AppendLine($"{silent}SET {envVar.Key}={envVar.Value}");

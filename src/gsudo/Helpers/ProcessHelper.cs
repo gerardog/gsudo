@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Threading;
 using gsudo.Native;
+using System.Linq;
 
 namespace gsudo.Helpers
 {
@@ -156,7 +157,13 @@ namespace gsudo.Helpers
             }
         }
 
-        [Obsolete]
+        public static bool IsMemberOfLocalAdmins()
+        {
+            var principal = new WindowsPrincipal(WindowsIdentity.GetCurrent());
+            var claims = principal.Claims;
+            return claims.Any(c => c.Value == "S-1-5-32-544");
+        }
+
         public static void Terminate(this Process process)
         {
             if (process.HasExited) return;

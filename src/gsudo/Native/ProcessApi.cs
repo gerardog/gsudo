@@ -10,7 +10,6 @@ namespace gsudo.Native
     /// <summary>
     /// PInvoke signatures for win32 process api
     /// </summary>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1060:Move pinvokes to native methods class", Justification = "Done")]
     public static class ProcessApi
     {
         internal const uint EXTENDED_STARTUPINFO_PRESENT = 0x00080000;

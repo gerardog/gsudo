@@ -12,7 +12,6 @@ namespace gsudo.ProcessRenderers
     /// <summary>
     /// Receives raw I/O from a remote process from a connection and renders on the current console.
     /// </summary>
-    [Obsolete("Experimental. Superseded by TokenSwitch mode")]
     class PipedClientRenderer : IProcessRenderer
     {
         static readonly string[] TOKENS = new string[] { "\0", "\f", Constants.TOKEN_ERROR, Constants.TOKEN_EXITCODE, Constants.TOKEN_FOCUS, Constants.TOKEN_KEY_CTRLBREAK, Constants.TOKEN_KEY_CTRLC };
@@ -35,7 +34,7 @@ namespace gsudo.ProcessRenderers
                 if(!Settings.SecurityEnforceUacIsolation)
                 {
                     var t1 = new StreamReader(Console.OpenStandardInput())
-                        .ConsumeOutput((s) => SendKeysToHost(s));
+                        .ConsumeOutput((s) => SendKeysToHost(s), CloseStdIn);
                 }
 
                 var t2 = new StreamReader(_connection.DataStream, Settings.Encoding)
@@ -189,6 +188,13 @@ namespace gsudo.ProcessRenderers
         {
             consecutiveCancelKeys = 0;
             await _connection.DataStream.WriteAsync(s).ConfigureAwait(false);
+        }
+
+        private async Task CloseStdIn()
+        {
+            // flush data before control command.
+            await _connection.FlushDataStream().ConfigureAwait(false);
+            await _connection.ControlStream.WriteAsync(Constants.TOKEN_EOF).ConfigureAwait(false);
         }
     }
 }

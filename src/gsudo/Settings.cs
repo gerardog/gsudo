@@ -47,6 +47,9 @@ namespace gsudo
         public static RegistrySetting<bool> CopyNetworkShares { get; internal set; } =
             new RegistrySetting<bool>(nameof(CopyNetworkShares), false, bool.Parse);
 
+        public static RegistrySetting<bool> PowerShellLoadProfile { get; internal set; } =
+            new RegistrySetting<bool>(nameof(PowerShellLoadProfile), false, bool.Parse);
+
         public static RegistrySetting<bool> SecurityEnforceUacIsolation { get; internal set; } =
             new RegistrySetting<bool>(nameof(SecurityEnforceUacIsolation), false, bool.Parse,
                 RegistrySettingScope.GlobalOnly);
@@ -64,6 +67,7 @@ namespace gsudo
                     ForceVTConsole,
                     CopyEnvironmentVariables,
                     CopyNetworkShares,
+                    PowerShellLoadProfile,
                     SecurityEnforceUacIsolation);
 
         internal static TimeSpan TimeSpanParseWithInfinite(string value)

@@ -9,10 +9,10 @@
 @{
 
 # Script module or binary module file associated with this manifest.
-# RootModule = ''
+RootModule = 'gsudoModule.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.1'
+ModuleVersion = "0.1"
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -75,7 +75,7 @@ FunctionsToExport = 'gsudo', 'invoke-gsudo'
 CmdletsToExport = @()
 
 # Variables to export from this module
-VariablesToExport = 'gsudoVerbose'
+VariablesToExport = 'gsudoVerbose', 'gsudoLoadProfile'
 
 # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
 AliasesToExport = @()

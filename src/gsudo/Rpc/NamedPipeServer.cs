@@ -19,7 +19,9 @@ namespace gsudo.Rpc
         private readonly DateTime _allowedExeTimeStamp;
         private readonly long _allowedExeLength;
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+#if !DEBUG
         private FileStream _exeLock;
+#endif
 
         public event EventHandler<Connection> ConnectionAccepted;
         public event EventHandler<Connection> ConnectionClosed;
@@ -96,7 +98,7 @@ namespace gsudo.Rpc
 
                         if (dataPipe.IsConnected && controlPipe.IsConnected && !_cancellationTokenSource.IsCancellationRequested)
                         {
-                            var connection = new Connection() { ControlStream = controlPipe, DataStream = dataPipe };
+                            var connection = new Connection(controlPipe, dataPipe);
 
                             ConnectionKeepAliveThread.Start(connection);
 

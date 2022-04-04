@@ -8,8 +8,8 @@
         internal const string TOKEN_ERROR = "\u0013";
         internal const string TOKEN_KEY_CTRLC = "\u0014";
         internal const string TOKEN_KEY_CTRLBREAK = "\u0015";
-        internal const string TOKEN_SUCCESS = "\u0016";
-        
+        internal const string TOKEN_SUCCESS = "\u0016";        
+        internal const string TOKEN_EOF = "\u0017";
         internal const int GSUDO_ERROR_EXITCODE = 999;
     }
 }

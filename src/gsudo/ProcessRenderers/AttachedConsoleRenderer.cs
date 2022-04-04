@@ -14,7 +14,7 @@ namespace gsudo.ProcessRenderers
     /// Renderer empty shell, hosts a remote process until it finishes.
     /// All rendering is done by the remote process, because its attached to our console.
     /// </summary>
-    [Obsolete("Superseded by TokenSwitch mode")]
+    // This mode is not enabled unless you use --attached.
     class AttachedConsoleRenderer : IProcessRenderer
     {
         private readonly Connection _connection;

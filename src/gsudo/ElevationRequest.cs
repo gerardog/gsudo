@@ -20,6 +20,8 @@ namespace gsudo
         public bool KillCache { get; set; }
         public IntegrityLevel IntegrityLevel { get; set; }
 
+        public bool IsInputRedirected { get; set; }
+
         [Serializable]
         internal enum ConsoleMode { 
             /// <summary>

@@ -5,7 +5,6 @@ using System.Text;
 
 namespace gsudo.Native
 {
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1060:Move pinvokes to native methods class", Justification = "Done")]
     static class FileApi
     {
         internal static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
@@ -68,7 +67,7 @@ namespace gsudo.Native
             public string cAlternateFileName;
         }
 
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         public static extern IntPtr FindFirstFile(string lpFileName, out WIN32_FIND_DATA lpFindFileData);
 
 
@@ -82,7 +81,7 @@ namespace gsudo.Native
         #endregion
 
         #region Network Drives
-        [DllImport("mpr.dll")]
+        [DllImport("mpr.dll", CharSet = CharSet.Unicode)]
         public static extern uint WNetGetConnection(string lpLocalName, StringBuilder lpRemoteName, ref int lpnLength);
         #endregion
     }

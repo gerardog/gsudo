@@ -17,7 +17,7 @@ namespace gsudo.ProcessHosts
     /// Sends all I/O thru the connection using VT protocol.
     /// based on https://github.com/microsoft/terminal/tree/38156311e8f083614fb15ff627dabb2d3bf845b4/samples/ConPTY/MiniTerm/MiniTerm 
     /// </summary>
-    [Obsolete("Experimental. Superseded by TokenSwitch mode")] // TODO: Possible remove in 1.0
+    // This mode is not enabled unless you use --vt.
     class VTProcessHost : IProcessHost
     {
         private Connection _connection;

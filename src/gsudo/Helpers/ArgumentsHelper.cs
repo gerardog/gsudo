@@ -58,7 +58,8 @@ namespace gsudo.Helpers
 
                     if (args.Length > 0)
                     {
-                        newArgs.Add("-NoProfile");
+                        if (!Settings.PowerShellLoadProfile)
+                            newArgs.Add("-NoProfile");
                         newArgs.Add("-Command");
 
                         int last = args.Length - 1;
@@ -232,6 +233,9 @@ namespace gsudo.Helpers
                 return ret;
             };
 
+            // syntax gsudo [gsudo options] [verb] [command to run]:
+
+            // Parse [gsudo options]:
             string arg;
             while (args.Count>0)
             {
@@ -247,6 +251,7 @@ namespace gsudo.Helpers
                 SetTrueIf(arg, () => Settings.ForceVTConsole.Value = true, "--vt") ||
                 SetTrueIf(arg, () => Settings.CopyEnvironmentVariables.Value = true, "--copyEV") ||
                 SetTrueIf(arg, () => Settings.CopyNetworkShares.Value = true, "--copyNS") ||
+                SetTrueIf(arg, () => Settings.PowerShellLoadProfile.Value = true, "--loadProfile") ||
 
                 SetTrueIf(arg, () => InputArguments.RunAsSystem = true, "-s", "--system") ||
                 SetTrueIf(arg, () => InputArguments.Global = true, "--global") ||
@@ -292,9 +297,11 @@ namespace gsudo.Helpers
                 }
             }
 
+            // Parse [verb]:
+
             if (args.Count == 0)
             {
-                if (InputArguments.KillCache)
+                if (InputArguments.KillCache && !InputArguments.NewWindow)
                 {
                     // support for "-k" as command
                     // return a verbose command, instead of a silent argument.
@@ -307,7 +314,6 @@ namespace gsudo.Helpers
                 return new RunCommand() { CommandToRun = Array.Empty<string>() };
             }
             
-            // Parse Command
             arg = dequeue();
             if (arg.Equals("help", StringComparison.OrdinalIgnoreCase))
                 return new HelpCommand();
@@ -370,6 +376,8 @@ namespace gsudo.Helpers
             
             if (arg == "!!" || arg.StartsWith("!", StringComparison.InvariantCulture))
                 return new BangBangCommand() { Pattern = string.Join(" ", args) };
+
+            // Parse {command}:
 
             return new RunCommand() { CommandToRun = args };
         }

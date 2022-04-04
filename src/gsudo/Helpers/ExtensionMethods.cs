@@ -14,7 +14,7 @@ namespace gsudo
     {
         private static readonly TaskFactory _taskFactory = new TaskFactory();
 
-        public static Task ConsumeOutput(this StreamReader reader, Func<string, Task> callback)
+        public static Task ConsumeOutput(this StreamReader reader, Func<string, Task> callback, Func<Task> eofCallback = null)
         {
             return _taskFactory.StartNew(async () =>
             {
@@ -28,8 +28,10 @@ namespace gsudo
                     {
                         await callback(new string(buffer, 0, cch)).ConfigureAwait(false);
                     }
+
+                    await (eofCallback?.Invoke() ?? Task.CompletedTask).ConfigureAwait(false);
                 }
-                catch (ObjectDisposedException) { }
+                catch (InvalidOperationException) { }
                 catch (IOException) { }
                 catch (Exception ex) { Logger.Instance.Log(ex.ToString(), LogLevel.Error); }
                 finally
@@ -49,6 +51,11 @@ namespace gsudo
         public static bool NotIn(this string toSearch, params string[] list)
         {
             return !In(toSearch, list);
+        }
+
+        public static bool In(this string toSearch, string list)
+        {
+            return list.Equals(toSearch, StringComparison.OrdinalIgnoreCase);
         }
 
         public static bool In(this string toSearch, params string[] list)

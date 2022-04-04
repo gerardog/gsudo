@@ -54,7 +54,12 @@ param
     [Parameter(ValueFromPipeline)]
     [pscustomobject]
     $InputObject,
+
+	[Parameter()]
+	[switch]
+	$LoadProfile = $false,
 	
+	#test mode
 	[Parameter()]
 	[switch]
 	$NoElevate = $false
@@ -147,11 +152,13 @@ if($NoElevate) {
 	
 	$windowTitle = $host.ui.RawUI.WindowTitle;
 
-	# Must Read: https://stackoverflow.com/questions/68136128/how-do-i-call-the-powershell-cli-robustly-with-respect-to-character-encoding-i?noredirect=1&lq=1
-	#$result = $remoteCmd | & gsudo.exe --LogLevel Error -d $pwsh -NoProfile -NonInteractive -OutputFormat Xml -InputFormat Text -Command - *>&1
+	$dbg = if ($debug) {"--debug "} else {" "}
+	$NoProfile = if ($gsudoLoadProfile -or $LoadProfile) {""} else {"-NoProfile "}
+	
+	$arguments = "-d $dbg--LogLevel Error $pwsh -nologo $NoProfile-NonInteractive -OutputFormat Xml -InputFormat Text -encodedCommand IAAoACQAaQBuAHAAdQB0ACAAfAAgAE8AdQB0AC0AUwB0AHIAaQBuAGcAKQAgAHwAIABpAGUAeAAgAA==".Split(" ")
 
-	# $encodedCommand = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes(" ($input | Out-String) | iex"))
-	$result = $remoteCmd | & gsudo.exe --LogLevel Error -d $pwsh -NoProfile -NonInteractive -OutputFormat Xml -InputFormat Text -encodedCommand IAAoACQAaQBuAHAAdQB0ACAAfAAgAE8AdQB0AC0AUwB0AHIAaQBuAGcAKQAgAHwAIABpAGUAeAAgAA== *>&1
+	# Must Read: https://stackoverflow.com/questions/68136128/how-do-i-call-the-powershell-cli-robustly-with-respect-to-character-encoding-i?noredirect=1&lq=1
+	$result = $remoteCmd | & gsudo.exe $arguments *>&1
 	
 	$host.ui.RawUI.WindowTitle = $windowTitle;
 }
