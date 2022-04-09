@@ -56,11 +56,11 @@ namespace gsudo.Helpers
             }
         }
 
-        public static Process GetParentProcessExcludingShim(this Process process)
+        public static Process GetParentProcessExcludingShim(this Process process, bool excludeWrappers = true)
         {
             try
             {
-                var parentPid = ProcessHelper.GetParentProcessIdExcludingShim(process.Id);
+                var parentPid = ProcessHelper.GetParentProcessIdExcludingShim(process, excludeWrappers);
                 if (parentPid == 0)
                     return null;
                 return Process.GetProcessById(parentPid);
@@ -71,23 +71,25 @@ namespace gsudo.Helpers
             }
         }
 
-        public static int GetParentProcessIdExcludingShim(int processId) 
+        public static int GetParentProcessIdExcludingShim(this Process process, bool excludeWrappers = true) 
         {
-            var parentId = GetParentProcessId(processId);
+            var parentId = GetParentProcessId(process);
             Process parent;
             try
             {
                 parent = Process.GetProcessById(parentId);
+                var filename = parent.MainModule.FileName;
+
+                if (IsShim(filename))
+                    return GetParentProcessId(parent);
+
+                if (excludeWrappers && IsWrapper(filename, process))
+                    return GetParentProcessIdExcludingShim(parent, excludeWrappers);
             }
             catch 
             {
                 // For example: System.ArgumentException: Process with an Id of 18312 is not running.
                 return parentId;
-            }
-
-            if (IsShimOrWrapper(parent))
-            {
-                return GetParentProcessIdExcludingShim(parentId);
             }
 
             return parentId;
@@ -99,40 +101,37 @@ namespace gsudo.Helpers
 
             try
             {
-                if (hProcess == IntPtr.Zero) return 0;
-
-                var pbi = new NtDllApi.PROCESS_BASIC_INFORMATION();
-                int returnLength;
-
-                if (NtDllApi.NativeMethods.NtQueryInformationProcess(hProcess, 0, ref pbi, Marshal.SizeOf(pbi), out returnLength) != 0)
-                    return 0;
-
-                return (int)pbi.InheritedFromUniqueProcessId;
+                return GetParentProcessId(hProcess);
             }
             finally
             {
                 CloseHandle(hProcess);
             }
         }
-        
+
+        public static int GetParentProcessId(this Process process) => GetParentProcessId(process.Handle);
+
+        public static Process GetParentProcess(this Process process) => Process.GetProcessById(GetParentProcessId(process.Handle));
+
+        public static int GetParentProcessId(IntPtr hProcess)
+        {
+            if (hProcess == IntPtr.Zero) return 0;
+
+            var pbi = new NtDllApi.PROCESS_BASIC_INFORMATION();
+            int returnLength;
+
+            if (NtDllApi.NativeMethods.NtQueryInformationProcess(hProcess, 0, ref pbi, Marshal.SizeOf(pbi), out returnLength) != 0)
+                return 0;
+
+            return (int)pbi.InheritedFromUniqueProcessId;
+        }
+
         /// <summary>
         /// Gets the PID that will be allowed in the cache.
         /// </summary>
         internal static int GetCallerPid()
         {
-            var currentProcess= Process.GetCurrentProcess();
-            var parent = currentProcess.GetParentProcessExcludingShim();
-
-            if (parent == null) 
-            {
-                // Unable to get a caller pid for the cache.
-                // This is common in MSYS/git-bash/cygwin
-                // Fallback to first process attached to the current console.
-                var pids = ConsoleHelper.GetConsoleAttachedPids();
-                return (int)pids[pids.Length - 1];
-            }
-
-            return parent.Id;
+            return Process.GetCurrentProcess().GetParentProcessIdExcludingShim();
         }
 
         public static bool IsHighIntegrity()
@@ -326,22 +325,37 @@ namespace gsudo.Helpers
         /// <summary>
         /// Naive Shim Detection.
         /// </summary>
-        /// <param name="parent"></param>
+        /// <param name="process"></param>
         /// <returns></returns>
-        public static bool IsShimOrWrapper(Process parent)
+        private static bool IsShim(string fileName)
         {
             try
             {
-                var fileName = parent.MainModule.FileName.ToUpperInvariant();
-
-                if (!fileName.Equals(ProcessHelper.GetOwnExeName(), StringComparison.OrdinalIgnoreCase) && (
-                        fileName.EndsWith("\\SUDO.EXE", StringComparison.Ordinal) ||
-                        fileName.EndsWith("\\GSUDO.EXE", StringComparison.Ordinal) ||
-                        fileName.EndsWith("\\BASH.EXE", StringComparison.Ordinal) // MINGW64/MSYS wrapper
-                    )
-                   )
-                {
+                if (!fileName.Equals(ProcessHelper.GetOwnExeName(), StringComparison.OrdinalIgnoreCase) 
+                    && (fileName.EndsWith("\\SUDO.EXE", StringComparison.OrdinalIgnoreCase) ||
+                        fileName.EndsWith("\\GSUDO.EXE", StringComparison.OrdinalIgnoreCase)))
                     return true;
+            }
+            catch { } // fails to get parent.MainModule if our parent process is elevated and we are not.
+
+            return false;
+        }
+
+        /// <summary>
+        /// Naive Shim Detection.
+        /// </summary>
+        /// <param name="process"></param>
+        /// <returns></returns>
+        private static bool IsWrapper(string fileName, Process process)
+        {
+            try
+            {
+                // MINGW64/MSYS wraps .EXE calls with 2 bash.exe processes.
+                if (ShellHelper.InvokingShell == Shell.Bash &&
+                    fileName.EndsWith("\\BASH.EXE", StringComparison.Ordinal))
+                {
+                    if (GetParentProcess(process).MainModule.FileName.EndsWith("\\BASH.EXE", StringComparison.Ordinal))
+                        return true;
                 }
             }
             catch { } // fails to get parent.MainModule if our parent process is elevated and we are not.

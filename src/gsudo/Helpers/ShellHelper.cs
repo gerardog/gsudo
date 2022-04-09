@@ -18,38 +18,61 @@ namespace gsudo.Helpers
 
     static class ShellHelper
     {
-        public static Shell DetectInvokingShell(out string shellFullPath)
+        private static Shell? _invokingShell;
+        private static string _invokingShellFullPath;
+
+        public static string InvokingShellFullPath 
         {
-            var parentProcess = Process.GetCurrentProcess().GetParentProcessExcludingShim();
+            get
+            {
+                if (_invokingShellFullPath==null)
+                    Initialize();
+                return _invokingShellFullPath;
+            }
+        }
+
+        public static Shell InvokingShell
+        {
+            get
+            {
+                if (!_invokingShell.HasValue)
+                    Initialize();
+                return _invokingShell.Value;
+            }
+        }
+
+        private static void Initialize()
+        {
+            var parentProcess = Process.GetCurrentProcess().GetParentProcessExcludingShim(false); // must be false to avoid a stack overflow exception.
 
             if (parentProcess != null)
             {
-                shellFullPath = parentProcess.GetExeName();
-                string parentExeName = Path.GetFileName(shellFullPath).ToUpperInvariant();
+                _invokingShellFullPath = parentProcess.GetExeName();
+                string parentExeName = Path.GetFileName(_invokingShellFullPath).ToUpperInvariant();
 
                 if (parentExeName == "POWERSHELL.EXE")
                 {
-                    return Shell.PowerShell;
+                    _invokingShell = Shell.PowerShell;
                 }
                 else if (parentExeName == "PWSH.EXE")
                 {
-                    return Shell.PowerShellCore;
+                    _invokingShell = Shell.PowerShellCore;
                 }
                 else if (parentExeName == "YORI.EXE")
                 {
-                    return Shell.Yori;
+                    _invokingShell = Shell.Yori;
                 }
                 else if (parentExeName == "WSL.EXE")
                 {
-                    return Shell.Wsl;
+                    _invokingShell = Shell.Wsl;
                 }
                 else if (parentExeName == "BASH.EXE")
                 {
-                    return Shell.Bash;
+                    _invokingShell = Shell.Bash;
                 }
                 else if (parentExeName == "TCC.EXE")
                 {
-                    return Shell.TakeCommand;
+                    _invokingShell = Shell.TakeCommand;
                 }
                 else if (parentExeName == "CMD.EXE")
                 {
@@ -60,7 +83,7 @@ namespace gsudo.Helpers
 
                     // So lets keep shellFullPath = ParentProcess.FullPath
                     // in order to keep the same bitness.
-                    return Shell.Cmd;
+                    _invokingShell = Shell.Cmd;
                 }
                 else 
                 {
@@ -71,26 +94,29 @@ namespace gsudo.Helpers
                         var grandParentExeName = Path.GetFileName(grandParentProcess.GetExeName()).ToUpperInvariant();
                         if (grandParentExeName == "PWSH.EXE")
                         {
-                            shellFullPath = grandParentProcess.GetExeName();
+                            _invokingShellFullPath = grandParentProcess.GetExeName();
 
-                            FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(shellFullPath);
+                            FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(_invokingShellFullPath);
 
-                            if (Version.Parse(versionInfo.FileVersion) <= Version.Parse("6.2.3.0") && shellFullPath.EndsWith(".dotnet\\tools\\pwsh.exe", StringComparison.OrdinalIgnoreCase))
+                            if (Version.Parse(versionInfo.FileVersion) <= Version.Parse("6.2.3.0") && _invokingShellFullPath.EndsWith(".dotnet\\tools\\pwsh.exe", StringComparison.OrdinalIgnoreCase))
                             {
-                                return Shell.PowerShellCore623BuggedGlobalInstall;
+                                _invokingShell = Shell.PowerShellCore623BuggedGlobalInstall;
+                                return;
                             }
 
-                            return Shell.PowerShellCore;
+                            _invokingShell = Shell.PowerShellCore;
                         }
                     }
                 }
+
+                return;
             }
 
             // Unknown Shell. 
             // (We couldnt get info about caller process).
             // => Assume CMD.
-            shellFullPath = Environment.GetEnvironmentVariable("COMSPEC");
-            return Shell.Cmd;
+            _invokingShellFullPath = Environment.GetEnvironmentVariable("COMSPEC");
+            _invokingShell = Shell.Cmd;
         }
     }
 }

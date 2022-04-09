@@ -16,8 +16,8 @@ namespace gsudo.Helpers
 
         internal static string[] AugmentCommand(string[] args)
         {
-            string currentShellExeName;
-            Shell currentShell = ShellHelper.DetectInvokingShell(out currentShellExeName);
+            string currentShellExeName = ShellHelper.InvokingShellFullPath;
+            Shell currentShell = ShellHelper.InvokingShell;
 
             if (!InputArguments.Direct)
             {
