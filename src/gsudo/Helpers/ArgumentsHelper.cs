@@ -19,6 +19,8 @@ namespace gsudo.Helpers
             string currentShellExeName = ShellHelper.InvokingShellFullPath;
             Shell currentShell = ShellHelper.InvokingShell;
 
+            Logger.Instance.Log($"Invoking Shell: {currentShell}", LogLevel.Debug);
+
             if (!InputArguments.Direct)
             {
                 if (currentShell == Shell.PowerShellCore623BuggedGlobalInstall)
@@ -122,7 +124,8 @@ namespace gsudo.Helpers
                     if (args.Length == 0)
                         return new[] { currentShellExeName };
                     else
-                        return args;
+                        return new[] { currentShellExeName}
+                            .Concat(args).ToArray();
                 }
                 else if (currentShell == Shell.TakeCommand)
                 {
