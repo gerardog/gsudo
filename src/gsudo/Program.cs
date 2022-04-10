@@ -64,8 +64,8 @@ namespace gsudo
                     {
                         if (cmd.GetType() == typeof(ServiceCommand))
                         {
-                            Console.WriteLine("Press any key to exit.");
-                            Console.ReadKey();
+                            Console.WriteLine("Service shutdown. This window will close in 15 seconds");
+                            System.Threading.Thread.Sleep(15000);
                         }
                     }
                 }
