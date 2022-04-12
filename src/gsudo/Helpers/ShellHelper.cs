@@ -25,7 +25,7 @@ namespace gsudo.Helpers
         {
             get
             {
-                if (_invokingShellFullPath==null)
+                if (!IsIntialized)
                     Initialize();
                 return _invokingShellFullPath;
             }
@@ -35,15 +35,17 @@ namespace gsudo.Helpers
         {
             get
             {
-                if (!_invokingShell.HasValue)
+                if (!IsIntialized)
                     Initialize();
                 return _invokingShell.Value;
             }
         }
 
+        public static bool IsIntialized { get; internal set; }
+
         private static void Initialize()
         {
-            var parentProcess = Process.GetCurrentProcess().GetParentProcessExcludingShim(false); // must be false to avoid a stack overflow exception.
+            var parentProcess = Process.GetCurrentProcess().GetParentProcessExcludingShim();
 
             if (parentProcess != null)
             {
@@ -109,6 +111,7 @@ namespace gsudo.Helpers
                     }
                 }
 
+                IsIntialized = true;
                 return;
             }
 
@@ -117,6 +120,7 @@ namespace gsudo.Helpers
             // => Assume CMD.
             _invokingShellFullPath = Environment.GetEnvironmentVariable("COMSPEC");
             _invokingShell = Shell.Cmd;
+            IsIntialized = true;
         }
     }
 }

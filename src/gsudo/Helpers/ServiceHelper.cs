@@ -57,7 +57,7 @@ namespace gsudo.Helpers
         internal static bool StartElevatedService(int? allowedPid, TimeSpan? cacheDuration = null)
         {
             var callingSid = System.Security.Principal.WindowsIdentity.GetCurrent().User.Value;
-            var callingPid = allowedPid ?? ProcessHelper.GetCallerPid();
+            var callingPid = allowedPid ?? Process.GetCurrentProcess().GetCacheableRootProcessId();
             string verb;
 
             Logger.Instance.Log($"Caller SID: {callingSid}", LogLevel.Debug);

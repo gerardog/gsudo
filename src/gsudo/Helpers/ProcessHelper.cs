@@ -29,7 +29,7 @@ namespace gsudo.Helpers
                 exeName = process.ProcessName;
                 exeName = process.MainModule?.FileName ?? exeName;
             }
-            catch {}
+            catch { }
             return exeName;
         }
 
@@ -56,11 +56,55 @@ namespace gsudo.Helpers
             }
         }
 
-        public static Process GetParentProcessExcludingShim(this Process process, bool excludeWrappers = true)
+        public static Process GetShellProcess(this Process process)
+        {
+            if (ShellHelper.InvokingShell!=Shell.Bash)
+                return GetParentProcessExcludingShim(process);
+
+            // Unable to get a caller pid for the cache.
+            // This is common in MSYS/git-bash/cygwin
+            // Fallback to first process attached to the current console.
+            var pids = ConsoleHelper.GetConsoleAttachedPids();
+            return Process.GetProcessById((int) pids[pids.Length - 1]);
+        }
+
+        public static int GetCacheableRootProcessId(this Process process)
+        {
+            var parent = GetParentProcessId(process);
+
+            if (ShellHelper.InvokingShell == Shell.Bash)
+            {
+                if (parent == 0) 
+                    return process.Id;
+
+                try
+                {
+                    var pparent = Process.GetProcessById(parent);
+                    if (pparent.MainModule.FileName.EndsWith("\\BASH.EXE", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var grandparent = GetParentProcess(pparent);
+                        if (!grandparent.MainModule.FileName.EndsWith("\\BASH.EXE", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return parent;
+                        }
+                        return GetCacheableRootProcessId(pparent);
+                    }
+                }
+                catch
+                { }
+
+                return parent;
+
+            }
+        
+            return GetParentProcessIdExcludingShim(process);
+        }
+
+        public static Process GetParentProcessExcludingShim(this Process process)
         {
             try
             {
-                var parentPid = ProcessHelper.GetParentProcessIdExcludingShim(process, excludeWrappers);
+                var parentPid = ProcessHelper.GetParentProcessIdExcludingShim(process);
                 if (parentPid == 0)
                     return null;
                 return Process.GetProcessById(parentPid);
@@ -71,7 +115,7 @@ namespace gsudo.Helpers
             }
         }
 
-        public static int GetParentProcessIdExcludingShim(this Process process, bool excludeWrappers = true) 
+        public static int GetParentProcessIdExcludingShim(this Process process)
         {
             var parentId = GetParentProcessId(process);
             Process parent;
@@ -81,12 +125,9 @@ namespace gsudo.Helpers
                 var filename = parent.MainModule.FileName;
 
                 if (IsShim(filename))
-                    return GetParentProcessId(parent);
-
-                if (excludeWrappers && IsWrapper(filename, process))
-                    return GetParentProcessIdExcludingShim(parent, excludeWrappers);
+                    return GetParentProcessIdExcludingShim(parent);
             }
-            catch 
+            catch (Exception ex)
             {
                 // For example: System.ArgumentException: Process with an Id of 18312 is not running.
                 return parentId;
@@ -131,7 +172,7 @@ namespace gsudo.Helpers
         /// </summary>
         internal static int GetCallerPid()
         {
-            return Process.GetCurrentProcess().GetParentProcessIdExcludingShim();
+            return Process.GetCurrentProcess().GetCacheableRootProcessId();
         }
 
         public static bool IsHighIntegrity()
@@ -331,32 +372,11 @@ namespace gsudo.Helpers
         {
             try
             {
-                if (!fileName.Equals(ProcessHelper.GetOwnExeName(), StringComparison.OrdinalIgnoreCase) 
+                if (!fileName.Equals(ProcessHelper.GetOwnExeName(), StringComparison.OrdinalIgnoreCase)
                     && (fileName.EndsWith("\\SUDO.EXE", StringComparison.OrdinalIgnoreCase) ||
-                        fileName.EndsWith("\\GSUDO.EXE", StringComparison.OrdinalIgnoreCase)))
+                        fileName.EndsWith("\\GSUDO.EXE", StringComparison.OrdinalIgnoreCase)
+                        ))
                     return true;
-            }
-            catch { } // fails to get parent.MainModule if our parent process is elevated and we are not.
-
-            return false;
-        }
-
-        /// <summary>
-        /// Naive Shim Detection.
-        /// </summary>
-        /// <param name="process"></param>
-        /// <returns></returns>
-        private static bool IsWrapper(string fileName, Process process)
-        {
-            try
-            {
-                // MINGW64/MSYS wraps .EXE calls with 2 bash.exe processes.
-                if (ShellHelper.InvokingShell == Shell.Bash &&
-                    fileName.EndsWith("\\BASH.EXE", StringComparison.Ordinal))
-                {
-                    if (GetParentProcess(process).MainModule.FileName.EndsWith("\\BASH.EXE", StringComparison.Ordinal))
-                        return true;
-                }
             }
             catch { } // fails to get parent.MainModule if our parent process is elevated and we are not.
 

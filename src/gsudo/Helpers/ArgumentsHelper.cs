@@ -124,8 +124,8 @@ namespace gsudo.Helpers
                     if (args.Length == 0)
                         return new[] { currentShellExeName };
                     else
-                        return new[] { currentShellExeName}
-                            .Concat(args).ToArray();
+                        return new[] { currentShellExeName, "-c",
+                            $"\"{ String.Join(" ", args).Replace("\"", "\\\"") }\"" };
                 }
                 else if (currentShell == Shell.TakeCommand)
                 {

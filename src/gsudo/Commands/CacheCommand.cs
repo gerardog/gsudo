@@ -25,7 +25,7 @@ namespace gsudo.Commands
         {
             if (!AllowedPid.HasValue)
             {
-                AllowedPid = Process.GetCurrentProcess().GetParentProcessExcludingShim().Id;
+                AllowedPid = Process.GetCurrentProcess().GetCacheableRootProcessId();
             }
 
             if (!Action.HasValue || Action == CacheCommandAction.Help)

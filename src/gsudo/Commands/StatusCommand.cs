@@ -71,7 +71,7 @@ namespace gsudo.Commands
             var ownPid = ProcessApi.GetCurrentProcessId();
             var processIds = ConsoleHelper.GetConsoleAttachedPids();
             const string unknown = "(Unknown)";
-            Console.WriteLine($"{"PID".PadLeft(9)} {"Integrity".PadRight(10)} {"UserName".PadRight(25)} {"Name"}");
+            Console.WriteLine($"{"PID".PadLeft(9)} {"PPID".PadLeft(9)} {"Integrity".PadRight(10)} {"UserName".PadRight(25)} {"Name"}");
 
             foreach (var pid in processIds.Reverse())
             {
@@ -79,11 +79,13 @@ namespace gsudo.Commands
                 string name = unknown;
                 string integrity = unknown;
                 string username = unknown;
+                int ppid = 0;
                 try
                 {
                     p = Process.GetProcessById((int)pid);
                     name = p.GetExeName();
-                    
+                    ppid = ProcessHelper.GetParentProcessId((int)pid);
+
                     try
                     {
                         var i = ProcessHelper.GetProcessIntegrityLevel(p.Handle);
@@ -104,7 +106,7 @@ namespace gsudo.Commands
                 catch
                 { }
 
-                Console.WriteLine($"{pid.ToString(CultureInfo.InvariantCulture).PadLeft(9)} {integrity.PadRight(10)} {username.PadRight(25)} {name}{((ownPid == pid) ? " (this gsudo status)" : null)}");
+                Console.WriteLine($"{pid.ToString(CultureInfo.InvariantCulture).PadLeft(9)} {ppid.ToString(CultureInfo.InvariantCulture).PadLeft(9)} {integrity.PadRight(10)} {username.PadRight(25)} {name}{((ownPid == pid) ? " (this gsudo status)" : null)}");
             }
         }
     }
