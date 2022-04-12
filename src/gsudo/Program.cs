@@ -59,6 +59,7 @@ namespace gsudo
                     // cleanup console before returning.
                     Console.CursorVisible = true;
                     Console.ResetColor();
+                    await Task.Delay(1).ConfigureAwait(false); // force reset color on WSL.
 
                     if (InputArguments.Debug && !Console.IsInputRedirected)
                     {
