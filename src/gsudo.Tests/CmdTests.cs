@@ -99,18 +99,18 @@ namespace gsudo.Tests
         public void Cmd_WindowsAppWaitTest()
         {
             bool stillWaiting = false;
-            var p = new TestProcess("gsudo -w notepad");
+            var p = new TestProcess("gsudo \"c:\\Program Files (x86)\\Windows NT\\Accessories\\wordpad.exe\"");
             try
             {
                 p.WaitForExit(3000);
             }
-            catch (Exception)
+            finally
             {
                 stillWaiting = true;
             }
 
             Assert.IsTrue(stillWaiting);
-            Process.Start("gsudo", "taskkill.exe /FI \"WINDOWTITLE eq Untitled - Notepad\" ").WaitForExit();
+            Process.Start("gsudo", "taskkill.exe /IM Wordpad.exe").WaitForExit();
             p.WaitForExit();
         }
 
