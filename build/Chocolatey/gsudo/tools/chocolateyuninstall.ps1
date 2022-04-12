@@ -53,14 +53,13 @@ $ErrorActionPreference="Ignore"
 Get-ChildItem $installPath -Recurse |? LinkType -eq 'SymbolicLink'|%{$_.Delete()}
 # Delete the rest.
 Remove-Item $installPath -Recurse -Force -ErrorAction Ignore
+Remove-Item $installPath -Recurse -Force -ErrorAction Ignore
 
 if (Test-Path $installPath) {
 	# Files are in use so delete failed.
 	# Rename used files and directories. 
 
-	#for (($i = 0); $i -lt 3; $i++)
-	Get-ChildItem $installPath -Recurse -Exclude "*.deleteMe" | Sort-Object -Descending {(++$script:i)} | Rename-Item -NewName {$_.name + ".deleteMe" }
-
+    Get-ChildItem $installPath -Recurse -Exclude "*.deleteMe" | Sort-Object -Descending {(++$script:i)} | % { Rename-Item -Path $_.FullName -NewName ($_.Name + ".deleteMe")  ; } *> $NULL
 	# Mark remaining for delete after restart.
 	Get-ChildItem $installPath -Recurse | % { MarkFileDelete ( $_.FullName) }
 	MarkFileDelete ( $installPath );

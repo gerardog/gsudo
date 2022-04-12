@@ -22,22 +22,13 @@ Uninstall-ChocolateyPath $bin 'User'
 # Remove from Path on previous versions ( <= 1.0.2 )
 Uninstall-ChocolateyPath $bin 'Machine'
 
-if (Test-Path "$env:ChocolateyInstall\bin\gsudo.exe")  # Previous installers created symlinks on chocolatey\bin, we no longer need them.
-{ 
-  Remove-Item "$env:ChocolateyInstall\bin\gsudo.exe"
-  if (Test-IsSymLink "$env:ChocolateyInstall\bin\sudo.exe")
-  {
-    Remove-Item "$env:ChocolateyInstall\bin\sudo.exe"
-  }
-}
-
 if ([System.Environment]::CurrentDirectory -like "$ToolsLocation*") {
 	Write-Output -Verbose "Changing directory to $ToolsLocation to ensure successfull install/upgrade."
 	Set-Location $ToolsLocation
 }
 ############
 
-$TargetDir = "$ToolsLocation\gsudo\v" + (Get-Item "$bin\gsudo.exe").VersionInfo.FileVersion
+$TargetDir = ("$ToolsLocation\gsudo\v" + ((Get-Item "$bin\gsudo.exe").VersionInfo.ProductVersion -split "\+" )[0])
 $SymLinkDir = "$ToolsLocation\gsudo\Current"
 
 # Add to System Path

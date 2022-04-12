@@ -103,9 +103,9 @@ powershell -NoProfile -Command "(gc gsudo.nuspec.template) -replace '#VERSION#',
 echo --- >> tools\verification.txt
 echo Version Hashes for v%version% >> tools\verification.txt
 echo. >> tools\verification.txt
-powershell "Get-FileHash bin\*.* | Out-String -Width 200" >> tools\verification.txt
+powershell -NoProfile -Command "Get-FileHash bin\*.* | Out-String -Width 200" >> tools\verification.txt
 echo. >> tools\verification.txt
-rm *.bak -Recurse 
+powershell -NoProfile -Command "Get-childitem *.bak -Recurse | Remove-Item"
 cd ..
 choco pack gsudo\gsudo.nuspec -outdir="%OUTPUT_FOLDER%"
 
