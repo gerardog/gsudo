@@ -123,10 +123,6 @@ gsudo !!
    The ScriptBlock will ran elevated in a different process and lexical scope, so it can't access your existing `$variables`, but if you use `$using:variableName` syntax, it´s serialized value will be applied. The result object is serialized and returned (as an object).
 
 - <a name="gsudomodule"></a> For a enhanced experience: Import module `gsudoModule.psd1` into your Profile: (also enables `gsudo !!` on PS)
-- Manually create an custom alias for gsudo or Invoke-gsudo, as you prefer: (add this line to your $PROFILE)
-    - `Set-Alias 'sudo' 'gsudo'` or 
-    - `Set-Alias 'sudo' 'Invoke-gsudo'`
-
 
 ``` Powershell
 # Add the following line to your $PROFILE (replace with full path)
@@ -134,6 +130,10 @@ gsudo !!
 # Or run:
    Get-Command gsudoModule.psd1 | % { Write-Output "`nImport-Module `"$($_.Source)`"" | Add-Content $PROFILE }
 ```
+
+- You can create a custom alias for gsudo or Invoke-gsudo, as you prefer: (add one of these lines to your $PROFILE)
+    - `Set-Alias 'sudo' 'gsudo'` or 
+    - `Set-Alias 'sudo' 'Invoke-gsudo'`
 
 **Examples:**
 
@@ -164,7 +164,7 @@ if ($LastExitCode -eq 999 ) {
 } else { 'Success!' }
 ```
 
-Invoke-gsudo examples:
+**Invoke-gsudo examples:**
 ``` PowerShell
 # Accepts pipeline input.
 Get-process SpoolSv | Invoke-gsudo { Stop-Process -Force }
