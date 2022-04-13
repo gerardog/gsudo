@@ -6,8 +6,6 @@
 # You can also use 'gsudo.exe [command]' syntax (to avoids this wrapper),
 
 # For better experience (fix credentials cache) in git-bash/MinGw create this wrapper can be added as function in .bashrc:
-# 		gsudo() { export MSYS_NO_PATHCONV=1;  gsudo.exe "$@"; }
+# 		gsudo() { WSLENV=WSL_DISTRO_NAME:USER:$WSLENV MSYS_NO_PATHCONV=1 gsudo.exe "$@"; }
 
-export WSLENV=WSL_DISTRO_NAME:USER:$WSLENV
-export MSYS_NO_PATHCONV=1
-gsudo.exe "$@"
+WSLENV=WSL_DISTRO_NAME:USER:$WSLENV MSYS_NO_PATHCONV=1 gsudo.exe "$@"
