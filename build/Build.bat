@@ -88,8 +88,8 @@ pushd %REPO_ROOT_FOLDER%\Build
 :: Create GitHub release ZIP + ZIP hash
 Set PSModulePath=
 7z a "%OUTPUT_FOLDER%\gsudo.v%version%.zip" %OUTPUT_FOLDER%\bin\*
-powershell -Command ECHO (Get-FileHash %OUTPUT_FOLDER%\gsudo.v%version%.zip).hash > %OUTPUT_FOLDER%\gsudo.v%version%.zip.sha256
-powershell -Command ECHO (Get-FileHash %OUTPUT_FOLDER%\gsudoSetup.msi).hash > %OUTPUT_FOLDER%\gsudoSetup.msi.sha256
+powershell -NoProfile -Command ECHO (Get-FileHash %OUTPUT_FOLDER%\gsudo.v%version%.zip).hash > %OUTPUT_FOLDER%\gsudo.v%version%.zip.sha256
+powershell -NoProfile -Command ECHO (Get-FileHash %OUTPUT_FOLDER%\gsudoSetup.msi).hash > %OUTPUT_FOLDER%\gsudoSetup.msi.sha256
 
 :: Chocolatey
 git clean %REPO_ROOT_FOLDER%\Build\Chocolatey\gsudo\Bin -xf
