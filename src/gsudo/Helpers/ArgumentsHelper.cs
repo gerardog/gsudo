@@ -400,10 +400,6 @@ namespace gsudo.Helpers
             System.IntPtr ptr = ConsoleApi.GetCommandLine();
             string commandLine = Marshal.PtrToStringAuto(ptr).TrimStart();
 
-            // Since input args not yet parsed, this log can only be seen with:
-            //   gsudo config LogLevel Debug
-            Logger.Instance.Log($"Command Line: {commandLine}", LogLevel.Debug);
-
             if (commandLine[0] == '"')
                 return commandLine.Substring(commandLine.IndexOf('"', 1) + 1).TrimStart(' ');
             else if (commandLine.IndexOf(' ', 1) >= 0)
