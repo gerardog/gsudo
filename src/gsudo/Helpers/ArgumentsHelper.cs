@@ -16,8 +16,10 @@ namespace gsudo.Helpers
 
         internal static string[] AugmentCommand(string[] args)
         {
-            string currentShellExeName;
-            Shell currentShell = ShellHelper.DetectInvokingShell(out currentShellExeName);
+            string currentShellExeName = ShellHelper.InvokingShellFullPath;
+            Shell currentShell = ShellHelper.InvokingShell;
+
+            Logger.Instance.Log($"Invoking Shell: {currentShell}", LogLevel.Debug);
 
             if (!InputArguments.Direct)
             {
@@ -122,7 +124,8 @@ namespace gsudo.Helpers
                     if (args.Length == 0)
                         return new[] { currentShellExeName };
                     else
-                        return args;
+                        return new[] { currentShellExeName, "-c",
+                            $"\"{ String.Join(" ", args).Replace("\"", "\\\"") }\"" };
                 }
                 else if (currentShell == Shell.TakeCommand)
                 {
@@ -396,10 +399,6 @@ namespace gsudo.Helpers
         {
             System.IntPtr ptr = ConsoleApi.GetCommandLine();
             string commandLine = Marshal.PtrToStringAuto(ptr).TrimStart();
-
-            // Since input args not yet parsed, this log can only be seen with:
-            //   gsudo config LogLevel Debug
-            Logger.Instance.Log($"Command Line: {commandLine}", LogLevel.Debug);
 
             if (commandLine[0] == '"')
                 return commandLine.Substring(commandLine.IndexOf('"', 1) + 1).TrimStart(' ');

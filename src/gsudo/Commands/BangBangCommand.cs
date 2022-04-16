@@ -13,7 +13,7 @@ namespace gsudo.Commands
 
         public Task<int> Execute()
         {
-            var caller = Process.GetCurrentProcess().GetParentProcessExcludingShim().MainModule.ModuleName;
+            var caller = Process.GetCurrentProcess().GetShellProcess().MainModule.ModuleName;
             var length = (int)NativeMethods.GetConsoleCommandHistoryLength(caller);
 
             if (length == 0)

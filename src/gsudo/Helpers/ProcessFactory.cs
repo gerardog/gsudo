@@ -1,6 +1,7 @@
 ﻿using gsudo.Native;
-using System;
+using gsudo.Tokens;
 using Microsoft.Win32.SafeHandles;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -9,7 +10,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using static gsudo.Native.ProcessApi;
 using static gsudo.Native.TokensApi;
-using gsudo.Tokens;
 
 namespace gsudo.Helpers
 {
@@ -128,7 +128,11 @@ namespace gsudo.Helpers
 
                 var possibleNames = new List<string>();
 
-                possibleNames.Add(inputFileName);
+                if (validExtensions.Contains(Path.GetExtension(inputFileName), StringComparer.OrdinalIgnoreCase))
+                {
+                    possibleNames.Add(inputFileName);
+                }
+
                 possibleNames.AddRange(validExtensions.Select((ext) => inputFileName + ext));
 
                 var pathsToSearch = new List<string>();
@@ -168,7 +172,7 @@ namespace gsudo.Helpers
             {
                 using (var token = tm.GetToken())
                 {
-                    return CreateProcessWithToken(token.DangerousGetHandle() , appToRun, args, startupFolder, hidden);
+                    return CreateProcessWithToken(token.DangerousGetHandle(), appToRun, args, startupFolder, hidden);
                 }
             }
         }
@@ -188,7 +192,7 @@ namespace gsudo.Helpers
                 return new SafeProcessHandle(StartAttached(appToRun, args).Handle, true);
             }
 
-            if (integrityLevel >= IntegrityLevel.Medium ) // Unelevation request.
+            if (integrityLevel >= IntegrityLevel.Medium) // Unelevation request.
             {
                 try
                 {
@@ -261,7 +265,7 @@ namespace gsudo.Helpers
             CloseHandle(pi.hThread);
             return new SafeProcessHandle(pi.hProcess, true);
         }
-        
+
         private static SafeProcessHandle CreateProcessWithToken(IntPtr newToken, string appToRun, string args, string startupFolder, bool hidden)
         {
             var STARTF_USESHOWWINDOW = 0x00000001;
@@ -283,7 +287,7 @@ namespace gsudo.Helpers
             }
 
             PROCESS_INFORMATION processInformation;
-            if (!CreateProcessWithTokenW(newToken, 0, null, $"{appToRun} {args}",(UInt32) 0, IntPtr.Zero, startupFolder, ref startupInfo, out processInformation))
+            if (!CreateProcessWithTokenW(newToken, 0, null, $"{appToRun} {args}", (UInt32)0, IntPtr.Zero, startupFolder, ref startupInfo, out processInformation))
             {
                 throw new Win32Exception();
             }
@@ -294,7 +298,7 @@ namespace gsudo.Helpers
         {
             var sInfoEx = new ProcessApi.STARTUPINFOEX();
             sInfoEx.StartupInfo.cb = Marshal.SizeOf(sInfoEx);
-            
+
             var pSec = new ProcessApi.SECURITY_ATTRIBUTES();
             var tSec = new ProcessApi.SECURITY_ATTRIBUTES();
             pSec.nLength = Marshal.SizeOf(pSec);
@@ -311,7 +315,7 @@ namespace gsudo.Helpers
             tSec.lpSecurityDescriptor = sd_ptr;
 
             var command = $"{lpApplicationName} {args}";
-            
+
             Logger.Instance.Log($"{nameof(CreateProcessAsUserWithFlags)}: {lpApplicationName} {args}", LogLevel.Debug);
             if (!ProcessApi.CreateProcess(null, command, ref pSec, ref tSec, false, dwCreationFlags, IntPtr.Zero, null, ref sInfoEx, out pInfo))
             {

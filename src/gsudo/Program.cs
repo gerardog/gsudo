@@ -18,11 +18,14 @@ namespace gsudo
         {
             ICommand cmd = null;
 
-            var args = ArgumentsHelper.SplitArgs(ArgumentsHelper.GetRealCommandLine());
+            var commandLine = ArgumentsHelper.GetRealCommandLine();
+            var args = ArgumentsHelper.SplitArgs(commandLine);
 
             try
             {
                 cmd = ArgumentsHelper.ParseCommand(args);
+                Logger.Instance.Log($"Command Line: {commandLine}", LogLevel.Debug);
+
                 if (cmd != null)
                 {
                     try
@@ -59,13 +62,14 @@ namespace gsudo
                     // cleanup console before returning.
                     Console.CursorVisible = true;
                     Console.ResetColor();
+                    await Task.Delay(1).ConfigureAwait(false); // force reset color on WSL.
 
                     if (InputArguments.Debug && !Console.IsInputRedirected)
                     {
                         if (cmd.GetType() == typeof(ServiceCommand))
                         {
-                            Console.WriteLine("Press any key to exit.");
-                            Console.ReadKey();
+                            Console.WriteLine("Service shutdown. This window will close in 15 seconds");
+                            System.Threading.Thread.Sleep(15000);
                         }
                     }
                 }

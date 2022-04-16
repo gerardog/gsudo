@@ -29,7 +29,7 @@ namespace gsudo.Helpers
                 exeName = process.ProcessName;
                 exeName = process.MainModule?.FileName ?? exeName;
             }
-            catch {}
+            catch { }
             return exeName;
         }
 
@@ -56,11 +56,55 @@ namespace gsudo.Helpers
             }
         }
 
+        public static Process GetShellProcess(this Process process)
+        {
+            if (ShellHelper.InvokingShell!=Shell.Bash)
+                return GetParentProcessExcludingShim(process);
+
+            // Unable to get a caller pid for the cache.
+            // This is common in MSYS/git-bash/cygwin
+            // Fallback to first process attached to the current console.
+            var pids = ConsoleHelper.GetConsoleAttachedPids();
+            return Process.GetProcessById((int) pids[pids.Length - 1]);
+        }
+
+        public static int GetCacheableRootProcessId(this Process process)
+        {
+            var parent = GetParentProcessId(process);
+
+            if (ShellHelper.InvokingShell == Shell.Bash)
+            {
+                if (parent == 0) 
+                    return process.Id;
+
+                try
+                {
+                    var pparent = Process.GetProcessById(parent);
+                    if (pparent.MainModule.FileName.EndsWith("\\BASH.EXE", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var grandparent = GetParentProcess(pparent);
+                        if (!grandparent.MainModule.FileName.EndsWith("\\BASH.EXE", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return parent;
+                        }
+                        return GetCacheableRootProcessId(pparent);
+                    }
+                }
+                catch
+                { }
+
+                return parent;
+
+            }
+        
+            return GetParentProcessIdExcludingShim(process);
+        }
+
         public static Process GetParentProcessExcludingShim(this Process process)
         {
             try
             {
-                var parentPid = ProcessHelper.GetParentProcessIdExcludingShim(process.Id);
+                var parentPid = ProcessHelper.GetParentProcessIdExcludingShim(process);
                 if (parentPid == 0)
                     return null;
                 return Process.GetProcessById(parentPid);
@@ -71,23 +115,22 @@ namespace gsudo.Helpers
             }
         }
 
-        public static int GetParentProcessIdExcludingShim(int processId) 
+        public static int GetParentProcessIdExcludingShim(this Process process)
         {
-            var parentId = GetParentProcessId(processId);
+            var parentId = GetParentProcessId(process);
             Process parent;
             try
             {
                 parent = Process.GetProcessById(parentId);
+                var filename = parent.MainModule.FileName;
+
+                if (IsShim(filename))
+                    return GetParentProcessIdExcludingShim(parent);
             }
-            catch 
+            catch (Exception ex)
             {
                 // For example: System.ArgumentException: Process with an Id of 18312 is not running.
                 return parentId;
-            }
-
-            if (IsShimOrWrapper(parent))
-            {
-                return GetParentProcessIdExcludingShim(parentId);
             }
 
             return parentId;
@@ -99,40 +142,37 @@ namespace gsudo.Helpers
 
             try
             {
-                if (hProcess == IntPtr.Zero) return 0;
-
-                var pbi = new NtDllApi.PROCESS_BASIC_INFORMATION();
-                int returnLength;
-
-                if (NtDllApi.NativeMethods.NtQueryInformationProcess(hProcess, 0, ref pbi, Marshal.SizeOf(pbi), out returnLength) != 0)
-                    return 0;
-
-                return (int)pbi.InheritedFromUniqueProcessId;
+                return GetParentProcessId(hProcess);
             }
             finally
             {
                 CloseHandle(hProcess);
             }
         }
-        
+
+        public static int GetParentProcessId(this Process process) => GetParentProcessId(process.Handle);
+
+        public static Process GetParentProcess(this Process process) => Process.GetProcessById(GetParentProcessId(process.Handle));
+
+        public static int GetParentProcessId(IntPtr hProcess)
+        {
+            if (hProcess == IntPtr.Zero) return 0;
+
+            var pbi = new NtDllApi.PROCESS_BASIC_INFORMATION();
+            int returnLength;
+
+            if (NtDllApi.NativeMethods.NtQueryInformationProcess(hProcess, 0, ref pbi, Marshal.SizeOf(pbi), out returnLength) != 0)
+                return 0;
+
+            return (int)pbi.InheritedFromUniqueProcessId;
+        }
+
         /// <summary>
         /// Gets the PID that will be allowed in the cache.
         /// </summary>
         internal static int GetCallerPid()
         {
-            var currentProcess= Process.GetCurrentProcess();
-            var parent = currentProcess.GetParentProcessExcludingShim();
-
-            if (parent == null) 
-            {
-                // Unable to get a caller pid for the cache.
-                // This is common in MSYS/git-bash/cygwin
-                // Fallback to first process attached to the current console.
-                var pids = ConsoleHelper.GetConsoleAttachedPids();
-                return (int)pids[pids.Length - 1];
-            }
-
-            return parent.Id;
+            return Process.GetCurrentProcess().GetCacheableRootProcessId();
         }
 
         public static bool IsHighIntegrity()
@@ -326,23 +366,17 @@ namespace gsudo.Helpers
         /// <summary>
         /// Naive Shim Detection.
         /// </summary>
-        /// <param name="parent"></param>
+        /// <param name="process"></param>
         /// <returns></returns>
-        public static bool IsShimOrWrapper(Process parent)
+        private static bool IsShim(string fileName)
         {
             try
             {
-                var fileName = parent.MainModule.FileName.ToUpperInvariant();
-
-                if (!fileName.Equals(ProcessHelper.GetOwnExeName(), StringComparison.OrdinalIgnoreCase) && (
-                        fileName.EndsWith("\\SUDO.EXE", StringComparison.Ordinal) ||
-                        fileName.EndsWith("\\GSUDO.EXE", StringComparison.Ordinal) ||
-                        fileName.EndsWith("\\BASH.EXE", StringComparison.Ordinal) // MINGW64/MSYS wrapper
-                    )
-                   )
-                {
+                if (!fileName.Equals(ProcessHelper.GetOwnExeName(), StringComparison.OrdinalIgnoreCase)
+                    && (fileName.EndsWith("\\SUDO.EXE", StringComparison.OrdinalIgnoreCase) ||
+                        fileName.EndsWith("\\GSUDO.EXE", StringComparison.OrdinalIgnoreCase)
+                        ))
                     return true;
-                }
             }
             catch { } // fails to get parent.MainModule if our parent process is elevated and we are not.
 
