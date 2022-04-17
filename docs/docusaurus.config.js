@@ -9,7 +9,7 @@ const config = {
   title: 'gsudo',
   tagline: 'a sudo for windows',
   url: 'https://your-docusaurus-test-site.com',
-  baseUrl: '/',
+  baseUrl: '/gsudo/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
