@@ -4,38 +4,61 @@ import styles from './styles.module.css';
 
 const FeatureList = [
   {
-    title: 'Easy to Use',
-    Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
-    description: (
-      <>
-        gsudo is an  was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
-      </>
-    ),
-  },
-  {
-    title: 'Focus on What Matters',
+    title: 'Easy to Use', link: "docs/usage",
     Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
     description: (
       <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
+        Prepend <code>gsudo</code> to make your command run elevated <b>in the current console window</b>. Just as Unix/Linux sudo. One UAC popup will appear. 
       </>
     ),
-  },
-  {
-    title: 'Powered by React',
+  },  {
+    title: 'Easy to Install', link: "docs/install",
+    Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
+    description: (
+      <>
+        Using Chocolatey: <code>choco install gsudo</code><br/>
+        Using Scoop: <code>scoop install gsudo</code><br/>
+        Using WinGet: <code>winget install gerardog.gsudo</code><br/>
+        <a href='docs/install'>See more setup methods.</a>
+      </>
+    ),
+  },  {
+    title: 'Portable',
+    Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
+    description: (
+      <>
+        gsudo is just a portable console app. No Windows service is required or system change is done, except adding gsudo to the Path.
+      </>
+    ),
+  },  {
+    title: 'Supports your preferred shell',
+    Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
+    description: (
+      <>
+        Detects your shell and elevates your command as a native shell command.
+        Currently supports <code>CMD</code>, <code>PowerShell</code>, <code>WSL</code>, <code>MinGW/Git-Bash</code>, <code>MSYS2</code>, <code>Cygwin</code>,<code>Yori</code> and <code>Take Command</code>.
+      </>
+    ),
+  },  {
+    title: 'Credentials Cache', link: "docs/credentials-cache",
     Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
     description: (
       <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
+        Too many UAC pop-ups? You can see less popups if you opt-in to enable the <code>credentials cache</code>, once you understand the security implications.
+      </>
+    ),
+  },  {
+    title: 'Increase your productivity',
+    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
+    description: (
+      <>
+        Do not waste time opening a new window and switching context back and forth. Also avoid the "elevation fatigue" that leads to the malpractice of running <b>everything</b> elevated, and just elevate specific commands.
       </>
     ),
   },
 ];
 
-function Feature({Svg, title, description}) {
+function Feature({Svg, title, description, link}) {
   return (
     <div className={clsx('col col--4')}>
 {/* <!--
@@ -43,7 +66,7 @@ function Feature({Svg, title, description}) {
         <Svg className={styles.featureSvg} role="img" />
       </div>
 --> */}
-      <div className="text--center padding-horiz--md">
+      <div className="text--center padding-horiz--md feature-link" onClick={(e) => { if (link) window.location.href=link; }}>
         <h3>{title}</h3>
         <p>{description}</p>
       </div>

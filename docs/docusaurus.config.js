@@ -25,7 +25,7 @@ const config = {
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
-          editUrl: 'https://github.com/gerardog/gsudo/tree/main/packages/create-docusaurus/templates/shared/',
+          editUrl: 'https://github.com/gerardog/gsudo/blob/docs/docs/',
         },
         blog: {
           showReadingTime: true,
@@ -65,6 +65,7 @@ const config = {
             position: 'left',
             label: 'Install',
           },
+          /*{to: '/docs/install', label: 'Install', position: 'left'},*/
           {to: '/blog', label: 'Blog', position: 'left'},
           {
             href: 'https://github.com/gerardog/gsudo',
@@ -97,8 +98,8 @@ const config = {
                 href: 'https://discordapp.com/invite/docusaurus',
               }, */
               {
-                label: 'Twitter',
-                href: 'https://twitter.com/gerardog',
+                label: 'Follow me on Twitter',
+                href: 'https://twitter.com/gerardo_gr',
               },
             ],
           },
@@ -111,7 +112,7 @@ const config = {
               },
               {
                 label: 'GitHub',
-                href: 'https://github.com/facebook/docusaurus',
+                href: 'https://github.com/gerardog/gsudo',
               },
             ],
           },

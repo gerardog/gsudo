@@ -34,7 +34,7 @@ export default function Home() {
   const {siteConfig} = useDocusaurusContext();
   return (
     <Layout
-      title={`${siteConfig.title} Home Page`}
+      title={`Home`}
       description="gsudo Documentation Home Page">
       <HomepageHeader />
       <main>
