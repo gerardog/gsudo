@@ -9,6 +9,7 @@ const FeatureList = [
     description: (
       <>
         Prepend <code>gsudo</code> to make your command run elevated <b>in the current console window</b>. Just as Unix/Linux sudo. One UAC popup will appear. 
+        <br/><a href='docs/usage'>Learn more</a>
       </>
     ),
   },  {
@@ -19,7 +20,7 @@ const FeatureList = [
         Using Chocolatey: <code>choco install gsudo</code><br/>
         Using Scoop: <code>scoop install gsudo</code><br/>
         Using WinGet: <code>winget install gerardog.gsudo</code><br/>
-        <a href='docs/install'>See more setup methods.</a>
+        <a href='docs/install'>Learn how to install.</a>
       </>
     ),
   },  {
@@ -45,6 +46,7 @@ const FeatureList = [
     description: (
       <>
         Too many UAC pop-ups? You can see less popups if you opt-in to enable the <code>credentials cache</code>, once you understand the security implications.
+        <br/><a href='docs/credentials-cache'>Learn more.</a>
       </>
     ),
   },  {
@@ -66,7 +68,7 @@ function Feature({Svg, title, description, link}) {
         <Svg className={styles.featureSvg} role="img" />
       </div>
 --> */}
-      <div className="text--center padding-horiz--md feature-link" onClick={(e) => { if (link) window.location.href=link; }}>
+      <div className="text--center padding-horiz--md">
         <h3>{title}</h3>
         <p>{description}</p>
       </div>

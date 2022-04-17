@@ -92,11 +92,15 @@ const config = {
               {
                 label: 'Stack Overflow',
                 href: 'https://stackoverflow.com/questions/tagged/docusaurus',
-              },
+              },*/
               {
                 label: 'Discord',
-                href: 'https://discordapp.com/invite/docusaurus',
-              }, */
+                href: 'https://discord.gg/dEEA3P5WqF',
+              }, 
+              {
+                label: 'Report an Issue',
+                href: 'https://github.com/gerardog/gsudo/issues',
+              },
               {
                 label: 'Follow me on Twitter',
                 href: 'https://twitter.com/gerardo_gr',
@@ -122,6 +126,7 @@ const config = {
       prism: {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
+        additionalLanguages: ['powershell'],
       },
     }),
 };

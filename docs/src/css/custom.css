@@ -24,7 +24,7 @@
   --ifm-color-primary: #9aa4ff; 
   /**/
   /*--ifm-color-primary: #af3830;*/
-  --ifm-color-content-inverse: rgb(245, 246, 247);
+  --ifm-color-content-inverse: --ifm-font-color-base;
   --ifm-background-image: linear-gradient(315deg, #f9d29d 0%, #ffd8cb 74%);
   --ifm-color-primary-dark: #21af90;
   --ifm-color-primary-darker: #1fa588;
@@ -43,8 +43,4 @@
 
 [data-theme='dark'] .docusaurus-highlight-code-line {
   background-color: rgba(0, 0, 0, 0.3);
-}
-
-.feature-link{
-  cursor: pointer;
 }
