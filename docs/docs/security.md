@@ -3,7 +3,7 @@ sidebar_position: 5
 title: Security Considerations
 ---
 
-## Why Windows does not have a `sudo` command?
+## Why Windows doesn't have a `sudo` command?
 
 To answer this question, we first have to take a look back at the history.
 
@@ -35,15 +35,33 @@ Later, it was assumed publicily that `UIPI` in default mode is not a security bo
 
 > Same-desktop Elevation in UAC isn't a security boundary. It can be hijacked by unprivileged software that runs on the same desktop. Same-desktop Elevation should be considered a convenience feature.
 
-This literally means: <b>UAC is a tool to protect you from shooting yourself in the foot. The only thing that protects you from malicious processes is your Anti Virus software</b>.
+This literally means: <b>UAC is a tool that protects you from shooting yourself in the foot. The only thing that protects you from malicious processes is your Anti Virus software</b>.
 
-This contradicts the premises on which they decided not to create a Windows `sudo`, because UAC is not really a complete isolation that `sudo` will break. And if you want to avoid shooting yourself in the foot (running as admin something not intended to be admin), Window isolation is not always the best alternative, because:
+This contradicts the premises on which they decided not to create a Windows `sudo`: If UAC can be hijacked, if it is not really a complete isolation that `sudo` will break, and is meant to protect you from yourself (running as admin something not intended to be admin), then Windows UIPI isolation without `sudo` is not always the best alternative, because:
 
-- You loose important time by switching between elevated and unelevated windows, which leads to running non-admin stuff as admin to avoid context switching...
-- ... or even worse: you suffer from "elevation fatigue", which is, you tend to elevate everything 'just in case' one future command could require admin privileges.
+- You loose important time by switching between elevated and unelevated windows, which leads you to elevate the whole console beforehand, effectively running non-admin stuff as admin to minimize context switching...
+- ... or even worse: you suffer from "elevation fatigue", which is, you tend to elevate everything console 'just in case' one future command could require admin privileges.
 
-Therefore, in my opinion, it is fine to run a sudo tool for windows. A tool that allows you to cherry-pick which commands to elevate.
+Therefore, in my opinion, the best way to not shoot yourself in the foot is to use a `sudo` tool that allows you to easily cherry-pick which commands to elevate.
 
 ## Is it safe to run gsudo?
 
 To answer this question, lets explore how gsudo could be used as an attack vector for escalation of privileges.
+
+- **It could allow a medium integrity process to drive a high integrity/admin process**: 
+  
+  When gsudo is elevates in the same console, it creates a connection between a medium and a high integrity process. A malicious process (at medium integrity) can then drive the medium integrity console hosting the high integrity process. For example, by sending keystrokes and scrapping the screen.
+ 
+  This also applies to other apps that perform mixed elevation today.
+
+  But, if UAC can be hijacked directly, and your AV is your only protection: What's the difference when using a `sudo` tool?
+
+- **Abusing `gsudo cache` to elevate a process silently:** 
+
+   `gsudo credentials cache` allows many elevations with only one UAC popup. But there is a reason why the cache is disabled by default: AFAIK its impossible to secure a running instance of the credentials cache without changing Windows itself.
+   
+   The process that invokes gsudo will be allowed by the cache (when enabled) to elevate again, but is running at the unprotected medium integrity level. A malicious process also at medium level can inject it's code in the allowed process and trick gsudo to request elevation silently.
+
+- **Bugs in gsudo itself**:
+
+   Any piece of software may contain bugs. And `gsudo` is no exception. The source code is available since the first release and code reviews and audits are always welcome.

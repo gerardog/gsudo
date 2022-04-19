@@ -4,7 +4,7 @@ id: install
 title: How to Install
 ---
 
-You can install gsudo using a Package Manager for windows:
+You can install gsudo by:
 
 - Using [Scoop](https://scoop.sh): Run `scoop install gsudo`
 - Using [WinGet](https://github.com/microsoft/winget-cli/releases) Run `winget install gerardog.gsudo`
@@ -19,8 +19,7 @@ You can install gsudo using a Package Manager for windows:
 
 ## Configure your Shell
 
-gsudo works out of the box but some shells require some manual configuration for a better experience.
+gsudo works out of the box, but some shells require some manual configuration for a better experience. Please follow these next steps if you are using one of the following shells:
 
-Specifically:
-- [PowerShell](usage/powershell#config)
+- [PowerShell](usage/powershell#shell-config)
 - [MinGW / MSYS2 / Git-Bash / Cygwin](usage/mingw-msys2#config)

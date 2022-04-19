@@ -59,13 +59,7 @@ const config = {
             position: 'left',
             label: 'Docs',
           },
-          {
-            type: 'doc',
-            docId: 'install',
-            position: 'left',
-            label: 'Install',
-          },
-          /*{to: '/docs/install', label: 'Install', position: 'left'},*/
+          {to: '/docs/install', label: 'Install', position: 'left'},
           {to: '/blog', label: 'Blog', position: 'left'},
           {
             href: 'https://github.com/gerardog/gsudo',

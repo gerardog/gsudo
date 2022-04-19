@@ -56,14 +56,25 @@ gsudo md "C:\Program Files\MyApp"
 # redirect/pipe input/output/error
 gsudo dir | findstr /c:"bytes free" > FreeSpace.txt
 
+# Elevate last command (sudo bang bang)
+gsudo !!
+```
+
+Configuration:
+``` powershell
+# See current configuration
+gsudo config
 # Configure Reduced logging
 gsudo config LogLevel "Error"
 # Configure a custom Elevated Prompt
 gsudo config Prompt "$P [elevated]$G "
-# Reset Elevated Prompt config to default value
+# Reset to default value
 gsudo config Prompt --reset
+
 # Enable credentials cache (less UAC popups):
 gsudo config CacheMode Auto
-# Elevate last command (sudo bang bang)
-gsudo !!
 ```
+
+## Cache Mode Config
+
+- Windows PowerShell (5.x) and PowerShell Core (>6.x) have different `$PROFILE` configuration files, so follow this steps on the version that you use, or both.
