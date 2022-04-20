@@ -39,7 +39,7 @@ Just prepend `gsudo` (or the `sudo` alias) to your command and it will run eleva
 - Or manually: Unzip the latest release, and add to the path. 
 - Or running: 
 ``` PowerShell
-PowerShell -Command "Set-ExecutionPolicy RemoteSigned -scope Process; iwr -useb https://raw.githubusercontent.com/gerardog/gsudo/master/installgsudo.ps1 | iex"
+PowerShell -Command "Set-ExecutionPolicy RemoteSigned -scope Process; [Net.ServicePointManager]::SecurityProtocol = 'Tls12'; iwr -useb https://raw.githubusercontent.com/gerardog/gsudo/master/installgsudo.ps1 | iex"
 ```
  
 Note: gsudo is portable. No windows service is required or system change is done, except adding gsudo to the Path.

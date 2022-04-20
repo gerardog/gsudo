@@ -19,7 +19,7 @@ $MSIArguments = @(
     "/L*v"
     $logFile
 )
-$msiexec = (Get-Command "msiexec.exe").Source
+$msiexec = (Get-Command "msiexec.exe").Path
 $process = Start-Process -ArgumentList $MSIArguments -Wait $msiexec -PassThru
 
 if ($process.ExitCode -ne 0)
