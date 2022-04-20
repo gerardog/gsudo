@@ -65,3 +65,13 @@ To answer this question, lets explore how gsudo could be used as an attack vecto
 - **Bugs in gsudo itself**:
 
    Any piece of software may contain bugs. And `gsudo` is no exception. The source code is available since the first release and code reviews and audits are always welcome.
+
+<!--
+
+Or configurations:
+
+**SecurityEnforceUacIsolation=true:** This is piped mode with a hack where the Input is closed, making theoretically impossible for an unelevated process to drive the elevated world. I don't have real proof that this is less exploitable than the default, hence I never publicily documented this setting.
+
+**ForceNewWindow:** An idea (spec still pending), to add a config setting where all elevations are done in new windows, so no isolation is broken. If I/O is redirected, the result may be streamed to the unelevated. This is still only and idea because the user experience would probably be .
+
+-->

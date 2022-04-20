@@ -5,7 +5,6 @@ import styles from './styles.module.css';
 const FeatureList = [
   {
     title: 'Easy to Use', link: "docs/usage",
-    Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
     description: (
       <>
         Prepend <code>gsudo</code> to make your command run elevated <b>in the current console window</b>. Just as Unix/Linux sudo. One UAC popup will appear. 
@@ -14,7 +13,6 @@ const FeatureList = [
     ),
   },  {
     title: 'Easy to Install', link: "docs/install",
-    Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
     description: (
       <>
         Using Chocolatey: <code>choco install gsudo</code><br/>
@@ -25,7 +23,6 @@ const FeatureList = [
     ),
   },  {
     title: 'Portable',
-    Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
     description: (
       <>
         gsudo is just a portable console app. No Windows service is required or system change is done, except adding gsudo to the Path.
@@ -33,7 +30,6 @@ const FeatureList = [
     ),
   },  {
     title: 'Supports your preferred shell',
-    Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
     description: (
       <>
         Detects your shell and elevates your command as a native shell command.
@@ -42,7 +38,6 @@ const FeatureList = [
     ),
   },  {
     title: 'Credentials Cache', link: "docs/credentials-cache",
-    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
     description: (
       <>
         Too many UAC pop-ups? You can see less popups if you opt-in to enable the <code>credentials cache</code>, once you understand the security implications.
@@ -51,7 +46,6 @@ const FeatureList = [
     ),
   },  {
     title: 'Increase your productivity',
-    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
     description: (
       <>
         Do not waste time opening a new window and switching context back and forth. Also avoid the "elevation fatigue" that leads to the malpractice of running <b>everything</b> elevated, and just elevate specific commands.

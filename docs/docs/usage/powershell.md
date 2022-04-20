@@ -3,8 +3,6 @@ sidebar_position: 0
 title: Usage from PowerShell
 ---
 
-## Usage
-
 `gsudo` detects if it's invoked from PowerShell and elevates PS commands (unless `-d` is used to elevate CMD commands). 
 - Prepend `gsudo` for commands without special operators `()|&<>` or single quotes `'`. Otherwise you can **pass a string literal** with the command to be elevate:    
 
@@ -63,8 +61,6 @@ Invoke-gsudo { Remove-Item $using:folder }
 
 ## Shell Config
 
-- Windows PowerShell (5.x) and PowerShell Core (>6.x) have different `$PROFILE` configuration files, so follow this steps on the version that you use, or both.
-
 - For an enhanced experience, import module `gsudoModule.psd1`. This is optional and enables `gsudo !!`, and param auto-complete for `Invoke-Gsudo` cmdlet. 
 
   Add the following line to your $PROFILE (replace with full path)
@@ -77,11 +73,15 @@ Import-Module 'C:\FullPathTo\gsudoModule.psd1'
 Get-Command gsudoModule.psd1 | % { Write-Output "`nImport-Module `"$($_.Source)`"" | Add-Content $PROFILE }
 ```
 
-- You can create a custom alias for gsudo or Invoke-gsudo: 
-
-  Add one of these lines to your $PROFILE:
+:::tip
+- You can create a custom alias for gsudo or Invoke-gsudo by adding one of these lines to your `$PROFILE`:
   - `Set-Alias 'sudo' 'gsudo'` <br/>or
   - `Set-Alias 'sudo' 'Invoke-gsudo'`
+:::
+
+:::caution
+- Windows PowerShell (5.x) and PowerShell Core (>6.x) have different `$PROFILE` configuration files, so follow this steps on the version that you use, or both.
+:::
 
 ## Profile loading
 
@@ -97,4 +97,4 @@ When using `Invoke-gsudo`, add `-LoadProfile`:
 
 ## Known Issues:
 
-- Do not install PowerShell as a .Net global tool (i.e. with `dotnet tool install --global PowerShell`), because it uses a shim tool with [issues](https://github.com/PowerShell/PowerShell/issues/11747). Install with `choco install pwsh`, `winget install Microsoft.PowerShell` or any [other method](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows) instead.
+- Do not install PowerShell as a .Net global tool (i.e. with `dotnet tool install --global PowerShell`), because it uses a shim tool with [issues](https://github.com/PowerShell/PowerShell/issues/11747). Install with any [other official method](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows) instead, or with `choco install pwsh`, `winget install Microsoft.PowerShell`.

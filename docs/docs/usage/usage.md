@@ -1,7 +1,7 @@
 ---
 sidebar_position: 1
+title: How to Use
 id: usage
-title: Usage
 ---
 
 
