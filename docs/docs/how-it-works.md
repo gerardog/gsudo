@@ -25,9 +25,9 @@ This is a naive mechanism, implemented first more like a proof of concept (that 
 
 The elevated `PipedProcessHost` runs the command with it's I/O redirected (For example as in `(input) > Elevated Process > (output)`), and sends all I/O to the unelevated via named pipes. 
 
-The `PipedProcessRenderer` captures input and display the output on screen. In this mode, keyboard input is managed by the client console (without knowledge of which app you are running), and not by the elevated command/shell, hence <kbd>TAB</kbd> key auto-completition doesn't work. The user experience is far from ideal. 
+The `PipedProcessRenderer` captures input and display the output on screen. In this mode, keyboard input is managed by the client console (without knowledge of which app you are running), and not by the elevated command/shell, hence <kbd>TAB</kbd> key auto-completition doesn't work. The user experience is far from ideal.
 
-The process is created with the elevated context/Environment Variables.
+The process is created with the elevated Environment Variables.
 
 Pros: 
 
@@ -41,22 +41,22 @@ Cons:
 
 ### VT mode (PseudoConsole)
 
-:::note
-Side story: The day Microsoft [announced](https://devblogs.microsoft.com/commandline/windows-command-line-introducing-the-windows-pseudo-console-conpty/) Pseudo Consoles for Windows, I asked myself: What can pseudoconsoles be used for? a sudo for windows!!
+:::info Side story
+It was the day Microsoft [announced Pseudo Consoles for Windows](https://devblogs.microsoft.com/commandline/windows-command-line-introducing-the-windows-pseudo-console-conpty/), I asked myself: What can pseudoconsoles be used for? a sudo for windows!!
 :::
 
 The elevated instance runs a VT PseudoConsole, and sends all I/O it to the unelevated via named pipes.
 
-The process is created with the elevated context/Environment Variables.
+The process is created with the elevated Environment Variables.
 
 Pros:
 
-- Full colored screen
+- Full featured console screen
 - Full input support.
 
 Cons:
 
-- Not the best performance compared with the following alternatives.
+- Good but not best performance (compared with the following alternatives).
 - Apps always runs in console mode (not redirected). Redirection could be done but the result would be more like console screen recording than process redirection.
 - Struggles with encoding IF encoding or code page changes.
 - Console screen resizing still not implemented.
@@ -65,7 +65,7 @@ Cons:
 
 The elevated window ['attaches'](https://docs.microsoft.com/en-us/windows/console/attachconsole) to the non elevated. The bridge is actually done by Windows and ConHost. Doesn't work with I/O redirected.
 
-The process is created with the elevated context/Environment Variables.
+The process is created with the elevated Environment Variables.
 
 Pros:
 
@@ -92,12 +92,13 @@ Cons:
 
 - (debatable) The new process inherits the non-elevated environment variables.
 
-This last item is a confirmed problem when the elevation is done as somebody else (i.e. the current user is not admin and `RunAs` asks for credentials). For this reason and only in this scenario, the mode falls back to Attached mode (if no redirection) or Piped mode (if redirection exists).
+This last item is a confirmed problem when the elevation is done as somebody else (i.e. the current user is not admin and `RunAs` asks for credentials). For this reason and only in this scenario, this mode falls back to Attached mode (if no redirection) or Piped mode (if redirection exists).
 
 ## Should the elevated process inherit the same environment variables?
 
-Great question. It does not on Linux/Unix Sudo, unless '-E'.
-`gsudo` provides `--copyEV` to copy all the vars, except %USERNAME%.
+Great question. If you are a local admin, you elevate as yourself, so both contexts have the same origin for env vars.
+
+But if you are not local admin, UAC will prompt for credentials, and then yes, you will be running as another user, so isolation becames more important. On Linux/Unix, you always `sudo` as somebody else and env vars are not preserved, unless '-E' is specified. `gsudo` provides `--copyEV` to copy all the vars, except %USERNAME%.
 
 ## How do I force one mode over the other?
 
@@ -107,7 +108,7 @@ To force Attached mode use `--attached` or permanently with `gsudo config ForceA
 
 To force Piped mode use `--piped` or permanently with `gsudo config ForcePipedConsole True`
 
-To force Piped mode use `--vt` or permanently with `gsudo config ForceVTConsole True`
+To force VT mode use `--vt` or permanently with `gsudo config ForceVTConsole True`
 
 Only use one at the same time.
 

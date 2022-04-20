@@ -40,7 +40,7 @@ Steps:
 - Download `gsudoSetup.msi` from the [latest release](https://github.com/gerardog/gsudo/releases/latest), and run.
 - You probably want to update PowerShell up to 5.1
 
-### On Windows Windows 8.1
+### On Windows 8.1
 
 - Download [.NET Framework 4.8](https://dotnet.microsoft.com/download/dotnet-framework) (4.6 should work but, since you are there...)
 - Download `gsudoSetup.msi` from the [latest release](https://github.com/gerardog/gsudo/releases/latest), and run.
