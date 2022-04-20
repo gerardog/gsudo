@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
     <channel>
-        <title>gsudo Blog</title>
+        <title>gsudo (sudo for windows) Blog</title>
         <link>https://your-docusaurus-test-site.com/gsudo/blog</link>
-        <description>gsudo Blog</description>
+        <description>gsudo (sudo for windows) Blog</description>
         <lastBuildDate>Thu, 26 Aug 2021 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
