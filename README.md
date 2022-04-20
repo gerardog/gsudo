@@ -255,10 +255,9 @@ The cache session ends automatically when the allowed process ends or if no elev
 
   No. `gsudo` reminds of the original sudo regarding user expectations. Many `sudo` features are `*nix` specific and could never have a `Windows` counterpart. Other features (such as `sudoers`) could potentially be implemented but are not at this point.
 
-- Does it work in Windows Vista/7/8?
+- Does it work in Windows 7/8?
 
-  The elevation works, but not the credentials cache yet. On Windows 8.1 install [.Net Framework 4.8 runtime](https://dotnet.microsoft.com/en-us/download/dotnet-framework), then install the latest [`MSI`](https://github.com/gerardog/gsudo/releases/latest). On Windows 7 do the same but *first* enable TLS 1.2 using this ["easy fix tool"
-](https://support.microsoft.com/en-us/topic/update-to-enable-tls-1-1-and-tls-1-2-as-default-secure-protocols-in-winhttp-in-windows-c4bd73d2-31d7-761e-0178-11268bb10392#bkmk_easy) from Microsoft.
+  The elevation works, but not the credentials cache on W7. On Windows 8.1 install [.Net Framework 4.8 runtime](https://dotnet.microsoft.com/en-us/download/dotnet-framework), then install the latest [`gsudo MSI`](https://github.com/gerardog/gsudo/releases/latest). On Windows 7 do the same but *first* enable TLS 1.2 using this ["easy fix tool"](https://support.microsoft.com/en-us/topic/update-to-enable-tls-1-1-and-tls-1-2-as-default-secure-protocols-in-winhttp-in-windows-c4bd73d2-31d7-761e-0178-11268bb10392#bkmk_easy) from Microsoft.
 
 - How do I return to the previous security level after using gsudo?
 
