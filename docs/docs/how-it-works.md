@@ -4,7 +4,7 @@ title: How it works
 hide_title: true
 ---
 
-## How does it work?
+## How does it work internally?
 
 When gsudo is invoked, an elevated instance of `gsudo` in `service mode` is launched (with `Verb='RunAs'`). The service will allow one elevation (or many if the `credentials cache` is enabled).
 

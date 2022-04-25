@@ -16,3 +16,5 @@ title: Troubleshooting
 - PowerShell installed as a `dotnet global tool` is [not supported](usage/powershell#known-issues).
 
 - Search [gsudo GitHub issues](https://github.com/gerardog/gsudo/issues?q=) or create a new one.
+
+- Chat on gitter: https://gitter.im/gsudo/

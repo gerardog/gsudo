@@ -1,5 +1,9 @@
 # Website
 
+This is the source code of gsudo documentation.
+
+The documentation is available at: https://gerardog.github.io/gsudo/
+
 This website is built using [Docusaurus 2](https://docusaurus.io/), a modern static website generator.
 
 ### Installation

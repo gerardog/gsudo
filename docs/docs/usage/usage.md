@@ -6,7 +6,7 @@ hide_title: true
 ---
 ## How to Use
 
-```gsudo```  Opens an elevated shell in the current console.
+```gsudo```  Opens your shell elevated in the current console.
 
 ```gsudo [options] {command} [arguments]```
 Executes the specified command with elevated permissions.
