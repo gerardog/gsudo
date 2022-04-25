@@ -64,6 +64,7 @@ const config = {
             label: 'Docs',
           },
           {to: '/docs/install', label: 'Install', position: 'left'},
+          {to: '/docs/sponsor', label: 'Sponsor', position: 'left'},
           {to: '/blog', label: 'Blog', position: 'left'},
           {
             href: 'https://github.com/gerardog/gsudo',
