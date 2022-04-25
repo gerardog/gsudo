@@ -10,6 +10,11 @@ There are three ways to elevate PS commands.
 - Run `gsudo {command}` to elevate one command. It accepts and returns strings
 - Run `Invoke-gsudo { ScriptBlock }` for native ScriptBlock syntax and auto serialization of inputs, outputs and pipeline objects.
 
+
+:::warning
+PowerShell Core installed as a `dotnet global tool` is [not supported](../troubleshooting#known-issues). Please use another installation method.
+:::
+
 ### `gsudo` Command
 
 `gsudo` detects if it's invoked from PowerShell and elevates PS commands (unless `-d` is used to elevate CMD commands). 
@@ -113,7 +118,3 @@ When using `gsudo`, infix `--loadProfile`:
 When using `Invoke-gsudo`, add `-LoadProfile`:
  - `PS C:\> Invoke-Gsudo { echo (1+1) } -LoadProfile`
  - Set as a permanent setting adding `$gsudoLoadProfile=$true` in your `$PROFILE` after `Import-Module C:\FullPathTo\gsudoModule.psd1`
-
-## Known Issues
-
-- Do not install PowerShell as a .Net global tool (i.e. with `dotnet tool install --global PowerShell`), because it uses a shim tool with [issues](https://github.com/PowerShell/PowerShell/issues/11747). Install with any [other official method](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows) instead, or with `choco install pwsh`, `winget install Microsoft.PowerShell`.
