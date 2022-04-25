@@ -1,11 +1,14 @@
 ---
+id: bash-for-windows
 sidebar_position: 4
-title: Usage from MinGW / MSYS2 / Git-Bash / Cygwin
+hide_title: true
+title: Usage from Bash for Windows
 ---
+## Usage from Bash for Windows (MinGW / MSYS2 / Git-Bash / Cygwin)
 
 Prepend `gsudo` to elevate `bash` commands (unless `-d` is used to elevate CMD commands). 
 
-# Config
+## Bash Profile Config
 
 There is an issue with `bash for windows` shells: The process tree is splitted when invoking `bash` scripts such as the `gsudo` wrapper, that invalidates the Credentials Cache.
 You need to add this function to your `.bashrc` profile (to skip the wrapper):

@@ -1,9 +1,12 @@
 ---
 sidebar_position: 0
 title: Usage from WSL
+hide_title: true
 ---
 
-On WSL (Windows Subsystem for Linux), elevation and `root` are different concepts. `root` allows full administration of WSL but not the windows system. Use WSL's native `su` or `sudo` to gain `root` access. But to get admin privilege on the Windows box you need to elevate the WSL.EXE process. `gsudo` allows that (a UAC popup will appear).
+## Usage from WSL
+
+On WSL (Windows Subsystem for Linux), elevation and `root` are different concepts. `root` allows full administration of WSL but not the Windows system. Use WSL's native `su` or `sudo` to gain `root` access. To get admin privilege on the Windows box you need to elevate the `WSL.EXE` process. `gsudo` allows that (a UAC popup will appear).
 
 On WSL bash, prepend `gsudo` to elevate **WSL commands** or `gsudo -d` for **CMD commands**. 
 

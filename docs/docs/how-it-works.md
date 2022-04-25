@@ -1,6 +1,7 @@
 ---
 sidebar_position: 6
 title: How it works
+hide_title: true
 ---
 
 ## How does it work?
@@ -9,7 +10,7 @@ When gsudo is invoked, an elevated instance of `gsudo` in `service mode` is laun
 
 ## Elevation modes
 
-To achieve the `sudo` functionallity, `gsudo` has 4 different mechanisms implemented.
+To achieve the `sudo` functionality, `gsudo` has 4 different mechanisms implemented.
 
 In a way, each one superseded the previous one, leading to the current default `TokenSwitch`.
 
@@ -21,11 +22,11 @@ These are the elevations modes implemented in `gsudo`, in the order they were im
 
 ### Piped mode
 
-This is a naive mechanism, implemented first more like a proof of concept (that later prooved to be useful).
+This is a naive mechanism, implemented first more like a proof of concept (that later proved to be useful).
 
-The elevated `PipedProcessHost` runs the command with it's I/O redirected (For example as in `(input) > Elevated Process > (output)`), and sends all I/O to the unelevated via named pipes. 
+The elevated `PipedProcessHost` runs the command with its I/O redirected (For example as in `(input) > Elevated Process > (output)`), and sends all I/O to the unelevated via named pipes. 
 
-The `PipedProcessRenderer` captures input and display the output on screen. In this mode, keyboard input is managed by the client console (without knowledge of which app you are running), and not by the elevated command/shell, hence <kbd>TAB</kbd> key auto-completition doesn't work. The user experience is far from ideal.
+The `PipedProcessRenderer` captures input and display the output on screen. In this mode, keyboard input is managed by the client console (without knowledge of which app you are running), and not by the elevated command/shell, hence <kbd>TAB</kbd> key auto-completion doesn't work. The user experience is far from ideal.
 
 The process is created with the elevated Environment Variables.
 
@@ -37,12 +38,12 @@ Cons:
 
 - Apps always run in redirected mode.
 - Input only support of chars, not key presses.
-- Struggles with encoding, specially explicit code page changes.
+- Struggles with encoding, especially explicit code page changes.
 
 ### VT mode (PseudoConsole)
 
 :::info Side story
-It was the day Microsoft [announced Pseudo Consoles for Windows](https://devblogs.microsoft.com/commandline/windows-command-line-introducing-the-windows-pseudo-console-conpty/), I asked myself: What can pseudoconsoles be used for? a sudo for windows!!
+It was the day Microsoft [announced Pseudo Consoles for Windows](https://devblogs.microsoft.com/commandline/windows-command-line-introducing-the-windows-pseudo-console-conpty/), I asked myself: What can PseudoConsoles be used for? a sudo for windows!!
 :::
 
 The elevated instance runs a VT PseudoConsole, and sends all I/O it to the unelevated via named pipes.
@@ -63,7 +64,7 @@ Cons:
 
 ### Attached mode
 
-The elevated window ['attaches'](https://docs.microsoft.com/en-us/windows/console/attachconsole) to the non elevated. The bridge is actually done by Windows and ConHost. Doesn't work with I/O redirected.
+The elevated window ['attaches'](https://docs.microsoft.com/en-us/windows/console/attachconsole) to the non-elevated. The bridge is actually done by Windows and ConHost. Doesn't work with I/O redirected.
 
 The process is created with the elevated Environment Variables.
 
@@ -92,17 +93,17 @@ Cons:
 
 - (debatable) The new process inherits the non-elevated environment variables.
 
-This last item is a confirmed problem when the elevation is done as somebody else (i.e. the current user is not admin and `RunAs` asks for credentials). For this reason and only in this scenario, this mode falls back to Attached mode (if no redirection) or Piped mode (if redirection exists).
+This last item is a confirmed problem when the elevation is done as somebody else (i.e. the current user is not admin and `RunAs` asks for credentials). To avoid it, and only in this scenario, this mode falls back to Attached mode (if no redirection) or Piped mode (if redirection exists).
 
 ## Should the elevated process inherit the same environment variables?
 
-Great question. If you are a local admin, you elevate as yourself, so both contexts have the same origin for env vars.
+Great question. If your user is a local admin, i.e. you elevate as yourself, both contexts have similar if not same env vars.
 
-But if you are not local admin, UAC will prompt for credentials, and then yes, you will be running as another user, so isolation becames more important. On Linux/Unix, you always `sudo` as somebody else and env vars are not preserved, unless '-E' is specified. `gsudo` provides `--copyEV` to copy all the vars, except %USERNAME%.
+But if you are not local admin, UAC will prompt for credentials, and then you will be running as another user, so env var isolation becomes more important. On Linux/Unix, you always `sudo` as somebody else and env vars are not preserved, unless `-E` is specified. `gsudo` provides `--copyEV` to copy all the vars, except %USERNAME%.
 
 ## How do I force one mode over the other?
 
-You shouldn't. `gsudo` should do a better job choosing than you. Still reading? OMG... Ok, I will tell you. But this is marked as deprecated and can change anytime.
+You shouldn't. `gsudo` should do a better job choosing than you. Still reading? Ok... I will tell you. But this is marked as deprecated and can change anytime.
 
 To force Attached mode use `--attached` or permanently with `gsudo config ForceAttachedConsole True`
 
@@ -110,14 +111,4 @@ To force Piped mode use `--piped` or permanently with `gsudo config ForcePipedCo
 
 To force VT mode use `--vt` or permanently with `gsudo config ForceVTConsole True`
 
-Only use one at the same time.
-
-<!--
-
-Or configurations:
-
-**SecurityEnforceUacIsolation=true:** This is piped mode with a hack where the Input is closed, making theoretically impossible for an unelevated process to drive the elevated world. I don't have real proof that this is less exploitable than the default, hence I never publicily documented this setting.
-
-**ForceNewWindow:** An idea (spec still pending), to add a config setting where all elevations are done in new windows, so no isolation is broken. If I/O is redirected, the result may be streamed to the unelevated. This is still only and idea because the user experience would probably be .
-
--->
+Use only one at the same time.

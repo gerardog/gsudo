@@ -39,7 +39,7 @@ else
 	"Or run: "
 	"  Write-Output `"``nImport-Module '${Env:ProgramFiles(x86)}\gsudo\gsudoModule.psd1'`" | Add-Content `$PROFILE"
 	
-	rm $fileName 
+	Remove-Item $fileName 
 }
 
 if ([Console]::IsInputRedirected -eq $false -and [Console]::IsOutputRedirected -eq $false) 

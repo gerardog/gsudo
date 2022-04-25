@@ -1,9 +1,10 @@
 ---
 sidebar_position: 1
-title: How to Use
 id: usage
+title: How to Use
+hide_title: true
 ---
-
+## How to Use
 
 ```gsudo```  Opens an elevated shell in the current console.
 
@@ -31,7 +32,7 @@ Show status information about current user, security, integrity level or other g
 
 **Note:** You can use anywhere **the `sudo` alias** created by the installers.
 
-**Examples:**
+### Examples
 
 ``` powershell
 # elevate the current shell in the current console window (Cmd/PowerShell/Pwsh Core/Yori/Take Command/git-bash/cygwin)
@@ -60,7 +61,8 @@ gsudo dir | findstr /c:"bytes free" > FreeSpace.txt
 gsudo !!
 ```
 
-Configuration:
+### Configuration
+
 ``` powershell
 # See current configuration
 gsudo config
@@ -74,7 +76,3 @@ gsudo config Prompt --reset
 # Enable credentials cache (less UAC popups):
 gsudo config CacheMode Auto
 ```
-
-## Cache Mode Config
-
-- Windows PowerShell (5.x) and PowerShell Core (>6.x) have different `$PROFILE` configuration files, so follow this steps on the version that you use, or both.

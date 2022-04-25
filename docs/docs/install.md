@@ -1,8 +1,9 @@
 ---
-sidebar_position: 2
-id: install
+hide_title: true 
 title: How to Install
+sidebar_position: 2
 ---
+## How to Install
 
 On Windows 10/11, You can install gsudo using any of the popular Package Managers:
 
@@ -12,12 +13,12 @@ On Windows 10/11, You can install gsudo using any of the popular Package Manager
 
 Or:
 
-- Download the `MSI` from the [latest release](https://github.com/gerardog/gsudo/releases/latest) and run it.
-- Or download the `ZIP` file. Manually uncompress and add to the path.
-- Or run:  
+- Download and run the `MSI` file from the [latest release](https://github.com/gerardog/gsudo/releases/latest).
+- Or use this script to achieve the same:  
   ```powershell
-  PowerShell -Command "Set-ExecutionPolicy RemoteSigned -scope Process; iwr -useb https://raw.githubusercontent.com/gerardog/gsudo/master/installgsudo.ps1 | iex"
+  PowerShell -Command "Set-ExecutionPolicy RemoteSigned -scope Process; [Net.ServicePointManager]::SecurityProtocol = 'Tls12'; iwr -useb https://raw.githubusercontent.com/gerardog/gsudo/master/installgsudo.ps1 | iex"
   ```
+- Manually: Download the `ZIP` file from the [latest release](https://github.com/gerardog/gsudo/releases/latest). Uncompress and add to the path.
  
 :::info
 `gsudo` is just a portable console app. No Windows service is required or system change is done, except adding gsudo to the Path.
@@ -28,7 +29,7 @@ Or:
 On the following shells you get a better experience if you follow some manual configuration:
 
 - [PowerShell](usage/powershell#shell-config)
-- [MinGW / MSYS2 / Git-Bash / Cygwin](usage/mingw-msys2#config)
+- [Bash for Windows (MinGW / MSYS2 / Git-Bash / Cygwin)](usage/bash-for-windows#bash-profile-config)
 
 ## Older Windows Versions
 ### On Windows 7 SP1
