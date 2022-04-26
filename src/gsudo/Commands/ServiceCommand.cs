@@ -5,6 +5,7 @@ using System.IO;
 using gsudo.Rpc;
 using gsudo.ProcessHosts;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Linq;
 
 namespace gsudo.Commands
 {
@@ -31,6 +32,12 @@ namespace gsudo.Commands
             if (LogLvl.HasValue) Settings.LogLevel.Value = LogLvl.Value;
             
             Console.Title = "gsudo Service";
+
+            if (InputArguments.TrustedInstaller && !System.Security.Principal.WindowsIdentity.GetCurrent().Claims.Any(c => c.Value == Constants.TI_SID))
+            {
+                return Helpers.ServiceHelper.StartElevatedService(AllowedPid, CacheDuration, SingleUse) ? 0: Constants.GSUDO_ERROR_EXITCODE;
+            }
+
             var cacheLifetime = new CredentialsCacheLifetimeManager(AllowedPid);
             Logger.Instance.Log("Service started", LogLevel.Info);
 

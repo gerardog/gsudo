@@ -207,8 +207,11 @@ namespace gsudo.Commands
             }
         }
 
-        private static bool IsRunningAsDesiredUser()
+        internal static bool IsRunningAsDesiredUser()
         {
+            if (InputArguments.TrustedInstaller && !WindowsIdentity.GetCurrent().Claims.Any(c => c.Value == Constants.TI_SID))
+                return false;
+
             if (InputArguments.RunAsSystem && !WindowsIdentity.GetCurrent().IsSystem)
                 return false;
 
@@ -220,6 +223,9 @@ namespace gsudo.Commands
 
         private static bool IsElevationRequired()
         {
+            if (InputArguments.TrustedInstaller && !WindowsIdentity.GetCurrent().Claims.Any(c => c.Value == Constants.TI_SID))
+                return true;
+
             if (InputArguments.RunAsSystem && !WindowsIdentity.GetCurrent().IsSystem)
                 return true;
 

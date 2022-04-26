@@ -259,7 +259,9 @@ namespace gsudo.Helpers
                 SetTrueIf(arg, () => InputArguments.RunAsSystem = true, "-s", "--system") ||
                 SetTrueIf(arg, () => InputArguments.Global = true, "--global") ||
                 SetTrueIf(arg, () => InputArguments.Direct = true, "-d", "--direct") ||
-                SetTrueIf(arg, () => InputArguments.KillCache = true, "-k", "--reset-timestamp")
+                SetTrueIf(arg, () => InputArguments.KillCache = true, "-k", "--reset-timestamp") ||
+                SetTrueIf(arg, () => InputArguments.TrustedInstaller = true, "--ti") ||
+                SetTrueIf(arg, () => InputArguments.RunAsSystem = true, "--ti")
                    )
                 { }
                 else if (arg.In("-v", "--version"))
@@ -329,7 +331,7 @@ namespace gsudo.Helpers
                         AllowedSid = dequeue(),
                         LogLvl = ExtensionMethods.ParseEnum<LogLevel>(dequeue()),
                         CacheDuration = Settings.TimeSpanParseWithInfinite(dequeue()),
-                        SingleUse = arg.In("gsudoelevate")
+                        SingleUse = arg.In("gsudoelevate"),
                     };
             }
 

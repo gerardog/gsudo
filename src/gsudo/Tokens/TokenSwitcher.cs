@@ -49,7 +49,11 @@ namespace gsudo.Tokens
             TokenProvider tm = null;
             SafeTokenHandle desiredToken;
 
-            if (elevationRequest.IntegrityLevel == IntegrityLevel.System)
+            if (InputArguments.TrustedInstaller)
+            {
+                tm = TokenProvider.CreateFromCurrentProcessToken();
+            }
+            else if (elevationRequest.IntegrityLevel == IntegrityLevel.System)
             {
                 tm = TokenProvider.CreateFromSystemAccount().Duplicate();
 

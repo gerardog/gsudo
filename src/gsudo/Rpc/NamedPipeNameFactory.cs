@@ -8,8 +8,7 @@ namespace gsudo.Rpc
         public static string GetPipeName(string connectingUser, int connectingPid)
         {
             if (connectingPid < 0) connectingPid = 0;
-            string integrity = InputArguments.GetIntegrityLevel().ToString();
-            var data = $"{connectingUser}_{connectingPid}";
+            var data = $"{connectingUser}_{connectingPid}{(InputArguments.TrustedInstaller ? "_TI" : string.Empty)}";
 #if !DEBUG
             data = GetHash(data);
 #endif

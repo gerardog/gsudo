@@ -1,6 +1,8 @@
 ﻿using gsudo.Rpc;
 using System;
 using System.Diagnostics;
+using System.Linq;
+using System.Security.Principal;
 using System.Threading.Tasks;
 
 namespace gsudo.Helpers
@@ -46,7 +48,7 @@ namespace gsudo.Helpers
 
             if (connection == null) // service is not running or listening.
             {
-                if (!StartElevatedService(callingPid))
+                if (!StartElevatedService(callingPid, null, InputArguments.KillCache))
                     return null;
 
                 connection = await rpcClient.Connect(callingPid, false).ConfigureAwait(false);
@@ -54,7 +56,7 @@ namespace gsudo.Helpers
             return connection;
         }
 
-        internal static bool StartElevatedService(int? allowedPid, TimeSpan? cacheDuration = null)
+        internal static bool StartElevatedService(int? allowedPid, TimeSpan? cacheDuration = null, bool singleUse = false)
         {
             var callingSid = System.Security.Principal.WindowsIdentity.GetCurrent().User.Value;
             var callingPid = allowedPid ?? Process.GetCurrentProcess().GetCacheableRootProcessId();
@@ -66,11 +68,13 @@ namespace gsudo.Helpers
             //            if (InputArguments.IntegrityLevel.HasValue) @params += $"-i {InputArguments.IntegrityLevel.Value} ";
             //            if (InputArguments.RunAsSystem) @params += "-s ";
 
+            if (InputArguments.TrustedInstaller) @params += "--ti ";
+
             verb = "gsudoservice";
 
-            if (!cacheDuration.HasValue)
+            if (!cacheDuration.HasValue || singleUse)
             {
-                if (!Settings.CacheMode.Value.In(Enums.CacheMode.Auto))
+                if (!Settings.CacheMode.Value.In(Enums.CacheMode.Auto) || singleUse)
                 {
                     verb = "gsudoelevate";
                     cacheDuration = TimeSpan.Zero;
@@ -88,7 +92,11 @@ namespace gsudo.Helpers
             try
             {
                 string ownExe = ProcessHelper.GetOwnExeName();
-                if (InputArguments.RunAsSystem && isAdmin)
+                if (InputArguments.TrustedInstaller && isAdmin && !WindowsIdentity.GetCurrent().Claims.Any(c => c.Value == Constants.TI_SID))
+                {
+                    return StartTrustedInstallerService(commandLine, callingPid);
+                }
+                else if (InputArguments.RunAsSystem && isAdmin)
                 {
                     success = null != ProcessFactory.StartAsSystem(ownExe, commandLine, Environment.CurrentDirectory, !InputArguments.Debug);
                 }
@@ -113,49 +121,40 @@ namespace gsudo.Helpers
             return true;
         }
 
-        internal static bool StartSingleUseElevatedService(int callingPid)
+        private static bool StartTrustedInstallerService(string commandLine, int pid)
         {
-            var @params = string.Empty;
+            string name = $"gsudo TI Cache for PID {pid}";
 
-            if (InputArguments.Debug) @params = "--debug ";
-            if (InputArguments.IntegrityLevel.HasValue) @params += $"-i {InputArguments.IntegrityLevel.Value} ";
-            if (InputArguments.RunAsSystem) @params += "-s ";
-
-            bool isAdmin = ProcessHelper.IsHighIntegrity();
-            string ownExe = ProcessHelper.GetOwnExeName();
-
-            string commandLine;
-            commandLine = $"{@params}gsudoelevate --pid {callingPid}";
-
+            string args = $"/Create /ru \"NT SERVICE\\TrustedInstaller\" /TN \"{name}\" /TR \"\\\"{ProcessHelper.GetOwnExeName()}\\\" {commandLine}\" /sc ONCE /st 00:00 /f\"";
+            Logger.Instance.Log($"Running: schtasks {args}", LogLevel.Debug);
             Process p;
+
+            p = InputArguments.Debug
+                ? ProcessFactory.StartAttached("schtasks", args)
+                : ProcessFactory.StartRedirected("schtasks", args, null);
+
+            p.WaitForExit();
+            if (p.ExitCode != 0) return false;
 
             try
             {
-                p = ProcessFactory.StartElevatedDetached(ownExe, commandLine, !InputArguments.Debug);
+                args = $"/run /I /TN \"{name}\"";
+                p = InputArguments.Debug
+                    ? ProcessFactory.StartAttached("schtasks", args)
+                    : ProcessFactory.StartRedirected("schtasks", args, null);
+                p.WaitForExit();
+                if (p.ExitCode != 0) return false;
             }
-            catch (System.ComponentModel.Win32Exception ex)
+            finally
             {
-                Logger.Instance.Log(ex.Message, LogLevel.Error);
-                return false;
+                args = $"/delete /F /TN \"{name}\"";
+                p = InputArguments.Debug
+                    ? ProcessFactory.StartAttached("schtasks", args)
+                    : ProcessFactory.StartRedirected("schtasks", args, null);
+                p.WaitForExit();
             }
 
-            if (p == null)
-            {
-                Logger.Instance.Log("Failed to start elevated instance.", LogLevel.Error);
-                return false;
-            }
-
-            Logger.Instance.Log("Elevated instance started.", LogLevel.Debug);
-
-            p.WaitForExit();
-
-            if (p.ExitCode == 0)
-            {
-                return true;
-            }
-
-            return false;
+            return true;
         }
-
     }
 }
