@@ -84,7 +84,8 @@ namespace gsudo.ProcessRenderers
                 }
 
                 Logger.Instance.Log("Process token successfully substituted.", LogLevel.Debug);
-                _ = _connection.FlushAndCloseAll();
+                _connection.DataStream.Close();
+                _connection.ControlStream.Close();
 
                 return GetResult();
             }
