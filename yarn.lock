@@ -1395,7 +1395,7 @@
     "@docusaurus/utils-validation" "2.0.0-beta.18"
     tslib "^2.3.1"
 
-"@docusaurus/plugin-sitemap@2.0.0-beta.18":
+"@docusaurus/plugin-sitemap@2.0.0-beta.18", "@docusaurus/plugin-sitemap@^2.0.0-beta.18":
   version "2.0.0-beta.18"
   resolved "https://registry.yarnpkg.com/@docusaurus/plugin-sitemap/-/plugin-sitemap-2.0.0-beta.18.tgz#7e8217e95bede5719bd02265dcf7eb2fea76b675"
   integrity sha512-Klonht0Ye3FivdBpS80hkVYNOH+8lL/1rbCPEV92rKhwYdwnIejqhdKct4tUTCl8TYwWiyeUFQqobC/5FNVZPQ==

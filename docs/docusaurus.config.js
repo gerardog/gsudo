@@ -8,7 +8,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 const config = {
   title: 'gsudo (sudo for windows)',
   tagline: 'The missing piece in Windows. Cherry-pick which commands to elevate with just one keyword.',
-  url: 'https://your-docusaurus-test-site.com',
+  url: 'https://gerardog.github.io',
   baseUrl: '/gsudo/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
@@ -40,6 +40,10 @@ const config = {
           trackingID: 'G-RLH6G3T39R',
           anonymizeIP: true,
 		},
+		sitemap: {
+          changefreq: 'weekly',
+          priority: 0.5,
+        },
 	  }),
     ],
   ],
@@ -65,7 +69,7 @@ const config = {
           },
           {to: '/docs/install', label: 'Install', position: 'left'},
           {to: '/docs/sponsor', label: 'Sponsor', position: 'left'},
-          {to: '/blog', label: 'Blog', position: 'left'},
+          /**{to: '/blog', label: 'Blog', position: 'left'},**/
           {
             href: 'https://github.com/gerardog/gsudo',
             label: 'GitHub',
@@ -80,7 +84,7 @@ const config = {
             title: 'Docs',
             items: [
               {
-                label: 'Tutorial',
+                label: 'Documentation',
                 to: '/docs/intro',
               },
             ],
