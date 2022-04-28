@@ -2,7 +2,7 @@
 <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
     <channel>
         <title>gsudo (sudo for windows) Blog</title>
-        <link>https://your-docusaurus-test-site.com/gsudo/blog</link>
+        <link>https://gerardog.github.io/gsudo/blog</link>
         <description>gsudo (sudo for windows) Blog</description>
         <lastBuildDate>Thu, 26 Aug 2021 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
@@ -10,7 +10,7 @@
         <language>en</language>
         <item>
             <title><![CDATA[Welcome]]></title>
-            <link>https://your-docusaurus-test-site.com/gsudo/blog/welcome</link>
+            <link>https://gerardog.github.io/gsudo/blog/welcome</link>
             <guid>welcome</guid>
             <pubDate>Thu, 26 Aug 2021 00:00:00 GMT</pubDate>
             <description><![CDATA[Welcome.]]></description>
