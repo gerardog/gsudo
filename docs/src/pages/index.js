@@ -5,6 +5,7 @@ import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import styles from './index.module.css';
 import HomepageFeatures from '@site/src/components/HomepageFeatures';
+import DemoImage from '../../../demo.gif'
 
 function HomepageHeader() {
   const {siteConfig} = useDocusaurusContext();
@@ -23,8 +24,11 @@ function HomepageHeader() {
             className="button button--secondary button--lg"
             to="/docs/install">
             Install
-          </Link>          
+          </Link>           
         </div>
+		<div>
+			<img class="demo-image" src={DemoImage} />
+		</div>
       </div>
     </header>
   );
