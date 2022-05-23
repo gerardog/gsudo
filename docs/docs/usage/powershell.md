@@ -12,7 +12,9 @@ There are three ways to elevate PS commands.
 
 
 :::warning
-PowerShell Core installed as a `dotnet global tool` is [not supported](../troubleshooting#known-issues). Please use another installation method.
+
+If you installed `PowerShell Core` using `dotnet tool install PowerShell` [you will have issues](https://github.com/PowerShell/PowerShell/issues/11747). Please install with any another installation method such as: `winget install Microsoft.PowerShell` / `choco install pwsh` / [Download from GitHub](https://github.com/PowerShell/PowerShell/releases/latest) / [Microsoft Store](https://apps.microsoft.com/store/detail/powershell/9MZ1SNWT0N5D)
+ 
 :::
 
 ### `gsudo` Command
