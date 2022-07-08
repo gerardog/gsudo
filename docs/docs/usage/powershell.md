@@ -5,7 +5,7 @@ title: Usage from PowerShell
 ---
 ## Usage from PowerShell
 
-There are three ways to elevate PS commands.
+When the current shell is `PowerShell`, there are three ways to elevate PS commands.
 - Run `gsudo` to start an elevated PowerShell session.
 - Run `gsudo {command}` to elevate one command. It accepts and returns strings
 - Run `Invoke-gsudo { ScriptBlock }` for native ScriptBlock syntax and auto serialization of inputs, outputs and pipeline objects.
