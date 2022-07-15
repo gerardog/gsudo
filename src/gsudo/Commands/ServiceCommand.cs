@@ -5,6 +5,7 @@ using System.IO;
 using gsudo.Rpc;
 using gsudo.ProcessHosts;
 using System.Runtime.Serialization.Formatters.Binary;
+using gsudo.Helpers;
 
 namespace gsudo.Commands
 {
@@ -71,6 +72,11 @@ namespace gsudo.Commands
                 if (request.KillCache) throw new OperationCanceledException();
 
                 IProcessHost applicationHost = CreateProcessHost(request);
+
+                if (!applicationHost.SupportsSimultaneousElevations && Settings.CacheMode.Value==Enums.CacheMode.Auto)
+                {
+                    ServiceHelper.StartElevatedService(AllowedPid, CacheDuration, AllowedSid);
+                }
 
                 if (!string.IsNullOrEmpty(request.Prompt))
                     Environment.SetEnvironmentVariable("PROMPT",

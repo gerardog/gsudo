@@ -14,5 +14,7 @@ namespace gsudo.ProcessHosts
     interface IProcessHost
     {
         Task Start(Connection connection, ElevationRequest elevationRequest);
+
+        bool SupportsSimultaneousElevations { get; }
     }
 }
