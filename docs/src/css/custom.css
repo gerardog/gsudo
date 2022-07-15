@@ -48,3 +48,8 @@
 code {
   vertical-align:baseline;
 }
+
+.demo-image {  
+  clip-path: inset(1px 10px 0px 1px round 10px);
+  margin-top: 2em;    
+}

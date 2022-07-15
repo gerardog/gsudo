@@ -50,4 +50,4 @@ Read [How to Use](usage) for your favorite shell to see additional features.
 
 ### Demo
 
-![Demo](../../demo.gif)
+[![Demo](../../demo.gif)](../../demo.gif)
