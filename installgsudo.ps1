@@ -1,33 +1,49 @@
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $release = Invoke-RestMethod -Method Get -Uri "https://api.github.com/repos/gerardog/gsudo/releases/latest"
-$asset = $release.assets | Where-Object name -like *.zip
-$destdir = "$home\apps\gsudo"
-$zipfile = "$env:TEMP\$($asset.name)"
+$asset = $release.assets | Where-Object name -like "gsudoSetup.msi"
+$fileName = "$env:TEMP\$($asset.name)"
 
 Write-Output "Downloading $($asset.name)"
-Invoke-RestMethod -Method Get -Uri $asset.browser_download_url -OutFile $zipfile
+Invoke-RestMethod -Method Get -Uri $asset.browser_download_url -OutFile $fileName
 
-Write-Output "Extracting to $destdir"
-Expand-Archive -Path $zipfile -DestinationPath $destdir -Force
-Remove-Item -Path $zipfile
+Write-Output "Installing $($asset.name)"
 
-$p = [System.Environment]::GetEnvironmentVariable('Path', [System.EnvironmentVariableTarget]::User);
-if (!$p.ToLower().Contains($destdir.ToLower()))
+$DataStamp = get-date -Format yyyyMMddTHHmmss
+$logFile = '{0}-{1}.log' -f "$env:TEMP\gsudoSetup",$DataStamp
+
+$MSIArguments = @(
+    "/i"
+    ('"{0}"' -f $fileName)
+    "/qb"
+    "/norestart"
+    "/L*v"
+    $logFile
+)
+$msiexec = (Get-Command "msiexec.exe").Path
+$process = Start-Process -ArgumentList $MSIArguments -Wait $msiexec -PassThru
+
+if ($process.ExitCode -ne 0)
 {
-	Write-Output "Adding $destdir to your Path"
+	#Get-Content $logFile
+	Write-Warning -Verbose "Installation failed! (msiexec error code $($process.ExitCode))"
+	Write-Warning -Verbose "  Log File location: $logFile"
+	Write-Warning -Verbose "  MSI File location: $fileName"
+}
+else
+{
+	Write-Output "gsudo installed succesfully!"
+	Write-Output "Please restart your consoles to use gsudo!`n"
 	
-	$p += ";$destdir";
-	[System.Environment]::SetEnvironmentVariable('Path',$p,[System.EnvironmentVariableTarget]::User);
+	"PowerShell users: To use enhanced gsudo and Invoke-Gsudo cmdlet, add the following line to your `$PROFILE"
+	"  Import-Module '${Env:ProgramFiles(x86)}\gsudo\gsudoModule.psd1'"
+	"Or run: "
+	"  Write-Output `"``nImport-Module '${Env:ProgramFiles(x86)}\gsudo\gsudoModule.psd1'`" | Add-Content `$PROFILE"
 	
-	$Env:Path = [System.Environment]::GetEnvironmentVariable('Path', [System.EnvironmentVariableTarget]::Machine) + ";" + $p
-	
-	Write-Output "Restart your consoles to refresh the Path env var."
+	Remove-Item $fileName 
 }
 
-$ans = Read-host "Do you want to alias ""sudo"" to ""gsudo""? (may show UAC elevation popup.) (y/n)"
-if ($ans -eq "y") 
+if ([Console]::IsInputRedirected -eq $false -and [Console]::IsOutputRedirected -eq $false) 
 {
-	& "$destdir\gsudo.exe" cmd /c mklink "$destdir\sudo.exe" "$destdir\gsudo.exe"
+	Write-Host -NoNewLine 'Press any key to continue...';
+	$_ = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
 }
-Write-Output "Done!"
-Start-Sleep -Seconds 5
