@@ -32,7 +32,7 @@ gsudo status | findstr /C:"Admin: True" 1> nul 2>nul || gsudo "%~f0" && exit /b
 :: You are admin. Do admin stuff here.
 ```
 
-PowerShell: (e.g. 'SelfElevate.ps1')
+PowerShell: (e.g. `SelfElevate.ps1`)
 
 ```powershell
 function Test-IsAdmin {

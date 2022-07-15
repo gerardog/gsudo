@@ -19,6 +19,8 @@ The cache mode can be set with **`gsudo config CacheMode auto|explicit|disabled`
 - **Explicit: (default)** Every elevation shows a UAC popup, unless a cache session is started explicitly with `gsudo cache on`.
 
 ```powershell
+gsudo config CacheMode Explicit # This is optional since Explicit is the default.
+
 gsudo command1 # 1st UAC Popup shown
 gsudo command2 # 2nd UAC Popup shown
 gsudo cache on # 3rd UAC Popup shown, cache session started
@@ -30,6 +32,8 @@ gsudo cache off # (or gsudo -k) Ends the cache session. Next elevation will show
 - **Auto:** Simil-unix-sudo. The first elevation shows a UAC Popup and starts a cache session automatically.
 
 ```powershell
+gsudo config CacheMode Auto # Only need to run once, this setting is persistent.
+
 gsudo command1 # 1st UAC Popup shown, cache session started
 gsudo command2 # Elevation without popup
 gsudo command3 # Elevation without popup 
