@@ -72,20 +72,21 @@ namespace gsudo.Rpc
             }
         }
 
-        public static bool IsServiceAvailable()
+        public static bool IsServiceAvailable(int? pid = null, string sid = null)
         {
             string pipeName = null;
-            var callerProcessId = Process.GetCurrentProcess().Id;
-            string user = System.Security.Principal.WindowsIdentity.GetCurrent().User.Value;
 
-            while (callerProcessId > 0)
+            pid = pid ?? ProcessHelper.GetParentProcessId(Process.GetCurrentProcess().Id);
+            sid = sid ?? System.Security.Principal.WindowsIdentity.GetCurrent().User.Value;
+
+            while (pid.Value > 0)
             {
-                callerProcessId = ProcessHelper.GetParentProcessId(callerProcessId);
-                pipeName = NamedPipeNameFactory.GetPipeName(user, callerProcessId);
+                pipeName = NamedPipeNameFactory.GetPipeName(sid, pid.Value);
                 // Does the pipe exists?
                 if (NamedPipeUtils.ExistsNamedPipe(pipeName))
                     break;
 
+                pid = ProcessHelper.GetParentProcessId(pid.Value);
                 pipeName = null;
                 // try grandfather.
             }
