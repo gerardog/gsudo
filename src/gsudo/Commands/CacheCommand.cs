@@ -66,8 +66,9 @@ namespace gsudo.Commands
                     commandToRun.AddRange(new[]
                         {"cache", "on", "--pid", AllowedPid.ToString()});
 
+                    InputArguments.Wait = true;
                     InputArguments.Direct = true;
-                    return await new RunCommand() {CommandToRun = commandToRun}
+                    return await new RunCommand() {CommandToRun = commandToRun, }
                         .Execute().ConfigureAwait(false);
                 }
                 else
@@ -84,6 +85,10 @@ namespace gsudo.Commands
 
                     Logger.Instance.Log("Cache is a security risk. Use `gsudo cache off` (or `-k`) to go back to safety.",
                         LogLevel.Warning);
+
+                    // wait until the cache service becomes available (2 seconds max)
+                    for (int i=0; i<40 && !NamedPipeClient.IsServiceAvailable(AllowedPid); i++)
+                        await Task.Delay(50).ConfigureAwait(false);
                 }
 
                 return 0;
