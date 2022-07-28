@@ -350,7 +350,7 @@ namespace gsudo.Commands
 
                 var dirSec = new DirectorySecurity();
                 dirSec.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), FileSystemRights.FullControl, AccessControlType.Allow));
-                Directory.CreateDirectory(tempFolder, dirSec);
+                dirSec.CreateDirectory(tempFolder);
 
                 string tempBatName = Path.Combine(
                     tempFolder,
@@ -360,7 +360,9 @@ namespace gsudo.Commands
 
                 System.Security.AccessControl.FileSecurity fSecurity = new System.Security.AccessControl.FileSecurity();
                 fSecurity.AddAccessRule(new System.Security.AccessControl.FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), System.Security.AccessControl.FileSystemRights.FullControl, System.Security.AccessControl.AccessControlType.Allow));
-                File.SetAccessControl(tempBatName, fSecurity);
+
+                new FileInfo(tempBatName).SetAccessControl(fSecurity);
+                
 
                 return new string[] {
                     Environment.GetEnvironmentVariable("COMSPEC"),

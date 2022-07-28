@@ -80,10 +80,10 @@ namespace gsudo.Rpc
 
             do
             {
-                using (NamedPipeServerStream dataPipe = new NamedPipeServerStream(pipeName, PipeDirection.InOut, MAX_SERVER_INSTANCES,
+                using (var dataPipe = NamedPipeServerStreamConstructors.New(pipeName, PipeDirection.InOut, MAX_SERVER_INSTANCES,
                     PipeTransmissionMode.Message, PipeOptions.Asynchronous, Settings.BufferSize, Settings.BufferSize, ps))
                 {
-                    using (NamedPipeServerStream controlPipe = new NamedPipeServerStream(pipeName + "_control", PipeDirection.InOut, MAX_SERVER_INSTANCES,
+                    using (var controlPipe = NamedPipeServerStreamConstructors.New(pipeName + "_control", PipeDirection.InOut, MAX_SERVER_INSTANCES,
                         PipeTransmissionMode.Message, PipeOptions.Asynchronous, Settings.BufferSize, Settings.BufferSize, ps))
                     {
                         Logger.Instance.Log("NamedPipeServer listening.", LogLevel.Debug);

@@ -15,10 +15,13 @@ namespace gsudo.Helpers
     {
         private static int? _cacheGetCurrentIntegrityLevelCache;
         private static bool? _cacheIsAdmin;
+        private static string _cacheOwnExeName;
 
         public static string GetOwnExeName()
         {
-            return SymbolicLinkSupport.ResolveSymbolicLink(System.Reflection.Assembly.GetEntryAssembly().Location);
+            if (_cacheOwnExeName != null)
+                return _cacheOwnExeName;
+            return _cacheOwnExeName = SymbolicLinkSupport.ResolveSymbolicLink(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
         }
 
         public static string GetExeName(this Process process)

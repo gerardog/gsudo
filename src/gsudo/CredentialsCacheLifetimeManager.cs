@@ -46,20 +46,20 @@ namespace gsudo
                 EventWaitHandleRights.Synchronize | EventWaitHandleRights.Modify,
                 AccessControlType.Allow));
 
-            if (!EventWaitHandle.TryOpenExisting(
+            if (!EventWaitHandleAcl.TryOpenExisting(
                     GLOBAL_WAIT_HANDLE_NAME,
                     EventWaitHandleRights.Synchronize | EventWaitHandleRights.Modify,
                     out var eventWaitHandle))
             {
-                eventWaitHandle = new EventWaitHandle(false, EventResetMode.ManualReset, GLOBAL_WAIT_HANDLE_NAME, out var created, security);
+                eventWaitHandle = EventWaitHandleAcl.Create(false, EventResetMode.ManualReset, GLOBAL_WAIT_HANDLE_NAME, out var created, security);
             }
 
-            if (!EventWaitHandle.TryOpenExisting(
+            if (!EventWaitHandleAcl.TryOpenExisting(
                 GLOBAL_WAIT_HANDLE_NAME + pid.ToString(CultureInfo.InvariantCulture),
                 EventWaitHandleRights.Synchronize | EventWaitHandleRights.Modify,
                 out var eventWaitHandleSpecific))
             {
-                eventWaitHandleSpecific = new EventWaitHandle(false, EventResetMode.ManualReset, GLOBAL_WAIT_HANDLE_NAME + pid.ToString(CultureInfo.InvariantCulture), out var created, security);
+                eventWaitHandleSpecific = EventWaitHandleAcl.Create(false, EventResetMode.ManualReset, GLOBAL_WAIT_HANDLE_NAME + pid.ToString(CultureInfo.InvariantCulture), out var created, security);
             }
 
             var credentialsResetThread = new Thread(() =>
@@ -83,7 +83,7 @@ namespace gsudo
         {
             try
             {
-                using (var eventWaitHandle = EventWaitHandle.OpenExisting(
+                using (var eventWaitHandle = EventWaitHandleAcl.OpenExisting(
                     GLOBAL_WAIT_HANDLE_NAME + (pid?.ToString(CultureInfo.InvariantCulture) ?? ""),
                     EventWaitHandleRights.Synchronize | EventWaitHandleRights.Modify))
                 {
