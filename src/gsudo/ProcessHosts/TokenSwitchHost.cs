@@ -12,6 +12,8 @@ namespace gsudo.ProcessHosts
     /// </summary>
     class TokenSwitchHost : IProcessHost
     {
+        public bool SupportsSimultaneousElevations { get; } = true;
+
         public async Task Start(Connection connection, ElevationRequest elevationRequest)
         {
             if (Settings.SecurityEnforceUacIsolation && !elevationRequest.NewWindow)
@@ -22,7 +24,6 @@ namespace gsudo.ProcessHosts
                 TokenSwitcher.ReplaceProcessToken(elevationRequest);
 
                 await connection.ControlStream.WriteAsync(Constants.TOKEN_SUCCESS).ConfigureAwait(false);
-                connection.DisconnectedWaitHandle.WaitOne(); // Wait until client receives the response before closing.
             }
             catch (Exception ex)
             {

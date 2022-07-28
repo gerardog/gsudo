@@ -23,6 +23,8 @@ namespace gsudo.ProcessHosts
         private ElevationRequest _request;
         private bool _errorStreamActive;
 
+        public bool SupportsSimultaneousElevations { get; } = false;
+
         public async Task Start(Connection connection, ElevationRequest request)
         {
             Native.ConsoleApi.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, true);

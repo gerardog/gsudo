@@ -23,6 +23,8 @@ namespace gsudo.ProcessHosts
         private Connection _connection;
         private static Encoding PseudoConsoleEncoding = new System.Text.UTF8Encoding(false);
 
+        public bool SupportsSimultaneousElevations { get; } = false;
+
         public async Task Start(Connection connection, ElevationRequest request)
         {
             if (Settings.SecurityEnforceUacIsolation)
