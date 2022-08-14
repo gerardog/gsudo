@@ -2,6 +2,7 @@
 using System.IO;
 using System.IO.Pipes;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -58,6 +59,13 @@ namespace gsudo.Rpc
 
         public async Task WriteElevationRequest(ElevationRequest elevationRequest)
         {
+            byte[] utf8Json = JsonSerializer.SerializeToUtf8Bytes(elevationRequest, ElevationRequestJsonContext.Default.ElevationRequest);
+
+            await ControlStream.WriteAsync(BitConverter.GetBytes(utf8Json.Length), 0, sizeof(int)).ConfigureAwait(false);
+            await ControlStream.WriteAsync(utf8Json, 0, utf8Json.Length).ConfigureAwait(false);
+            await ControlStream.FlushAsync().ConfigureAwait(false);
+
+            /*
             // Using Binary instead of Newtonsoft.JSON to reduce load times.
             var ms = new System.IO.MemoryStream();
             new BinaryFormatter()
@@ -71,6 +79,7 @@ namespace gsudo.Rpc
             await ControlStream.WriteAsync(lengthArray, 0, sizeof(int)).ConfigureAwait(false);
             await ControlStream.WriteAsync(ms.ToArray(), 0, (int)ms.Length).ConfigureAwait(false);
             await ControlStream.FlushAsync().ConfigureAwait(false);
+            */
         }
 
         public void Dispose()

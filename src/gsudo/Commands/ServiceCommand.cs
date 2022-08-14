@@ -5,6 +5,7 @@ using System.IO;
 using gsudo.Rpc;
 using gsudo.ProcessHosts;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Text.Json;
 
 namespace gsudo.Commands
 {
@@ -123,9 +124,12 @@ namespace gsudo.Commands
             
             Logger.Instance.Log($"ElevationRequest length {dataSizeInt}", LogLevel.Debug);
 
-            return (ElevationRequest) new BinaryFormatter()
+            return JsonSerializer.Deserialize(inBuffer, ElevationRequestJsonContext.Default.ElevationRequest);
+
+            /*
+            return (ElevationRequest)new BinaryFormatter()
             .Deserialize(new MemoryStream(inBuffer));
-            
+            */
         }
 
         public void Dispose()
