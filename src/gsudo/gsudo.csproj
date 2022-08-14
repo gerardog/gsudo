@@ -25,8 +25,9 @@
     <FileVersion>1.0.0.0</FileVersion>
     <AutoGenerateBindingRedirects>False</AutoGenerateBindingRedirects>
     <!-- .net 7 only below -->
-	<PublishAot>true</PublishAot> 
 	<PublishTrimmed>true</PublishTrimmed>
+	<InvariantGlobalization>true</InvariantGlobalization> 
+	<IlcOptimizationPreference>Size</IlcOptimizationPreference>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>DEBUG</DefineConstants>
