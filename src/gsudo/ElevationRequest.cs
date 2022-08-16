@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Runtime.Serialization;
-using System.Text.Json.Serialization;
 
 namespace gsudo
 {
@@ -44,12 +43,7 @@ namespace gsudo
         }
     }
 
-    [JsonSerializable(typeof(ElevationRequest))]
-    internal partial class ElevationRequestJsonContext : JsonSerializerContext
-    {
-    }
-
-    /*
+#if NETFRAMEWORK
     class MySerializationBinder : SerializationBinder
     {
         /// <summary>
@@ -60,13 +54,7 @@ namespace gsudo
         /// <returns></returns>
         public override Type BindToType(string assemblyName, string typeName)
         {
-            switch (typeName)
-            {
-                case "System.String": return typeof(String);
-                case "System.Int32": return typeof(Int32);
-                default:
-                    throw new NotImplementedException(typeName);
-            }
+            return Type.GetType(typeName);
         }
 
         /// <summary>
@@ -81,6 +69,10 @@ namespace gsudo
             typeName = serializedType.FullName;
         }
     }
-
-    */
+#else
+    [System.Text.Json.Serialization.JsonSerializable(typeof(ElevationRequest))]
+    internal partial class ElevationRequestJsonContext : System.Text.Json.Serialization.JsonSerializerContext
+    {
+    }
+#endif
 }

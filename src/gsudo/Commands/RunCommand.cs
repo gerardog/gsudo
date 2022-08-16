@@ -350,7 +350,11 @@ namespace gsudo.Commands
 
                 var dirSec = new DirectorySecurity();
                 dirSec.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), FileSystemRights.FullControl, AccessControlType.Allow));
+#if NETFRAMEWORK
+                Directory.CreateDirectory(tempFolder, dirSec);
+#else
                 dirSec.CreateDirectory(tempFolder);
+#endif
 
                 string tempBatName = Path.Combine(
                     tempFolder,

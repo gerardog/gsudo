@@ -3,6 +3,9 @@ using System.Globalization;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Threading;
+#if NETFRAMEWORK
+using EventWaitHandleAcl = System.Threading.EventWaitHandle;
+#endif
 
 namespace gsudo
 {
@@ -51,7 +54,11 @@ namespace gsudo
                     EventWaitHandleRights.Synchronize | EventWaitHandleRights.Modify,
                     out var eventWaitHandle))
             {
+#if NETFRAMEWORK
+                eventWaitHandle = new EventWaitHandle(false, EventResetMode.ManualReset, GLOBAL_WAIT_HANDLE_NAME, out var created, security);
+#else
                 eventWaitHandle = EventWaitHandleAcl.Create(false, EventResetMode.ManualReset, GLOBAL_WAIT_HANDLE_NAME, out var created, security);
+#endif
             }
 
             if (!EventWaitHandleAcl.TryOpenExisting(
@@ -59,7 +66,11 @@ namespace gsudo
                 EventWaitHandleRights.Synchronize | EventWaitHandleRights.Modify,
                 out var eventWaitHandleSpecific))
             {
+#if NETFRAMEWORK
+                eventWaitHandleSpecific = new EventWaitHandle(false, EventResetMode.ManualReset, GLOBAL_WAIT_HANDLE_NAME + pid.ToString(CultureInfo.InvariantCulture), out var created, security);
+#else
                 eventWaitHandleSpecific = EventWaitHandleAcl.Create(false, EventResetMode.ManualReset, GLOBAL_WAIT_HANDLE_NAME + pid.ToString(CultureInfo.InvariantCulture), out var created, security);
+#endif
             }
 
             var credentialsResetThread = new Thread(() =>

@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Configurations>Debug;Release;Debug-Net46</Configurations>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\gsudo\gsudo.csproj" />

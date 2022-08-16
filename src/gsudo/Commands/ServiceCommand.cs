@@ -5,7 +5,9 @@ using System.IO;
 using gsudo.Rpc;
 using gsudo.ProcessHosts;
 using System.Runtime.Serialization.Formatters.Binary;
+#if NETCOREAPP
 using System.Text.Json;
+#endif
 
 namespace gsudo.Commands
 {
@@ -124,12 +126,11 @@ namespace gsudo.Commands
             
             Logger.Instance.Log($"ElevationRequest length {dataSizeInt}", LogLevel.Debug);
 
+#if NETFRAMEWORK
+            return (ElevationRequest)new BinaryFormatter().Deserialize(new MemoryStream(inBuffer));
+#else
             return JsonSerializer.Deserialize(inBuffer, ElevationRequestJsonContext.Default.ElevationRequest);
-
-            /*
-            return (ElevationRequest)new BinaryFormatter()
-            .Deserialize(new MemoryStream(inBuffer));
-            */
+#endif
         }
 
         public void Dispose()

@@ -18,23 +18,27 @@ install:
   - ps: Install-Module Pester -Force -SkipPublisherCheck -Scope CurrentUser
 
 before_build:
-  - ps: gitversion /l console /output buildserver /updateAssemblyInfo
+  - ps: gitversion /l console /output buildserver /updateAssemblyInfo /verbosity minimal
 
 build_script:
   - dotnet restore src\gsudo.sln 
   - dotnet build src\gsudo.sln -c Release
   # x64 build with NativeAOT
-  - dotnet publish .\src\gsudo\gsudo.csproj -c Release -r win-x64 -p:PublishAot=true
+  - dotnet publish .\src\gsudo\gsudo.csproj -c Release -f net7.0 -r win-x64 --sc -p:PublishAot=true
   # x86 does not support NativeAOT
-  - dotnet publish .\src\gsudo\gsudo.csproj -c Release -r win-x86 -p:PublishReadyToRun=true --self-contained
+  - dotnet publish .\src\gsudo\gsudo.csproj -c Release -f net7.0 -r win-x86 --sc -p:PublishReadyToRun=true;PublishSingleFile=true
+  - dotnet publish .\src\gsudo\gsudo.csproj -c Release -f net46 -p:Platform=x64
 
 after_build:
-  - 7z a gsudo.%CONFIGURATION%.%APPVEYOR_BUILD_VERSION%.Unsigned.x64.zip %APPVEYOR_BUILD_FOLDER%\src\gsudo\bin\win-x64\publish\*.* %APPVEYOR_BUILD_FOLDER%\src\gsudo.extras\gsudoModule.* %APPVEYOR_BUILD_FOLDER%\src\gsudo.extras\Invoke-gsudo.ps1
-  - appveyor PushArtifact gsudo.%CONFIGURATION%.%APPVEYOR_BUILD_VERSION%.Unsigned.x64.zip
+  - 7z a gsudo.%APPVEYOR_BUILD_VERSION%.net70.x64.Unsigned.zip    .\src\gsudo\bin\net7.0\win-x64\publish\*.* .\src\gsudo.extras\gsudoModule.* .\src\gsudo.extras\Invoke-gsudo.ps1
+  - appveyor PushArtifact gsudo.%APPVEYOR_BUILD_VERSION%.net70.x64.Unsigned.zip
 
-  - 7z a gsudo.%CONFIGURATION%.%APPVEYOR_BUILD_VERSION%.Unsigned.x86.zip %APPVEYOR_BUILD_FOLDER%\src\gsudo\bin\*.* %APPVEYOR_BUILD_FOLDER%\src\gsudo.extras\gsudoModule.* %APPVEYOR_BUILD_FOLDER%\src\gsudo.extras\Invoke-gsudo.ps1
-  - appveyor PushArtifact gsudo.%CONFIGURATION%.%APPVEYOR_BUILD_VERSION%.Unsigned.x86.zip
+  - 7z a gsudo.%APPVEYOR_BUILD_VERSION%.net70.x86.Unsigned.zip    .\src\gsudo\bin\net7.0\win-x86\publish\*.* .\src\gsudo.extras\gsudoModule.* .\src\gsudo.extras\Invoke-gsudo.ps1
+  - appveyor PushArtifact gsudo.%APPVEYOR_BUILD_VERSION%.net70.x86.Unsigned.zip
   
+  - 7z a gsudo.%APPVEYOR_BUILD_VERSION%.net46.AnyCpu.Unsigned.zip .\src\gsudo\bin\net46\publish\*.*          .\src\gsudo.extras\gsudoModule.* .\src\gsudo.extras\Invoke-gsudo.ps1
+  - appveyor PushArtifact gsudo.%APPVEYOR_BUILD_VERSION%.net46.AnyCpu.Unsigned.zip
+    
 test_script:
   - ps: $Env:Path+=";$($Env:APPVEYOR_BUILD_FOLDER)/src/gsudo/bin;";
   - vstest.console /logger:Appveyor %APPVEYOR_BUILD_FOLDER%\src\gsudo.Tests\bin\%CONFIGURATION%\net7.0\gsudo.Tests.dll  
