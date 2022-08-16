@@ -4,7 +4,7 @@ platform: Any CPU
 configuration: Release
 
 cache:
-  - src\packages -> **\packages.config  # preserve "packages" directory in the root of build folder but will reset it if packages.config is modified
+  - src\gsudo\packages -> **\packages.config  # preserve "packages" directory in the root of build folder but will reset it if packages.config is modified
   - '%LocalAppData%\NuGet\Cache'    # NuGet < v3
   - '%LocalAppData%\NuGet\v3-cache' # NuGet v3
   
@@ -23,10 +23,10 @@ before_build:
 build_script:
   - dotnet restore src\gsudo.sln 
   - dotnet build src\gsudo.sln -c Release
-  # x64 build with NativeAOT
-  - dotnet publish .\src\gsudo\gsudo.csproj -c Release -f net7.0 -r win-x64 --sc -p:PublishAot=true
-  # x86 does not support NativeAOT
-  - dotnet publish .\src\gsudo\gsudo.csproj -c Release -f net7.0 -r win-x86 --sc -p:PublishReadyToRun=true;PublishSingleFile=true
+  # net 7.0 x64 build with NativeAOT
+  - dotnet publish .\src\gsudo\gsudo.csproj -c Release -f net7.0 -r win-x64 --sc -p:PublishAot=true -p:TrimmerDefaultAction=link -p:IlcOptimizationPreference=Size
+  # net 7.0 x86 does not support NativeAOT
+  - dotnet publish .\src\gsudo\gsudo.csproj -c Release -f net7.0 -r win-x86 --sc -p:PublishReadyToRun=true -p:PublishSingleFile=true
   # net framework 4.6 AnyCpu
   - dotnet publish .\src\gsudo\gsudo.csproj -c Release -f net46 -p:Platform=x64
 
