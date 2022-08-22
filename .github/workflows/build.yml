@@ -1,0 +1,39 @@
+name: Build Release
+
+on:
+  push:
+    branches:
+      - Feature.NetCore.Build
+      - Feature.NetCore
+    # Review gh actions docs if you want to further define triggers, paths, etc
+    # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#on
+
+jobs:
+  build:
+    name: Build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+        with: 
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: '7.0.x'
+          include-prerelease: true 
+      - name: Install dependencies
+        run: choco install GitVersion.Portable wixtoolset --confirm
+      - name: Update project version
+        run: gitversion /l console /output buildserver /updateAssemblyInfo /verbosity minimal
+      - name: Build net7.0 for win-x64
+        run: | 
+          cmd /c rd .\src\gsudo\obj /s /q
+          dotnet publish .\src\gsudo\gsudo.csproj -c Release -f net7.0 -r win-x64 --sc -p:PublishAot=true -p:IlcOptimizationPreference=Size -v minimal -p:WarningLevel=0
+      - name: Build net7.0 for win-x86
+        run: |
+          cmd /c rd .\src\gsudo\obj /s /q
+          dotnet publish .\src\gsudo\gsudo.csproj -c Release -f net7.0 -r win-x86 --sc -p:PublishReadyToRun=true -p:PublishSingleFile=true
+      - name: Build net462 for AnyCPU 
+        run: |
+          cmd /c rd .\src\gsudo\obj /s /q
+          dotnet publish .\src\gsudo\gsudo.csproj -c Release -f net46 -p:Platform=AnyCpu
+        
