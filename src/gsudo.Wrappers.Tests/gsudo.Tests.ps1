@@ -1,6 +1,7 @@
 Describe "PS Gsudo (v$($PSVersionTable.PSVersion.ToString()))" {
 	BeforeAll {
-		$Path = (Get-Item (Join-Path $PSScriptRoot "gsudoModule.psm1")).FullName
+		$env:Path += ";" + (Get-Item (Join-Path $PSScriptRoot "..\gsudo.Wrappers")).FullName
+		$Path = (Get-Item (Join-Path $PSScriptRoot "..\gsudo.Wrappers\gsudoModule.psm1")).FullName
 		$Path | Should -not -BeNullOrEmpty
 		Import-Module $Path
 	}
