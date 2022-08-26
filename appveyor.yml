@@ -17,7 +17,7 @@ after_build:
   
 test_script:
   - ps: $Env:Path+=";$($Env:APPVEYOR_BUILD_FOLDER)/src/gsudo/bin;";
-  - vstest.console /logger:Appveyor %APPVEYOR_BUILD_FOLDER%\src\gsudo.Tests\bin\%CONFIGURATION%\gsudo.Tests.dll  
+  - vstest.console /logger:Appveyor %APPVEYOR_BUILD_FOLDER%\src\gsudo.Tests\bin\%CONFIGURATION%\net46\gsudo.Tests.dll  
   - powershell -c Invoke-Pester -EnableExit -OutputFile Powershell5Tests.xml -OutputFormat NUnitXml
   - pwsh -c Invoke-Pester -EnableExit -OutputFile PowershellCoreTests.xml -OutputFormat NUnitXml
   - ps: |
