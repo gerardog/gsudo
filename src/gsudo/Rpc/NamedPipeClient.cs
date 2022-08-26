@@ -32,7 +32,8 @@ namespace gsudo.Rpc
                 else
                 {
                     var callerProcessId = Process.GetCurrentProcess().Id;
-                    while (callerProcessId > 0)
+                    int maxRecursion = 20;
+                    while (callerProcessId > 0 && maxRecursion-- > 0)
                     {
                         callerProcessId = ProcessHelper.GetParentProcessId(callerProcessId);
                         pipeName = NamedPipeNameFactory.GetPipeName(user, callerProcessId);
@@ -79,7 +80,8 @@ namespace gsudo.Rpc
             pid = pid ?? ProcessHelper.GetParentProcessId(Process.GetCurrentProcess().Id);
             sid = sid ?? System.Security.Principal.WindowsIdentity.GetCurrent().User.Value;
 
-            while (pid.Value > 0)
+            int maxRecursion = 20;
+            while (pid.Value > 0 && maxRecursion-- > 0)
             {
                 pipeName = NamedPipeNameFactory.GetPipeName(sid, pid.Value);
                 // Does the pipe exists?
