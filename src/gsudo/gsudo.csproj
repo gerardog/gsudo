@@ -52,7 +52,6 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)'=='net7.0'">
-	<PackageReference Include="NamedPipeServerStream.NetFrameworkVersion" Version="1.1.9" />
     <PackageReference Include="System.Security.Principal.Windows" Version="5.0.0" />
     <PackageReference Include="System.Threading.AccessControl" Version="6.0.0" />
   </ItemGroup>

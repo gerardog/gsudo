@@ -83,14 +83,14 @@ namespace gsudo.Rpc
 #if NETFRAMEWORK
                 using (NamedPipeServerStream dataPipe = new NamedPipeServerStream(
 #else
-                using (var dataPipe = NamedPipeServerStreamConstructors.New(
+                using (var dataPipe = System.IO.Pipes.NamedPipeServerStreamAcl.Create(
 #endif
                     pipeName, PipeDirection.InOut, MAX_SERVER_INSTANCES, PipeTransmissionMode.Message, PipeOptions.Asynchronous, Settings.BufferSize, Settings.BufferSize, ps))
                 {
 #if NETFRAMEWORK
                     using (var controlPipe = new NamedPipeServerStream(
 #else
-                    using (var controlPipe = NamedPipeServerStreamConstructors.New(                    
+                    using (var controlPipe = System.IO.Pipes.NamedPipeServerStreamAcl.Create(
 #endif
                         pipeName + "_control", PipeDirection.InOut, MAX_SERVER_INSTANCES, PipeTransmissionMode.Message, PipeOptions.Asynchronous, Settings.BufferSize, Settings.BufferSize, ps))
                     {
