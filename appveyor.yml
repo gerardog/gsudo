@@ -31,13 +31,13 @@ build_script:
   - dotnet publish .\src\gsudo\gsudo.csproj -c Release -f net46 -p:Platform=x64
 
 after_build:
-  - 7z a gsudo.net70.x64.Unsigned.v%APPVEYOR_BUILD_VERSION%.zip    .\src\gsudo\bin\net7.0\win-x64\publish\*.* .\src\gsudo.extras\gsudoModule.* .\src\gsudo.extras\Invoke-gsudo.ps1
+  - 7z a gsudo.net70.x64.Unsigned.v%APPVEYOR_BUILD_VERSION%.zip    .\src\gsudo\bin\net7.0\win-x64\publish\*.* .\src\gsudo.Wrappers\gsudoModule.* .\src\gsudo.Wrappers\Invoke-gsudo.ps1
   - appveyor PushArtifact gsudo.net70.x64.Unsigned.v%APPVEYOR_BUILD_VERSION%.zip
 
-  - 7z a gsudo.net70.x86.Unsigned.v%APPVEYOR_BUILD_VERSION%.zip    .\src\gsudo\bin\net7.0\win-x86\publish\*.* .\src\gsudo.extras\gsudoModule.* .\src\gsudo.extras\Invoke-gsudo.ps1
+  - 7z a gsudo.net70.x86.Unsigned.v%APPVEYOR_BUILD_VERSION%.zip    .\src\gsudo\bin\net7.0\win-x86\publish\*.* .\src\gsudo.Wrappers\gsudoModule.* .\src\gsudo.Wrappers\Invoke-gsudo.ps1
   - appveyor PushArtifact gsudo.net70.x86.Unsigned.v%APPVEYOR_BUILD_VERSION%.zip
   
-  - 7z a gsudo.net46.AnyCpu.Unsigned.v%APPVEYOR_BUILD_VERSION%.zip .\src\gsudo\bin\net46\publish\*.*          .\src\gsudo.extras\gsudoModule.* .\src\gsudo.extras\Invoke-gsudo.ps1
+  - 7z a gsudo.net46.AnyCpu.Unsigned.v%APPVEYOR_BUILD_VERSION%.zip .\src\gsudo\bin\net46\publish\*.*          .\src\gsudo.Wrappers\gsudoModule.* .\src\gsudo.Wrappers\Invoke-gsudo.ps1
   - appveyor PushArtifact gsudo.net46.AnyCpu.Unsigned.v%APPVEYOR_BUILD_VERSION%.zip
     
 test_script:
