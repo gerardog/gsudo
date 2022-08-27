@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[535],{137:s=>{s.exports=JSON.parse('{"title":"Recent posts","items":[{"title":"Migrating gsudo to .NET 7","permalink":"/gsudo/blog/gsudo-dotnet-7"}]}')}}]);
