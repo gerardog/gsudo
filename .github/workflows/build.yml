@@ -1,4 +1,4 @@
-sname: Build Release
+name: Build, Test & Release
 
 on:
   push:
@@ -11,17 +11,15 @@ jobs:
     name: Test
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
     - uses: actions/setup-dotnet@v2
       with:
         dotnet-version: '7.0.x'
         include-prerelease: true 
-    - name: Install dependencies
-      run: choco install pester --confirm --no-progress
-      
+    - uses: actions/checkout@v2
+      with: 
+        fetch-depth: 0    
     - name: Run Tests
       run: ./build/02-test.ps1
-
     - name: Test Report DotNet
       uses: dorny/test-reporter@v1
       if: success() || failure()    # run this step even if previous step failed
@@ -46,24 +44,24 @@ jobs:
         report_name: powershell_tests_v7
         report_title: PowerShell v7 Tests
         github_token: ${{ secrets.GITHUB_TOKEN }}
-    - uses: OrbitalOwen/desktop-screenshot-action@0.1
-      if: always()
-      with:
-        file-name: 'desktop.jpg'      
+#    - uses: OrbitalOwen/desktop-screenshot-action@0.1
+#      if: always()
+#      with:
+#        file-name: 'desktop.jpg'      
           
   build:
     name: Build
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
-      with: 
-        fetch-depth: 0
     - uses: actions/setup-dotnet@v2
       with:
         dotnet-version: '7.0.x'
         include-prerelease: true 
+    - uses: actions/checkout@v2   
+      with: 
+        fetch-depth: 0
     - name: Install dependencies
-      run: choco install GitVersion.Portable pester ilmerge --confirm --no-progress
+      run: choco install GitVersion.Portable ilmerge --confirm --no-progress
     - name: Update project version
       run: gitversion /l console /output buildserver /updateAssemblyInfo /verbosity minimal
     - name: Build
@@ -79,31 +77,31 @@ jobs:
     #wixtoolset
     if: github.repository == 'gerardog/gsudo'
     runs-on: windows-latest
-    needs: build
+    needs: [build, test]
     environment:
       name: release-github
     env:
       cert_path: "C:\\secret\\cert.pfx"
       
     steps:
+    - uses: actions/checkout@v2
+      with: 
+        fetch-depth: 0
     - uses: actions/download-artifact@v3
       with:
         name: Binaries
-        
+        path: ./artifacts
     - name: Decode cert
       run: |
         $pfx_cert_byte = [System.Convert]::FromBase64String("${{ secrets.p_f_x }}")
         mkdir (split-path -parent $env:cert_path) -ErrorAction Ignore
         [IO.File]::WriteAllBytes("$env:cert_path", $pfx_cert_byte)
-        
     - name: Code Sign
       run: ./build/03-sign.ps1
       env:
         cert_key: ${{ secrets.P_F_X_Key }}
-        
     - name: Remove the pfx
       run: Remove-Item -path $env:cert_path
-      
     - name: Upload build artifacts
       uses: actions/upload-artifact@v3
       with:

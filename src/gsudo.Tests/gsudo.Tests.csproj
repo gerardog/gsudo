@@ -2,10 +2,10 @@
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <Configurations>Debug;Release;Debug-Net46</Configurations>
+    <Configurations>Debug;Release</Configurations>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\gsudo\gsudo.csproj" />
+    <ProjectReference Include="..\gsudo\gsudo.csproj" AdditionalProperties="TargetFramework=net7.0" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.*" />

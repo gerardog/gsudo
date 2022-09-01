@@ -6,14 +6,16 @@ if (! (Test-IsAdmin)) {
 	throw "Must be admin to run tests"
 }
 
+$failure=$false
+
 pushd $PSScriptRoot\..
 
 dotnet test -f net7.0 .\src\gsudo.sln --logger "trx;LogFileName=$((gi .).FullName)\TestResults.trx" 
+if (! $?) { $failure = $true }
 
-$env:path=$env:path+";"+(Get-Item .\src\gsudo\bin\net7.0\).FullName
+$env:path=(Get-Item .\src\gsudo\bin\net7.0\).FullName+";"+$env:path
 
-.\src\gsudo\bin\net7.0\gsudo -k
-Get-process gsudo -ErrorAction SilentlyContinue | stop-process
+gsudo -k
 
 $script  = {
  	Install-Module Pester -Force -SkipPublisherCheck
@@ -33,8 +35,12 @@ $script  = {
 
 Write-Verbose -verbose "Running PowerShell Tests on Windows PowerShell (v5.x)"
 powershell $script
+if (! $?) { $failure = $true }
 
 Write-Verbose -verbose "Running PowerShell Tests on Pwsh Core (v7.x)"
 pwsh $script
+if (! $?) { $failure = $true }
 
 .\src\gsudo\bin\net7.0\gsudo.exe -k
+
+if ($failure) { exit 1 }

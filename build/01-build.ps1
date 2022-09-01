@@ -10,4 +10,10 @@ if ($?) {
 	rm artifacts\net46-AnyCpu\unmerged -Recurse
 	echo "ilmerge -> artifacts\net46-AnyCpu\"
 }
+
+cp .\src\gsudo.Wrappers\* .\artifacts\net46-AnyCpu
+#cp .\src\gsudo.Wrappers\* .\artifacts\net70-arm64
+cp .\src\gsudo.Wrappers\* .\artifacts\net70-x86
+cp .\src\gsudo.Wrappers\*	 .\artifacts\net70-x64
+
 popd
