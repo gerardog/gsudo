@@ -3,37 +3,98 @@ name: Build Release
 on:
   push:
     branches:
-      - Feature.NetCore.Build
       - Feature.NetCore
-    # Review gh actions docs if you want to further define triggers, paths, etc
-    # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#on
+      - master
 
 jobs:
   build:
-    name: Build
+    name: Build and Test
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2
-        with: 
-          fetch-depth: 0
-      - uses: actions/setup-dotnet@v2
-        with:
-          dotnet-version: '7.0.x'
-          include-prerelease: true 
-      - name: Install dependencies
-        run: choco install GitVersion.Portable wixtoolset --confirm
-      - name: Update project version
-        run: gitversion /l console /output buildserver /updateAssemblyInfo /verbosity minimal
-      - name: Build net7.0 for win-x64
-        run: | 
-          cmd /c rd .\src\gsudo\obj /s /q
-          dotnet publish .\src\gsudo\gsudo.csproj -c Release -f net7.0 -r win-x64 --sc -p:PublishAot=true -p:IlcOptimizationPreference=Size -v minimal -p:WarningLevel=0
-      - name: Build net7.0 for win-x86
-        run: |
-          cmd /c rd .\src\gsudo\obj /s /q
-          dotnet publish .\src\gsudo\gsudo.csproj -c Release -f net7.0 -r win-x86 --sc -p:PublishReadyToRun=true -p:PublishSingleFile=true
-      - name: Build net462 for AnyCPU 
-        run: |
-          cmd /c rd .\src\gsudo\obj /s /q
-          dotnet publish .\src\gsudo\gsudo.csproj -c Release -f net46 -p:Platform=AnyCpu
+    - uses: actions/checkout@v2
+      with: 
+        fetch-depth: 0
+    - uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: '7.0.x'
+        include-prerelease: true 
+    - name: Install dependencies
+      run: choco install GitVersion.Portable pester ilmerge --confirm --no-progress
+      
+    - name: Run Tests
+      run: ./build/02-test.ps1
+
+    - name: Test Report DotNet
+      uses: dorny/test-reporter@v1
+      if: success() || failure()    # run this step even if previous step failed
+      with:
+        name: DotNET Tests
+        path: "**/TestResults*.trx"                            
+        reporter: dotnet-trx
+        fail-on-error: false
+    - name: Test Report PowerShell v5
+      uses: zyborg/pester-tests-report@v1 # https://github.com/zyborg/pester-tests-report#inputs
+      if: success() || failure()    # run this step even if previous step failed
+      with:
+        test_results_path: ./testResults_PS5.xml
+        report_name: powershell_tests_v5
+        report_title: PowerShell v5 Tests
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Test Report PowerShell v7
+      uses: zyborg/pester-tests-report@v1 # https://github.com/zyborg/pester-tests-report#inputs
+      if: success() || failure()    # run this step even if previous step failed
+      with:
+        test_results_path: ./testResults_PS7.xml
+        report_name: powershell_tests_v7
+        report_title: PowerShell v7 Tests
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Update project version
+      run: gitversion /l console /output buildserver /updateAssemblyInfo /verbosity minimal
+    - name: Build
+      run: ./build/01-build.ps1
+    - uses: OrbitalOwen/desktop-screenshot-action@0.1
+      if: always()
+      with:
+        file-name: 'desktop.jpg'      
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: Binaries
+        path: ./artifacts
+
+  release:
+    name: Pack & Release
+    #wixtoolset
+    if: github.repository == 'gerardog/gsudo'
+    runs-on: windows-latest
+    needs: build
+    environment:
+      name: release-github
+    env:
+      cert_path: "C:\\secret\\"
+      
+    steps:
+    - uses: actions/download-artifact@v3
+      with:
+        name: Binaries
         
+    - name: Decode cert
+      run: |
+        $pfx_cert_byte = [System.Convert]::FromBase64String("${{ secrets.p_f_x }}")
+        $certificatePath = Join-Path -Path $env:cert_path -ChildPath cert.pfx
+        [IO.File]::WriteAllBytes("$certificatePath", $pfx_cert_byte)
+        
+    - name: Code Sign
+      run: ./build/03-sign.ps1
+      env:
+        cert_key: ${{ secrets.P_F_X_Key }}
+        
+    - name: Remove the pfx
+      run: Remove-Item -path $env:cert_path\cert.pfx
+      
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: Binaries
+        path: ./artifacts
