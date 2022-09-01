@@ -7,7 +7,6 @@ if (! (Test-IsAdmin)) {
 }
 
 pushd $PSScriptRoot\..
-if (-not(gcm Invoke-Pester)) { choco install Pester }
 
 dotnet test -f net7.0 .\src\gsudo.sln --logger "trx;LogFileName=$((gi .).FullName)\TestResults.trx" 
 
@@ -34,6 +33,7 @@ $script  = {
 
 Write-Verbose -verbose "Running PowerShell Tests on Windows PowerShell (v5.x)"
 powershell $script
+
 Write-Verbose -verbose "Running PowerShell Tests on Pwsh Core (v7.x)"
 pwsh $script
 

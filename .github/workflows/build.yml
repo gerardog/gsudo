@@ -1,4 +1,4 @@
-name: Build Release
+sname: Build Release
 
 on:
   push:
@@ -7,19 +7,17 @@ on:
       - master
 
 jobs:
-  build:
-    name: Build and Test
+  test:
+    name: Test
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
-      with: 
-        fetch-depth: 0
     - uses: actions/setup-dotnet@v2
       with:
         dotnet-version: '7.0.x'
         include-prerelease: true 
     - name: Install dependencies
-      run: choco install GitVersion.Portable pester ilmerge --confirm --no-progress
+      run: choco install pester --confirm --no-progress
       
     - name: Run Tests
       run: ./build/02-test.ps1
@@ -48,15 +46,28 @@ jobs:
         report_name: powershell_tests_v7
         report_title: PowerShell v7 Tests
         github_token: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Update project version
-      run: gitversion /l console /output buildserver /updateAssemblyInfo /verbosity minimal
-    - name: Build
-      run: ./build/01-build.ps1
     - uses: OrbitalOwen/desktop-screenshot-action@0.1
       if: always()
       with:
         file-name: 'desktop.jpg'      
+          
+  build:
+    name: Build
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+      with: 
+        fetch-depth: 0
+    - uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: '7.0.x'
+        include-prerelease: true 
+    - name: Install dependencies
+      run: choco install GitVersion.Portable pester ilmerge --confirm --no-progress
+    - name: Update project version
+      run: gitversion /l console /output buildserver /updateAssemblyInfo /verbosity minimal
+    - name: Build
+      run: ./build/01-build.ps1
     - name: Upload build artifacts
       uses: actions/upload-artifact@v3
       with:
@@ -64,7 +75,7 @@ jobs:
         path: ./artifacts
 
   release:
-    name: Pack & Release
+    name: Sign & Release to GitHub
     #wixtoolset
     if: github.repository == 'gerardog/gsudo'
     runs-on: windows-latest
@@ -72,7 +83,7 @@ jobs:
     environment:
       name: release-github
     env:
-      cert_path: "C:\\secret\\"
+      cert_path: "C:\\secret\\cert.pfx"
       
     steps:
     - uses: actions/download-artifact@v3
@@ -82,8 +93,8 @@ jobs:
     - name: Decode cert
       run: |
         $pfx_cert_byte = [System.Convert]::FromBase64String("${{ secrets.p_f_x }}")
-        $certificatePath = Join-Path -Path $env:cert_path -ChildPath cert.pfx
-        [IO.File]::WriteAllBytes("$certificatePath", $pfx_cert_byte)
+        mkdir (split-path -parent $env:cert_path) -ErrorAction Ignore
+        [IO.File]::WriteAllBytes("$env:cert_path", $pfx_cert_byte)
         
     - name: Code Sign
       run: ./build/03-sign.ps1
@@ -91,7 +102,7 @@ jobs:
         cert_key: ${{ secrets.P_F_X_Key }}
         
     - name: Remove the pfx
-      run: Remove-Item -path $env:cert_path\cert.pfx
+      run: Remove-Item -path $env:cert_path
       
     - name: Upload build artifacts
       uses: actions/upload-artifact@v3
