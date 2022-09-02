@@ -24,24 +24,25 @@ jobs:
       uses: dorny/test-reporter@v1
       if: success() || failure()    # run this step even if previous step failed
       with:
-        name: DotNET Tests
+        name: TestsResults (dotnet)
         path: "**/TestResults*.trx"                            
         reporter: dotnet-trx
         fail-on-error: false
     - name: Test Report PowerShell v5
-      uses: zyborg/pester-tests-report@v1 # https://github.com/zyborg/pester-tests-report#inputs
+      uses: zyborg/pester-tests-report@v1.5.0 # https://github.com/zyborg/pester-tests-report#inputs
       if: success() || failure()    # run this step even if previous step failed
       with:
         test_results_path: ./testResults_PS5.xml
-        report_name: powershell_tests_v5
+        report_name: TestResults PowerShell v5.x
         report_title: PowerShell v5 Tests
         github_token: ${{ secrets.GITHUB_TOKEN }}
+        
     - name: Test Report PowerShell v7
-      uses: zyborg/pester-tests-report@v1 # https://github.com/zyborg/pester-tests-report#inputs
+      uses: zyborg/pester-tests-report@v1.5.0 # https://github.com/zyborg/pester-tests-report#inputs
       if: success() || failure()    # run this step even if previous step failed
       with:
         test_results_path: ./testResults_PS7.xml
-        report_name: powershell_tests_v7
+        report_name: TestResults PowerShell Core (v7.x)
         report_title: PowerShell v7 Tests
         github_token: ${{ secrets.GITHUB_TOKEN }}
 #    - uses: OrbitalOwen/desktop-screenshot-action@0.1
@@ -52,9 +53,6 @@ jobs:
   build:
     name: Build
     runs-on: windows-latest
-    outputs:
-      version:                 ${{ steps.getversion.outputs.version }}
-      version_MajorMinorPatch: ${{ steps.getversion.outputs.version_MajorMinorPatch }}    
     steps:
     - uses: actions/setup-dotnet@v2
       with:
@@ -70,8 +68,8 @@ jobs:
     - name: Get project version
       id: getversion
       run: |
-           echo "::set-output name=version::$(gitversion /showvariable SemVer)"
-           echo "::set-output name=version_MajorMinorPatch::$(gitversion /showvariable MajorMinorPatch)"
+           echo "::set-output name=version::$(gitversion /showvariable LegacySemVer)"
+           echo "::set-output name=version_MajorMinorPatch::$(gitversion /showvariable MajorMinorPatch)"    
     - name: Build
       run: ./build/01-build.ps1
     - name: Upload build artifacts
@@ -79,6 +77,9 @@ jobs:
       with:
         name: Binaries
         path: ./artifacts
+    outputs:
+      version:                 ${{ steps.getversion.outputs.version }}
+      version_MajorMinorPatch: ${{ steps.getversion.outputs.version_MajorMinorPatch }}    
 
   release:
     name: Sign & Release to GitHub
@@ -131,3 +132,33 @@ jobs:
         name: gsudo v${{env.version}}
         tag: v${{env.version}}
         commit: ${{env.GITHUB_SHA}}
+
+  chocolatey:
+    name: Pack & Release to Chocolatey
+    #if: github.ref == 'refs/heads/master' && github.repository == 'gerardog/gsudo'
+    if: github.repository == 'gerardog/gsudo'
+    runs-on: windows-latest
+    #needs: [build, test]
+    needs: [build, release]
+    environment:
+      name: release-chocolatey
+    env:
+      version: ${{ needs.build.outputs.version }}
+      version_MajorMinorPatch: ${{ needs.build.outputs.version_MajorMinorPatch }}
+    steps:
+    - uses: actions/checkout@v2
+      with: 
+        fetch-depth: 0
+    - uses: actions/download-artifact@v3
+      with:
+        name: Binaries
+        path: ./artifacts
+    - name: Import Chocolatey Api Key
+      run: choco apikey --key ${{ secrets.CHOCOLATEY_APIKEY }} --source https://push.chocolatey.org/
+    - name: Build Package for Chocolatey & Upload
+      run: ./build/05-release-Chocolatey.ps1
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: Binaries
+        path: ./artifacts       
