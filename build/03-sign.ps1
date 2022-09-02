@@ -26,15 +26,21 @@ if (!(gi "$env:cert_path")) { throw 'Missing $env:cert_path file'}
 "Using Certificate from:  $env:cert_path" 
 
 $files = @(
-"artifacts\net70-x64\*.exe", 
-"artifacts\net70-x64\*.p*1" 
-"artifacts\net70-x86\*.exe", 
-"artifacts\net70-x86\*.p*1", 
-#"artifacts\net70-arm64\*.exe", 
-#"artifacts\net70-arm64\*.p*1", 
+"artifacts\x64\*.exe", 
+"artifacts\x64\*.p*1" 
+"artifacts\x86\*.exe", 
+"artifacts\x86\*.p*1", 
+#"artifacts\arm64\*.exe", 
+#"artifacts\arm64\*.p*1", 
 "artifacts\net46-AnyCpu\*.exe", 
 "artifacts\net46-AnyCpu\*.p*1"
 ) -join " "
+
+# Accept $args override.
+if ($args)
+{
+	$files = $args -join " "
+}
 
 $cmd = "& ""$env:SignToolExe"" sign /f ""$env:cert_path"" /p $env:cert_key /fd SHA256 /t http://timestamp.digicert.com $files"
 

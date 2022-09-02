@@ -5,7 +5,7 @@ on:
     branches:
       - Feature.NetCore
       - master
-
+  
 jobs:
   test:
     name: Test
@@ -52,6 +52,9 @@ jobs:
   build:
     name: Build
     runs-on: windows-latest
+    outputs:
+      version:                 ${{ steps.getversion.outputs.version }}
+      version_MajorMinorPatch: ${{ steps.getversion.outputs.version_MajorMinorPatch }}    
     steps:
     - uses: actions/setup-dotnet@v2
       with:
@@ -64,6 +67,11 @@ jobs:
       run: choco install GitVersion.Portable ilmerge --confirm --no-progress
     - name: Update project version
       run: gitversion /l console /output buildserver /updateAssemblyInfo /verbosity minimal
+    - name: Get project version
+      id: getversion
+      run: |
+           echo "::set-output name=version::$(gitversion /showvariable SemVer)"
+           echo "::set-output name=version_MajorMinorPatch::$(gitversion /showvariable MajorMinorPatch)"
     - name: Build
       run: ./build/01-build.ps1
     - name: Upload build artifacts
@@ -74,15 +82,20 @@ jobs:
 
   release:
     name: Sign & Release to GitHub
-    #wixtoolset
+    #if: github.ref == 'refs/heads/master' && github.repository == 'gerardog/gsudo'
     if: github.repository == 'gerardog/gsudo'
     runs-on: windows-latest
-    needs: [build, test]
+    #needs: [build, test]
+    needs: build
     environment:
       name: release-github
     env:
       cert_path: "C:\\secret\\cert.pfx"
-      
+      cert_key: ${{ secrets.P_F_X_Key }}
+      version: ${{ needs.build.outputs.version }}
+      version_MajorMinorPatch: ${{ needs.build.outputs.version_MajorMinorPatch }}
+    permissions:
+      contents: write      
     steps:
     - uses: actions/checkout@v2
       with: 
@@ -91,19 +104,29 @@ jobs:
       with:
         name: Binaries
         path: ./artifacts
-    - name: Decode cert
+    - name: Decode certificate
       run: |
         $pfx_cert_byte = [System.Convert]::FromBase64String("${{ secrets.p_f_x }}")
-        mkdir (split-path -parent $env:cert_path) -ErrorAction Ignore
+        $_ = mkdir (split-path -parent $env:cert_path) -ErrorAction Ignore
         [IO.File]::WriteAllBytes("$env:cert_path", $pfx_cert_byte)
     - name: Code Sign
       run: ./build/03-sign.ps1
-      env:
-        cert_key: ${{ secrets.P_F_X_Key }}
-    - name: Remove the pfx
-      run: Remove-Item -path $env:cert_path
     - name: Upload build artifacts
       uses: actions/upload-artifact@v3
       with:
         name: Binaries
-        path: ./artifacts
+        path: ./artifacts       
+    - name: Package for GitHub Release
+      run: ./build/04-release-GitHub.ps1
+    - name: Remove the pfx
+      run: Remove-Item -path $env:cert_path
+    - name: Create Release
+      uses: ncipollo/release-action@v1.10.0
+      with:
+        artifacts: "artifacts/*.*"
+        token: ${{ secrets.GITHUB_TOKEN  }}
+        draft: true
+        generateReleaseNotes: true
+        name: gsudo v${{env.version}}
+        tag: v${{env.version}}
+        commit: ${{env.GITHUB_SHA}}

@@ -10,12 +10,12 @@ $failure=$false
 
 pushd $PSScriptRoot\..
 
-dotnet test -f net7.0 .\src\gsudo.sln --logger "trx;LogFileName=$((gi .).FullName)\TestResults.trx" -v minimal -p:WarningLevel=0
+dotnet test .\src\gsudo.sln --logger "trx;LogFileName=$((gi .).FullName)\TestResults.trx" --logger:"console;verbosity=normal" -v quiet -p:WarningLevel=0
 if (! $?) { $failure = $true }
 
 $env:path=(Get-Item .\src\gsudo\bin\net7.0\).FullName+";"+$env:path
 
-gsudo -k
+gsudo -k > $null
 
 $script  = {
  	Install-Module Pester -Force -SkipPublisherCheck
