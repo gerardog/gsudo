@@ -8,31 +8,22 @@ Import-Module (Join-Path (Split-Path -parent $MyInvocation.MyCommand.Definition)
 $ErrorActionPreference = 'Continue'
 $ToolsLocation = Get-ToolsLocation 
 
-$bin = "$env:ChocolateyInstall\lib\gsudo\bin\"
-
-############ Clean-up previous versions
-if (Test-Path "$bin\sudo.exe")
-{
-	Remove-Item "$bin\sudo.exe" 
+if ([Environment]::Is64BitOperatingSystem -eq $true) {
+  $bin = "$env:ChocolateyInstall\lib\gsudo\tools\x64"
+} else {
+  $bin = "$env:ChocolateyInstall\lib\gsudo\tools\x86"
 }
-
-# Remove from User Path on previous versions ( <= 0.7.1 )
-Uninstall-ChocolateyPath $bin 'User'
-
-# Remove from Path on previous versions ( <= 1.0.2 )
-Uninstall-ChocolateyPath $bin 'Machine'
 
 if ([System.Environment]::CurrentDirectory -like "$ToolsLocation*") {
 	Write-Output -Verbose "Changing directory to $ToolsLocation to ensure successfull install/upgrade."
 	Set-Location $ToolsLocation
 }
-############
 
 $TargetDir = ("$ToolsLocation\gsudo\v" + ((Get-Item "$bin\gsudo.exe").VersionInfo.ProductVersion -split "\+" )[0])
 $SymLinkDir = "$ToolsLocation\gsudo\Current"
 
 # Add to System Path
-mkdir $TargetDir -ErrorAction Ignore
+mkdir $TargetDir -ErrorAction Ignore > $null
 copy "$bin\*" $TargetDir -Exclude *.ignore -Force
 Install-ChocolateyPath -PathToInstall $SymLinkDir -PathType 'Machine'
 
@@ -49,7 +40,7 @@ cmd /c mklink /d "$SymLinkDir" "$TargetDir\"
 # gsudo powershell module banner.
 "";
 
-Write-Output "gsudo successfully installed. Please restart your consoles to use gsudo."
+Write-Output "gsudo successfully installed. Please restart your consoles to use gsudo.`n"
 
 if (Get-Module gsudoModule) {
 	"Please restart PowerShell to update PowerShell gsudo Module."

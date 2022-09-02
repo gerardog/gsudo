@@ -105,6 +105,7 @@ jobs:
         name: Binaries
         path: ./artifacts
     - name: Decode certificate
+      # First encode and upload as environment secret using: [convert]::ToBase64String((Get-Content .\code_signing.pfx -AsByteStream))
       run: |
         $pfx_cert_byte = [System.Convert]::FromBase64String("${{ secrets.p_f_x }}")
         $_ = mkdir (split-path -parent $env:cert_path) -ErrorAction Ignore
