@@ -7,7 +7,7 @@
     <ProductVersion>3.10</ProductVersion>
     <ProjectGuid>34aaa3cf-95e5-41ea-8a00-c5f713bf664e</ProjectGuid>
     <SchemaVersion>2.0</SchemaVersion>
-    <OutputName>gsudomsi</OutputName>
+    <OutputName>gsudoSetup</OutputName>
     <OutputType>Package</OutputType>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">

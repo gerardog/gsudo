@@ -164,7 +164,7 @@ namespace gsudo.Native
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)] public string szExeFile;
         };
 
-        [SuppressUnmanagedCodeSecurity, HostProtection(SecurityAction.LinkDemand, MayLeakOnAbort = true)]
+        [SuppressUnmanagedCodeSecurity]
         internal sealed class SafeSnapshotHandle : SafeHandleMinusOneIsInvalid
         {
             internal SafeSnapshotHandle() : base(true)

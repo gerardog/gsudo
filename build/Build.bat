@@ -11,7 +11,7 @@ gitversion /showvariable MajorMinorPatch > "%temp%\version.tmp"
 SET /P MajorMinorPatch= < "%temp%\version.tmp"
 
 set REPO_ROOT_FOLDER=%cd%
-set BIN_FOLDER=%cd%\src\gsudo\bin
+set BIN_FOLDER=%cd%\src\gsudo\bin\
 set OUTPUT_FOLDER=%REPO_ROOT_FOLDER%\Build\Releases\%version%
 
 popd
@@ -27,29 +27,45 @@ echo Building with version number v%version%
 :: Cleanup
 del %BIN_FOLDER%\*.* /q
 rd %BIN_FOLDER%\package /q /s 2>nul
+
 mkdir %BIN_FOLDER%\package 2> nul
+mkdir %BIN_FOLDER%\package\x64 2> nul
+mkdir %BIN_FOLDER%\package\x86 2> nul
+mkdir %BIN_FOLDER%\package\net46-AnyCpu 2> nul
+
 IF EXIST %OUTPUT_FOLDER% RD %OUTPUT_FOLDER% /q /s
 mkdir %OUTPUT_FOLDER% 2> nul
-mkdir %OUTPUT_FOLDER%\bin 2> nul
 
 :: Build
-%msbuild% /t:restore /p:RestorePackagesConfig=true %REPO_ROOT_FOLDER%\src\gsudo.sln /v:Minimal
-%msbuild% /t:Rebuild /p:Configuration=Release %REPO_ROOT_FOLDER%\src\gsudo.sln /p:Version=%version% /v:Minimal /p:WarningLevel=0
+echo Build net7.0 win-x64
+cmd /c rd .\src\gsudo\obj /s /q
+dotnet publish .\src\gsudo\gsudo.csproj -c Release -f net7.0 -r win-x64 --sc -p:PublishAot=true -p:IlcOptimizationPreference=Size -v minimal -p:WarningLevel=0
+
+echo Build net7.0 win-x86
+cmd /c rd .\src\gsudo\obj /s /q
+dotnet publish .\src\gsudo\gsudo.csproj -c Release -f net7.0 -r win-x86 --sc -p:PublishReadyToRun=true -p:PublishSingleFile=true
+
+echo Build net46 AnyCpu
+cmd /c rd .\src\gsudo\obj /s /q
+dotnet publish .\src\gsudo\gsudo.csproj -c Release -f net46 -p:Platform=AnyCpu
 
 if errorlevel 1 goto badend
 echo Build Succeded.
 
-echo Running ILMerge
-pushd %BIN_FOLDER%
+echo Running ILMerge for net46
+pushd %BIN_FOLDER%\net46\publish
 
-ilmerge gsudo.exe System.Security.Claims.dll System.Security.Principal.Windows.dll /out:%BIN_FOLDER%\package\gsudo.exe /target:exe /targetplatform:v4,"C:\Windows\Microsoft.NET\Framework\v4.0.30319" /ndebug
-
+ilmerge gsudo.exe System.Security.Claims.dll System.Security.Principal.Windows.dll /out:%BIN_FOLDER%\package\net46-AnyCpu\gsudo.exe /target:exe /targetplatform:v4,"C:\Windows\Microsoft.NET\Framework\v4.0.30319" /ndebug
 if errorlevel 1 echo ILMerge Failed - Try: choco install ilmerge & pause & popd & goto badend
 
 popd
-copy %REPO_ROOT_FOLDER%\src\gsudo.extras\gsudo %BIN_FOLDER%\package\
-copy %REPO_ROOT_FOLDER%\src\gsudo.extras\gsudoModule.ps?1 %BIN_FOLDER%\package\
-copy %REPO_ROOT_FOLDER%\src\gsudo.extras\invoke-gsudo.ps1 %BIN_FOLDER%\package\
+
+copy %REPO_ROOT_FOLDER%\src\gsudo.Wrappers\*.* %BIN_FOLDER%\package\x64
+copy %REPO_ROOT_FOLDER%\src\gsudo.Wrappers\*.* %BIN_FOLDER%\package\x86
+copy %REPO_ROOT_FOLDER%\src\gsudo.Wrappers\*.* %BIN_FOLDER%\package\net46-AnyCpu
+
+copy %BIN_FOLDER%\net7.0\win-x64\publish\gsudo.exe %BIN_FOLDER%\package\x64
+copy %BIN_FOLDER%\net7.0\win-x86\publish\gsudo.exe %BIN_FOLDER%\package\x86
 
 :: Code Sign
 if 'skipsign'=='%1' goto skipsign
@@ -57,7 +73,9 @@ if 'skipsign'=='%1' goto skipsign
 echo Signing exe.
 pushd %BIN_FOLDER%
 
-%SignToolPath%signtool.exe sign /n "Open Source Developer, Gerardo Grignoli" /fd SHA256 /tr "http://time.certum.pl" %BIN_FOLDER%\package\gsudo.exe %BIN_FOLDER%\package\gsudoModule.psm1 %BIN_FOLDER%\package\gsudoModule.psd1 %BIN_FOLDER%\package\invoke-gsudo.ps1
+::%SignToolPath%signtool.exe sign /n "Open Source Developer, Gerardo Grignoli" /fd SHA256 /tr "http://time.certum.pl" package\x64\*.* package\x86\*.* package\net46-AnyCpu\*.*
+%SignToolPath%signtool.exe sign /f C:\git\code_signing.pfx /p 1234 /fd SHA256 /t http://timestamp.digicert.com package\x64\*.exe package\x64\*.p* package\x86\*.exe package\x86\*.p* package\net46-AnyCpu\*.exe package\net46-AnyCpu\*.p*
+
 if errorlevel 1 echo Sign Failed & pause & popd & goto badend
 echo Sign successfull
 
@@ -68,10 +86,12 @@ echo Building Installer
 
 %msbuild% /t:Restore,Rebuild /p:Configuration=Release %REPO_ROOT_FOLDER%\src\gsudo.Installer.sln /v:Minimal 
 if errorlevel 1 echo Buid Failed & pause & popd & goto badend
+
 echo Signing Installer
 
 if 'skipsign'=='%1' goto skipbuild
-%SignToolPath%signtool.exe sign /n "Open Source Developer, Gerardo Grignoli" /fd SHA256 /tr "http://time.certum.pl" %REPO_ROOT_FOLDER%\src\gsudo.Installer\bin\Release\gsudomsi.msi
+::%SignToolPath%signtool.exe sign /n "Open Source Developer, Gerardo Grignoli" /fd SHA256 /t http://timestamp.digicert.com %REPO_ROOT_FOLDER%\src\gsudo.Installer\bin\Release\gsudomsi.msi
+%SignToolPath%signtool.exe sign /f C:\git\code_signing.pfx /p 1234 /fd SHA256 /t http://timestamp.digicert.com %REPO_ROOT_FOLDER%\src\gsudo.Installer\bin\Release\gsudomsi.msi
 
 :skipbuild
 
@@ -87,14 +107,17 @@ pushd %REPO_ROOT_FOLDER%\Build
 
 :: Create GitHub release ZIP + ZIP hash
 Set PSModulePath=
-7z a "%OUTPUT_FOLDER%\gsudo.v%version%.zip" %OUTPUT_FOLDER%\bin\*
+7z a "%OUTPUT_FOLDER%\gsudo.v%version%.zip" %BIN_FOLDER%\package\x86 
+7z a "%OUTPUT_FOLDER%\gsudo.v%version%.zip" %BIN_FOLDER%\package\x64
+7z a "%OUTPUT_FOLDER%\gsudo.v%version%.zip" %BIN_FOLDER%\package\net46-AnyCpu
+
 powershell -NoProfile -Command ECHO (Get-FileHash %OUTPUT_FOLDER%\gsudo.v%version%.zip).hash > %OUTPUT_FOLDER%\gsudo.v%version%.zip.sha256
 powershell -NoProfile -Command ECHO (Get-FileHash %OUTPUT_FOLDER%\gsudoSetup.msi).hash > %OUTPUT_FOLDER%\gsudoSetup.msi.sha256
 
 :: Chocolatey
 git clean %REPO_ROOT_FOLDER%\Build\Chocolatey\gsudo\Bin -xf
 md %REPO_ROOT_FOLDER%\Build\Chocolatey\gsudo\Bin 2> nul
-copy %OUTPUT_FOLDER%\bin\*.* %REPO_ROOT_FOLDER%\Build\Chocolatey\gsudo\Bin\
+copy %BIN_FOLDER%\package\net46-AnyCpu\*.* %REPO_ROOT_FOLDER%\Build\Chocolatey\gsudo\Bin\
 copy %REPO_ROOT_FOLDER%\Build\Chocolatey\verification.txt.template %REPO_ROOT_FOLDER%\Build\Chocolatey\gsudo\Tools\VERIFICATION.txt
 
 popd & pushd %REPO_ROOT_FOLDER%\Build\Chocolatey\gsudo

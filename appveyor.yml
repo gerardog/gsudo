@@ -1,23 +1,48 @@
-image: Visual Studio 2019
+image: Visual Studio 2022
+clone_folder: c:\git\gsudo
+platform: Any CPU
+configuration: Release
 
-install:
-  - choco install gitversion.portable -pre -y
-  - ps: Install-Module Pester -Force -SkipPublisherCheck -Scope CurrentUser
+cache:
+  - src\gsudo\packages -> **\packages.config  # preserve "packages" directory in the root of build folder but will reset it if packages.config is modified
+  - '%LocalAppData%\NuGet\Cache'    # NuGet < v3
+  - '%LocalAppData%\NuGet\v3-cache' # NuGet v3
+  
 init:
   - git config --global core.autocrlf true
   - powershell -noprofile -command "Install-Module PSReadLine -Force -SkipPublisherCheck -AllowPrerelease"
 
+install:
+  - choco install dotnet-7.0-sdk --pre 
+  - choco install gitversion.portable -y
+  - ps: Install-Module Pester -Force -SkipPublisherCheck -Scope CurrentUser
+
 before_build:
-  - nuget restore src\gsudo.sln
-  - ps: gitversion /l console /output buildserver /updateAssemblyInfo
+  - ps: gitversion /l console /output buildserver /updateAssemblyInfo /verbosity minimal
+
+build_script:
+  - dotnet restore src\gsudo.sln 
+  - dotnet build src\gsudo.sln -c Release
+  # net 7.0 x64 build with NativeAOT
+  - dotnet publish .\src\gsudo\gsudo.csproj -c Release -f net7.0 -r win-x64 --sc -p:PublishAot=true -p:TrimmerDefaultAction=link -p:IlcOptimizationPreference=Size
+  # net 7.0 x86 does not support NativeAOT
+  - dotnet publish .\src\gsudo\gsudo.csproj -c Release -f net7.0 -r win-x86 --sc -p:PublishReadyToRun=true -p:PublishSingleFile=true
+  # net framework 4.6 AnyCpu
+  - dotnet publish .\src\gsudo\gsudo.csproj -c Release -f net46 -p:Platform=x64
 
 after_build:
-  - 7z a gsudo.%CONFIGURATION%.%APPVEYOR_BUILD_VERSION%.Unsigned.zip %APPVEYOR_BUILD_FOLDER%\src\gsudo\bin\*.* %APPVEYOR_BUILD_FOLDER%\src\gsudo.extras\gsudoModule.* %APPVEYOR_BUILD_FOLDER%\src\gsudo.extras\Invoke-gsudo.ps1
-  - appveyor PushArtifact gsudo.%CONFIGURATION%.%APPVEYOR_BUILD_VERSION%.Unsigned.zip
+  - 7z a gsudo.net70.x64.Unsigned.v%APPVEYOR_BUILD_VERSION%.zip    .\src\gsudo\bin\net7.0\win-x64\publish\*.* .\src\gsudo.Wrappers\gsudoModule.* .\src\gsudo.Wrappers\Invoke-gsudo.ps1
+  - appveyor PushArtifact gsudo.net70.x64.Unsigned.v%APPVEYOR_BUILD_VERSION%.zip
+
+  - 7z a gsudo.net70.x86.Unsigned.v%APPVEYOR_BUILD_VERSION%.zip    .\src\gsudo\bin\net7.0\win-x86\publish\*.* .\src\gsudo.Wrappers\gsudoModule.* .\src\gsudo.Wrappers\Invoke-gsudo.ps1
+  - appveyor PushArtifact gsudo.net70.x86.Unsigned.v%APPVEYOR_BUILD_VERSION%.zip
   
+  - 7z a gsudo.net46.AnyCpu.Unsigned.v%APPVEYOR_BUILD_VERSION%.zip .\src\gsudo\bin\net46\publish\*.*          .\src\gsudo.Wrappers\gsudoModule.* .\src\gsudo.Wrappers\Invoke-gsudo.ps1
+  - appveyor PushArtifact gsudo.net46.AnyCpu.Unsigned.v%APPVEYOR_BUILD_VERSION%.zip
+    
 test_script:
-  - ps: $Env:Path+=";$($Env:APPVEYOR_BUILD_FOLDER)/src/gsudo/bin;";
-  - vstest.console /logger:Appveyor %APPVEYOR_BUILD_FOLDER%\src\gsudo.Tests\bin\%CONFIGURATION%\gsudo.Tests.dll  
+  - ps: $Env:Path+=";$($Env:APPVEYOR_BUILD_FOLDER)/src/gsudo/bin/net7.0/win-x64/publish;";
+  - vstest.console /logger:Appveyor %APPVEYOR_BUILD_FOLDER%\src\gsudo.Tests\bin\%CONFIGURATION%\net7.0\gsudo.Tests.dll  
   - powershell -c Invoke-Pester -EnableExit -OutputFile Powershell5Tests.xml -OutputFormat NUnitXml
   - pwsh -c Invoke-Pester -EnableExit -OutputFile PowershellCoreTests.xml -OutputFormat NUnitXml
   - ps: |
@@ -26,17 +51,3 @@ test_script:
 
 on_finish:
   - ps: if($env:APPVEYOR_RDP_ENABLED -eq 'TRUE') { $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1')) }
-
-clone_folder: c:\git\gsudo
-platform: Any CPU
-configuration: Release
-  
-build:
-  parallel: true
-  project: src\gsudo.sln
-  verbosity: minimal
-      
-cache:
-  - src\packages -> **\packages.config  # preserve "packages" directory in the root of build folder but will reset it if packages.config is modified
-  - '%LocalAppData%\NuGet\Cache'    # NuGet < v3
-  - '%LocalAppData%\NuGet\v3-cache' # NuGet v3

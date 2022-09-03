@@ -1,13 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29215.179
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32421.90
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "gsudo", "gsudo\gsudo.csproj", "{9EEBDA90-12DE-4780-B8B1-8BF86DFE71B3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "gsudo.Tests", "gsudo.Tests\gsudo.Tests.csproj", "{B91748FC-950F-46AB-A037-7118BEA81FF7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "gsudo.Tests", "gsudo.Tests\gsudo.Tests.csproj", "{B91748FC-950F-46AB-A037-7118BEA81FF7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeyPressTester", "KeyPressTester\KeyPressTester.csproj", "{FD3B76FD-E682-4C65-A936-84B9B2C6FB19}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KeyPressTester", "KeyPressTester\KeyPressTester.csproj", "{FD3B76FD-E682-4C65-A936-84B9B2C6FB19}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
