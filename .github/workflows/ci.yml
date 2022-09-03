@@ -2,6 +2,7 @@ name: CI Build & Test
 
 on:
   push:
+  workflow_call:
   
 jobs:
   test:
