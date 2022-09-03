@@ -132,6 +132,11 @@ jobs:
         name: gsudo v${{env.version}}
         tag: v${{env.version}}
         commit: ${{env.GITHUB_SHA}}
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: Installer
+        path: ./artifacts/gsudoSetup.msi       
 
   chocolatey:
     name: Pack & Release to Chocolatey
