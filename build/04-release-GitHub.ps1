@@ -11,10 +11,10 @@ if ($env:version) {
 }
 "- Using version number v$version / v$version_MajorMinorPatch"
 
-Get-ChildItem .\artifacts\ -File | Remove-Item
-
 "- Packaging v$version"
-rm ./Artifacts/*.pdb -Recurse
+Get-ChildItem .\artifacts\ -File | Remove-Item                  # Remove files on artifacts root
+Get-ChildItem .\artifacts\ -Filter *.pdb -Recurse | Remove-Item # Remove *.pdb on subfolders
+
 Compress-Archive -Path ./artifacts/x86,./artifacts/x64,./artifacts/net46-AnyCpu -DestinationPath "artifacts/gsudo.v$($version).zip" -force -CompressionLevel Optimal
 (Get-FileHash artifacts\gsudo.v$($version).zip).hash > artifacts\gsudo.v$($version).zip.sha256
 
