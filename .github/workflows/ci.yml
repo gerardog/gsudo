@@ -2,7 +2,6 @@ name: CI Build & Test
 
 on:
   push:
-    branches:
     tags-ignore:
       - '**'    
   workflow_call:
