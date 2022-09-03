@@ -1,89 +1,13 @@
-name: Build, Test & Release
+name: Release
 
 on:
   push:
-    branches:
-      - Feature.NetCore
-      - master
+    tags:
+      - v*
   
 jobs:
-  test:
-    name: Test
-    runs-on: windows-latest
-    permissions:
-      id-token: write
-      contents: read
-      checks: write    
-    steps:
-    - uses: actions/setup-dotnet@v2
-      with:
-        dotnet-version: '7.0.x'
-        include-prerelease: true 
-    - uses: actions/checkout@v2
-      with: 
-        fetch-depth: 0    
-    - name: Run Tests
-      run: ./build/02-test.ps1
-    - name: Test Report DotNet
-      uses: dorny/test-reporter@v1
-      if: success() || failure()    # run this step even if previous step failed
-      with:
-        name: TestsResults (dotnet)
-        path: "**/TestResults*.trx"                            
-        reporter: dotnet-trx
-        fail-on-error: false
-    - name: Test Report PowerShell v5
-      uses: zyborg/pester-tests-report@v1.5.0 # https://github.com/zyborg/pester-tests-report#inputs
-      if: success() || failure()    # run this step even if previous step failed
-      with:
-        test_results_path: ./testResults_PS5.xml
-        report_name: TestResults PowerShell v5.x
-        report_title: PowerShell v5 Tests
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        
-    - name: Test Report PowerShell v7
-      uses: zyborg/pester-tests-report@v1.5.0 # https://github.com/zyborg/pester-tests-report#inputs
-      if: success() || failure()    # run this step even if previous step failed
-      with:
-        test_results_path: ./testResults_PS7.xml
-        report_name: TestResults PowerShell Core (v7.x)
-        report_title: PowerShell v7 Tests
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-#    - uses: OrbitalOwen/desktop-screenshot-action@0.1
-#      if: always()
-#      with:
-#        file-name: 'desktop.jpg'      
-          
   build:
-    name: Build
-    runs-on: windows-latest
-    steps:
-    - uses: actions/setup-dotnet@v2
-      with:
-        dotnet-version: '7.0.x'
-        include-prerelease: true 
-    - uses: actions/checkout@v2   
-      with: 
-        fetch-depth: 0
-    - name: Install dependencies
-      run: choco install GitVersion.Portable ilmerge --confirm --no-progress
-    - name: Update project version
-      run: gitversion /l console /output buildserver /updateAssemblyInfo /verbosity minimal
-    - name: Get project version
-      id: getversion
-      run: |
-           echo "::set-output name=version::$(gitversion /showvariable LegacySemVer)"
-           echo "::set-output name=version_MajorMinorPatch::$(gitversion /showvariable MajorMinorPatch)"    
-    - name: Build
-      run: ./build/01-build.ps1
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: Binaries
-        path: ./artifacts
-    outputs:
-      version:                 ${{ steps.getversion.outputs.version }}
-      version_MajorMinorPatch: ${{ steps.getversion.outputs.version_MajorMinorPatch }}    
+    uses: ./.github/workflows/ci.yml
 
   release:
     name: Sign & Release to GitHub
