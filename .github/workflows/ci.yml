@@ -2,8 +2,16 @@ name: CI Build & Test
 
 on:
   push:
+    branches:
   workflow_call:
-  
+    outputs:
+      version:
+        description: "Version"
+        value: ${{ jobs.build.outputs.version }}
+      version_MajorMinorPatch:
+        description: "Version (without prerelease tag)"
+        value: ${{ jobs.build.outputs.version_MajorMinorPatch }}
+
 jobs:
   test:
     name: Test

@@ -11,7 +11,8 @@ jobs:
     permissions:
       id-token: write
       contents: read
-      checks: write    
+      checks: write
+    outputs
 
   release:
     name: Sign & Release to GitHub
@@ -20,11 +21,12 @@ jobs:
     runs-on: windows-latest
     environment:
       name: release-github
+    needs: build
     env:
       cert_path: "C:\\secret\\cert.pfx"
       cert_key: ${{ secrets.P_F_X_Key }}
-#      version: ${{ needs.build.outputs.version }}
-#      version_MajorMinorPatch: ${{ needs.build.outputs.version_MajorMinorPatch }}
+      version: ${{ needs.build.outputs.version }}
+      version_MajorMinorPatch: ${{ needs.build.outputs.version_MajorMinorPatch }}
     permissions:
       contents: write      
     steps:
@@ -78,12 +80,12 @@ jobs:
     if: github.repository == 'gerardog/gsudo'
     runs-on: windows-latest
     #needs: [build, test]
-    needs: release
+    needs: build, release
     environment:
       name: release-chocolatey
-#    env:
-#      version: ${{ needs.build.outputs.version }}
-#      version_MajorMinorPatch: ${{ needs.build.outputs.version_MajorMinorPatch }}
+    env:
+      version: ${{ needs.build.outputs.version }}
+      version_MajorMinorPatch: ${{ needs.build.outputs.version_MajorMinorPatch }}
     steps:
     - uses: actions/checkout@v2
       with: 
