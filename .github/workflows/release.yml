@@ -12,7 +12,6 @@ jobs:
       id-token: write
       contents: read
       checks: write
-    outputs
 
   release:
     name: Sign & Release to GitHub
