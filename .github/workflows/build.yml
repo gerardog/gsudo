@@ -137,10 +137,14 @@ jobs:
         artifacts: "artifacts/*.*"
         token: ${{ secrets.GITHUB_TOKEN  }}
         draft: true
+        prerelease: true
         generateReleaseNotes: true
         name: gsudo v${{env.version}}
         tag: v${{env.version}}
         commit: ${{env.GITHUB_SHA}}
+        allowUpdates: true 
+        omitBodyDuringUpdate: true 
+        replacesArtifacts: true
 
   chocolatey:
     name: Pack & Release to Chocolatey
