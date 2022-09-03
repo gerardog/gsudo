@@ -57,7 +57,7 @@ if (choco list -lo | Where-object { $_.StartsWith("gsudo") }) {
 if($(choco apikey).Count -lt 2) { throw "Missing Chocolatey ApiKey. Use: choco apikey -k <your key here> -s https://push.chocolatey.org/" }
 
 "`n- Uploading v$version to chocolatey"
-#choco push gsudo.$($version).nupkg  || $(throw "Choco push failed.")
-
+choco push artifacts\Chocolatey\gsudo.$($version).nupkg  || $(throw "Choco push failed.")
+	
 "- Success"
 popd
