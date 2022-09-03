@@ -10,6 +10,10 @@ jobs:
   test:
     name: Test
     runs-on: windows-latest
+    permissions:
+      id-token: write
+      contents: read
+      checks: write    
     steps:
     - uses: actions/setup-dotnet@v2
       with:
@@ -122,6 +126,11 @@ jobs:
       run: ./build/04-release-GitHub.ps1
     - name: Remove the pfx
       run: Remove-Item -path $env:cert_path
+    - name: Upload installer artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: Installer
+        path: ./artifacts/gsudoSetup.msi             
     - name: Create Release
       uses: ncipollo/release-action@v1.10.0
       with:
@@ -132,11 +141,6 @@ jobs:
         name: gsudo v${{env.version}}
         tag: v${{env.version}}
         commit: ${{env.GITHUB_SHA}}
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: Installer
-        path: ./artifacts/gsudoSetup.msi       
 
   chocolatey:
     name: Pack & Release to Chocolatey
