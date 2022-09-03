@@ -78,8 +78,7 @@ jobs:
     #if: github.ref == 'refs/heads/master' && github.repository == 'gerardog/gsudo'
     if: github.repository == 'gerardog/gsudo'
     runs-on: windows-latest
-    #needs: [build, test]
-    needs: build, release
+    needs: [build, release]
     environment:
       name: release-chocolatey
     env:
