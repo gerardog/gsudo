@@ -2,14 +2,14 @@
 
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 
-  <Product Id="*" Name="gsudo v!(bind.FileVersion.GSudoExe)" Language="1033" Version="!(bind.FileVersion.GSudoExe)"
+  <Product Id="*" Name="gsudo v$(env.version)" Language="1033" Version="$(env.version_MajorMinorPatch)"
            UpgradeCode="567b5616-d362-484e-b6ff-7c1875cf0aee" Manufacturer="gerardog">
 
     <Package InstallerVersion="200"
              Compressed="yes"
              InstallScope="perMachine"
-             Manufacturer="Silvenga"
-             Description="Provides packaging for the gsudo utility by @gerardog." />
+             Manufacturer="Gerardo Grignoli"
+             Description="gsudo is a sudo-equivalent for windows" />
 
     <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
     <MediaTemplate EmbedCab="yes" />
@@ -19,6 +19,21 @@
     </Feature>
 
     <UIRef Id="WixUI_InstallDir" />
+	
+	<!-- Skip license dialog -->
+	<UI>
+		<Publish Dialog="WelcomeDlg"
+				 Control="Next"
+				 Event="NewDialog"
+				 Value="InstallDirDlg"
+				 Order="2">1</Publish>
+		<Publish Dialog="InstallDirDlg"
+				 Control="Back"
+				 Event="NewDialog"
+				 Value="WelcomeDlg"
+				 Order="2">1</Publish>
+	</UI>				 
+	
     <WixVariable Id="WixUILicenseRtf" Value="..\..\vendor\LICENSE.rtf" />
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
 
@@ -33,6 +48,7 @@
     <ComponentGroup Id="GSudo">
       <ComponentRef Id="GSudoPath" />
       <ComponentRef Id="GSudoExe" />
+      <ComponentRef Id="GSudoExeX86" />
 	  <ComponentRef Id="GSudoBash" />
 	  <ComponentRef Id="GSudoPowerShell" />
 	</ComponentGroup>
@@ -49,18 +65,28 @@
                          Value="[INSTALLFOLDER]" />
           </Component>
 
-          <Component Id="GSudoExe" Guid="22f27e91-98ef-4edb-8f6b-9ed48501185c">
-            <File Id="GSudoExe" KeyPath="yes" Name="gsudo.exe" Source="..\gsudo\bin\package\gsudo.exe" />
+          <Component Id="GSudoExe" Guid="bec137e1-06e2-4efb-aea9-30306cc01c87">
+            <Condition>
+              <![CDATA[VersionNT64]]>
+            </Condition>
+            <File Id="GSudoExe" KeyPath="yes" Name="gsudo.exe" Source="..\..\artifacts\x64\gsudo.exe"/>
+          </Component>
+		  
+          <Component Id="GSudoExeX86" Guid="bec137e1-06e2-4efb-aea9-30306cc01c86">
+            <Condition>
+              <![CDATA[NOT(VersionNT64)]]>
+            </Condition>
+            <File Id="GSudoExeX86" KeyPath="yes" Name="gsudo.exe" Source="..\..\artifacts\x86\gsudo.exe" />
           </Component>
 
           <Component Id="GSudoBash" Guid="3d6047df-a14c-484d-9ded-77761d03197a">
-            <File Id="GSudoBash" KeyPath="yes" Name="gsudo" Source="..\gsudo\bin\package\gsudo" />
+            <File Id="GSudoBash" KeyPath="yes" Name="gsudo" Source="..\..\artifacts\x64\gsudo" />
           </Component>
 
           <Component Id="GSudoPowerShell" Guid="99d35b52-4b20-42d3-afad-11a98cab2fd3">
-            <File Id="GSudoModuleDef" KeyPath="no" 	Name="gsudoModule.psd1" Source="..\gsudo\bin\package\gsudoModule.psd1" />
-            <File Id="GSudoModule" KeyPath="yes" 	Name="gsudoModule.psm1" Source="..\gsudo\bin\package\gsudoModule.psm1" />
-            <File Id="InvokeGSudo" KeyPath="no" 	Name="invoke-gsudo.ps1" Source="..\gsudo\bin\package\invoke-gsudo.ps1" />
+            <File Id="GSudoModuleDef" KeyPath="no" 	Name="gsudoModule.psd1" Source="..\..\artifacts\x64\gsudoModule.psd1" />
+            <File Id="GSudoModule" KeyPath="yes" 	Name="gsudoModule.psm1" Source="..\..\artifacts\x64\gsudoModule.psm1" />
+            <File Id="InvokeGSudo" KeyPath="no" 	Name="invoke-gsudo.ps1" Source="..\..\artifacts\x64\invoke-gsudo.ps1" />
           </Component>
 
         </Directory>

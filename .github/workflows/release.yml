@@ -1,0 +1,103 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  
+jobs:
+  build:
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      id-token: write
+      contents: read
+      checks: write
+
+  release:
+    name: Sign & Release to GitHub
+    #if: github.ref == 'refs/heads/master' && github.repository == 'gerardog/gsudo'
+    if: github.repository == 'gerardog/gsudo'
+    runs-on: windows-latest
+    environment:
+      name: release-github
+    needs: build
+    env:
+      cert_path: "C:\\secret\\cert.pfx"
+      cert_key: ${{ secrets.P_F_X_Key }}
+      version: ${{ needs.build.outputs.version }}
+      version_MajorMinorPatch: ${{ needs.build.outputs.version_MajorMinorPatch }}
+    permissions:
+      contents: write      
+    steps:
+    - uses: actions/checkout@v2
+      with: 
+        fetch-depth: 0
+    - uses: actions/download-artifact@v3
+      with:
+        name: Binaries
+        path: ./artifacts
+    - name: Decode certificate
+      # First encode and upload as environment secret using: [convert]::ToBase64String((Get-Content .\code_signing.pfx -AsByteStream))
+      run: |
+        $pfx_cert_byte = [System.Convert]::FromBase64String("${{ secrets.p_f_x }}")
+        $_ = mkdir (split-path -parent $env:cert_path) -ErrorAction Ignore
+        [IO.File]::WriteAllBytes("$env:cert_path", $pfx_cert_byte)
+    - name: Code Sign
+      run: ./build/03-sign.ps1
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: Binaries
+        path: ./artifacts       
+    - name: Package for GitHub Release
+      run: ./build/04-release-GitHub.ps1
+    - name: Remove the pfx
+      run: Remove-Item -path $env:cert_path
+    - name: Upload installer artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: Installer
+        path: ./artifacts/gsudoSetup.msi             
+    - name: Create Release
+      uses: ncipollo/release-action@v1.10.0
+      with:
+        artifacts: "artifacts/*.*"
+        token: ${{ secrets.GITHUB_TOKEN  }}
+        draft: true
+        prerelease: true
+        generateReleaseNotes: true
+        name: gsudo v${{env.version}}
+        tag: v${{env.version}}
+        commit: ${{env.GITHUB_SHA}}
+        allowUpdates: true 
+        omitBodyDuringUpdate: true 
+        replacesArtifacts: true
+
+  chocolatey:
+    name: Pack & Release to Chocolatey
+    #if: github.ref == 'refs/heads/master' && github.repository == 'gerardog/gsudo'
+    if: github.repository == 'gerardog/gsudo'
+    runs-on: windows-latest
+    needs: [build, release]
+    environment:
+      name: release-chocolatey
+    env:
+      version: ${{ needs.build.outputs.version }}
+      version_MajorMinorPatch: ${{ needs.build.outputs.version_MajorMinorPatch }}
+    steps:
+    - uses: actions/checkout@v2
+      with: 
+        fetch-depth: 0
+    - uses: actions/download-artifact@v3
+      with:
+        name: Binaries
+        path: ./artifacts
+    - name: Import Chocolatey Api Key
+      run: choco apikey --key ${{ secrets.CHOCOLATEY_APIKEY }} --source https://push.chocolatey.org/
+    - name: Build Package for Chocolatey & Upload
+      run: ./build/05-release-Chocolatey.ps1
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: Binaries
+        path: ./artifacts       

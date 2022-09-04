@@ -43,6 +43,7 @@ namespace gsudo
         }
     }
 
+#if NETFRAMEWORK
     class MySerializationBinder : SerializationBinder
     {
         /// <summary>
@@ -68,4 +69,10 @@ namespace gsudo
             typeName = serializedType.FullName;
         }
     }
+#else
+    [System.Text.Json.Serialization.JsonSerializable(typeof(ElevationRequest))]
+    internal partial class ElevationRequestJsonContext : System.Text.Json.Serialization.JsonSerializerContext
+    {
+    }
+#endif
 }

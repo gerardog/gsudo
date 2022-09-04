@@ -8,7 +8,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 const config = {
   title: 'gsudo (sudo for windows)',
   tagline: 'The missing piece in Windows. Cherry-pick which commands to elevate with just one keyword.',
-  url: 'https://your-docusaurus-test-site.com',
+  url: 'https://gerardog.github.io',
   baseUrl: '/gsudo/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
@@ -40,6 +40,10 @@ const config = {
           trackingID: 'G-RLH6G3T39R',
           anonymizeIP: true,
 		},
+		sitemap: {
+          changefreq: 'weekly',
+          priority: 0.5,
+        },
 	  }),
     ],
   ],
@@ -54,7 +58,7 @@ const config = {
         title: 'gsudo',
         logo: {
           alt: 'gsudo Logo',
-          src: 'img/gsudo.png',
+          src: 'img/AnimatedPrompt.gif',
         },
         items: [
           {
@@ -64,8 +68,8 @@ const config = {
             label: 'Docs',
           },
           {to: '/docs/install', label: 'Install', position: 'left'},
-          {to: '/docs/sponsor', label: 'Sponsor', position: 'left'},
-          {to: '/blog', label: 'Blog', position: 'left'},
+          {to: '/sponsor', label: 'Sponsor', position: 'left'},
+          /**{to: '/blog', label: 'Blog', position: 'left'},**/
           {
             href: 'https://github.com/gerardog/gsudo',
             label: 'GitHub',
@@ -80,7 +84,7 @@ const config = {
             title: 'Docs',
             items: [
               {
-                label: 'Tutorial',
+                label: 'Documentation',
                 to: '/docs/intro',
               },
             ],
@@ -125,8 +129,35 @@ const config = {
       prism: {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
-        additionalLanguages: ['powershell'],
+        additionalLanguages: ['powershell','batch'],
       },
+      algolia: {
+        // The application ID provided by Algolia
+        appId: '48THU2IKHD',
+
+        // Public API key: it is safe to commit it
+        apiKey: '062d00b0a8d02c9951557954935de46e',
+
+        indexName: 'gsudo',
+
+        // Optional: see doc section below
+        contextualSearch: true,
+
+        // Optional: Specify domains where the navigation should occur through window.location instead on history.push. Useful when our Algolia config crawls multiple documentation sites and we want to navigate with window.location.href to them.
+        externalUrlRegex: 'external\\.com|domain\\.com',
+
+        // Optional: Algolia search parameters
+        searchParameters: {},
+
+        // Optional: path for search page that enabled by default (`false` to disable it)
+        searchPagePath: 'search',
+
+        //... other Algolia params
+      },
+      metadata: [{
+        name: 'keywords',
+        content: 'windows sudo, powershell sudo, sudo for windows, sudo for powershell'
+      }]
     }),
 };
 
