@@ -5,8 +5,8 @@
 [![CI Build](https://github.com/gerardog/gsudo/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/gerardog/gsudo/actions/workflows/ci.yml)
 [![Release](https://github.com/gerardog/gsudo/actions/workflows/release.yml/badge.svg?branch=master)](https://github.com/gerardog/gsudo/actions/workflows/release.yml)
 
-[![CI Build](actions/workflows/ci.yml/badge.svg?branch=master)](actions/workflows/ci.yml)
-[![Release](actions/workflows/release.yml/badge.svg?branch=master)](/actions/workflows/release.yml)
+[![CI Build](../../actions/workflows/ci.yml/badge.svg?branch=master)](../../actions/workflows/ci.yml)
+[![Release](../../actions/workflows/release.yml/badge.svg?branch=master)](../../actions/workflows/release.yml)
 
 [![Chocolatey Downloads](https://img.shields.io/chocolatey/dt/gsudo?label=Chocolatey%20Downloads)](https://community.chocolatey.org/packages/gsudo)
 [![GitHub Downloads](https://img.shields.io/github/downloads/gerardog/gsudo/total?label=GitHub%20Downloads)](https://github.com/gerardog/gsudo/releases/latest)
