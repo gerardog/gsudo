@@ -1,13 +1,8 @@
 # gsudo - a sudo for Windows
 
 [![Join the chat at https://gitter.im/gsudo/community](https://badges.gitter.im/gsudo/community.svg)](https://gitter.im/gsudo/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
-[![CI Build](https://github.com/gerardog/gsudo/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/gerardog/gsudo/actions/workflows/ci.yml)
-[![Release](https://github.com/gerardog/gsudo/actions/workflows/release.yml/badge.svg?branch=master)](https://github.com/gerardog/gsudo/actions/workflows/release.yml)
-
 [![CI Build](../../actions/workflows/ci.yml/badge.svg?branch=master)](../../actions/workflows/ci.yml)
-[![Release](../../actions/workflows/release.yml/badge.svg?branch=master)](../../actions/workflows/release.yml)
-
+[![Release](../../actions/workflows/release.yml/badge.svg)](../../actions/workflows/release.yml)
 [![Chocolatey Downloads](https://img.shields.io/chocolatey/dt/gsudo?label=Chocolatey%20Downloads)](https://community.chocolatey.org/packages/gsudo)
 [![GitHub Downloads](https://img.shields.io/github/downloads/gerardog/gsudo/total?label=GitHub%20Downloads)](https://github.com/gerardog/gsudo/releases/latest)
 
@@ -24,10 +19,10 @@ Just prepend `gsudo` (or the `sudo` alias) to your command and it will run eleva
 
 **NEW!** Extended documentation available at: https://gerardog.github.io/gsudo/
 
-## 💵 Please support gsudo 💵
+## Please support gsudo! 💵
 
-> Please consider [sponsoring gsudo](https://github.com/gerardog/gsudo/wiki/Sponsor-gsudo).
-> It also helps support the costs of the yearly renewal for the code-signing certificate.
+- Please consider [sponsoring gsudo](https://gerardog.github.io/gsudo/sponsor). It helps to cover the yearly renewal of the code-signing certificate.
+- No money? No problem! Please give us a star! ⭐
 
 ## Features
 
@@ -38,6 +33,7 @@ Just prepend `gsudo` (or the `sudo` alias) to your command and it will run eleva
 - Supports being used on scripts:
   - Outputs of the elevated commands can be interpreted: E.g. StdOut/StdErr can be piped or captured (e.g. `gsudo dir | findstr /c:"bytes free" > FreeSpace.txt`) and exit codes too (`%errorlevel%`). If `gsudo` fails to elevate, the exit code will be 999.
   - If `gsudo` is invoked from an already elevated console, it will just run the command (it won't fail). So, you don't have to worry if you run `gsudo` or a script that uses `gsudo` from an already elevated console. (The UAC popup will not appear, as no elevation is required)
+  
 - `gsudo !!` elevates the last executed command. Works on CMD, Git-Bash, MinGW, Cygwin (and PowerShell with [gsudo module](#gsudomodule) only)
 
 ## Installation
@@ -85,36 +81,26 @@ Show status information about current user, security, integrity level or other g
 **Examples:**
 
 ``` powershell
-# elevate the current shell in the current console window (Cmd/PowerShell/Pwsh Core/Yori/Take Command/git-bash/cygwin)
-gsudo
+gsudo   # elevates the current shell in the current console window (Supports Cmd/PowerShell/Pwsh Core/Yori/Take Command/git-bash/cygwin)
 
-# launch the current shell elevated in a new console window
-gsudo -n
+gsudo -n # launch the current shell elevated in a new console window
 
-# launch in new window and wait for exit
-gsudo -n -w powershell ./Do-Something.ps1
+gsudo -n -w powershell ./Do-Something.ps1 # launch in new window and wait for exit
 
-# launch windows app
-gsudo notepad %windir%\system32\drivers\etc\hosts
+gsudo notepad %windir%\system32\drivers\etc\hosts # launch windows app
 
-# sudo alias built-in with choco/scoop/manual installers: 
-sudo notepad %windir%\system32\drivers\etc\hosts
+sudo notepad # sudo alias built-in
 
-# Cmd Commands:
-gsudo type MySecretFile.txt
-gsudo md "C:\Program Files\MyApp"
-
-# redirect/pipe input/output/error
+# redirect/pipe input/output/error example
 gsudo dir | findstr /c:"bytes free" > FreeSpace.txt
 
-# Configure Reduced logging
-gsudo config LogLevel "Error"
-# Configure a custom Elevated Prompt
-gsudo config Prompt "$P [elevated]$G "
-# Reset Elevated Prompt config to default value
-gsudo config Prompt --reset
+gsudo config LogLevel "Error"          # Configure Reduced logging
+gsudo config Prompt "$P [elevated]$G " # Configure a custom Elevated Prompt
+gsudo config Prompt --reset            # Reset to default value
+
 # Enable credentials cache (less UAC popups):
 gsudo config CacheMode Auto
+
 # Elevate last command (sudo bang bang)
 gsudo !!
 ```
