@@ -1,8 +1,13 @@
 # gsudo - a sudo for Windows
 
 [![Join the chat at https://gitter.im/gsudo/community](https://badges.gitter.im/gsudo/community.svg)](https://gitter.im/gsudo/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Build status](https://ci.appveyor.com/api/projects/status/nkd11bifhnqaxay9/branch/master?svg=true)](https://ci.appveyor.com/project/gerardog/gsudo)
-[![Tests](https://img.shields.io/appveyor/tests/gerardog/gsudo/master)](https://ci.appveyor.com/project/gerardog/gsudo/build/tests)
+
+[![CI Build](https://github.com/gerardog/gsudo/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/gerardog/gsudo/actions/workflows/ci.yml)
+[![Release](https://github.com/gerardog/gsudo/actions/workflows/release.yml/badge.svg?branch=master)](https://github.com/gerardog/gsudo/actions/workflows/release.yml)
+
+[![CI Build](actions/workflows/ci.yml/badge.svg?branch=master)](actions/workflows/ci.yml)
+[![Release](actions/workflows/release.yml/badge.svg?branch=master)](/actions/workflows/release.yml)
+
 [![Chocolatey Downloads](https://img.shields.io/chocolatey/dt/gsudo?label=Chocolatey%20Downloads)](https://community.chocolatey.org/packages/gsudo)
 [![GitHub Downloads](https://img.shields.io/github/downloads/gerardog/gsudo/total?label=GitHub%20Downloads)](https://github.com/gerardog/gsudo/releases/latest)
 
@@ -236,9 +241,9 @@ The `Credentials Cache` allows to elevate several times from a parent process wi
 
   When I created `gsudo`, there were other `sudo` packages on most Windows popular package managers such as `Chocolatey` and `Scoop`, so I had no other choice to pick another name. `gsudo` installers create an alias for `sudo`, so feel free to use `sudo` on your command line to invoke `gsudo`.
 
-- Why `.Net Framework 4.6`?
+- Why did you migrated from `.Net Framework 4.6` to `.Net Core 7.0`?
 
-  Because 4.6 is included in every Windows 10/11 installation. `.Net Core` requires additional installation steps and provides no substantial benefit since `gsudo` is Windows-specific. (Other platforms can use the standard *nix sudo.)
+  Starting from v1.4.0, it is built using `.Net 7.0` NativaAOT. It loads faster and uses less memory, and runs on machines without any .Net runtime installed. Prior versions `<v1.3.0` used .Net 4.6, because it was included in every Windows 10/11 installation.
 
 - Is `gsudo` a port of `*nix sudo`?
 
@@ -246,7 +251,7 @@ The `Credentials Cache` allows to elevate several times from a parent process wi
 
 - Does it work in Windows 7/8?
 
-  The elevation works, but not the credentials cache on W7. On Windows 8.1 install [.Net Framework 4.8 runtime](https://dotnet.microsoft.com/en-us/download/dotnet-framework), then install the latest [`gsudo MSI`](https://github.com/gerardog/gsudo/releases/latest). On Windows 7 do the same but *first* enable TLS 1.2 using this ["easy fix tool"](https://support.microsoft.com/en-us/topic/update-to-enable-tls-1-1-and-tls-1-2-as-default-secure-protocols-in-winhttp-in-windows-c4bd73d2-31d7-761e-0178-11268bb10392#bkmk_easy) from Microsoft.
+  Yes, it works from Win7 SP1 onwards, except the credentials cache.
 
 - How do I return to the previous security level after using gsudo?
 
