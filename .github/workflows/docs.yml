@@ -3,7 +3,7 @@ name: Documentation web
 on:
   push:
     branches:
-      - main
+      - master
       - docs
     paths:
       - 'docs/**'      
