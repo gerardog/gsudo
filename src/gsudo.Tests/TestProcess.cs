@@ -55,7 +55,12 @@ namespace gsudo.Tests
         private string ReadAllText(string fileName)
         {
             System.Threading.Thread.Sleep(2000); // Freaking wait for the output file to be freed on the CI build server.
-            return File.ReadAllText(fileName);
+
+            using (var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var textReader = new StreamReader(fileStream))
+            {
+                return textReader.ReadToEnd();
+            }
         }
 
 
@@ -64,7 +69,19 @@ namespace gsudo.Tests
             if (!_testProcessHandle.GetProcessWaitHandle().WaitOne(waitMilliseconds))
             {
                 NativeMethods.TerminateProcess(_testProcessHandle.DangerousGetHandle(), 0);
-                Debug.WriteLine($"Process Std Output:\n{GetStdOut()}");
+                if(!_testProcessHandle.GetProcessWaitHandle().WaitOne(2000))
+                {
+                    Kill();
+                }
+
+                try
+                {
+                    Debug.WriteLine($"Process Std Output:\n{GetStdOut()}");
+                }
+                catch
+                {
+                    Console.Error.WriteLine($"Unable to read output. (file in use)");
+                }
                 //Debug.WriteLine($"Process Std Error:\n{GetStdErr()}");
 
                 Assert.Fail("Process still active!");
@@ -79,7 +96,7 @@ namespace gsudo.Tests
 
         public void Kill()
         {
-            Process.Start("gsudo", "--debug taskkill.exe /PID " + ProcessId).WaitForExit();
+            Process.Start("taskkill.exe ", "/PID " + ProcessId).WaitForExit();
         }
     }
 
