@@ -14,7 +14,7 @@ namespace gsudo.Tests
         public int ExitCode;
 
         static int TestNumber = 1;
-        private readonly string _testId = TestNumber++.ToString();// DateTime.Now.ToString("yyyyMMddHHmmssff");
+        private readonly string _testId = new Random().Next(1,99999).ToString() ;// DateTime.Now.ToString("yyyyMMddHHmmssff");
         string _sIn => $"in{_testId}";
         string _sOut => $"out{_testId}";
 //       string _sErr => $"err{_testId}";
@@ -51,14 +51,7 @@ namespace gsudo.Tests
 
         private string ReadAllText(string fileName)
         {
-            try
-            {
-                return File.ReadAllText(fileName);
-            }
-            catch (Exception e) 
-            {
-                return e.ToString();
-            }
+            return File.ReadAllText(fileName);
         }
 
 
