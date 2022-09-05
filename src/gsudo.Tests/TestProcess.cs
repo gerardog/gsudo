@@ -74,7 +74,7 @@ namespace gsudo.Tests
         }
 
 
-        public void WaitForExit(int waitMilliseconds = 10000)
+        public void WaitForExit(int waitMilliseconds = 20000)
         {
             if (!_testProcessHandle.GetProcessWaitHandle().WaitOne(waitMilliseconds))
             {
