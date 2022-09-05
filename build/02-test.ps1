@@ -12,13 +12,15 @@ pushd $PSScriptRoot\..
 
 dotnet test .\src\gsudo.sln --logger "trx;LogFileName=$((gi .).FullName)\TestResults.trx" --logger:"console;verbosity=normal" -v quiet -p:WarningLevel=0
 if (! $?) { $failure = $true }
+if ($failure) { exit 1 } # fail fast
 
 $env:path=(Get-Item .\src\gsudo\bin\net7.0\).FullName+";"+$env:path
 
 gsudo -k > $null
 
 $script  = {
-	if ((Get-InstalledModule Pester -ErrorAction SilentlyContinue).Version -lt "5.0.0") { Install-Module Pester -Force -SkipPublisherCheck > $null }
+	$ProgressPreference = "SilentlyContinue";
+	if ((Get-InstalledModule Pester -ErrorAction SilentlyContinue).Version -lt "5.0.0") { Install-Module Pester -Force -SkipPublisherCheck }
 	Import-Module Pester 
 	
 	$configuration = New-PesterConfiguration;
