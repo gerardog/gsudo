@@ -54,12 +54,22 @@ namespace gsudo.Tests
 
         private string ReadAllText(string fileName)
         {
-            System.Threading.Thread.Sleep(2000); // Freaking wait for the output file to be freed on the CI build server.
-
-            using (var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-            using (var textReader = new StreamReader(fileStream))
+            try
             {
-                return textReader.ReadToEnd();
+                using (var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (var textReader = new StreamReader(fileStream))
+                {
+                    return textReader.ReadToEnd();
+                }
+            }
+            catch
+            {
+                System.Threading.Thread.Sleep(2000); // Freaking wait for the output file to be freed on the CI build server.
+                using (var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (var textReader = new StreamReader(fileStream))
+                {
+                    return textReader.ReadToEnd();
+                }
             }
         }
 
