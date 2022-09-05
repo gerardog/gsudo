@@ -54,9 +54,9 @@ namespace gsudo.Helpers
             return connection;
         }
 
-        internal static bool StartElevatedService(int? allowedPid, TimeSpan? cacheDuration = null)
+        internal static bool StartElevatedService(int? allowedPid, TimeSpan? cacheDuration = null, string allowedSid=null)
         {
-            var callingSid = System.Security.Principal.WindowsIdentity.GetCurrent().User.Value;
+            var callingSid = allowedSid ?? System.Security.Principal.WindowsIdentity.GetCurrent().User.Value;
             var callingPid = allowedPid ?? Process.GetCurrentProcess().GetCacheableRootProcessId();
             string verb;
 
@@ -112,50 +112,5 @@ namespace gsudo.Helpers
             Logger.Instance.Log("Elevated instance started.", LogLevel.Debug);
             return true;
         }
-
-        internal static bool StartSingleUseElevatedService(int callingPid)
-        {
-            var @params = string.Empty;
-
-            if (InputArguments.Debug) @params = "--debug ";
-            if (InputArguments.IntegrityLevel.HasValue) @params += $"-i {InputArguments.IntegrityLevel.Value} ";
-            if (InputArguments.RunAsSystem) @params += "-s ";
-
-            bool isAdmin = ProcessHelper.IsHighIntegrity();
-            string ownExe = ProcessHelper.GetOwnExeName();
-
-            string commandLine;
-            commandLine = $"{@params}gsudoelevate --pid {callingPid}";
-
-            Process p;
-
-            try
-            {
-                p = ProcessFactory.StartElevatedDetached(ownExe, commandLine, !InputArguments.Debug);
-            }
-            catch (System.ComponentModel.Win32Exception ex)
-            {
-                Logger.Instance.Log(ex.Message, LogLevel.Error);
-                return false;
-            }
-
-            if (p == null)
-            {
-                Logger.Instance.Log("Failed to start elevated instance.", LogLevel.Error);
-                return false;
-            }
-
-            Logger.Instance.Log("Elevated instance started.", LogLevel.Debug);
-
-            p.WaitForExit();
-
-            if (p.ExitCode == 0)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
     }
 }

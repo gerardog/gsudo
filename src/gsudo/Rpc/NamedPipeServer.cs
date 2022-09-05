@@ -57,11 +57,21 @@ namespace gsudo.Rpc
         {
             var ps = new PipeSecurity();
 
+            // _allowedSid is the input argument saying who invoked this elevated instance.
+            // Needs access to connect to this pipe.
             ps.AddAccessRule(new PipeAccessRule(
                 new SecurityIdentifier(_allowedSid),
+                PipeAccessRights.ReadWrite,
+                AccessControlType.Allow));
+
+            // WindowsIdentity.GetCurrent().User is our current elevated user.
+            // For UAC in admin-approval mode, it is the same as _allowedSid
+            // But when entering credentials (on the UAC Popup), it is not.
+            ps.AddAccessRule(new PipeAccessRule(
+                WindowsIdentity.GetCurrent().User,
                 PipeAccessRights.ReadWrite | PipeAccessRights.CreateNewInstance,
                 AccessControlType.Allow));
-            
+
             var networkSid = new SecurityIdentifier("S-1-5-2");
             // deny remote connections.
             ps.AddAccessRule(new PipeAccessRule(
