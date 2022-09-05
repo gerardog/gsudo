@@ -18,7 +18,7 @@ $env:path=(Get-Item .\src\gsudo\bin\net7.0\).FullName+";"+$env:path
 gsudo -k > $null
 
 $script  = {
- 	Install-Module Pester -Force -SkipPublisherCheck
+	if ((Get-InstalledModule Pester).Version -lt 5) { Install-Module Pester -Force -SkipPublisherCheck > $null }
 	Import-Module Pester 
 	
 	$configuration = New-PesterConfiguration;

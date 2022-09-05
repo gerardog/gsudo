@@ -14,7 +14,7 @@ namespace gsudo.Tests
         public int ExitCode;
 
         static int TestNumber = 1;
-        private readonly string _testId = new Random().Next(1,99999).ToString() ;// DateTime.Now.ToString("yyyyMMddHHmmssff");
+        private readonly string _testId = Random.Shared.Next(1,999999).ToString() ;// DateTime.Now.ToString("yyyyMMddHHmmssff");
         string _sIn => $"in{_testId}";
         string _sOut => $"out{_testId}";
 //       string _sErr => $"err{_testId}";
@@ -51,6 +51,7 @@ namespace gsudo.Tests
 
         private string ReadAllText(string fileName)
         {
+            System.Threading.Thread.Sleep(200); // Freaking wait for the output file to be freed on the CI build server.
             return File.ReadAllText(fileName);
         }
 
@@ -65,7 +66,6 @@ namespace gsudo.Tests
 
                 Assert.Fail("Process still active!");
             }
-            System.Threading.Thread.Sleep(200); // Freaking wait for the output file to be freed on the CI build server.
 
             Debug.WriteLine($"Process Std Output:\n{GetStdOut()}");
             //Debug.WriteLine($"Process Std Error:\n{GetStdErr()}");
