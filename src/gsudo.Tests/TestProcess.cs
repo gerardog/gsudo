@@ -28,6 +28,9 @@ namespace gsudo.Tests
 
         public TestProcess(string inputScript, string shell = "cmd /k") 
         {
+            Console.WriteLine($"StdIn File: {_sIn}");
+            Console.WriteLine($"StdOut File: {_sOut}");
+
             string arguments = $"";
 
             File.WriteAllText(_batchFile,
@@ -51,7 +54,7 @@ namespace gsudo.Tests
 
         private string ReadAllText(string fileName)
         {
-            System.Threading.Thread.Sleep(200); // Freaking wait for the output file to be freed on the CI build server.
+            System.Threading.Thread.Sleep(2000); // Freaking wait for the output file to be freed on the CI build server.
             return File.ReadAllText(fileName);
         }
 
