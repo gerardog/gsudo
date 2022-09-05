@@ -1,15 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net46</TargetFramework>
+	<TargetFrameworks>net7.0;net46</TargetFrameworks>
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>StrongName.snk</AssemblyOriginatorKeyFile>
     <Authors>Gerardo Grignoli</Authors>
     <Description>gsudo is a sudo for Windows, allows to run commands with elevated permissions in the current console.</Description>
     <DelaySign>false</DelaySign>
     <OutputPath>bin\</OutputPath>
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
     <Version>1.0.0-prerelease</Version>
@@ -24,21 +23,24 @@
     <PathMap>$(MSBuildProjectDirectory)=C:\</PathMap>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
-</PropertyGroup>
-
+	<NoWarn>1701;1702;CA1303;CA1707;CA1028;CA1001;CA1031;CA1416</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)'=='net7.0'">
+    <AutoGenerateBindingRedirects>False</AutoGenerateBindingRedirects>
+	<PublishTrimmed>true</PublishTrimmed>
+	<InvariantGlobalization>true</InvariantGlobalization> 
+	<IlcOptimizationPreference>Size</IlcOptimizationPreference>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>DEBUG</DefineConstants>
     <DebugType>pdbonly</DebugType>
-    <DebugSymbols>true</DebugSymbols>
-    <NoWarn>1701;1702;CA1303;CA1707;CA1028;CA1001;CA1031</NoWarn>
+    <DebugSymbols>true</DebugSymbols>    
   </PropertyGroup>
-
   <ItemGroup>
     <Compile Remove="bin\**" />
     <EmbeddedResource Remove="bin\**" />
     <None Remove="bin\**" />
   </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="GitVersion.MsBuild" Version="5.6.11">
       <PrivateAssets>all</PrivateAssets>
@@ -48,13 +50,17 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="System.Security.Principal.Windows" Version="4.6.0" />
   </ItemGroup>
-
+  <ItemGroup Condition="'$(TargetFramework)'=='net7.0'">
+    <PackageReference Include="System.Security.Principal.Windows" Version="5.0.0" />
+    <PackageReference Include="System.Threading.AccessControl" Version="6.0.0" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)'=='net46'">
+	<PackageReference Include="System.Security.Principal.Windows" Version="4.6.0" />
+  </ItemGroup>
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <Exec Command="echo Killing running gsudo commands.&#xD;&#xA;gsudo -k 2&gt;nul&#xD;&#xA;%25windir%25\sysnative\tskill gsudo&#xD;&#xA;exit 0" />
   </Target>
-    
   <Target Name="PostBuildMacros">
     <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
       <Output TaskParameter="Assemblies" ItemName="Targets" />
@@ -63,5 +69,4 @@
       <VersionNumber Include="$([System.Text.RegularExpressions.Regex]::Replace(&quot;%(Targets.Version)&quot;, &quot;^(.*?)(\.0)*$&quot;, &quot;$1&quot;))" />
     </ItemGroup>
   </Target>
-
 </Project>

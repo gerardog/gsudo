@@ -296,7 +296,9 @@ namespace gsudo.Tokens
 
         public TokenProvider Impersonate(Action ActionImpersonated)
         {
-            using (var ctx = System.Security.Principal.WindowsIdentity.Impersonate(GetToken().DangerousGetHandle()))
+            System.Security.Principal.WindowsIdentity.RunImpersonated(new Microsoft.Win32.SafeHandles.SafeAccessTokenHandle(GetToken().DangerousGetHandle()), ActionImpersonated);
+
+/*            using (var ctx = System.Security.Principal.WindowsIdentity.Impersonate(GetToken().DangerousGetHandle()))
             {
                 try
                 {
@@ -308,24 +310,17 @@ namespace gsudo.Tokens
                 }
             }
 
+*/
             return this;
         }
 
         public T Impersonate<T>(Func<T> ActionImpersonated)
 
         {
-            using (var ctx = System.Security.Principal.WindowsIdentity.Impersonate(GetToken().DangerousGetHandle()))
-            {
-                try
-                {
-                    return ActionImpersonated();
-                }
-                finally
-                {
-                    ctx.Undo();
-                }
-            }
-        }
+            T res = default;
+            System.Security.Principal.WindowsIdentity.RunImpersonated(new Microsoft.Win32.SafeHandles.SafeAccessTokenHandle(GetToken().DangerousGetHandle()), () => { res = ActionImpersonated(); });
+            return res;
+         }
 
         public TokenProvider EnablePrivileges(bool throwOnFailure, params Privilege[] priviledgesList)
         {

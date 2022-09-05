@@ -185,7 +185,7 @@ namespace gsudo.Tests
                     Verb = "RunAs"
                 }
             )?.WaitForExit();
-            Thread.Sleep(500);
+            Thread.Sleep(2000);
         }
     }
 }

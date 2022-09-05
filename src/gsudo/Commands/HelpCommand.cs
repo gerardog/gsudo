@@ -35,9 +35,7 @@ namespace gsudo.Commands
             Console.WriteLine("gsudo config\t\t\t\tShow current config settings & values.");
             Console.WriteLine("gsudo config {key} [--global] [value] \tRead or write a user setting");
             Console.WriteLine("gsudo config {key} [--global] --reset \tReset config to default value");
-
             Console.WriteLine("gsudo status\t\t\t\tShow status about current user, security, integrity level or other gsudo relevant data.");
-            //            Console.WriteLine("gsudo confighelp \tGet additional help about config settings.");
             Console.WriteLine();
             Console.WriteLine("General options:");
             Console.WriteLine(" -n | --new             Starts the command in a new console (and returns immediately).");
@@ -49,11 +47,6 @@ namespace gsudo.Commands
             Console.WriteLine(" --loadProfile          When elevating PowerShell commands, do load profiles.");
             Console.WriteLine(" --copyns               Connect network drives to the elevated user. Warning: Verbose, interactive asks for credentials");
             Console.WriteLine();
-            /*
-            Console.WriteLine("Credentials Cache options:");
-            Console.WriteLine($"  If no cache option is specified, your credentials will be cached for {Settings.CacheDuration.Value.TotalSeconds} seconds.");
-            Console.WriteLine();
-            */
             Console.WriteLine("Other options:");
             Console.WriteLine(" --loglevel {val}       Set minimum log level to display: All, Debug, Info, Warning, Error, None");
             Console.WriteLine(" --debug                Enable debug mode.");
@@ -61,7 +54,7 @@ namespace gsudo.Commands
             Console.WriteLine(" --vt                   (deprecated) Set console mode to piped VT100 ConPty/PseudoConsole (experimental).");
             Console.WriteLine(" --attached             (deprecated) Set console mode to attached.");
             Console.WriteLine(" --copyev               (deprecated) Copy environment variables to the elevated process. (not needed on default console mode)");
-            Console.Write("\nLearn more about security considerations of using gsudo at: https://bit.ly/gsudoSecurity\n");
+            Console.Write("\nLearn more about security considerations of using gsudo at: https://gerardog.github.io/gsudo/docs/security\n");
 
             return;
         }

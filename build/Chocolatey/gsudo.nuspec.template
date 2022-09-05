@@ -22,16 +22,16 @@
     <!-- == SOFTWARE SPECIFIC SECTION == -->
     <!-- This section is about the software itself -->
     <title>gsudo - a sudo for windows</title>
-    <authors>Gerardo Grignoli</authors>
+    <authors>Gerardo Grignoli &amp; GitHub contributors</authors>
     <!-- projectUrl is required for the community feed -->
     <projectUrl>http://github.com/gerardog/gsudo</projectUrl>
     <!--<iconUrl>http://cdn.rawgit.com/gerardog/master/icons/gsudo.png</iconUrl>-->
-    <copyright>2019 Gerardo Grignoli</copyright>
+    <copyright>2022 Gerardo Grignoli</copyright>
     <!-- If there is a license Url available, it is is required for the community feed -->
     <licenseUrl>https://opensource.org/licenses/MIT</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
 	<projectSourceUrl>http://github.com/gerardog/gsudo</projectSourceUrl>
-    <docsUrl>https://github.com/gerardog/gsudo/blob/master/README.md</docsUrl>
+    <docsUrl>https://gerardog.github.io/gsudo/</docsUrl>
     <!--<mailingListUrl></mailingListUrl>-->
     <bugTrackerUrl>https://github.com/gerardog/gsudo/issues</bugTrackerUrl>
     <tags>sudo for windows run elevated user command runas powershell wsl</tags>
