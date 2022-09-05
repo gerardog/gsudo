@@ -51,6 +51,7 @@ namespace gsudo.Tests
 
         private string ReadAllText(string fileName)
         {
+            System.Threading.Thread.Sleep(200); // Freaking wait for the output file to be freed on the CI build server.
             return File.ReadAllText(fileName);
         }
 
@@ -65,7 +66,6 @@ namespace gsudo.Tests
 
                 Assert.Fail("Process still active!");
             }
-            System.Threading.Thread.Sleep(200); // Freaking wait for the output file to be freed on the CI build server.
 
             Debug.WriteLine($"Process Std Output:\n{GetStdOut()}");
             //Debug.WriteLine($"Process Std Error:\n{GetStdErr()}");
