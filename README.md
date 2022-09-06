@@ -13,6 +13,10 @@ Just prepend `gsudo` (or the `sudo` alias) to your command and it will run eleva
 
 **Why use `gsudo` instead of `some-other-sudo`?**
 
+
+
+
+
 `gsudo` is very easy to install and use. Its similarities with Unix/Linux sudo make the experience a breeze. It detects your current shell and elevates accordingly (as native shell commands). (Supports `Cmd`, `PowerShell`, `git-bash`, `MinGW`, `Cygwin`, `Yori`, `Take Command`)
 
 ## Documentation
