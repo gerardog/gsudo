@@ -60,31 +60,31 @@ namespace gsudo.Helpers
                 invokingShellFullPath = parentProcess.GetExeName();
                 string parentExeName = Path.GetFileName(invokingShellFullPath).ToUpperInvariant();
 
-                if (parentExeName == "POWERSHELL.EXE")
+                if (parentExeName == "POWERSHELL.EXE" || parentExeName == "POWERSHELL")
                 {
                     return Shell.PowerShell;
                 }
-                else if (parentExeName == "PWSH.EXE")
+                else if (parentExeName == "PWSH.EXE" || parentExeName == "PWSH")
                 {
                     return Shell.PowerShellCore;
                 }
-                else if (parentExeName == "YORI.EXE")
+                else if (parentExeName == "YORI.EXE" || parentExeName == "YORI")
                 {
                     return Shell.Yori;
                 }
-                else if (parentExeName == "WSL.EXE")
+                else if (parentExeName == "WSL.EXE" || parentExeName == "WSL")
                 {
                     return Shell.Wsl;
                 }
-                else if (parentExeName == "BASH.EXE")
+                else if (parentExeName == "BASH.EXE" || parentExeName == "BASH")
                 {
                     return Shell.Bash;
                 }
-                else if (parentExeName == "TCC.EXE")
+                else if (parentExeName == "TCC.EXE" || parentExeName == "TCC")
                 {
                     return Shell.TakeCommand;
                 }
-                else if (parentExeName == "CMD.EXE")
+                else if (parentExeName == "CMD.EXE" || parentExeName == "CMD")
                 {
                     // CMD.EXE can be
                     //   %windir%\System32\cmd.exe => 64-bit CMD.
@@ -102,7 +102,7 @@ namespace gsudo.Helpers
                     if (grandParentProcess != null)
                     {
                         var grandParentExeName = Path.GetFileName(grandParentProcess.GetExeName()).ToUpperInvariant();
-                        if (grandParentExeName == "PWSH.EXE")
+                        if (grandParentExeName == "PWSH.EXE" || grandParentExeName == "PWSH")
                         {
                             invokingShellFullPath = grandParentProcess.GetExeName();
 

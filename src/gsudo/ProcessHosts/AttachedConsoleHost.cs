@@ -14,6 +14,8 @@ namespace gsudo.ProcessHosts
     // This mode is not enabled unless you use --attached.
     class AttachedConsoleHost : IProcessHost
     {
+        public bool SupportsSimultaneousElevations { get; } = false;
+
         public async Task Start(Connection connection, ElevationRequest elevationRequest)
         {
             var exitCode = 0;

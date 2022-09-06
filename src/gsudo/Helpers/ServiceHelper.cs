@@ -48,7 +48,7 @@ namespace gsudo.Helpers
 
             if (connection == null) // service is not running or listening.
             {
-                if (!StartElevatedService(callingPid, null, InputArguments.KillCache))
+                if (!StartElevatedService(callingPid, singleUse: InputArguments.KillCache))
                     return null;
 
                 connection = await rpcClient.Connect(callingPid, false).ConfigureAwait(false);
@@ -56,9 +56,9 @@ namespace gsudo.Helpers
             return connection;
         }
 
-        internal static bool StartElevatedService(int? allowedPid, TimeSpan? cacheDuration = null, bool singleUse = false)
+        internal static bool StartElevatedService(int? allowedPid, TimeSpan? cacheDuration = null, string allowedSid=null, bool singleUse = false)
         {
-            var callingSid = System.Security.Principal.WindowsIdentity.GetCurrent().User.Value;
+            var callingSid = allowedSid ?? System.Security.Principal.WindowsIdentity.GetCurrent().User.Value;
             var callingPid = allowedPid ?? Process.GetCurrentProcess().GetCacheableRootProcessId();
             string verb;
 

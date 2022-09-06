@@ -6,6 +6,7 @@ using gsudo.Rpc;
 using gsudo.ProcessHosts;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Linq;
+using gsudo.Helpers;
 #if NETCOREAPP
 using System.Text.Json;
 #endif
@@ -38,7 +39,7 @@ namespace gsudo.Commands
 
             if (InputArguments.TrustedInstaller && !System.Security.Principal.WindowsIdentity.GetCurrent().Claims.Any(c => c.Value == Constants.TI_SID))
             {
-                return Helpers.ServiceHelper.StartElevatedService(AllowedPid, CacheDuration, SingleUse) ? 0: Constants.GSUDO_ERROR_EXITCODE;
+                return Helpers.ServiceHelper.StartElevatedService(AllowedPid, CacheDuration, singleUse: SingleUse) ? 0: Constants.GSUDO_ERROR_EXITCODE;
             }
 
             var cacheLifetime = new CredentialsCacheLifetimeManager(AllowedPid);
@@ -81,6 +82,11 @@ namespace gsudo.Commands
                 if (request.KillCache) throw new OperationCanceledException();
 
                 IProcessHost applicationHost = CreateProcessHost(request);
+
+                if (!applicationHost.SupportsSimultaneousElevations && Settings.CacheMode.Value==Enums.CacheMode.Auto)
+                {
+                    ServiceHelper.StartElevatedService(AllowedPid, CacheDuration, AllowedSid);
+                }
 
                 if (!string.IsNullOrEmpty(request.Prompt))
                     Environment.SetEnvironmentVariable("PROMPT",

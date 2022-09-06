@@ -14,6 +14,8 @@ namespace gsudo.ProcessHosts
     {
         private Process process;
 
+        public bool SupportsSimultaneousElevations { get; } = true;
+
         public async Task Start(Connection connection, ElevationRequest request)
         {
             try
