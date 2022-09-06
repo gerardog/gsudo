@@ -11,4 +11,4 @@ assignees: ''
 <!-- Describe why and how a user would use this new functionality (if applicable). -->
 
 ## Proposed technical details
-<!-- A clear and concise description of what you want to happen -->
+<!-- A description of what you want to happen, as clear and concise as possible. -->
