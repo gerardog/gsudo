@@ -260,8 +260,7 @@ namespace gsudo.Helpers
                 SetTrueIf(arg, () => InputArguments.Global = true, "--global") ||
                 SetTrueIf(arg, () => InputArguments.Direct = true, "-d", "--direct") ||
                 SetTrueIf(arg, () => InputArguments.KillCache = true, "-k", "--reset-timestamp") ||
-                SetTrueIf(arg, () => InputArguments.TrustedInstaller = true, "--ti") ||
-                SetTrueIf(arg, () => InputArguments.RunAsSystem = true, "--ti")
+                SetTrueIf(arg, () => InputArguments.TrustedInstaller = InputArguments.RunAsSystem = true, "--ti")
                    )
                 { }
                 else if (arg.In("-v", "--version"))
