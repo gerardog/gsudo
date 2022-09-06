@@ -10,4 +10,7 @@ ignore:
 merge-message-formats: {}
 branches:
   develop:
+  
+  
+  
     increment: Patch
