@@ -244,8 +244,8 @@ namespace gsudo.Commands
         /// <returns></returns>
         private static ElevationRequest.ConsoleMode GetElevationMode(bool isWindowsApp)
         {
-            if (!ProcessHelper.IsMemberOfLocalAdmins() || // => Not local admin? Force attached mode, so the new process has admin user env vars. (See #113)
-                Settings.ForceAttachedConsole)
+            if ((!ProcessHelper.IsMemberOfLocalAdmins() || // => Not local admin? Force attached mode, so the new process has admin user env vars. (See #113)
+                Settings.ForceAttachedConsole) && !Settings.ForcePipedConsole && !Settings.ForceVTConsole)
             {
                 if (Console.IsErrorRedirected
                     || Console.IsInputRedirected
@@ -254,6 +254,8 @@ namespace gsudo.Commands
                     // Attached mode doesnt supports redirection.
                     return ElevationRequest.ConsoleMode.Piped; 
                 }
+                if (InputArguments.TrustedInstaller)
+                    return ElevationRequest.ConsoleMode.VT; // workaround for #173
 
                 return ElevationRequest.ConsoleMode.Attached;
             }
