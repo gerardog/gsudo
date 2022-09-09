@@ -32,4 +32,4 @@ function gsudo {
 
 $gsudoVerbose=$true;
 
-Export-ModuleMember -function Invoke-Gsudo, gsudo -Variable gsudoVerbose, gsudoLoadProfile
+Export-ModuleMember -function Invoke-Gsudo, gsudo -Variable gsudoVerbose
