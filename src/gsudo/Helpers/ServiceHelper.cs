@@ -66,8 +66,7 @@ namespace gsudo.Helpers
 
             var @params = InputArguments.Debug ? "--debug " : string.Empty;
             //            if (InputArguments.IntegrityLevel.HasValue) @params += $"-i {InputArguments.IntegrityLevel.Value} ";
-            //            if (InputArguments.RunAsSystem) @params += "-s ";
-
+            if (InputArguments.RunAsSystem && allowedSid != System.Security.Principal.WindowsIdentity.GetCurrent().User.Value) @params += "-s ";
             if (InputArguments.TrustedInstaller) @params += "--ti ";
 
             verb = "gsudoservice";
