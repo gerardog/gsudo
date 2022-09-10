@@ -3,6 +3,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Security.Principal;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace gsudo.Helpers
@@ -58,11 +59,12 @@ namespace gsudo.Helpers
 
         internal static bool StartElevatedService(int? allowedPid, TimeSpan? cacheDuration = null, string allowedSid=null, bool singleUse = false)
         {
-            var callingSid = allowedSid ?? System.Security.Principal.WindowsIdentity.GetCurrent().User.Value;
-            var callingPid = allowedPid ?? Process.GetCurrentProcess().GetCacheableRootProcessId();
+            allowedPid = allowedPid ?? Process.GetCurrentProcess().GetCacheableRootProcessId();
+            allowedSid = allowedSid ?? Process.GetProcessById(allowedPid.Value).GetProcessUser();
+
             string verb;
 
-            Logger.Instance.Log($"Caller SID: {callingSid}", LogLevel.Debug);
+            Logger.Instance.Log($"Caller SID: {allowedSid}", LogLevel.Debug);
 
             var @params = InputArguments.Debug ? "--debug " : string.Empty;
             //            if (InputArguments.IntegrityLevel.HasValue) @params += $"-i {InputArguments.IntegrityLevel.Value} ";
@@ -84,7 +86,7 @@ namespace gsudo.Helpers
 
             bool isAdmin = ProcessHelper.IsHighIntegrity();
 
-            string commandLine = $"{@params}{verb} {callingPid} {callingSid} {Settings.LogLevel} {Settings.TimeSpanWithInfiniteToString(cacheDuration.Value)}";
+            string commandLine = $"{@params}{verb} {allowedPid} {allowedSid} {Settings.LogLevel} {Settings.TimeSpanWithInfiniteToString(cacheDuration.Value)}";
 
             bool success = false;
 
@@ -93,7 +95,7 @@ namespace gsudo.Helpers
                 string ownExe = ProcessHelper.GetOwnExeName();
                 if (InputArguments.TrustedInstaller && isAdmin && !WindowsIdentity.GetCurrent().Claims.Any(c => c.Value == Constants.TI_SID))
                 {
-                    return StartTrustedInstallerService(commandLine, callingPid);
+                    return StartTrustedInstallerService(commandLine, allowedPid.Value);
                 }
                 else if (InputArguments.RunAsSystem && isAdmin)
                 {

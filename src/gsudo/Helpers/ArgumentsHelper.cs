@@ -371,6 +371,8 @@ namespace gsudo.Helpers
                         cmd.Action = CacheCommandAction.Help;
                     else if (arg.In("-p", "--pid"))
                         cmd.AllowedPid = int.Parse(dequeue(), CultureInfo.InvariantCulture);
+                    else if (arg.In("--sid"))
+                        cmd.AllowedSid = dequeue();
                     else if (arg.In("-d", "--duration"))
                         cmd.CacheDuration = Settings.TimeSpanParseWithInfinite(dequeue());
                     else if (arg.In("-k"))

@@ -19,6 +19,7 @@ namespace gsudo.Commands
     {
         public CacheCommandAction? Action { get; set; }
         public int? AllowedPid { get; set; }
+        public string AllowedSid { get; set; }
         public TimeSpan? CacheDuration { get; set; }
 
         public async Task<int> Execute()
@@ -73,10 +74,11 @@ namespace gsudo.Commands
                 }
                 else
                 {
-                    if (!ServiceHelper.StartElevatedService(AllowedPid.Value, CacheDuration ?? Settings.CacheDuration))
+                    if (!ServiceHelper.StartElevatedService(AllowedPid.Value, CacheDuration ?? Settings.CacheDuration, AllowedSid))
                     {
                         return Constants.GSUDO_ERROR_EXITCODE;
                     }
+
                     if (AllowedPid.Value != 0)
                         Logger.Instance.Log($"Elevation allowed for process Id {AllowedPid.Value} and children.",
                             LogLevel.Info);
