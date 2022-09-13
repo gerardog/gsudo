@@ -175,8 +175,9 @@ if($NoElevate) {
 ForEach ($item in $result)
 {
 	if (
-	$item.Exception.SerializedRemoteException.WasThrownFromThrowStatement -or
-	$item.Exception.WasThrownFromThrowStatement
+	$item.psobject.Properties['Exception'] -and
+	($item.Exception.SerializedRemoteException.WasThrownFromThrowStatement -or
+	 $item.Exception.WasThrownFromThrowStatement)
 	)
 	{
 		throw $item
