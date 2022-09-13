@@ -107,7 +107,7 @@ gsudo !!
 
 ## Usage from PowerShell / PowerShell Core
 
-`gsudo` detects if it's invoked from PowerShell and elevates PS commands (unless `-d` is used to elevate CMD commands). 
+`gsudo` detects if invoked from PowerShell and elevates PS commands (unless `-d` is used to elevate CMD commands). 
 - Prepend `gsudo` for commands without special operators `()|&<>` or single quotes `'`, just prepend `gsudo`. Otherwise you can **pass a string literal** with the command to be elevate:    
 
   `PS C:\> gsudo 'powershell string command'`
@@ -215,7 +215,7 @@ The `Credentials Cache` allows to elevate several times from a parent process wi
 
 ## Known issues
 
-- The elevated instances do not have access to the network shares connected on the non-elevated space. This is not a `gsudo` issue but how Windows works. Use `--copyNS` to replicate Network Shares into the elevated session, but this is not bi-directional and it's interactive (may prompt for user/password).
+- The elevated instances do not have access to the network shares connected on the non-elevated space. This is not a `gsudo` issue but how Windows works. Use `--copyNS` to replicate Network Shares into the elevated session, but this is not bi-directional and is interactive (may prompt for user/password).
 
 - `gsudo.exe` can be placed on a network share and invoked as `\\server\share\gsudo {command}` but doesn't work if your **current** folder is a network drive. For example do not map `\\server\share\` to `Z:` and then `Z:\>gsudo do-something`.
 
@@ -229,7 +229,7 @@ The `Credentials Cache` allows to elevate several times from a parent process wi
 
 - Why did you migrated from `.Net Framework 4.6` to `.Net Core 7.0`?
 
-  Starting from v1.4.0, it is built using `.Net 7.0` NativaAOT. It loads faster and uses less memory, and runs on machines without any .Net runtime installed. Prior versions `<v1.3.0` used .Net 4.6, because it was included in every Windows 10/11 installation.
+  Starting from v1.4.0, it is built using `.Net 7.0` NativeAOT. It loads faster and uses less memory, and runs on machines without any .Net runtime installed. Prior versions `<v1.3.0` used .Net 4.6, because it was included in every Windows 10/11 installation. 
 
 - Is `gsudo` a port of `*nix sudo`?
 
