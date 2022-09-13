@@ -12,7 +12,7 @@ Describe "PS Gsudo (v$($PSVersionTable.PSVersion.ToString()))" {
 
 	It "It serializes return values as string." {
 		$result = gsudo "1+1"
-		$result | Should -Be "20"
+		$result | Should -Be "2"
 		$result -is [System.String] | Should -Be $true
 	}
 

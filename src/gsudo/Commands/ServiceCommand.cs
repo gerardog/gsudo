@@ -37,6 +37,8 @@ namespace gsudo.Commands
             
             Console.Title = "gsudo Service";
 
+            Commands.HelpCommand.ShowVersion();
+
             if ((InputArguments.TrustedInstaller && !System.Security.Principal.WindowsIdentity.GetCurrent().Claims.Any(c => c.Value == Constants.TI_SID))
                 || (InputArguments.RunAsSystem && !System.Security.Principal.WindowsIdentity.GetCurrent().IsSystem))
             {
