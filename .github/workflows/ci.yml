@@ -32,10 +32,11 @@ jobs:
       with: 
         fetch-depth: 0    
     - name: Run Tests
+      id: tests
       run: ./build/02-test.ps1
     - name: Test Report DotNet
       uses: dorny/test-reporter@v1
-      if: success() || failure()    # run this step even if previous step failed
+      if: success() || failure()
       with:
         name: TestsResults (dotnet)
         path: "**/TestResults*.trx"                            
@@ -43,7 +44,7 @@ jobs:
         fail-on-error: false
     - name: Test Report PowerShell v5
       uses: zyborg/pester-tests-report@v1.5.0 # https://github.com/zyborg/pester-tests-report#inputs
-      if: success() || failure()    # run this step even if previous step failed
+      if: success() || failure()
       with:
         test_results_path: ./testResults_PS5.xml
         report_name: TestResults PowerShell v5.x
@@ -52,14 +53,14 @@ jobs:
         
     - name: Test Report PowerShell v7
       uses: zyborg/pester-tests-report@v1.5.0 # https://github.com/zyborg/pester-tests-report#inputs
-      if: success() || failure()    # run this step even if previous step failed
+      if: success() || failure()
       with:
         test_results_path: ./testResults_PS7.xml
         report_name: TestResults PowerShell Core (v7.x)
         report_title: PowerShell v7 Tests
         github_token: ${{ secrets.GITHUB_TOKEN }}
     - name: Fail on error
-      if: failure()    # run this step only if any of the previous steps failed
+      if: ${{ steps.tests.conclusion == 'failure' }}
       run: exit 1
   build:
     name: Build
