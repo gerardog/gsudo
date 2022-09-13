@@ -20,7 +20,11 @@ namespace gsudo.Commands
             {
                 // print all configs
                 foreach (var k in Settings.AllKeys)
-                    Console.WriteLine($"{k.Value.Name} = \"{ k.Value.GetStringValue().ToString()}\"".PadRight(50) + (k.Value.HasGlobalValue() ? "(global)" : (k.Value.HasLocalValue() ? "(user)" : string.Empty)));
+                {                    
+                    var scope = k.Value.HasGlobalValue() ? "(global)" : 
+                                    (k.Value.HasLocalValue() ? "(user)" : "(default)");
+                    Console.WriteLine($"{k.Value.Name} = \"{ k.Value.GetStringValue().ToString()}\" ".PadRight(50) + scope);
+                }
 
                 return Task.FromResult(0);
             }
@@ -33,7 +37,7 @@ namespace gsudo.Commands
                 return Task.FromResult(Constants.GSUDO_ERROR_EXITCODE);
             }
 
-            if (value != null && value.Any())
+            if (value != null && value.Any()) // Write Setting
             {
                 if (value.Any(v => v.In("--global")))
                 {
@@ -81,7 +85,7 @@ namespace gsudo.Commands
 
             // READ
             setting.ClearRunningValue();
-            Console.WriteLine($"{setting.Name} = \"{ setting.GetStringValue().ToString()}\" {(setting.HasGlobalValue() ? "(global)" : (setting.HasLocalValue() ? "(user)" : "(default)"))}");
+            Console.WriteLine($"{setting.Name} = \"{ setting.GetStringValue().ToString()}\"");
             return Task.FromResult(0);
         }
     }

@@ -115,8 +115,8 @@ For faster performance, elevation is called with the `-NoProfile` argument. If y
 
 When using `gsudo`, infix `--loadProfile`:
  - `PS C:\> gsudo --loadProfile echo (1+1)`
- - Set as a permanent setting with `gsudo config PowerShellLoadProfile true`
 
 When using `Invoke-gsudo`, add `-LoadProfile`:
  - `PS C:\> Invoke-Gsudo { echo (1+1) } -LoadProfile`
- - Set as a permanent setting adding `$gsudoLoadProfile=$true` in your `$PROFILE` after `Import-Module C:\FullPathTo\gsudoModule.psd1`
+
+Set as a permanent setting with `gsudo config PowerShellLoadProfile true`
