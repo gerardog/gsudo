@@ -158,7 +158,7 @@ if($NoElevate) {
 
 	$dbg = if ($debug) {"--debug "} else {" "}
 	
-	if ($LoadProfile -or ((gsudo.exe --loglevel None config Powershellloadprofile | Split-String " = ")[1] -like "*true*" -and -not $NoProfile)) {
+	if ($LoadProfile -or ((gsudo.exe --loglevel None config Powershellloadprofile).Split(" = ")[1] -like "*true*" -and -not $NoProfile)) {
 		$sNoProfile = ""
 	} else {
 		$sNoProfile = "-NoProfile "
