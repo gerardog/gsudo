@@ -58,11 +58,9 @@ jobs:
         report_name: TestResults PowerShell Core (v7.x)
         report_title: PowerShell v7 Tests
         github_token: ${{ secrets.GITHUB_TOKEN }}
-#    - uses: OrbitalOwen/desktop-screenshot-action@0.1
-#      if: always()
-#      with:
-#        file-name: 'desktop.jpg'      
-          
+    - name: Fail on error
+      if: failure()    # run this step only if any of the previous steps failed
+      run: exit 1
   build:
     name: Build
     runs-on: windows-latest
