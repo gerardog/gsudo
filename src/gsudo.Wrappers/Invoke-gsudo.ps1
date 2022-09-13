@@ -158,7 +158,7 @@ if($NoElevate) {
 
 	$dbg = if ($debug) {"--debug "} else {" "}
 	
-	if ($LoadProfile -or ((./gsudo --loglevel None config Powershellloadprofile | Split-String " = ")[1] -like "*true*" -and -not $NoProfile)) {
+	if ($LoadProfile -or ((gsudo.exe --loglevel None config Powershellloadprofile).Split(" = ")[1] -like "*true*" -and -not $NoProfile)) {
 		$sNoProfile = ""
 	} else {
 		$sNoProfile = "-NoProfile "
@@ -175,8 +175,9 @@ if($NoElevate) {
 ForEach ($item in $result)
 {
 	if (
-	$item.Exception.SerializedRemoteException.WasThrownFromThrowStatement -or
-	$item.Exception.WasThrownFromThrowStatement
+	$item.psobject.Properties['Exception'] -and
+	($item.Exception.SerializedRemoteException.WasThrownFromThrowStatement -or
+	 $item.Exception.WasThrownFromThrowStatement)
 	)
 	{
 		throw $item
