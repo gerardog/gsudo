@@ -15,15 +15,18 @@ Just prepend `gsudo` (or the `sudo` alias) to your command and it will run eleva
 
 `gsudo` is very easy to install and use. Its similarities with Unix/Linux sudo make the experience a breeze. It detects your current shell and elevates accordingly (as native shell commands). (Supports `Cmd`, `PowerShell`, `git-bash`, `MinGW`, `Cygwin`, `Yori`, `Take Command`)
 
+---
 ## Documentation
 
 **NEW!** Extended documentation available at: https://gerardog.github.io/gsudo/
 
+---
 ## Please support gsudo! 💵
 
 - Please consider [sponsoring gsudo](https://gerardog.github.io/gsudo/sponsor). It helps to cover the yearly renewal of the code-signing certificate.
 - No money? No problem! Please give us a star! ⭐
 
+---
 ## Features
 
 - Elevated commands are shown in the current user-level console. No new window. (Unless you specify `-n` which opens a new window.)
@@ -107,71 +110,77 @@ gsudo !!
 
 ## Usage from PowerShell / PowerShell Core
 
-`gsudo` detects if invoked from PowerShell and elevates PS commands (unless `-d` is used to elevate CMD commands). 
-- Prepend `gsudo` for commands without special operators `()|&<>` or single quotes `'`, just prepend `gsudo`. Otherwise you can **pass a string literal** with the command to be elevate:    
+`gsudo` detects if invoked from PowerShell and elevates PS commands (unless `-d` is used to elevate CMD commands).
 
-  `PS C:\> gsudo 'powershell string command'`
+- NEW! (starting `v1.6.0`): Use `gsudo { ScriptBlock }` syntax to elevate PowerShell commands.
+  
+  The ScriptBlock will ran elevated in a different process and lexical scope, so it can't access your existing `$variables`.
 
-  Note that the `gsudo` command returns a string that can be captured, not powershell objects. It will ran elevated, in a different process and lexical scope, so it can't access your existing `$variables`, so use literal values instead of `$vars`
+  To parametrize the script, you can pass values with `-args` parameter and access them via `$args` array (or try `Invoke-gsudo` function).
 
-- Use **`Invoke-gsudo` CmdLet** to elevate a ScriptBlock (allowing better PowerShell syntax validation and auto-complete), with auto serialization of inputs and outputs and pipeline objects.
 
-   The ScriptBlock will ran elevated in a different process and lexical scope, so it can't access your existing `$variables`, but if you use `$using:variableName` syntax, it´s serialized value will be applied. The result object is serialized and returned (as an object).
+  ``` powershell
+  gsudo { Write-Output "Hello World" }
+  gsudo { Write-Output $args[0] $args[1] } -args "Hello", "World"
+  
+  # Output can be captured as serialized PSObjects with properties.
+  $services = gsudo { Get-Service 'WSearch', 'Winmgmt'} 
+  Write-Output $services.DisplayName
+
+  # Variable substitution example:
+  $file='C:\My Secret.txt'; $algorithm='md5';
+  $hash = gsudo {(Get-FileHash args[0] -Algorithm args[1]).Hash} -args $file, $algorithm
+  ```
+
+- Use **`Invoke-gsudo` wrapper function** to elevate a ScriptBlock.
+
+   To parametrize the script, you can use `$using:variableName` syntax and it´s serialized value will be applied. The result object is serialized and returned (as an object).
+
+  ``` PowerShell
+  # Accepts pipeline input.
+  Get-process SpoolSv | Invoke-gsudo { Stop-Process -Force }
+
+  # Variable substitution usage:
+  $folder = "C:\ProtectedFolder"
+  Invoke-gsudo { Remove-Item $using:folder }
+
+  # The result is serialized (PSObject) with properties.
+  (Invoke-gsudo { Get-ChildItem $using:folder }).LastWriteTime
+  ```
+
+- Legacy Syntax (not recommended, quote-escaping hell).
+  
+  Prepend `gsudo` for commands without special operators `()|&<>` or single quotes `'`. Otherwise you can **pass a string literal** with the command to be elevate:
+
+  ``` powershell
+  # Elevate Commands without ()|&<>' by prepending gsudo
+  gsudo Remove-Item ProtectedFile.txt
+  
+  # Or pass a string literal:
+  gsudo 'Remove-Item ProtectedFile.txt'
+  $hash = gsudo '(Get-FileHash "C:\My Secret.txt").Hash'
+
+  # Legacy: Variable substitutions example:
+  $file='C:\My Secret.txt'; $algorithm='md5';
+  $hash = gsudo "(Get-FileHash '$file' -Algorithm $algorithm).Hash"
+  # or 
+  $hash = gsudo "(Get-FileHash ""$file"" -Algorithm $algorithm).Hash"
+  ```
 
 - <a name="gsudomodule"></a> For a enhanced experience: Import module `gsudoModule.psd1` into your Profile: (also enables `gsudo !!` on PS)
 
-``` Powershell
-# Add the following line to your $PROFILE (replace with full path)
-   Import-Module 'C:\FullPathTo\gsudoModule.psd1'
-# Or run:
-   Get-Command gsudoModule.psd1 | % { Write-Output "`nImport-Module `"$($_.Source)`"" | Add-Content $PROFILE }
-```
+  ``` Powershell
+  # Add the following line to your $PROFILE (replace with full path)
+  Import-Module 'C:\FullPathTo\gsudoModule.psd1'
+
+  # Or run:
+  Get-Command gsudoModule.psd1 | % { Write-Output "`nImport-Module `"$($_.Source)`"" | Add-Content $PROFILE }
+  ```
 
 - You can create a custom alias for gsudo or Invoke-gsudo, as you prefer: (add one of these lines to your $PROFILE)
-    - `Set-Alias 'sudo' 'gsudo'` or 
-    - `Set-Alias 'sudo' 'Invoke-gsudo'`
 
-**Examples:**
-
-``` PowerShell
-# Elevate PowerShell itself
-PS C:\> gsudo
-
-# Elevate Commands without ()|&<>' by prepending gsudo
-gsudo Remove-Item ProtectedFile.txt
-# Or pass a string literal:
-gsudo 'Remove-Item ProtectedFile.txt'
-$hash = gsudo '(Get-FileHash "C:\My Secret.txt").Hash'
-
-# Variable substitutions example:
-$file='C:\My Secret.txt'; $algorithm='md5';
-$hash = gsudo "(Get-FileHash '$file' -Algorithm $algorithm).Hash"
-# or 
-$hash = gsudo "(Get-FileHash ""$file"" -Algorithm $algorithm).Hash"
-
-# Skip PowerShell wrapper (with -d): run an .EXE or a CMD command directly (optional, faster)
-gsudo -d notepad 
-
-# Test gsudo success (optional):
-if ($LastExitCode -eq 999 ) {
-    'gsudo failed to elevate!'
-} elseif ($LastExitCode) {
-    'Command failed!'
-} else { 'Success!' }
-```
-
-**Invoke-gsudo examples:**
-``` PowerShell
-# Accepts pipeline input.
-Get-process SpoolSv | Invoke-gsudo { Stop-Process -Force }
-
-# Variable usage
-$folder = "C:\ProtectedFolder"
-Invoke-gsudo { Remove-Item $using:folder }
-
-# The result is serialized (PSObject) with properties.
-(Invoke-gsudo { Get-ChildItem $using:folder }).LastWriteTime
-```
+  - `Set-Alias 'sudo' 'gsudo'` or 
+  - `Set-Alias 'sudo' 'Invoke-gsudo'`
 
 ## Usage from WSL (Windows Subsystem for Linux)
 

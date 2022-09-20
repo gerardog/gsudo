@@ -17,7 +17,7 @@ When the current shell is `PowerShell`, gsudo can be used in the following ways:
 - To elevate a command, use:
   - [`gsudo { ScriptBlock }`](#using-gsudo-scriptblock-syntax) => New, suggested syntax.
   - [`gsudo 'string command'`](#using-gsudo-command-syntax) => Old, legacy syntax.
-  - [`Invoke-gsudo` CmdLet](#using-invoke-gsudo-cmdlet) is a wrapper with better serialization.
+  - [`Invoke-gsudo` function](#using-invoke-gsudo-function) is a wrapper with better serialization.
   
 - You can [add `gsudo` PowerShell Module](#powershell-profile-config) to your `$PROFILE`
   - This enables to use `gsudo !!` to elevate last command.
@@ -33,7 +33,7 @@ When the current shell is `PowerShell`, gsudo can be used in the following ways:
 
 - New! *recommended* way (added in gsudo v1.6.0)
 - Express the command to elevate as a PowerShell ScriptBlock, between `{braces}`. PowerShell will parse it and auto-complete commands.
-- The ScriptBlock can use literals, but can't access parent or global scope variables (remember it runs in another process). To parametrize the script, you can pass values with `-args` parameter and access them via `$args` array. If you find this painfull, try [`Invoke-gsudo`](#using-invoke-gsudo-cmdlet).
+- The ScriptBlock can use literals, but can't access parent or global scope variables (remember it runs in another process). To parametrize the script, you can pass values with `-args` parameter and access them via `$args` array. If you find this painfull, try [`Invoke-gsudo`](#using-invoke-gsudo-function).
   
   ``` powershell
   gsudo { Get-Process "chrome" }
@@ -49,7 +49,7 @@ When the current shell is `PowerShell`, gsudo can be used in the following ways:
 
 - Pipeline input:
   - Must be explicitly mapped with `$input`
-  - If marshaling doesn't work as intended, try [`Invoke-gsudo`](#using-invoke-gsudo-cmdlet)
+  - If marshaling doesn't work as intended, try [`Invoke-gsudo`](#using-invoke-gsudo-function)
 
   ``` powershell
   get-process winword | gsudo { $input | Stop-Process }
