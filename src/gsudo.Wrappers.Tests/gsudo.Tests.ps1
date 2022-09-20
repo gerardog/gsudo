@@ -1,4 +1,4 @@
-Describe "PS Gsudo (v$($PSVersionTable.PSVersion.ToString()))" {
+Describe "PS Gsudo (PSv$($PSVersionTable.PSVersion.Major))" {	
 	BeforeAll {
 		$env:Path = (Get-Item (Join-Path $PSScriptRoot "..\gsudo.Wrappers")).FullName + ";" + $env:Path
 		$Path = (Get-Item (Join-Path $PSScriptRoot "..\gsudo.Wrappers\gsudoModule.psm1")).FullName
@@ -26,4 +26,17 @@ Describe "PS Gsudo (v$($PSVersionTable.PSVersion.ToString()))" {
 	
 		gsudo !! | Should -Be 'Hello World'
 	}
+	
+	It "Elevates a ScriptBlock." {
+		$result = gsudo { (1+1) }
+		$result | Should -Be "2"
+		$result -is [System.Int32] | Should -Be $true
+	}
+
+	It "Elevates a ScriptBlock with arguments." {
+		$result = gsudo { "$($args[1]) $($args[0])" } -args "World", "Hello"
+		$result | Should -Be "Hello World"
+		$result -is [System.String] | Should -Be $true
+	}
+
 }

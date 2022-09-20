@@ -1,4 +1,4 @@
-Describe "PS Invoke-Gsudo (v$($PSVersionTable.PSVersion.ToString()))" {	
+Describe "PS Invoke-Gsudo (PSv$($PSVersionTable.PSVersion.Major))" {	
 	BeforeAll {
 		$env:Path = (Get-Item (Join-Path $PSScriptRoot "..\gsudo.Wrappers")).FullName + ";" + $env:Path
 	}
