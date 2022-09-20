@@ -101,3 +101,11 @@ jobs:
       with:
         name: Binaries
         path: ./artifacts       
+
+  docs:
+    needs: release
+    uses: ./.github/workflows/docs.yml
+    permissions:
+      id-token: write
+      contents: read
+      pages: write
