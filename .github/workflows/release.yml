@@ -109,5 +109,3 @@ jobs:
       id-token: write
       contents: read
       pages: write
-    environment:
-      name: github-pages
