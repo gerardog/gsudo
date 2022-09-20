@@ -27,7 +27,7 @@ $script  = {
 	$configuration.Run.Path = "src"
 	$configuration.TestResult.Enabled = $true
 	$configuration.TestResult.OutputPath = "TestResults_PS$($PSVersionTable.PSVersion.Major).xml"
-	$configuration.TestResult.OutputFormat = "NUnitXml"
+	$configuration.TestResult.OutputFormat = "JUnitXml"
 #	$configuration.Should.ErrorAction = 'Continue'
 #	$configuration.CodeCoverage.Enabled = $true  
 	
