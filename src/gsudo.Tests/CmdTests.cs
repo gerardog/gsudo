@@ -12,6 +12,9 @@ namespace gsudo.Tests
     [TestClass]
     public class CmdTests : TestBase
     {
+        [ClassInitialize]
+        public static void ClassInitialize(TestContext context) => TestBase.ClassInitialize(context);
+
         [TestMethod]
         public void Cmd_DebugTestHelper()
         {
@@ -170,8 +173,8 @@ namespace gsudo.Tests
     {
         public TestContext TestContext { get; set; }
 
-        [AssemblyInitialize]
-        public static void AssemblyInitialize(TestContext context)
+        [ClassInitialize]
+        public static void ClassInitialize(TestContext context)
         {
             // Start elevated service.
             var callingSid = WindowsIdentity.GetCurrent().User.Value;

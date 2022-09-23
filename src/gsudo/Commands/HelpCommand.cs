@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace gsudo.Commands
 {
-    class HelpCommand : ICommand
+    public class HelpCommand : ICommand
     {
         public virtual Task<int> Execute()
         {
