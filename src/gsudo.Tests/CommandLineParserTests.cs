@@ -36,7 +36,6 @@ namespace gsudo.Tests
             validate(new CommandLineParser("-KDWN cmd /c echo 1 2 3 4").Parse());
         }
 
-
         [TestMethod]
         public void CmdLine_Flags_System()
         {

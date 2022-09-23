@@ -10,10 +10,10 @@ using System.Threading;
 namespace gsudo.Tests
 {
     [TestClass]
-    public class CmdTests : TestBase
+    public class CmdTests
     {
         [ClassInitialize]
-        public static void ClassInitialize(TestContext context) => TestBase.ClassInitialize(context);
+        public static void ClassInitialize(TestContext context) => TestShared.StartCacheSession();
 
         [TestMethod]
         public void Cmd_DebugTestHelper()
@@ -168,13 +168,9 @@ namespace gsudo.Tests
         }
     }
 
-    [TestClass]
-    public class TestBase
+    public static class TestShared
     {
-        public TestContext TestContext { get; set; }
-
-        [ClassInitialize]
-        public static void ClassInitialize(TestContext context)
+        public static void StartCacheSession()
         {
             // Start elevated service.
             var callingSid = WindowsIdentity.GetCurrent().User.Value;

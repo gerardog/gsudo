@@ -7,7 +7,7 @@ namespace gsudo.Tests
 	public class PowerShellCoreTests : PowerShellTests
     {
         [ClassInitialize]
-        public static new void ClassInitialize(TestContext context) => TestBase.ClassInitialize(context);
+        public static new void ClassInitialize(TestContext context) => TestShared.StartCacheSession();
 
         public PowerShellCoreTests()
         {
@@ -16,10 +16,10 @@ namespace gsudo.Tests
     }
 
     [TestClass]
-    public class PowerShellTests : TestBase
+    public class PowerShellTests
     {
         [ClassInitialize]
-        public static new void ClassInitialize(TestContext context) => TestBase.ClassInitialize(context);
+        public static void ClassInitialize(TestContext context) => TestShared.StartCacheSession();
 
         internal string PS_FILENAME = "PowerShell.exe";
         internal string PS_ARGS = "-NoExit -NoLogo -NoProfile -Command Set-ExecutionPolicy UnRestricted -Scope CurrentUser; function Prompt { return '# '}";
