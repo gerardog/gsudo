@@ -21,7 +21,7 @@ namespace gsudo.Tests
             var p = new TestProcess("start cmd");
         }
 
-        [TestMethod]
+        //[TestMethod]
         public void Cmd_AdminUserTest()
         {
             Assert.IsTrue(ProcessHelper.IsAdministrator(), "This test suite is intended to be run as an administrator, otherwise it will not work.");
@@ -153,7 +153,7 @@ namespace gsudo.Tests
             var p = new TestProcess("gsudo --debug qaqswswdewfwerferfwe");
             p.WaitForExit();
             Assert.AreNotEqual(0, p.ExitCode, p.GetStdOut());
-            Assert.AreNotEqual(0, 999, p.GetStdOut());
+            Assert.AreNotEqual(999, p.ExitCode, p.GetStdOut());
         }
 
         [TestMethod]

@@ -30,7 +30,7 @@ namespace gsudo.Commands
             if (isElevationRequired & ProcessHelper.GetCurrentIntegrityLevel() < (int)IntegrityLevel.Medium)
                 throw new ApplicationException("Sorry, gsudo doesn't allow to elevate from low integrity level."); // This message is not a security feature, but a nicer error message. It would have failed anyway since the named pipe's ACL restricts it.
 
-            CommandToRun = ArgumentsHelper.AugmentCommand(CommandToRun.ToArray());
+            CommandToRun = CommandToRunGenerator.AugmentCommand(CommandToRun.ToArray());
             bool isWindowsApp = ProcessFactory.IsWindowsApp(CommandToRun.FirstOrDefault());
 
             var elevationMode = GetElevationMode(isWindowsApp);
