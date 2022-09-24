@@ -9,7 +9,6 @@ namespace gsudo.Helpers
     public class CommandLineParser
     {
         LinkedList<string> args;
-                        
 
         public CommandLineParser(string args)
         {
@@ -52,9 +51,14 @@ namespace gsudo.Helpers
 
                 if (arg.In("help", "/?", "-?", "/h")) // Are actually illegal, but let's be nice and help.
                     return new HelpCommand();
+                else if (arg == "--")
+                {
+                    // The -- argument terminates options.
+                    return null;
+                }
                 else if (arg.StartsWith("--", StringComparison.OrdinalIgnoreCase))
                 {
-                    var c = ParseOption(null, arg);
+                    var c = ParseOption(null, arg, out var skip);
                     if (c != null)
                         return c;
                 }
@@ -63,7 +67,9 @@ namespace gsudo.Helpers
                 {
                     foreach (string option in arg.Skip(1).Select(c => c.ToString(CultureInfo.InvariantCulture)))
                     {
-                        var c = ParseOption(option, arg);
+                        var c = ParseOption(option, arg, out var skip);
+                        if (skip)
+                            break;
                         if (c!=null)
                             return c;
                     }
@@ -77,38 +83,28 @@ namespace gsudo.Helpers
             return null;
         }
 
-        ICommand ParseOption(string singleChar, string arg)
+        ICommand ParseOption(string argChar, string arg, out bool skip)
         {
-            Func<string, string, bool> match = (string letter, string word) =>
-            {
-                if (
-                    singleChar?.Equals(letter, StringComparison.OrdinalIgnoreCase)
-                    ?? word?.Equals(arg, StringComparison.OrdinalIgnoreCase)
-                    ?? false
-                    )
-                {
-                    return true;
-                }
-                return false;
-            };
+            skip = false;
 
-            if (arg.In("--loglevel"))
+            Func<string, string, bool> match = (string shortName, string longName) 
+                => IsOptionMatch(argChar, arg, shortName, longName);
+
+            if (IsOptionMatchWithArgument(argChar, arg, null, "--loglevel", (optionArg) =>
             {
-                arg = DeQueueArg();
-                if (!Enum.TryParse<LogLevel>(arg, true, out var val))
-                    throw new ApplicationException($"\"{arg}\" is not a valid LogLevel. Valid values are: All, Debug, Info, Warning, Error, None");
+                if (!Enum.TryParse<LogLevel>(optionArg, true, out var val))
+                    throw new ApplicationException($"\"{optionArg}\" is not a valid LogLevel. Valid values are: All, Debug, Info, Warning, Error, None");
 
                 Settings.LogLevel.Value = val;
-            }
-            else if (match("i", "--integrity"))
+            })) skip = true;
+            else if (IsOptionMatchWithArgument(argChar, arg, "i", "--integrity", (optionArg) =>
             {
-                arg = DeQueueArg();
-                if (!Enum.TryParse<IntegrityLevel>(arg, true, out var val))
-                    throw new ApplicationException($"\"{arg}\" is not a valid IntegrityLevel. Valid values are: \n" +
+                if (!Enum.TryParse<IntegrityLevel>(optionArg, true, out var val))
+                    throw new ApplicationException($"\"{optionArg}\" is not a valid IntegrityLevel. Valid values are: \n" +
                         $"Untrusted, Low, Medium, MediuPlus, High, System, Protected (unsupported), Secure (unsupported)");
 
                 InputArguments.IntegrityLevel = val;
-            }
+            })) skip = true;
             else if (match("n", "--new")) { InputArguments.NewWindow = true; }
             else if (match("w", "--wait")) { InputArguments.Wait = true; }
             else if (match("s", "--system")) { InputArguments.RunAsSystem = true; }
@@ -127,8 +123,8 @@ namespace gsudo.Helpers
             else if (match("h", "--help")) return new HelpCommand();
             else if (arg.StartsWith("-", StringComparison.Ordinal))
             {
-                if (singleChar != null)
-                    throw new ApplicationException($"Invalid option: -{singleChar}");
+                if (argChar != null)
+                    throw new ApplicationException($"Invalid option: -{argChar}");
 
                 throw new ApplicationException($"Invalid option: {arg}");
             }
@@ -139,6 +135,74 @@ namespace gsudo.Helpers
             }
 
             return null;
+        }
+
+        private bool IsOptionMatchWithArgument(string argChar, string arg, string shortName, string longName, Action<string> action)
+        {
+            if(argChar!=null && argChar == shortName)
+            {
+                var startIndex = arg.IndexOf(argChar)+1;
+                if (startIndex > 0)
+                {
+                    if (arg.Length <= startIndex)
+                    {
+                        action(DeQueueArg());
+                        return true;
+                    }
+
+                    if (arg[startIndex] == '=')
+                        startIndex++;
+
+                    var optionArg = arg.Substring(startIndex).Trim();
+                    action(optionArg);
+                    return true;
+                }
+            }
+
+            var s1 = $"-{shortName}";
+            if (shortName!=null && arg.StartsWith(s1, StringComparison.OrdinalIgnoreCase))
+            {
+                return IsOptionMatchWithArgument(arg, s1, action);
+            }
+            else if (longName !=null && arg.StartsWith(longName, StringComparison.OrdinalIgnoreCase))
+            {
+                return IsOptionMatchWithArgument(arg, longName, action);
+            }
+            return false;
+        }
+
+        private bool IsOptionMatchWithArgument(string arg, string optionName, Action<string> action)
+        {
+            if (arg.Length == optionName.Length)
+            {
+                action(DeQueueArg());
+                return true;
+            }
+            else
+            {
+                var startIndex = optionName.Length;
+                if (arg[startIndex] == '=')
+                    startIndex++;
+                else if (optionName.Length!=2)
+                    return false;
+
+                var optionArg = arg.Substring(startIndex).Trim();
+                action(optionArg);
+                return true;
+            }
+        }
+
+        private static bool IsOptionMatch(string argChar, string arg, string shortName, string longName)
+        {
+            if (
+                argChar?.Equals(shortName, StringComparison.OrdinalIgnoreCase)
+                ?? longName?.Equals(arg, StringComparison.OrdinalIgnoreCase)
+                ?? false
+                )
+            {
+                return true;
+            }
+            return false;
         }
 
         private ICommand ParseVerb()
@@ -205,12 +269,16 @@ namespace gsudo.Helpers
                         cmd.Action = CacheCommandAction.On;
                     else if (arg.In("OFF"))
                         cmd.Action = CacheCommandAction.Off;
-                    else if (arg.In("-h", "/h", "--help", "help")) 
+                    else if (arg.In("-h", "/h", "--help", "help"))
                         cmd.Action = CacheCommandAction.Help;
-                    else if (arg.In("-p", "--pid"))
-                        cmd.AllowedPid = int.Parse(DeQueueArg(), CultureInfo.InvariantCulture);
-                    else if (arg.In("-d", "--duration"))
-                        cmd.CacheDuration = Settings.TimeSpanParseWithInfinite(DeQueueArg());
+                    else if (IsOptionMatchWithArgument(null, arg, "p", "--pid", (string v) =>
+                        {
+                            cmd.AllowedPid = int.Parse(v, CultureInfo.InvariantCulture);
+                        })) ;
+                    else if (IsOptionMatchWithArgument(null, arg, "d", "--duration", (string v) =>
+                    {
+                        cmd.CacheDuration = Settings.TimeSpanParseWithInfinite(v);
+                    })) ;
                     else if (arg.In("-k"))
                         InputArguments.KillCache = true;
                     else
