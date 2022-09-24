@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -47,7 +44,7 @@ namespace gsudo
             await stream.WriteAsync(bytes, 0, bytes.Length).ConfigureAwait(false);
             await stream.FlushAsync().ConfigureAwait(false);
         }
-        
+
         public static bool NotIn(this string toSearch, params string[] list)
         {
             return !In(toSearch, list);
@@ -73,11 +70,15 @@ namespace gsudo
             list.AddRange(items);
         }
 
-        public static T ParseEnum<T>(string inString, bool ignoreCase = true) where T : struct
+        public static TEnum ParseEnum<TEnum>(string inString) where TEnum : struct
+         => ParseEnum<TEnum>(inString, ignoreCase: true);
+
+        public static TEnum ParseEnum<TEnum>(string inString, bool ignoreCase = true) where TEnum : struct
         {
-            if (!Enum.TryParse<T>(inString, ignoreCase, out var returnEnum))
-                throw new ApplicationException($"\"{inString}\" is not a valid {typeof(T).Name}");
-            return returnEnum;
+            if (Enum.TryParse<TEnum>(inString, true, out var result))
+                return result;
+
+            throw new ApplicationException($"\"{inString}\" is not a valid {typeof(TEnum).Name}. Valid values are: {String.Join(", ", Enum.GetNames(typeof(TEnum)))}");
         }
     }
 }

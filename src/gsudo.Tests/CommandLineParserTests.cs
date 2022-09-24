@@ -87,7 +87,7 @@ namespace gsudo.Tests
                 CollectionAssert.AreEqual(new string[] { "notepad", "\"1 2 3 4\"" }, runCmd.CommandToRun.ToArray());
 
                 Assert.IsTrue(InputArguments.NewWindow);
-                Assert.IsFalse(InputArguments.Wait);
+                Assert.IsTrue(InputArguments.Wait);
                 Assert.IsFalse(InputArguments.Direct);
                 Assert.IsFalse(InputArguments.KillCache);
                 Assert.IsFalse(InputArguments.TrustedInstaller);
@@ -96,30 +96,32 @@ namespace gsudo.Tests
                 Assert.AreEqual(InputArguments.GetIntegrityLevel(), IntegrityLevel.MediumPlus);
             };
 
-            validate(new CommandLineParser("-i MediumPlus --new notepad \"1 2 3 4\"").Parse());
-            validate(new CommandLineParser("-i MediumPlus -n notepad \"1 2 3 4\"").Parse());
+            validate(new CommandLineParser("-i MediumPlus --new --wait notepad \"1 2 3 4\"").Parse());
+            validate(new CommandLineParser("-i MediumPlus -n --wait notepad \"1 2 3 4\"").Parse());
+            validate(new CommandLineParser("-i MediumPlus --new -w notepad \"1 2 3 4\"").Parse());
+            validate(new CommandLineParser("-i MediumPlus -n -w notepad \"1 2 3 4\"").Parse());
+            validate(new CommandLineParser("-i MediumPlus -nw notepad \"1 2 3 4\"").Parse());
 
-            validate(new CommandLineParser("-ni=MediumPlus notepad \"1 2 3 4\"").Parse());
-            validate(new CommandLineParser("-ni MediumPlus notepad \"1 2 3 4\"").Parse());
-            validate(new CommandLineParser("-niMediumPlus notepad \"1 2 3 4\"").Parse()); // *
+            validate(new CommandLineParser("-nw -i=MediumPlus notepad \"1 2 3 4\"").Parse());
+            validate(new CommandLineParser("-nw -i MediumPlus notepad \"1 2 3 4\"").Parse());
+            validate(new CommandLineParser("-nw -iMediumPlus notepad \"1 2 3 4\"").Parse());
+            validate(new CommandLineParser("-n -w -i=MediumPlus notepad \"1 2 3 4\"").Parse());
+            validate(new CommandLineParser("-n -w -i MediumPlus notepad \"1 2 3 4\"").Parse());                    
+            validate(new CommandLineParser("-n -w -iMediumPlus notepad \"1 2 3 4\"").Parse());
 
-            validate(new CommandLineParser("-n -i=MediumPlus notepad \"1 2 3 4\"").Parse());
-            validate(new CommandLineParser("-n -i MediumPlus notepad \"1 2 3 4\"").Parse());                    
-            validate(new CommandLineParser("-n -iMediumPlus notepad \"1 2 3 4\"").Parse()); // *
+            validate(new CommandLineParser("-nw -I=MediumPlus notepad \"1 2 3 4\"").Parse());
+            validate(new CommandLineParser("-nw -I MediumPlus notepad \"1 2 3 4\"").Parse());
+            validate(new CommandLineParser("-nw -IMediumPlus notepad \"1 2 3 4\"").Parse()); 
 
-            validate(new CommandLineParser("-n -I=MediumPlus notepad \"1 2 3 4\"").Parse());
-            validate(new CommandLineParser("-n -I MediumPlus notepad \"1 2 3 4\"").Parse());
-            validate(new CommandLineParser("-n -IMediumPlus notepad \"1 2 3 4\"").Parse()); // *
+            validate(new CommandLineParser("--integrity MediumPlus --new -w notepad \"1 2 3 4\"").Parse());
+            validate(new CommandLineParser("--integrity=MediumPlus --new -w notepad \"1 2 3 4\"").Parse());
+            validate(new CommandLineParser("--integrity MediumPlus -nw notepad \"1 2 3 4\"").Parse());
+            validate(new CommandLineParser("--integrity=MediumPlus -nw notepad \"1 2 3 4\"").Parse());
 
-            validate(new CommandLineParser("--integrity MediumPlus --new notepad \"1 2 3 4\"").Parse());
-            validate(new CommandLineParser("--integrity MediumPlus -n notepad \"1 2 3 4\"").Parse());
-            validate(new CommandLineParser("--integrity=MediumPlus --new notepad \"1 2 3 4\"").Parse());
-            validate(new CommandLineParser("--integrity=MediumPlus -n notepad \"1 2 3 4\"").Parse());
-
-            validate(new CommandLineParser("--new --integrity MediumPlus notepad \"1 2 3 4\"").Parse());
-            validate(new CommandLineParser("-n    --integrity MediumPlus notepad \"1 2 3 4\"").Parse());
-            validate(new CommandLineParser("--new --integrity=MediumPlus notepad \"1 2 3 4\"").Parse());
-            validate(new CommandLineParser("-n    --integrity=MediumPlus notepad \"1 2 3 4\"").Parse());
+            validate(new CommandLineParser("--new --wait --integrity MediumPlus notepad \"1 2 3 4\"").Parse());
+            validate(new CommandLineParser("--new --wait --integrity=MediumPlus notepad \"1 2 3 4\"").Parse());
+            validate(new CommandLineParser("-nw      --integrity MediumPlus notepad \"1 2 3 4\"").Parse());
+            validate(new CommandLineParser("-nw      --integrity=MediumPlus notepad \"1 2 3 4\"").Parse());
         }
 
         [TestMethod]

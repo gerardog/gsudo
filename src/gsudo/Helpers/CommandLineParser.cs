@@ -6,6 +6,9 @@ using System.Linq;
 
 namespace gsudo.Helpers
 {
+    // Why not use a parsing library? 
+    // When gsudo was built on .Net Framework 4.x, loading the parsing library took significant time at startup.
+    // This may no longer be the case on modern .net, but that would require coding and comparing performance.
     public class CommandLineParser
     {
         LinkedList<string> args;
@@ -23,14 +26,11 @@ namespace gsudo.Helpers
         public ICommand Parse()
         {
             InputArguments.Clear();
-            // syntax gsudo [gsudo options] [verb] [command to run]:
+            
+            // syntax: gsudo [options] [verb] [command to run]:
 
-            // Parse [gsudo options]:
-            return ParseOptions()
-                // Parse [gsudo verb]:
-                ?? ParseVerb()
-                // Default = Run {command}:
-                ?? new RunCommand() { CommandToRun = args };
+            return ParseOptions()  // Parse [options]
+                   ?? ParseVerb(); // Parse [verb]:
         }
 
         private string DeQueueArg()
@@ -49,11 +49,11 @@ namespace gsudo.Helpers
             {
                 arg = DeQueueArg();
 
-                if (arg.In("help", "/?", "-?", "/h")) // Are actually illegal, but let's be nice and help.
+                if (arg.In("-h", "/h", "/?", "-?", "--help", "help")) // Some are actually not-posix, but let's be nice and help.
                     return new HelpCommand();
                 else if (arg == "--")
                 {
-                    // The -- argument terminates options.
+                    // The -- argument terminates options parsing.
                     return null;
                 }
                 else if (arg.StartsWith("--", StringComparison.OrdinalIgnoreCase))
@@ -63,14 +63,15 @@ namespace gsudo.Helpers
                         return c;
                 }
                 else if (arg.StartsWith("-", StringComparison.OrdinalIgnoreCase)
-                            && arg.NotIn("-encodedCommand")) // -encodedCommand is the start of the command in pwsh> gsudo { script block }
+                            && arg.NotIn("-encodedCommand")) // -encodedCommand is not posix compliant, but is what powershell sends on: gsudo { script block }
+                                                             // So treat -encodedCommand as part of the CommandToRun, for gerardog/gsudo#160
                 {
                     foreach (string option in arg.Skip(1).Select(c => c.ToString(CultureInfo.InvariantCulture)))
                     {
-                        var c = ParseOption(option, arg, out var skip);
-                        if (skip)
+                        var c = ParseOption(option, arg, out var skipRemainingChars);
+                        if (skipRemainingChars)
                             break;
-                        if (c!=null)
+                        if (c != null)
                             return c;
                     }
                 }
@@ -83,28 +84,23 @@ namespace gsudo.Helpers
             return null;
         }
 
-        ICommand ParseOption(string argChar, string arg, out bool skip)
+        ICommand ParseOption(string argChar, string argWord, out bool skipRemainingChars)
         {
-            skip = false;
+            skipRemainingChars = false;
 
-            Func<string, string, bool> match = (string shortName, string longName) 
-                => IsOptionMatch(argChar, arg, shortName, longName);
+            Func<string, string, bool> match = (string shortName, string longName)
+                => CommandLineParser.IsOptionMatch(argChar, argWord, shortName, longName);
 
-            if (IsOptionMatchWithArgument(argChar, arg, null, "--loglevel", (optionArg) =>
+            if (IsOptionMatchWithArgument(argWord, null, "--loglevel", out var optionArg))
             {
-                if (!Enum.TryParse<LogLevel>(optionArg, true, out var val))
-                    throw new ApplicationException($"\"{optionArg}\" is not a valid LogLevel. Valid values are: All, Debug, Info, Warning, Error, None");
-
-                Settings.LogLevel.Value = val;
-            })) skip = true;
-            else if (IsOptionMatchWithArgument(argChar, arg, "i", "--integrity", (optionArg) =>
+                Settings.LogLevel.Value = ExtensionMethods.ParseEnum<LogLevel>(optionArg);
+                skipRemainingChars = true;
+            }
+            else if (IsOptionMatchWithArgument(argWord, "i", "--integrity", out optionArg))
             {
-                if (!Enum.TryParse<IntegrityLevel>(optionArg, true, out var val))
-                    throw new ApplicationException($"\"{optionArg}\" is not a valid IntegrityLevel. Valid values are: \n" +
-                        $"Untrusted, Low, Medium, MediuPlus, High, System, Protected (unsupported), Secure (unsupported)");
-
-                InputArguments.IntegrityLevel = val;
-            })) skip = true;
+                InputArguments.IntegrityLevel = ExtensionMethods.ParseEnum<IntegrityLevel>(optionArg);
+                skipRemainingChars = true;
+            }
             else if (match("n", "--new")) { InputArguments.NewWindow = true; }
             else if (match("w", "--wait")) { InputArguments.Wait = true; }
             else if (match("s", "--system")) { InputArguments.RunAsSystem = true; }
@@ -121,92 +117,25 @@ namespace gsudo.Helpers
             else if (match(null, "--debug")) { Settings.LogLevel.Value = LogLevel.All; InputArguments.Debug = true; }
             else if (match("v", "--version")) { return new ShowVersionHelpCommand(); }
             else if (match("h", "--help")) return new HelpCommand();
-            else if (arg.StartsWith("-", StringComparison.Ordinal))
+            else if (argWord.StartsWith("-", StringComparison.Ordinal))
             {
                 if (argChar != null)
-                    throw new ApplicationException($"Invalid option: -{argChar}");
+                    throw new ApplicationException($"Invalid option: {argChar} in {argWord}");
 
-                throw new ApplicationException($"Invalid option: {arg}");
+                throw new ApplicationException($"Invalid option: {argWord}");
             }
             else
             {
                 // arg is not an option, requeue and parse as a command.
-                args.AddFirst(arg);
+                args.AddFirst(argWord);
             }
 
             return null;
         }
 
-        private bool IsOptionMatchWithArgument(string argChar, string arg, string shortName, string longName, Action<string> action)
-        {
-            if(argChar!=null && argChar == shortName)
-            {
-                var startIndex = arg.IndexOf(argChar)+1;
-                if (startIndex > 0)
-                {
-                    if (arg.Length <= startIndex)
-                    {
-                        action(DeQueueArg());
-                        return true;
-                    }
-
-                    if (arg[startIndex] == '=')
-                        startIndex++;
-
-                    var optionArg = arg.Substring(startIndex).Trim();
-                    action(optionArg);
-                    return true;
-                }
-            }
-
-            var s1 = $"-{shortName}";
-            if (shortName!=null && arg.StartsWith(s1, StringComparison.OrdinalIgnoreCase))
-            {
-                return IsOptionMatchWithArgument(arg, s1, action);
-            }
-            else if (longName !=null && arg.StartsWith(longName, StringComparison.OrdinalIgnoreCase))
-            {
-                return IsOptionMatchWithArgument(arg, longName, action);
-            }
-            return false;
-        }
-
-        private bool IsOptionMatchWithArgument(string arg, string optionName, Action<string> action)
-        {
-            if (arg.Length == optionName.Length)
-            {
-                action(DeQueueArg());
-                return true;
-            }
-            else
-            {
-                var startIndex = optionName.Length;
-                if (arg[startIndex] == '=')
-                    startIndex++;
-                else if (optionName.Length!=2)
-                    return false;
-
-                var optionArg = arg.Substring(startIndex).Trim();
-                action(optionArg);
-                return true;
-            }
-        }
-
-        private static bool IsOptionMatch(string argChar, string arg, string shortName, string longName)
-        {
-            if (
-                argChar?.Equals(shortName, StringComparison.OrdinalIgnoreCase)
-                ?? longName?.Equals(arg, StringComparison.OrdinalIgnoreCase)
-                ?? false
-                )
-            {
-                return true;
-            }
-            return false;
-        }
-
         private ICommand ParseVerb()
         {
+            // Parse `gsudo -k` as if `-k` was KillCache verb.
             if (args.Count == 0)
             {
                 if (InputArguments.KillCache
@@ -229,12 +158,12 @@ namespace gsudo.Helpers
             }
 
             string arg;
-            arg = DeQueueArg ();
-            if (arg.Equals("help", StringComparison.OrdinalIgnoreCase))
+            arg = DeQueueArg();
+
+            if (arg.In("help"))
                 return new HelpCommand();
 
             if (arg.In("gsudoservice", "gsudoelevate"))
-            {
                 return new ServiceCommand()
                 {
                     AllowedPid = int.Parse(DeQueueArg(), CultureInfo.InvariantCulture),
@@ -243,13 +172,14 @@ namespace gsudo.Helpers
                     CacheDuration = Settings.TimeSpanParseWithInfinite(DeQueueArg()),
                     SingleUse = arg.In("gsudoelevate"),
                 };
-            }
 
+            // Internal use from Piped and VT mode:
+            // gsudo gsudoctrlc {pid} {sendSigBreak: true/false}
             if (arg.In("gsudoctrlc"))
                 return new CtrlCCommand()
                 {
                     Pid = int.Parse(DeQueueArg(), CultureInfo.InvariantCulture),
-                    sendSigBreak = bool.Parse(DeQueueArg())
+                    SendSigBreak = bool.Parse(DeQueueArg())
                 };
 
             if (arg.In("config"))
@@ -265,20 +195,20 @@ namespace gsudo.Helpers
                 {
                     arg = DeQueueArg();
 
-                    if (arg.In("ON"))
+                    if (arg.In("on"))
                         cmd.Action = CacheCommandAction.On;
-                    else if (arg.In("OFF"))
+                    else if (arg.In("off"))
                         cmd.Action = CacheCommandAction.Off;
-                    else if (arg.In("-h", "/h", "--help", "help"))
+                    else if (arg.In("-h", "/h", "/?", "-?", "--help", "help"))
                         cmd.Action = CacheCommandAction.Help;
-                    else if (IsOptionMatchWithArgument(null, arg, "p", "--pid", (string v) =>
-                        {
-                            cmd.AllowedPid = int.Parse(v, CultureInfo.InvariantCulture);
-                        })) ;
-                    else if (IsOptionMatchWithArgument(null, arg, "d", "--duration", (string v) =>
+                    else if (IsOptionMatchWithArgument(arg, "p", "--pid", out string v))
+                    {
+                        cmd.AllowedPid = int.Parse(v, CultureInfo.InvariantCulture);
+                    }
+                    else if (IsOptionMatchWithArgument(arg, "d", "--duration", out v))
                     {
                         cmd.CacheDuration = Settings.TimeSpanParseWithInfinite(v);
-                    })) ;
+                    }
                     else if (arg.In("-k"))
                         InputArguments.KillCache = true;
                     else
@@ -296,7 +226,63 @@ namespace gsudo.Helpers
             if (arg == "!!" || arg.StartsWith("!", StringComparison.InvariantCulture))
                 return new BangBangCommand() { Pattern = string.Join(" ", args) };
 
-            return null;
+            return new RunCommand() { CommandToRun = args };
         }
+
+        #region Posix option matching functions
+        private bool IsOptionMatchWithArgument(string argWord, string optionShortLetter, string optionLongName, out string argument)
+        {
+            var short1 = $"-{optionShortLetter}";
+            if (optionShortLetter != null && argWord.StartsWith(short1, StringComparison.OrdinalIgnoreCase))
+            {
+                return IsOptionMatchWithArgument(argWord, short1, out argument);
+            }
+            else if (optionLongName != null && argWord.StartsWith(optionLongName, StringComparison.OrdinalIgnoreCase))
+            {
+                return IsOptionMatchWithArgument(argWord, optionLongName, out argument);
+            }
+            argument = null;
+            return false;
+        }
+
+        private bool IsOptionMatchWithArgument(string argWord, string optionName, out string argument)
+        {
+            if (argWord.Length == optionName.Length)
+            {
+                argument = DeQueueArg();
+                return true;
+            }
+            else
+            {
+                var startIndex = optionName.Length;
+                if (argWord[startIndex] == '=')
+                    startIndex++;
+                else if (optionName.Length != 2)
+                {
+                    argument = null;
+                    return false;
+                }
+
+                var optionArg = argWord.Substring(startIndex).Trim();
+
+                argument = optionArg;
+                return true;
+            }
+        }
+
+        private static bool IsOptionMatch(string argChar, string argWord, string optionShortName, string optionLongName)
+        {
+            if (
+                argChar?.Equals(optionShortName, StringComparison.OrdinalIgnoreCase)
+                ?? optionLongName?.Equals(argWord, StringComparison.OrdinalIgnoreCase)
+                ?? false
+                )
+            {
+                return true;
+            }
+            return false;
+        }
+
+        #endregion
     }
 }
