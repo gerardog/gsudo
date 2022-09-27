@@ -1,7 +1,11 @@
-﻿using System;
+﻿using gsudo.Native;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -146,13 +150,13 @@ namespace gsudo.Helpers
                 }
             }
 
+            // We will use CMD.
             if (currentShell != Shell.Cmd)
             {
-                // Fall back to CMD.
+                // Let's find Cmd.Exe
                 currentShellExeName = Environment.GetEnvironmentVariable("COMSPEC");
             }
 
-            // Not Powershell, or Powershell Core, assume CMD.
             if (args.Length == 0)
             {
                 return new string[]
@@ -166,7 +170,13 @@ namespace gsudo.Helpers
                         .Concat(args).ToArray();
 
                 var exename = ProcessFactory.FindExecutableInPath(ArgumentsHelper.UnQuote(args[0]));
-                if (exename == null || !CreateProcessSupportedExtensions.Contains(Path.GetExtension(exename)))
+                if (exename != null && CreateProcessSupportedExtensions.Contains(Path.GetExtension(exename)))
+                {
+                    args[0] = $"\"{exename}\"";
+                    var newArgs = DoFixIfIsMicrosoftStoreApp(exename, args);
+                    return newArgs.ToArray();
+                }
+                else
                 {
                     // We don't know what command are we executing. It may be an invalid program...
                     // Or a non-executable file with a valid file association..
@@ -174,12 +184,6 @@ namespace gsudo.Helpers
                     return new string[]
                         { currentShellExeName, "/c" }
                         .Concat(args).ToArray();
-                }
-                else
-                {
-                    args[0] = $"\"{exename}\"";
-                    var newArgs = DoFixIfIsMicrosoftStoreApp(exename, args);
-                    return newArgs.ToArray();
                 }
             }
         }
@@ -207,5 +211,78 @@ namespace gsudo.Helpers
                 return args;
             // -- End of workaround.
         }
+
+
+        /// <summary>
+        /// Copy environment variables and network shares to the destination user context
+        /// </summary>
+        /// <remarks>CopyNetworkShares is *the best I could do*. Too much verbose, asks for passwords, etc. Far from ideal.</remarks>
+        /// <returns>a modified args list</returns>
+        internal static IEnumerable<string> AddCopyEnvironment(IEnumerable<string> args, ElevationRequest.ConsoleMode mode)
+        {
+            if (Settings.CopyEnvironmentVariables || Settings.CopyNetworkShares)
+            {
+                var silent = InputArguments.Debug ? string.Empty : "@";
+                var sb = new StringBuilder();
+                if (Settings.CopyEnvironmentVariables && mode != ElevationRequest.ConsoleMode.TokenSwitch) // TokenSwitch already uses the current env block.
+                {
+                    foreach (DictionaryEntry envVar in Environment.GetEnvironmentVariables())
+                    {
+                        if (envVar.Key.ToString().In("prompt", "username"))
+                            continue;
+
+                        sb.AppendLine($"{silent}SET {envVar.Key}={envVar.Value}");
+                    }
+                }
+                if (Settings.CopyNetworkShares)
+                {
+                    foreach (DriveInfo drive in DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Network && d.Name.Length == 3))
+                    {
+                        var tmpSb = new StringBuilder(2048);
+                        var size = tmpSb.Capacity;
+
+                        var error = FileApi.WNetGetConnection(drive.Name.Substring(0, 2), tmpSb, ref size);
+                        if (error == 0)
+                        {
+                            sb.AppendLine($"{silent}ECHO Connecting {drive.Name.Substring(0, 2)} to {tmpSb.ToString()} 1>&2");
+                            sb.AppendLine($"{silent}NET USE /D {drive.Name.Substring(0, 2)} >NUL 2>NUL");
+                            sb.AppendLine($"{silent}NET USE {drive.Name.Substring(0, 2)} {tmpSb.ToString()} 1>&2");
+                        }
+                    }
+                }
+
+                string tempFolder = Path.Combine(
+                    Environment.GetEnvironmentVariable("temp", EnvironmentVariableTarget.Machine), // use machine temp to ensure elevated user has access to temp folder
+                    nameof(gsudo));
+
+                var dirSec = new DirectorySecurity();
+                dirSec.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), FileSystemRights.FullControl, AccessControlType.Allow));
+#if NETFRAMEWORK
+                Directory.CreateDirectory(tempFolder, dirSec);
+#else
+                dirSec.CreateDirectory(tempFolder);
+#endif
+
+                string tempBatName = Path.Combine(
+                    tempFolder,
+                    $"{Guid.NewGuid()}.bat");
+
+                File.WriteAllText(tempBatName, sb.ToString());
+
+                System.Security.AccessControl.FileSecurity fSecurity = new System.Security.AccessControl.FileSecurity();
+                fSecurity.AddAccessRule(new System.Security.AccessControl.FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), System.Security.AccessControl.FileSystemRights.FullControl, System.Security.AccessControl.AccessControlType.Allow));
+
+                new FileInfo(tempBatName).SetAccessControl(fSecurity);
+
+
+                return new string[] {
+                    Environment.GetEnvironmentVariable("COMSPEC"),
+                    "/s /c" ,
+                    $"\"{tempBatName} & del /q {tempBatName} & {string.Join(" ",args)}\""
+                };
+            }
+            return args;
+        }
+
     }
 }

@@ -78,7 +78,7 @@ namespace gsudo.Tests
         }
 
         [TestMethod]
-        public void CmdLine_Integrity()
+        public void CmdLine_OptionWithArguments()
         {
             Action<ICommand> validate = (ICommand result) =>
             {
@@ -120,7 +120,7 @@ namespace gsudo.Tests
 
             validate(new CommandLineParser("--new --wait --integrity MediumPlus notepad \"1 2 3 4\"").Parse());
             validate(new CommandLineParser("--new --wait --integrity=MediumPlus notepad \"1 2 3 4\"").Parse());
-            validate(new CommandLineParser("-nw      --integrity MediumPlus notepad \"1 2 3 4\"").Parse());
+            validate(new CommandLineParser("-nw      --integrity   MediumPlus notepad \"1 2 3 4\"").Parse());
             validate(new CommandLineParser("-nw      --integrity=MediumPlus notepad \"1 2 3 4\"").Parse());
         }
 
@@ -133,6 +133,7 @@ namespace gsudo.Tests
                 Assert.IsNotNull(runCmd);
             };
 
+            validate(new CommandLineParser("/h").Parse());
             validate(new CommandLineParser("-h").Parse());
             validate(new CommandLineParser("-?").Parse());
             validate(new CommandLineParser("/?").Parse());
