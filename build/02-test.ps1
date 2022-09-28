@@ -11,6 +11,7 @@ $failure=$false
 pushd $PSScriptRoot\..
 
 dotnet build .\src\gsudo.sln || $(exit $LASTEXITCODE)
+
 $originalPath = $env:path
 
 $env:path=(Get-Item .\src\gsudo.Tests\bin\Debug\net7.0\).FullName+";" + [String]::Join(";", (($ENV:Path).Split(";") -notlike "*gsudo*" | % {$_ -replace "\\$" }))
@@ -18,7 +19,7 @@ $env:path=(Get-Item .\src\gsudo.Tests\bin\Debug\net7.0\).FullName+";" + [String]
 gsudo -k
 gsudo --debug cache on -p 0 -d 1
 $env:nokill=1
-gsudo -d --debug --integrity medium dotnet test .\src\gsudo.sln --logger "trx;LogFileName=$((gi .).FullName)\TestResults.trx" --logger:"console;verbosity=normal" -v quiet -p:WarningLevel=0
+gsudo -d --debug --integrity medium dotnet test .\src\gsudo.sln --no-build --logger "trx;LogFileName=$((gi .).FullName)\TestResults.trx" --logger:"console;verbosity=normal" -v quiet -p:WarningLevel=0
 
 if (! $?) { $failure = $true }
 if ($failure) { exit 1 } # fail fast
