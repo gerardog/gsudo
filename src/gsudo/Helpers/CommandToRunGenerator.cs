@@ -16,6 +16,18 @@ namespace gsudo.Helpers
         static readonly HashSet<string> CmdCommands = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "ASSOC", "BREAK", "CALL", "CD", "CHDIR", "CLS", "COLOR", "COPY", "DATE", "DEL", "DIR", "ECHO", "ENDLOCAL", "ERASE", "EXIT", "FOR", "FTYPE", "GOTO", "IF", "MD", "MKDIR", "MKLINK", "MOVE", "PATH", "PAUSE", "POPD", "PROMPT", "PUSHD", "RD", "REM", "REN", "RENAME", "RMDIR", "SET", "SETLOCAL", "SHIFT", "START", "TIME", "TITLE", "TYPE", "VER", "VERIFY", "VOL" };
         static readonly HashSet<string> CreateProcessSupportedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ".CMD", ".EXE", ".BAT", ".COM" };
 
+        /// <summary>
+        /// Interpret user entered command, as a `current-shell` command
+        /// and convert it into a Win32 process we can invoke with arguments.
+        /// 
+        /// For example:
+        ///   - In CMD
+        ///         C:\>gsudo md Folder => cmd /c md Folder
+        ///   - In Windows PowerShell
+        ///         PS C:\> gsudo New-Item -Path .\TestFolder -ItemType Directory     => powershell.exe -NoLogo -Command "New-Item -Path .\TestFolder -ItemType Directory"
+        ///   - In PowerShell Core
+        ///         PS C:\> gsudo New-Item -Path .\TestFolder -ItemType Directory     => pwsh.exe -NoLogo -Command "New-Item -Path .\TestFolder -ItemType Directory"
+        /// </summary>
         internal static string[] AugmentCommand(string[] args)
         {
             string currentShellExeName = ShellHelper.InvokingShellFullPath;
@@ -100,7 +112,7 @@ namespace gsudo.Helpers
                             // ----
 
                             string pscommand = string.Join(" ", args)
-                                            .Replace("\"", "\\\"")
+                                            .ReplaceOrdinal("\"", "\\\"")
                                             .Quote();
 
                             newArgs.Add(pscommand);
@@ -138,7 +150,7 @@ namespace gsudo.Helpers
                         return new[] { currentShellExeName };
                     else
                         return new[] { currentShellExeName, "-c",
-                            $"\"{ String.Join(" ", args).Replace("\"", "\\\"") }\"" };
+                            $"\"{ String.Join(" ", args).ReplaceOrdinal("\"", "\\\"") }\"" };
                 }
                 else if (currentShell == Shell.TakeCommand)
                 {

@@ -50,7 +50,7 @@ namespace gsudo.Commands
 
                 string unescapedValue =
                     (value.Count() == 1)
-                    ? ArgumentsHelper.UnQuote(value.FirstOrDefault()).Replace("\\%", "%")
+                    ? ArgumentsHelper.UnQuote(value.FirstOrDefault()).ReplaceOrdinal("\\%", "%")
                     : string.Join(" ", value.ToArray());
 
                 if (!reset) _ = setting.Parse(unescapedValue);
