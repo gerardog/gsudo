@@ -180,7 +180,7 @@ namespace gsudo.Tests
                 new ProcessStartInfo()
                 {
                     FileName = "cmd",
-                    Arguments = $" /c start \"gsudo Service\" \"{gsudoPath}\" --debug cache on --pid 0 --duration 0:1:0 ",
+                    Arguments = $" /c start \"gsudo Service\" \"{gsudoPath}\" \"{gsudoPath}\" --debug cache on --pid 0 --duration 0:1:0 ",
                     Verb = "RunAs"
                 }
             )?.WaitForExit();

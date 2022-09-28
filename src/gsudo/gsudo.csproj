@@ -59,7 +59,7 @@
 	<PackageReference Include="System.Security.Principal.Windows" Version="4.6.0" />
   </ItemGroup>
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="echo Killing running gsudo commands.&#xD;&#xA;gsudo -k 2&gt;nul&#xD;&#xA;%25windir%25\sysnative\tskill gsudo&#xD;&#xA;exit 0" />
+    <Exec Command="IF NOT DEFINED nokill echo Killing running gsudo commands.&#xD;&#xA;IF NOT DEFINED nokill gsudo -k 2&gt;nul&#xD;&#xA;IF NOT DEFINED nokill %25windir%25\sysnative\tskill gsudo&#xD;&#xA;exit 0" />
   </Target>
   <Target Name="PostBuildMacros">
     <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
