@@ -18,7 +18,7 @@ $env:path=(Get-Item .\src\gsudo.Tests\bin\Debug\net7.0\).FullName+";" + [String]
 gsudo -k
 gsudo --debug cache on -p 0 -d 1
 $env:nokill=1
-gsudo -d --debug --integrity medium -n -w cmd /s /c "dotnet test .\src\gsudo.sln --logger `"trx;LogFileName=$((gi .).FullName)\TestResults.trx`" --logger:`"console;verbosity=normal`" -v quiet -p:WarningLevel=0"
+gsudo --debug --integrity medium -n -w { dotnet test .\src\gsudo.sln --logger "trx;LogFileName=$((gi .).FullName)\TestResults.trx" --logger:"console;verbosity=normal" -v quiet -p:WarningLevel=0 }
 
 
 if (! $?) { $failure = $true }
