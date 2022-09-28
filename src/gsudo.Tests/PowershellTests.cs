@@ -105,5 +105,14 @@ exit");
                 ;
             Assert.AreEqual(0, p.ExitCode);
         }
+
+
+        [TestMethod]
+        public void PS_WriteProgress()
+        {
+            var p = new TestProcess($"{PS_FILENAME} {PS_ARGS}\r\n./gsudo Write-Progress -Activity \"Test\"; exit\r\n");
+            p.WaitForExit();
+            Assert.IsFalse(p.GetStdOut().Contains("internal error", StringComparison.OrdinalIgnoreCase));
+        }
     }
 }
