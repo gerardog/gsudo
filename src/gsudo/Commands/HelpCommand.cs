@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace gsudo.Commands
 {
-    class HelpCommand : ICommand
+    public class HelpCommand : ICommand
     {
         public virtual Task<int> Execute()
         {
@@ -59,7 +59,7 @@ Other options:
  --copyns               Connect network drives to the elevated user. Warning: Verbose, interactive asks for credentials
  --copyev               (deprecated) Copy environment variables to the elevated process. (not needed on default console mode)
 
-Learn more about security considerations of using gsudo at: https://gerardog.github.io/gsudo/docs/security".Replace("\\t", "\t"));
+Learn more about security considerations of using gsudo at: https://gerardog.github.io/gsudo/docs/security".ReplaceOrdinal("\\t", "\t"));
 
             return;
         }

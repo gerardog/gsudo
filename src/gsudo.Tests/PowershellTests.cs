@@ -1,16 +1,14 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace gsudo.Tests
 {
     [TestClass]
 	public class PowerShellCoreTests : PowerShellTests
     {
+        [ClassInitialize]
+        public static new void ClassInitialize(TestContext context) => TestShared.StartCacheSession();
+
         public PowerShellCoreTests()
         {
             PS_FILENAME = "pwsh.exe";
@@ -18,8 +16,11 @@ namespace gsudo.Tests
     }
 
     [TestClass]
-    public class PowerShellTests : TestBase
+    public class PowerShellTests
     {
+        [ClassInitialize]
+        public static void ClassInitialize(TestContext context) => TestShared.StartCacheSession();
+
         internal string PS_FILENAME = "PowerShell.exe";
         internal string PS_ARGS = "-NoExit -NoLogo -NoProfile -Command Set-ExecutionPolicy UnRestricted -Scope CurrentUser; function Prompt { return '# '}";
 

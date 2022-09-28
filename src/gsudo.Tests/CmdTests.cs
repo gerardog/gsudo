@@ -10,15 +10,18 @@ using System.Threading;
 namespace gsudo.Tests
 {
     [TestClass]
-    public class CmdTests : TestBase
+    public class CmdTests
     {
+        [ClassInitialize]
+        public static void ClassInitialize(TestContext context) => TestShared.StartCacheSession();
+
         [TestMethod]
         public void Cmd_DebugTestHelper()
         {
             var p = new TestProcess("start cmd");
         }
 
-        [TestMethod]
+        //[TestMethod]
         public void Cmd_AdminUserTest()
         {
             Assert.IsTrue(ProcessHelper.IsAdministrator(), "This test suite is intended to be run as an administrator, otherwise it will not work.");
@@ -150,7 +153,7 @@ namespace gsudo.Tests
             var p = new TestProcess("gsudo --debug qaqswswdewfwerferfwe");
             p.WaitForExit();
             Assert.AreNotEqual(0, p.ExitCode, p.GetStdOut());
-            Assert.AreNotEqual(0, 999, p.GetStdOut());
+            Assert.AreNotEqual(999, p.ExitCode, p.GetStdOut());
         }
 
         [TestMethod]
@@ -165,13 +168,9 @@ namespace gsudo.Tests
         }
     }
 
-    [TestClass]
-    public class TestBase
+    public static class TestShared
     {
-        public TestContext TestContext { get; set; }
-
-        [AssemblyInitialize]
-        public static void AssemblyInitialize(TestContext context)
+        public static void StartCacheSession()
         {
             // Start elevated service.
             var callingSid = WindowsIdentity.GetCurrent().User.Value;

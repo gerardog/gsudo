@@ -42,8 +42,8 @@ namespace gsudo.Helpers
         public static string ResolveSymbolicLink(string symLinkFullPath)
         {
             return GetFinalPathName(symLinkFullPath)
-                    .Replace("\\\\?\\UNC\\", "\\\\")
-                    .Replace("\\\\?\\", "")
+                    .ReplaceOrdinal("\\\\?\\UNC\\", "\\\\")
+                    .ReplaceOrdinal("\\\\?\\", "")
                 ;
         }
         private static string GetFinalPathName(string path)

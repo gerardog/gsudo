@@ -60,6 +60,8 @@ namespace gsudo.Helpers
                 invokingShellFullPath = parentProcess.GetExeName();
                 string parentExeName = Path.GetFileName(invokingShellFullPath).ToUpperInvariant();
 
+                // If user is running gsudo x86-version on x64 windows (not recommedned),
+                // Open process fails, and so we fail to get the process FullName (it just returns filename without extension).
                 if (parentExeName == "POWERSHELL.EXE" || parentExeName == "POWERSHELL")
                 {
                     return Shell.PowerShell;
@@ -92,6 +94,7 @@ namespace gsudo.Helpers
                     //   %windir%\SysWoW64\cmd.exe => 32-bit CMD
 
                     // So lets keep shellFullPath = ParentProcess.FullPath
+                    // (instead of using COMSPEC)
                     // in order to keep the same bitness.
                     return Shell.Cmd;
                 }

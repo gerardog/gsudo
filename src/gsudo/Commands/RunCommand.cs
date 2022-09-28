@@ -30,13 +30,13 @@ namespace gsudo.Commands
             if (isElevationRequired & ProcessHelper.GetCurrentIntegrityLevel() < (int)IntegrityLevel.Medium)
                 throw new ApplicationException("Sorry, gsudo doesn't allow to elevate from low integrity level."); // This message is not a security feature, but a nicer error message. It would have failed anyway since the named pipe's ACL restricts it.
 
-            CommandToRun = ArgumentsHelper.AugmentCommand(CommandToRun.ToArray());
-            bool isWindowsApp = ProcessFactory.IsWindowsApp(CommandToRun.FirstOrDefault());
+            CommandToRun = CommandToRunGenerator.AugmentCommand(CommandToRun.ToArray());
 
+            bool isWindowsApp = ProcessFactory.IsWindowsApp(CommandToRun.FirstOrDefault());
             var elevationMode = GetElevationMode(isWindowsApp);
 
             if (!isRunningAsDesiredUser)
-                CommandToRun = AddCopyEnvironment(CommandToRun, elevationMode);
+                CommandToRun = CommandToRunGenerator.AddCopyEnvironment(CommandToRun, elevationMode);
 
             var exeName = CommandToRun.FirstOrDefault();
 
@@ -312,77 +312,6 @@ namespace gsudo.Commands
             if (args == null) return null;
             if (args.Count() <= v) return string.Empty;
             return string.Join(" ", args.Skip(v).ToArray());
-        }
-
-        /// <summary>
-        /// Copy environment variables and network shares to the destination user context
-        /// </summary>
-        /// <remarks>CopyNetworkShares is *the best I could do*. Too much verbose, asks for passwords, etc. Far from ideal.</remarks>
-        /// <returns>a modified args list</returns>
-        internal IEnumerable<string> AddCopyEnvironment(IEnumerable<string> args, ElevationRequest.ConsoleMode mode)
-        {
-            if (Settings.CopyEnvironmentVariables || Settings.CopyNetworkShares)
-            {
-                var silent = InputArguments.Debug ? string.Empty : "@";
-                var sb = new StringBuilder();
-                if (Settings.CopyEnvironmentVariables && mode != ElevationRequest.ConsoleMode.TokenSwitch) // TokenSwitch already uses the current env block.
-                {
-                    foreach (DictionaryEntry envVar in Environment.GetEnvironmentVariables())
-                    {
-                        if (envVar.Key.ToString().In("prompt", "username"))
-                            continue;
-
-                        sb.AppendLine($"{silent}SET {envVar.Key}={envVar.Value}");
-                    }
-                }
-                if (Settings.CopyNetworkShares)
-                {
-                    foreach (DriveInfo drive in DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Network && d.Name.Length == 3))
-                    {
-                        var tmpSb = new StringBuilder(2048);
-                        var size = tmpSb.Capacity;
-
-                        var error = FileApi.WNetGetConnection(drive.Name.Substring(0, 2), tmpSb, ref size);
-                        if (error == 0)
-                        {
-                            sb.AppendLine($"{silent}ECHO Connecting {drive.Name.Substring(0, 2)} to {tmpSb.ToString()} 1>&2");
-                            sb.AppendLine($"{silent}NET USE /D {drive.Name.Substring(0, 2)} >NUL 2>NUL");
-                            sb.AppendLine($"{silent}NET USE {drive.Name.Substring(0, 2)} {tmpSb.ToString()} 1>&2");
-                        }
-                    }
-                }
-
-                string tempFolder = Path.Combine(
-                    Environment.GetEnvironmentVariable("temp", EnvironmentVariableTarget.Machine), // use machine temp to ensure elevated user has access to temp folder
-                    nameof(gsudo));
-
-                var dirSec = new DirectorySecurity();
-                dirSec.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), FileSystemRights.FullControl, AccessControlType.Allow));
-#if NETFRAMEWORK
-                Directory.CreateDirectory(tempFolder, dirSec);
-#else
-                dirSec.CreateDirectory(tempFolder);
-#endif
-
-                string tempBatName = Path.Combine(
-                    tempFolder,
-                    $"{Guid.NewGuid()}.bat");
-
-                File.WriteAllText(tempBatName, sb.ToString());
-
-                System.Security.AccessControl.FileSecurity fSecurity = new System.Security.AccessControl.FileSecurity();
-                fSecurity.AddAccessRule(new System.Security.AccessControl.FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), System.Security.AccessControl.FileSystemRights.FullControl, System.Security.AccessControl.AccessControlType.Allow));
-
-                new FileInfo(tempBatName).SetAccessControl(fSecurity);
-                
-
-                return new string[] {
-                    Environment.GetEnvironmentVariable("COMSPEC"),
-                    "/s /c" ,
-                    $"\"{tempBatName} & del /q {tempBatName} & {string.Join(" ",args)}\""
-                };
-            }
-            return args;
         }
 
         private static void RemoveAdminPrefixFromConsoleTitle()

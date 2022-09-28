@@ -2,7 +2,7 @@
 
 namespace gsudo.Commands
 {
-    interface ICommand
+    public interface ICommand
     {
         Task<int> Execute();
     }

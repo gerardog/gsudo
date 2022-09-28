@@ -155,9 +155,9 @@ namespace gsudo.ProcessHosts
 
                         if (InputArguments.Debug)
                             Console.Write(s
-                                .Replace('\a', ' ') //  no bell sounds please
-                                .Replace("\r", "\\r")
-                                .Replace("\n", "\\n")
+                                .ReplaceOrdinal("\a", " ") //  no bell sounds please
+                                .ReplaceOrdinal("\r", "\\r")
+                                .ReplaceOrdinal("\n", "\\n")
                                 );
                     }
                 }
