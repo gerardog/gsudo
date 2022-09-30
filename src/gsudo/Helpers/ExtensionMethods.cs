@@ -90,7 +90,7 @@ namespace gsudo
 #if NETFRAMEWORK
         static public string Replace(this string original, string pattern, string replacement, StringComparison comparisonType, int stringBuilderInitialSize = -1)
         {
-            if (original == null)
+            if (String.IsNullOrEmpty(original))
             {
                 return null;
             }
