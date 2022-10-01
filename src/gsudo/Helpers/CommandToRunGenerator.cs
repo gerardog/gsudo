@@ -207,7 +207,7 @@ namespace gsudo.Helpers
             string targetFileName = Path.GetFileName(targetFullPath);
 
             var ExceptionDict = Settings.ExceptionList.Value
-                .Split(';')
+                .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(x => x.Split(new string[] { ":=" }, StringSplitOptions.None))
                 .ToDictionary(x => x.First(), x => x.Skip(1).FirstOrDefault(), StringComparer.OrdinalIgnoreCase);
 
@@ -239,7 +239,7 @@ namespace gsudo.Helpers
                 string action = ExceptionDict[targetFileName];
 
                 if (string.IsNullOrEmpty(action))
-                    action = $"\"{Environment.GetEnvironmentVariable("COMSPEC")}\" /s /c \"{0}\"";
+                    action = $"\"{Environment.GetEnvironmentVariable("COMSPEC")}\" /s /c \"{{0}}\"";
 
                 Logger.Instance.Log($"Found {targetFileName} in Exception List with Action=\"{action}\".", LogLevel.Debug);
                 
