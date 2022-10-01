@@ -1,19 +1,14 @@
-﻿using gsudo;
-using gsudo.Commands;
-using gsudo.Native;
+﻿using gsudo.Native;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace gsudo.Helpers
 {
     public static class ArgumentsHelper
     {
-        public static IEnumerable<string> SplitArgs(string args)
-        {
+        public static IList<string> SplitArgs(string args)
+        {   
             args = args.Trim();
             var results = new List<string>();
             int pushed = 0;

@@ -78,6 +78,12 @@ namespace gsudo
                 deserializer: bool.Parse,
                 scope: RegistrySettingScope.GlobalOnly);
 
+        public static RegistrySetting<string> ExceptionList { get; } =
+            new RegistrySetting<string>(nameof(ExceptionList),
+                defaultValue: "notepad.exe;powershell.exe;",
+                deserializer: (string s)=>s,
+                scope: RegistrySettingScope.GlobalOnly);
+
         public static IDictionary<string, RegistrySetting> AllKeys =>
             new Dictionary<string, RegistrySetting>(StringComparer.OrdinalIgnoreCase)
                 .Add(
@@ -92,7 +98,8 @@ namespace gsudo
                     CopyEnvironmentVariables,
                     CopyNetworkShares,
                     PowerShellLoadProfile,
-                    SecurityEnforceUacIsolation);
+                    SecurityEnforceUacIsolation,
+                    ExceptionList);
 
         internal static TimeSpan TimeSpanParseWithInfinite(string value)
         {

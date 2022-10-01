@@ -18,7 +18,7 @@ namespace gsudo.Commands
 {
     public class RunCommand : ICommand
     {
-        public IEnumerable<string> CommandToRun { get; set; }
+        public IList<string> CommandToRun { get; set; }
         private string GetArguments() => GetArgumentsString(CommandToRun, 1);
 
         public async Task<int> Execute()
@@ -34,6 +34,8 @@ namespace gsudo.Commands
 
             bool isWindowsApp = ProcessFactory.IsWindowsApp(CommandToRun.FirstOrDefault());
             var elevationMode = GetElevationMode(isWindowsApp);
+
+            CommandToRun = CommandToRunGenerator.FixCommandExceptions(CommandToRun);
 
             if (!isRunningAsDesiredUser)
                 CommandToRun = CommandToRunGenerator.AddCopyEnvironment(CommandToRun, elevationMode);

@@ -219,14 +219,14 @@ namespace gsudo.Helpers
             }
 
             if (arg.In("run"))
-                return new RunCommand() { CommandToRun = args };
+                return new RunCommand() { CommandToRun = args.ToArray() };
 
             args.AddFirst(arg);
 
             if (arg == "!!" || arg.StartsWith("!", StringComparison.InvariantCulture))
                 return new BangBangCommand() { Pattern = string.Join(" ", args) };
 
-            return new RunCommand() { CommandToRun = args };
+            return new RunCommand() { CommandToRun = args.ToArray() };
         }
 
         #region Posix option matching functions
