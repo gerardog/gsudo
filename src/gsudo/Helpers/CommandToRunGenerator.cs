@@ -1,7 +1,9 @@
 ﻿using gsudo.Native;
+using Microsoft.VisualBasic;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Security.AccessControl;
@@ -119,7 +121,7 @@ namespace gsudo.Helpers
                         }
                     }
 
-                    return DoFixIfIsMicrosoftStoreApp(currentShellExeName, newArgs.ToArray());
+                    return newArgs.ToArray();
                 }
                 else if (currentShell == Shell.Yori)
                 {
@@ -185,8 +187,7 @@ namespace gsudo.Helpers
                 if (exename != null && CreateProcessSupportedExtensions.Contains(Path.GetExtension(exename)))
                 {
                     args[0] = $"\"{exename}\"";
-                    var newArgs = DoFixIfIsMicrosoftStoreApp(exename, args);
-                    return newArgs.ToArray();
+                    return args;
                 }
                 else
                 {
@@ -200,24 +201,49 @@ namespace gsudo.Helpers
             }
         }
 
-        private static string[] DoFixIfIsMicrosoftStoreApp(string targetExe, string[] args)
+        internal static IList<string> FixCommandExceptions(IList<string> args)
         {
-            // -- Workaround for https://github.com/gerardog/gsudo/issues/65
+            string targetFullPath = args.First().UnQuote();
+            string targetFileName = Path.GetFileName(targetFullPath);
 
-            // ISSUE: Apps installed via Microsoft Store, need a special attribute in it's security token to work (WIN://SYSAPPID),
+            var ExceptionDict = Settings.ExceptionList.Value
+                .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => x.Split(new string[] { ":=" }, StringSplitOptions.None))
+                .ToDictionary(x => x.First(), x => x.Skip(1).FirstOrDefault(), StringComparer.OrdinalIgnoreCase);
+
+            if (
+            // ISSUE 1:
+            // -- https://github.com/gerardog/gsudo/issues/65
+            // Apps installed via Microsoft Store, need a special attribute in it's security token to work (WIN://SYSAPPID),
             // That attrib is inserted by CreateProcess() Api, but gsudo replaces the special token with regular but elevated one
             // which doesnt have the attribute. So the app fails to load.
-
             // WORKAROUND: The CreateProcess(pwsh.exe) call must be already elevated so that Api can manipulate the final token, 
             // and the easiest way I found is delegate the final CreateProcess to an elevated CMD instance: To elevate "cmd /c pwsh.exe" instead.
-
-            if (targetExe.IndexOf("\\WindowsApps\\", StringComparison.OrdinalIgnoreCase) >= 0) // Terrible but cheap Microsoft Store App detection.
+               targetFullPath.IndexOf("\\WindowsApps\\", StringComparison.OrdinalIgnoreCase) >= 0) // Terrible but cheap Microsoft Store App detection.
             {
                 Logger.Instance.Log("Applying workaround for target app installed via MSStore.", LogLevel.Debug);
+
                 return new string[] {
                     Environment.GetEnvironmentVariable("COMSPEC"),
                     "/s /c" ,
                     $"\"{string.Join(" ", args)}\""};
+            }
+            else if (ExceptionDict.ContainsKey(targetFileName))
+            {
+                // ISSUE 2: https://github.com/gerardog/gsudo/issues/131
+                //      notepad won't open notepad on CMD / Win11: 
+                //      It appears that notepad opens a Microsoft Store version of Notepad.exe. It fails to load using sudo.
+                // ISSUE 3: https://github.com/gerardog/gsudo/issues/180
+                //      Strange console "Access Denied" error while 
+
+                string action = ExceptionDict[targetFileName];
+
+                if (string.IsNullOrEmpty(action))
+                    action = $"\"{Environment.GetEnvironmentVariable("COMSPEC")}\" /s /c \"{{0}}\"";
+
+                Logger.Instance.Log($"Found {targetFileName} in Exception List with Action=\"{action}\".", LogLevel.Debug);
+                
+                return ArgumentsHelper.SplitArgs(String.Format(CultureInfo.InvariantCulture, action, string.Join(" ", args))).ToList();
             }
             else
                 return args;
@@ -230,7 +256,7 @@ namespace gsudo.Helpers
         /// </summary>
         /// <remarks>CopyNetworkShares is *the best I could do*. Too much verbose, asks for passwords, etc. Far from ideal.</remarks>
         /// <returns>a modified args list</returns>
-        internal static IEnumerable<string> AddCopyEnvironment(IEnumerable<string> args, ElevationRequest.ConsoleMode mode)
+        internal static IList<string> AddCopyEnvironment(IList<string> args, ElevationRequest.ConsoleMode mode)
         {
             if (Settings.CopyEnvironmentVariables || Settings.CopyNetworkShares)
             {

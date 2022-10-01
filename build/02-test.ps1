@@ -10,13 +10,19 @@ $failure=$false
 
 pushd $PSScriptRoot\..
 
-dotnet test .\src\gsudo.sln --logger "trx;LogFileName=$((gi .).FullName)\TestResults.trx" --logger:"console;verbosity=normal" -v quiet -p:WarningLevel=0
+dotnet build .\src\gsudo.sln || $(exit $LASTEXITCODE)
+
+$originalPath = $env:path
+
+$env:path=(Get-Item .\src\gsudo.Tests\bin\Debug\net7.0\).FullName+";" + [String]::Join(";", (($ENV:Path).Split(";") -notlike "*gsudo*" | % {$_ -replace "\\$" }))
+
+gsudo -k
+gsudo --debug cache on -p 0 -d 1
+$env:nokill=1
+gsudo -d --debug --integrity medium dotnet test .\src\gsudo.sln --no-build --logger "trx;LogFileName=$((gi .).FullName)\TestResults.trx" --logger:"console;verbosity=normal" -v quiet -p:WarningLevel=0
+
 if (! $?) { $failure = $true }
 if ($failure) { exit 1 } # fail fast
-
-$env:path=(Get-Item .\src\gsudo\bin\net7.0\).FullName+";"+$env:path
-
-gsudo -k > $null
 
 $script  = {
 	$ProgressPreference = "SilentlyContinue";
@@ -34,15 +40,16 @@ $script  = {
     Invoke-Pester -Configuration $configuration 
 }
 
-
+gsudo --debug cache on -p 0 -d 1
 Write-Verbose -verbose "Running PowerShell Tests on Windows PowerShell (v5.x)"
-powershell $script -outputformat text
+gsudo --integrity medium powershell -noprofile $script -outputformat text
 if (! $?) { $failure = $true }
 
+gsudo cache on -p 0 -d 1
 Write-Verbose -verbose "Running PowerShell Tests on Pwsh Core (v7.x)"
-pwsh $script
+gsudo --integrity medium pwsh -noprofile $script
 if (! $?) { $failure = $true }
 
-.\src\gsudo\bin\net7.0\gsudo.exe -k
+gsudo.exe -k
 
 if ($failure) { exit 1 }
