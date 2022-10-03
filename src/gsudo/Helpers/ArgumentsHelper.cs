@@ -32,6 +32,8 @@ namespace gsudo.Helpers
             return results;
         }
 
+                    else if (arg.In("--sid"))
+                        cmd.AllowedSid = dequeue();
         internal static string GetRealCommandLine()
         {
             System.IntPtr ptr = ConsoleApi.GetCommandLine();

@@ -73,10 +73,9 @@ namespace gsudo.Helpers
 
         public static int GetCacheableRootProcessId(this Process process)
         {
-            var parent = GetParentProcessId(process);
-
             if (ShellHelper.InvokingShell == Shell.Bash)
             {
+                var parent = GetParentProcessId(process);
                 if (parent == 0) 
                     return process.Id;
 
@@ -97,10 +96,32 @@ namespace gsudo.Helpers
                 { }
 
                 return parent;
+            }
 
+            int pid = process.Id;
+            Process p = null;
+
+            while (p == null)
+            {
+                pid = GetParentProcessId(pid);
+                try
+                {
+                    p = Process.GetProcessById(pid);
+                }
+                catch
+                { }
+
+                if (p != null)
+                {
+                    string filename = null;
+                    try { filename = p.MainModule.FileName; } catch { }
+
+                    if (filename != null && !IsShim(filename))
+                        break;
+                }                
             }
         
-            return GetParentProcessIdExcludingShim(process);
+            return pid;
         }
 
         public static Process GetParentProcessExcludingShim(this Process process)
@@ -139,6 +160,7 @@ namespace gsudo.Helpers
             return parentId;
         }
 
+        // This function is special because it can get the parent process of a process that no longer exists.
         public static int GetParentProcessId(int pid)
         {
             IntPtr hProcess = ProcessApi.OpenProcess(ProcessApi.PROCESS_QUERY_INFORMATION, true, (uint)pid);
