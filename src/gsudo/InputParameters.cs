@@ -1,4 +1,6 @@
-﻿namespace gsudo
+﻿using gsudo.Helpers;
+
+namespace gsudo
 {
     public static class InputArguments
     {
@@ -11,8 +13,14 @@
         public static bool Direct { get; internal set; }
         public static IntegrityLevel? IntegrityLevel { get; internal set; }
         public static bool TrustedInstaller { get; internal set; }
-        public static IntegrityLevel GetIntegrityLevel() => (RunAsSystem ? gsudo.IntegrityLevel.System : IntegrityLevel ?? gsudo.IntegrityLevel.High);
+        public static string User 
+        {
+            set => user = LoginHelper.UserNameToSid(value);
+            get => user;            
+        }
+        private static string user;
 
+        public static IntegrityLevel GetIntegrityLevel() => (RunAsSystem ? gsudo.IntegrityLevel.System : IntegrityLevel ?? gsudo.IntegrityLevel.High);
 
         internal static void Clear()
         {
@@ -25,6 +33,7 @@
             Direct = false; 
             TrustedInstaller = false;
             IntegrityLevel = null;
+            user = null;
         }
     }
 }

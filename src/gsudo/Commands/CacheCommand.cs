@@ -57,8 +57,7 @@ namespace gsudo.Commands
                     return 1;
                 }
 
-
-                if (!ProcessHelper.IsAdministrator() && NamedPipeClient.IsServiceAvailable())
+                if (!ProcessHelper.IsAdministrator() && NamedPipeClient.IsServiceAvailable(AllowedPid, AllowedSid))
                 {
                     var commandToRun = new List<string>();
                     commandToRun.Add($"\"{ProcessHelper.GetOwnExeName()}\"");
@@ -74,7 +73,7 @@ namespace gsudo.Commands
                 }
                 else
                 {
-                    if (!ServiceHelper.StartElevatedService(AllowedPid.Value, CacheDuration ?? Settings.CacheDuration, AllowedSid))
+                    if (!ServiceHelper.StartService(AllowedPid.Value, CacheDuration ?? Settings.CacheDuration, AllowedSid))
                     {
                         return Constants.GSUDO_ERROR_EXITCODE;
                     }

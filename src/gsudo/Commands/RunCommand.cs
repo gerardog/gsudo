@@ -220,6 +220,9 @@ namespace gsudo.Commands
             if ((int)InputArguments.GetIntegrityLevel() != ProcessHelper.GetCurrentIntegrityLevel())
                 return false;
 
+            if (InputArguments.User != WindowsIdentity.GetCurrent().Owner.ToString())
+                return false;
+
             return true;
         }
 

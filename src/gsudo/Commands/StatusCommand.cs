@@ -98,7 +98,7 @@ namespace gsudo.Commands
 
                     try
                     {
-                        username = p.GetProcessUser() ?? unknown;
+                        username = p.GetProcessUser()?.Name ?? unknown;
                     }
                     catch
                     { }

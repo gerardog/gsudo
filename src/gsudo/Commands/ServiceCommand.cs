@@ -44,7 +44,7 @@ namespace gsudo.Commands
             if ((InputArguments.TrustedInstaller && !System.Security.Principal.WindowsIdentity.GetCurrent().Claims.Any(c => c.Value == Constants.TI_SID))
                 || (InputArguments.RunAsSystem && !System.Security.Principal.WindowsIdentity.GetCurrent().IsSystem))
             {
-                return Helpers.ServiceHelper.StartElevatedService(AllowedPid, CacheDuration, singleUse: SingleUse, allowedSid: AllowedSid) ? 0: Constants.GSUDO_ERROR_EXITCODE;
+                return Helpers.ServiceHelper.StartService(AllowedPid, CacheDuration, singleUse: SingleUse, allowedSid: AllowedSid) ? 0: Constants.GSUDO_ERROR_EXITCODE;
             }
 
             var cacheLifetime = new CredentialsCacheLifetimeManager(AllowedPid);
@@ -90,7 +90,7 @@ namespace gsudo.Commands
 
                 if (!applicationHost.SupportsSimultaneousElevations && Settings.CacheMode.Value==Enums.CacheMode.Auto)
                 {
-                    ServiceHelper.StartElevatedService(AllowedPid, CacheDuration, AllowedSid);
+                    ServiceHelper.StartService(AllowedPid, CacheDuration, AllowedSid);
                 }
 
                 if (!string.IsNullOrEmpty(request.Prompt))

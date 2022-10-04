@@ -36,15 +36,14 @@ namespace gsudo.Helpers
             return exeName;
         }
 
-        public static string GetProcessUser(this Process process)
+        public static WindowsIdentity GetProcessUser(this Process process)
         {
             IntPtr processHandle = IntPtr.Zero;
             try
             {
                 OpenProcessToken(process.Handle, 8, out processHandle);
                 WindowsIdentity wi = new WindowsIdentity(processHandle);
-                string user = wi.Name;
-                return user; //.Contains(@"\") ? user.Substring(user.IndexOf(@"\", StringComparison.OrdinalIgnoreCase) + 1) : user;
+                return wi;
             }
             catch
             {

@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security;
 using static gsudo.Native.ProcessApi;
 using static gsudo.Native.TokensApi;
 
@@ -97,6 +98,22 @@ namespace gsudo.Helpers
             }
 
             return process;
+        }
+
+        public static Process StartWithCredentials(string filename, string arguments, string user, SecureString password)
+        {
+            Logger.Instance.Log($"Starting process as {user}: {filename} {arguments}", LogLevel.Debug);
+            var usr = InputArguments.User.Split('\\');
+
+            return Process.Start(new ProcessStartInfo()
+            {
+                UserName = usr[1],
+                Domain = usr[0],
+                Password = password,
+                Arguments = arguments,
+                FileName = filename,
+            });
+
         }
 
         public static bool IsWindowsApp(string exe)

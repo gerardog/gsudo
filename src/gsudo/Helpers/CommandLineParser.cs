@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Security.Principal;
 
 namespace gsudo.Helpers
 {
@@ -99,6 +100,13 @@ namespace gsudo.Helpers
             else if (IsOptionMatchWithArgument(argWord, "i", "--integrity", out optionArg))
             {
                 InputArguments.IntegrityLevel = ExtensionMethods.ParseEnum<IntegrityLevel>(optionArg);
+                skipRemainingChars = true;
+            }
+            else if (IsOptionMatchWithArgument(argWord, "u", "--user", out optionArg))
+            {
+                InputArguments.User = optionArg;
+                Console.WriteLine(InputArguments.User);
+
                 skipRemainingChars = true;
             }
             else if (match("n", "--new")) { InputArguments.NewWindow = true; }
@@ -204,6 +212,10 @@ namespace gsudo.Helpers
                     else if (IsOptionMatchWithArgument(arg, "p", "--pid", out string v))
                     {
                         cmd.AllowedPid = int.Parse(v, CultureInfo.InvariantCulture);
+                    }
+                    else if (IsOptionMatchWithArgument(arg, "s", "--sid", out v))
+                    {
+                        cmd.AllowedSid = v;
                     }
                     else if (IsOptionMatchWithArgument(arg, "d", "--duration", out v))
                     {

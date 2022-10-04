@@ -2,8 +2,8 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Security;
 using System.Security.Principal;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace gsudo.Helpers
@@ -49,7 +49,7 @@ namespace gsudo.Helpers
 
             if (connection == null) // service is not running or listening.
             {
-                if (!StartElevatedService(callingPid, singleUse: InputArguments.KillCache))
+                if (!StartService(callingPid, singleUse: InputArguments.KillCache))
                     return null;
 
                 connection = await rpcClient.Connect(callingPid, false).ConfigureAwait(false);
@@ -57,10 +57,10 @@ namespace gsudo.Helpers
             return connection;
         }
 
-        internal static bool StartElevatedService(int? allowedPid, TimeSpan? cacheDuration = null, string allowedSid=null, bool singleUse = false)
+        internal static bool StartService(int? allowedPid, TimeSpan? cacheDuration = null, string allowedSid=null, bool singleUse = false)
         {
             allowedPid = allowedPid ?? Process.GetCurrentProcess().GetCacheableRootProcessId();
-            allowedSid = allowedSid ?? Process.GetProcessById(allowedPid.Value).GetProcessUser();
+            allowedSid = allowedSid ?? Process.GetProcessById(allowedPid.Value).GetProcessUser().User.Value;
 
             string verb;
 
@@ -70,6 +70,7 @@ namespace gsudo.Helpers
             //            if (InputArguments.IntegrityLevel.HasValue) @params += $"-i {InputArguments.IntegrityLevel.Value} ";
             if (InputArguments.RunAsSystem && allowedSid != System.Security.Principal.WindowsIdentity.GetCurrent().User.Value) @params += "-s ";
             if (InputArguments.TrustedInstaller) @params += "--ti ";
+            if (!string.IsNullOrEmpty(InputArguments.User)) @params += $"-u {InputArguments.User} ";
 
             verb = "gsudoservice";
 
@@ -101,6 +102,13 @@ namespace gsudo.Helpers
                 {
                     success = null != ProcessFactory.StartAsSystem(ownExe, commandLine, Environment.CurrentDirectory, !InputArguments.Debug);
                 }
+                else if (InputArguments.User != null)
+                {
+                    Console.Write($"Password for user {InputArguments.User}: ");
+                    SecureString password = ConsoleHelper.ReadConsolePassword();
+
+                    success = null != ProcessFactory.StartWithCredentials(ownExe, commandLine, InputArguments.User, password);
+                }
                 else
                 {
                     success = null != ProcessFactory.StartElevatedDetached(ownExe, commandLine, !InputArguments.Debug);
@@ -114,11 +122,11 @@ namespace gsudo.Helpers
 
             if (!success)
             {
-                Logger.Instance.Log("Failed to start elevated instance.", LogLevel.Error);
+                Logger.Instance.Log("Failed to start service process.", LogLevel.Error);
                 return false;
             }
 
-            Logger.Instance.Log("Elevated instance started.", LogLevel.Debug);
+            Logger.Instance.Log("Service process started.", LogLevel.Debug);
             return true;
         }
 

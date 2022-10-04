@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security;
 using static gsudo.Native.ConsoleApi;
 
 namespace gsudo.Helpers
@@ -86,6 +87,30 @@ namespace gsudo.Helpers
                 cursorLeftPos = Console.CursorLeft;
                 cursorTopPos = Console.CursorTop;
             }
+        }
+
+        internal static SecureString ReadConsolePassword()
+        {
+            var pass = new SecureString();
+            ConsoleKey key;
+            do
+            {
+                var keyInfo = Console.ReadKey(intercept: true);
+                key = keyInfo.Key;
+
+                if (key == ConsoleKey.Backspace && pass.Length > 0)
+                {
+                    Console.Write("\b \b");
+                    pass.RemoveAt(pass.Length - 1);
+                }
+                else if (!char.IsControl(keyInfo.KeyChar))
+                {
+                    Console.Write("*");
+                    pass.AppendChar(keyInfo.KeyChar);
+                }
+            } while (key != ConsoleKey.Enter);
+            Console.Write("\n");
+            return pass;
         }
     }
 }
