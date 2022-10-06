@@ -41,7 +41,7 @@ function Test-IsAdmin {
 
 if ((Test-IsAdmin) -eq $false) {
  Write-Warning "This script requires local admin privileges. Elevating..."
- gsudo "$($MyInvocation.MyCommand.Source)" $args
+ gsudo "& '$($MyInvocation.MyCommand.Source)'" $args
  if ($LastExitCode -eq 999 ) {
     Write-error 'Failed to elevate.'
  }
