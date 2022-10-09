@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using gsudo.Enums;
+using gsudo.CredentialsCache;
 using gsudo.Helpers;
 using gsudo.Rpc;
 
@@ -88,7 +88,7 @@ namespace gsudo.Commands
                         LogLevel.Warning);
 
                     // wait until the cache service becomes available (2 seconds max)
-                    for (int i=0; i<40 && !NamedPipeClient.IsServiceAvailable(AllowedPid); i++)
+                    for (int i=0; i<40 && !NamedPipeClient.IsServiceAvailable(AllowedPid, AllowedSid); i++)
                         await Task.Delay(50).ConfigureAwait(false);
                 }
 

@@ -77,7 +77,7 @@ namespace gsudo.Commands
                 else 
                     setting.Save(unescapedValue, InputArguments.Global);
 
-                if (setting.Name == Settings.CacheMode.Name && unescapedValue.In(Enums.CacheMode.Disabled.ToString()))
+                if (setting.Name == Settings.CacheMode.Name && unescapedValue.In(CredentialsCache.CacheMode.Disabled.ToString()))
                     new KillCacheCommand().Execute();
                 if (setting.Name.In (Settings.CacheDuration.Name, Settings.SecurityEnforceUacIsolation.Name))
                     new KillCacheCommand().Execute();

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
-using gsudo.Enums;
+using gsudo.CredentialsCache;
 using Microsoft.Win32;
 
 namespace gsudo
@@ -15,7 +15,7 @@ namespace gsudo
         public const int BufferSize = 10240;
         public static readonly Encoding Encoding = new System.Text.UTF8Encoding(false);
         public static RegistrySetting<CacheMode> CacheMode { get; set; }
-            = new RegistrySetting<CacheMode>(nameof(CacheMode), Enums.CacheMode.Explicit,
+            = new RegistrySetting<CacheMode>(nameof(CacheMode), CredentialsCache.CacheMode.Explicit,
                 deserializer: ExtensionMethods.ParseEnum< CacheMode>, 
                 scope: RegistrySettingScope.GlobalOnly);
 

@@ -7,7 +7,7 @@ using System.Threading;
 using EventWaitHandleAcl = System.Threading.EventWaitHandle;
 #endif
 
-namespace gsudo
+namespace gsudo.CredentialsCache
 {
     /// <summary>
     /// Mechanism to invalidate all credentials cache. ('sudo -k')
@@ -55,7 +55,7 @@ namespace gsudo
                     out var eventWaitHandle))
             {
 #if NETFRAMEWORK
-                eventWaitHandle = new EventWaitHandle(false, EventResetMode.ManualReset, GLOBAL_WAIT_HANDLE_NAME, out var created, security);
+                eventWaitHandle = new EventWaitHandleAcl(false, EventResetMode.ManualReset, GLOBAL_WAIT_HANDLE_NAME, out var created, security);
 #else
                 eventWaitHandle = EventWaitHandleAcl.Create(false, EventResetMode.ManualReset, GLOBAL_WAIT_HANDLE_NAME, out var created, security);
 #endif
@@ -67,7 +67,7 @@ namespace gsudo
                 out var eventWaitHandleSpecific))
             {
 #if NETFRAMEWORK
-                eventWaitHandleSpecific = new EventWaitHandle(false, EventResetMode.ManualReset, GLOBAL_WAIT_HANDLE_NAME + pid.ToString(CultureInfo.InvariantCulture), out var created, security);
+                eventWaitHandleSpecific = new EventWaitHandleAcl(false, EventResetMode.ManualReset, GLOBAL_WAIT_HANDLE_NAME + pid.ToString(CultureInfo.InvariantCulture), out var created, security);
 #else
                 eventWaitHandleSpecific = EventWaitHandleAcl.Create(false, EventResetMode.ManualReset, GLOBAL_WAIT_HANDLE_NAME + pid.ToString(CultureInfo.InvariantCulture), out var created, security);
 #endif
@@ -75,7 +75,7 @@ namespace gsudo
 
             var credentialsResetThread = new Thread(() =>
             {
-                if (WaitHandle.WaitAny(new WaitHandle[] {eventWaitHandle, eventWaitHandleSpecific}) >= 0)
+                if (WaitHandle.WaitAny(new WaitHandle[] { eventWaitHandle, eventWaitHandleSpecific }) >= 0)
                 {
                     Logger.Instance.Log("Credentials Cache termination received", LogLevel.Info);
                     OnCacheClear?.Invoke();
@@ -102,7 +102,7 @@ namespace gsudo
                 }
                 return true;
             }
-            catch (System.Threading.WaitHandleCannotBeOpenedException)
+            catch (WaitHandleCannotBeOpenedException)
             {
                 return false;
             }

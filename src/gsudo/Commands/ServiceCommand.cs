@@ -47,7 +47,7 @@ namespace gsudo.Commands
                 return Helpers.ServiceHelper.StartService(AllowedPid, CacheDuration, singleUse: SingleUse, allowedSid: AllowedSid) ? 0: Constants.GSUDO_ERROR_EXITCODE;
             }
 
-            var cacheLifetime = new CredentialsCacheLifetimeManager(AllowedPid);
+            var cacheLifetime = new CredentialsCache.CredentialsCacheLifetimeManager(AllowedPid);
             Logger.Instance.Log("Service started", LogLevel.Info);
 
             if (CacheDuration == TimeSpan.Zero)
@@ -88,7 +88,7 @@ namespace gsudo.Commands
 
                 IProcessHost applicationHost = CreateProcessHost(request);
 
-                if (!applicationHost.SupportsSimultaneousElevations && Settings.CacheMode.Value==Enums.CacheMode.Auto)
+                if (!applicationHost.SupportsSimultaneousElevations && Settings.CacheMode.Value==CredentialsCache.CacheMode.Auto)
                 {
                     ServiceHelper.StartService(AllowedPid, CacheDuration, AllowedSid);
                 }
@@ -127,7 +127,8 @@ namespace gsudo.Commands
         private IRpcServer CreateServer()
         {
             // No credentials cache when CacheDuration = 0
-            bool singleUse = SingleUse || Settings.CacheMode.Value == Enums.CacheMode.Disabled;
+
+            bool singleUse = SingleUse || Settings.CacheMode.Value == CredentialsCache.CacheMode.Disabled;
             return new NamedPipeServer(AllowedPid, AllowedSid, singleUse);
         }
 
