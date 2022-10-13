@@ -9,7 +9,7 @@ namespace gsudo.Helpers
 {
     // Why not use a parsing library? 
     // When gsudo was built on .Net Framework 4.x, loading the parsing library took significant time at startup.
-    // This may no longer be the case on modern .net, but that would require coding and comparing performance.
+    // This may no longer be the case on modern .net, but confirming that would require coding and comparing performance.
     public class CommandLineParser
     {
         LinkedList<string> args;
@@ -104,8 +104,8 @@ namespace gsudo.Helpers
             }
             else if (IsOptionMatchWithArgument(argWord, "u", "--user", out optionArg))
             {
-                InputArguments.User = optionArg;
-                Console.WriteLine(InputArguments.User);
+                InputArguments.UserName = LoginHelper.ValidateUserName(optionArg);
+                InputArguments.UserSid = LoginHelper.GetSidFromUserName(InputArguments.UserName);
 
                 skipRemainingChars = true;
             }
@@ -162,7 +162,7 @@ namespace gsudo.Helpers
                     return new KillCacheCommand(verbose: true);
                 }
 
-                return new RunCommand() { CommandToRun = Array.Empty<string>() };
+                return new RunCommand(commandToRun: Array.Empty<string>());
             }
 
             string arg;
@@ -202,7 +202,7 @@ namespace gsudo.Helpers
                 while (args.Count > 0)
                 {
                     arg = DeQueueArg();
-
+                        
                     if (arg.In("on"))
                         cmd.Action = CacheCommandAction.On;
                     else if (arg.In("off"))
@@ -216,6 +216,10 @@ namespace gsudo.Helpers
                     else if (IsOptionMatchWithArgument(arg, "s", "--sid", out v))
                     {
                         cmd.AllowedSid = v;
+                    }
+                    else if (IsOptionMatchWithArgument(arg, "u", "--user", out v))
+                    {
+                        InputArguments.UserName = v;
                     }
                     else if (IsOptionMatchWithArgument(arg, "d", "--duration", out v))
                     {
@@ -231,14 +235,17 @@ namespace gsudo.Helpers
             }
 
             if (arg.In("run"))
-                return new RunCommand() { CommandToRun = args.ToArray() };
+                return new RunCommand(commandToRun: args.ToArray());
+
+            if (arg.In("AttachRun"))
+                return new AttachRunCommand(commandToRun: args.ToArray());
 
             args.AddFirst(arg);
 
             if (arg == "!!" || arg.StartsWith("!", StringComparison.InvariantCulture))
                 return new BangBangCommand() { Pattern = string.Join(" ", args) };
 
-            return new RunCommand() { CommandToRun = args.ToArray() };
+            return new RunCommand(commandToRun: args.ToArray());
         }
 
         #region Posix option matching functions

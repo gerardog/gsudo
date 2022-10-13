@@ -59,6 +59,7 @@ namespace gsudo.Helpers
 
         public static Process StartAttached(string filename, string arguments)
         {
+            Logger.Instance.Log($"Process Start: {filename} {arguments}", LogLevel.Debug    );
             var process = new Process();
             process.StartInfo = new ProcessStartInfo(filename)
             {
@@ -103,7 +104,7 @@ namespace gsudo.Helpers
         public static Process StartWithCredentials(string filename, string arguments, string user, SecureString password)
         {
             Logger.Instance.Log($"Starting process as {user}: {filename} {arguments}", LogLevel.Debug);
-            var usr = InputArguments.User.Split('\\');
+            var usr = InputArguments.UserName.Split('\\');
 
             return Process.Start(new ProcessStartInfo()
             {

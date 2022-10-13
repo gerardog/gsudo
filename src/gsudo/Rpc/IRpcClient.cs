@@ -4,6 +4,6 @@ namespace gsudo.Rpc
 {
     internal interface IRpcClient
     {
-        Task<Connection> Connect(int? clientPid, bool failFast);
+        Task<Connection> Connect(int? clientPid =null);
     }
 }

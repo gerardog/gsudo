@@ -15,18 +15,46 @@ Just prepend `gsudo` (or the `sudo` alias) to your command and it will run eleva
 
 `gsudo` is very easy to install and use. Its similarities with Unix/Linux sudo make the experience a breeze. It detects your current shell and elevates accordingly (as native shell commands). (Supports `Cmd`, `PowerShell`, `git-bash`, `MinGW`, `Cygwin`, `Yori`, `Take Command`)
 
+## Table of contents
+
+- [gsudo - a sudo for Windows](#gsudo---a-sudo-for-windows)
+  - [Table of contents](#table-of-contents)
+  - [Demo](#demo)
+  - [Documentation](#documentation)
+  - [Please support gsudo! 💵](#please-support-gsudo-)
+  - [Features](#features)
+  - [Installation](#installation)
+  - [Usage](#usage)
+  - [Config](#config)
+  - [Usage](#usage-1)
+    - [Usage from PowerShell / PowerShell Core](#usage-from-powershell--powershell-core)
+    - [Usage from WSL (Windows Subsystem for Linux)](#usage-from-wsl-windows-subsystem-for-linux)
+  - [Credentials Cache](#credentials-cache)
+  - [Known issues](#known-issues)
+  - [FAQ](#faq)
+
 ---
+
+## Demo
+
+![gsudo demo](demo.gif)
+(with `gsudo config CacheMode auto`)
+
+---
+
 ## Documentation
 
 **NEW!** Extended documentation available at: https://gerardog.github.io/gsudo/
 
 ---
+
 ## Please support gsudo! 💵
 
 - Please consider [sponsoring gsudo](https://gerardog.github.io/gsudo/sponsor). It helps to cover the yearly renewal of the code-signing certificate.
 - No money? No problem! Please give us a star! ⭐
 
 ---
+
 ## Features
 
 - Elevated commands are shown in the current user-level console. No new window. (Unless you specify `-n` which opens a new window.)
@@ -34,7 +62,7 @@ Just prepend `gsudo` (or the `sudo` alias) to your command and it will run eleva
 - Supports CMD commands: `gsudo md folder` (no need to use the longer form `gsudo cmd.exe /c md folder`)
 - Elevates [PowerShell/PowerShell Core commands](#usage-from-powershell--powershell-core), [WSL commands](#usage-from-wsl-windows-subsystem-for-linux), Bash for Windows (Git-Bash/MinGW/MSYS2/Cygwin), Yori or Take Command shell commands.
 - Supports being used on scripts:
-  - Outputs of the elevated commands can be interpreted: E.g. StdOut/StdErr can be piped or captured (e.g. `gsudo dir | findstr /c:"bytes free" > FreeSpace.txt`) and exit codes too (`%errorlevel%`). If `gsudo` fails to elevate, the exit code will be 999.
+  - Outputs StdOut/StdErr can be piped or captured (e.g. `gsudo dir | findstr /c:"bytes free" > FreeSpace.txt`) and exit codes too (`%errorlevel%`). If `gsudo` fails to elevate, the exit code will be 999.
   - If `gsudo` is invoked from an already elevated console, it will just run the command (it won't fail). So, you don't have to worry if you run `gsudo` or a script that uses `gsudo` from an already elevated console. (The UAC popup will not appear, as no elevation is required)
   
 - `gsudo !!` elevates the last executed command. Works on CMD, Git-Bash, MinGW, Cygwin (and PowerShell with [gsudo module](#gsudomodule) only)
@@ -42,10 +70,11 @@ Just prepend `gsudo` (or the `sudo` alias) to your command and it will run eleva
 ## Installation
 
 - Using [Scoop](https://scoop.sh): `scoop install gsudo`
-- Or using [WinGet](https://github.com/microsoft/winget-cli/releases) `winget install gerardog.gsudo`
-- Or using [Chocolatey](https://chocolatey.org/install):  `choco install gsudo`
+- Using [WinGet](https://github.com/microsoft/winget-cli/releases) `winget install gerardog.gsudo`
+- Using [Chocolatey](https://chocolatey.org/install):  `choco install gsudo`
 - Or manually: Unzip the latest release, and add to the path. 
 - Or running: 
+  
 ``` PowerShell
 PowerShell -Command "Set-ExecutionPolicy RemoteSigned -scope Process; [Net.ServicePointManager]::SecurityProtocol = 'Tls12'; iwr -useb https://raw.githubusercontent.com/gerardog/gsudo/master/installgsudo.ps1 | iex"
 ```
@@ -54,30 +83,54 @@ Note: gsudo is portable. No windows service is required or system change is done
 
 ## Usage
 
-```gsudo```  Opens an elevated shell in the current console.
+``` powershell
+gsudo [options]                  # Elevates your current shell
+gsudo [options] {command} [args] # Runs {command} with elevated permissions
+```
 
-```gsudo [options] {command} [arguments]```
-Executes the specified command with elevated permissions.
 
-Most relevant **`[options]`**:
+``` powershell
+General options:
+ -n | --new            # Starts the command in a new console (and returns immediately).
+ -w | --wait           # When in new console, force wait for the command to end.
 
-- **`-n | --new`**        Starts the command in a **new** console with elevated rights (and returns immediately).
-- **`-w | --wait`**       Force wait for the process to end (and return the exitcode).
-- **`-s | --system`**     Run As Local System account ("NT AUTHORITY\SYSTEM").
-- **`-i | --integrity {v}`**   Run command with a specific integrity level: `Low`, `Medium`, `MediumPlus`, `High` (default), `System`. For example, use `Low` to launch a restricted process, or use `Medium` to run without Admin rights. 
-- **`-d | --direct`**     Execute {command} directly. Does not wrap it with your current shell (Pwsh/WSL/MinGw/Yori/etc). Assumes it is a `CMD` command (eg. an `.EXE` file).
-- **`--loadProfile`**          When elevating PowerShell commands, do load profiles.
-- **`--copyns`**         Reconnect current connected network shares on the elevated session. Warning! This is verbose, affects the elevated user system-wide (other processes), and can prompt for credentials interactively.
-- **`--debug`**          Debug mode (verbose).
+Security options:
+ -i | --integrity {v}  # Specify integrity level: Untrusted, Low, Medium, MediumPlus, High (default), System
+ -s | --system         # Run as Local System account (NT AUTHORITY\SYSTEM).
+ --ti                  # Run as member of NT SERVICE\TrustedInstaller
 
-```gsudo config```
-Show current user-settings.
+Shell related options:
+ -d | --direct         # Execute {command} directly. Bypass shell wrapper (Pwsh/Yori/etc).
+ --loadProfile         # When elevating PowerShell commands, load user profile.
 
-```gsudo config {key} ["value" | --reset]```
-Read, write, or reset a user setting to the default value.
+Other options:
+ --loglevel {val}      # Set minimum log level to display: All, Debug, Info, Warning, Error, None
+ --debug               # Enable debug mode.
+ --copyns              # Connect network drives to the elevated user. Warning: Verbose, interactive asks for credentials
+ --copyev              # (deprecated) Copy environment variables to the elevated process. (not needed on default console mode)
 
-```gsudo status```
-Show status information about current user, security, integrity level or other gsudo relevant data.
+ -k                   # Kills all cached credentials. The next time gsudo is run a UAC popup will be appear.
+```
+
+## Config
+
+gsudo status                     #  Show status information about current user, security, integrity level or other gsudo relevant data.
+
+|----|---|
+|`gsudo config`| Show current user-settings.|
+|`gsudo config {key} ["value"]`| Read, write, or reset a user setting to the default value.|
+\| --reset
+
+
+## Usage
+
+- `gsudo cache [-h]`              Shows cache help
+- `gsudo cache {on | off} [-p {pid}] [-d {time}]`   Start/stop a gsudo cache session.
+
+  - `-p | --pid {pid}`            Specify which process can use the cache. (Use 0 for any, Default=`caller pid`)
+  - `-d | --duration {hh:mm:ss}`  Max time the cache can stay idle before closing.
+    - Use '-1' to keep open until logoff (or until `cache off`, or `-k`).
+    - The default is `CacheDuration` is 5 minutes.
 
 **Note:** You can use anywhere **the `sudo` alias** created by the installers.
 
@@ -108,33 +161,38 @@ gsudo config CacheMode Auto
 gsudo !!
 ```
 
-## Usage from PowerShell / PowerShell Core
+### Usage from PowerShell / PowerShell Core
 
 `gsudo` detects if invoked from PowerShell and elevates PS commands (unless `-d` is used to elevate CMD commands).
 
-- NEW! (starting `v1.6.0`): Use `gsudo { ScriptBlock }` syntax to elevate PowerShell commands.
-  
-  The ScriptBlock will ran elevated in a different process and lexical scope, so it can't access your existing `$variables`.
+The command to elevate will ran in a different process, so it can't access your existing `$variables`.
 
-  To parametrize the script, you can pass values with `-args` parameter and access them via `$args` array (or try `Invoke-gsudo` function).
+There are 3 possible syntaxes to elevate commands.
+
+``` powershell 
+gsudo {command Script Block}   # Invoke-Command
+gsudo 'string command'         # Invoke-Expression
+Invoke-Gsudo { command }       # Invoke-Command
+```
+
+  * To parametrize the script, you can pass values with `-args` parameter and access them via `$args` array (or try `Invoke-gsudo` function).
 
 
   ``` powershell
   gsudo { Write-Output "Hello World" }
+  # Pass arguments
   gsudo { Write-Output $args[0] $args[1] } -args "Hello", "World"
   
   # Output can be captured as serialized PSObjects with properties.
   $services = gsudo { Get-Service 'WSearch', 'Winmgmt'} 
   Write-Output $services.DisplayName
-
-  # Variable substitution example:
-  $file='C:\My Secret.txt'; $algorithm='md5';
-  $hash = gsudo {(Get-FileHash args[0] -Algorithm args[1]).Hash} -args $file, $algorithm
   ```
 
 - Use **`Invoke-gsudo` wrapper function** to elevate a ScriptBlock.
 
-   To parametrize the script, you can use `$using:variableName` syntax and it´s serialized value will be applied. The result object is serialized and returned (as an object).
+   Is similar to the previous syntax, but with a few additional perks:
+   * To parametrize the script, you can use `$using:variableName` syntax and it´s serialized value will be applied. 
+   * Use `-LoadProfile` or `-NoProfile` to 
 
   ``` PowerShell
   # Accepts pipeline input.
@@ -155,9 +213,9 @@ gsudo !!
   ``` powershell
   # Elevate Commands without ()|&<>' by prepending gsudo
   gsudo Remove-Item ProtectedFile.txt
-  
   # Or pass a string literal:
   gsudo 'Remove-Item ProtectedFile.txt'
+  # Capture result string, not objects:
   $hash = gsudo '(Get-FileHash "C:\My Secret.txt").Hash'
 
   # Legacy: Variable substitutions example:
@@ -182,7 +240,7 @@ gsudo !!
   - `Set-Alias 'sudo' 'gsudo'` or 
   - `Set-Alias 'sudo' 'Invoke-gsudo'`
 
-## Usage from WSL (Windows Subsystem for Linux)
+### Usage from WSL (Windows Subsystem for Linux)
 
 On WSL, elevation and `root` are different concepts. `root` allows full administration of WSL but not the windows system. Use WSL's native `su` or `sudo` to gain `root` access. To get admin privilege on the Windows box you need to elevate the WSL.EXE process. `gsudo` allows that (a UAC popup will appear).
 
@@ -198,7 +256,6 @@ PC:~$ gsudo mkdir /mnt/c/Windows/MyFolder
 # run elevated Windows command
 PC:~$ gsudo -d notepad C:/Windows/System32/drivers/etc/hosts
 PC:~$ gsudo -d "notepad C:\Windows\System32\drivers\etc\hosts"
-PC:~$ gsudo -d "echo 127.0.0.1 www.MyWeb.com >> %windir%\System32\drivers\etc\hosts"
 
 # test for gsudo and command success
 retval=$?;
@@ -216,11 +273,6 @@ fi;
 The `Credentials Cache` allows to elevate several times from a parent process with only one UAC pop-up.  
 
 [Learn more](https://gerardog.github.io/gsudo/docs/credentials-cache)
-
-## Demo
-
-(with `gsudo config CacheMode auto`)
-![gsudo demo](demo.gif)
 
 ## Known issues
 

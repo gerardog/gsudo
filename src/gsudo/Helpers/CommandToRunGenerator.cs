@@ -35,6 +35,9 @@ namespace gsudo.Helpers
             string currentShellExeName = ShellHelper.InvokingShellFullPath;
             Shell currentShell = ShellHelper.InvokingShell;
 
+            if (currentShellExeName[0] != '"' && currentShellExeName.Contains(' '))
+                { currentShellExeName = $"\"{currentShellExeName}\""; }
+
             Logger.Instance.Log($"Invoking Shell: {currentShell}", LogLevel.Debug);
 
             if (!InputArguments.Direct)
@@ -63,7 +66,7 @@ namespace gsudo.Helpers
 
                     var newArgs = new List<string>
                     {
-                        $"\"{currentShellExeName}\""
+                        currentShellExeName
                     };
                     newArgs.AddMany(args);
 
@@ -73,7 +76,7 @@ namespace gsudo.Helpers
                 {
                     var newArgs = new List<string>
                     {
-                        $"\"{currentShellExeName}\"",
+                        currentShellExeName,
                         "-NoLogo"
                     };
 
@@ -168,7 +171,7 @@ namespace gsudo.Helpers
             if (currentShell != Shell.Cmd)
             {
                 // Let's find Cmd.Exe
-                currentShellExeName = Environment.GetEnvironmentVariable("COMSPEC");
+                currentShellExeName = $"\"{Environment.GetEnvironmentVariable("COMSPEC")}\"";
             }
 
             if (args.Length == 0)

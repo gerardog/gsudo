@@ -16,6 +16,11 @@ namespace gsudo.Commands
         {
             RegistrySetting setting = null;
 
+            if (key.In("-h", "/h", "/?", "-?", "--help", "help"))
+            {
+                return new HelpCommand().Execute();
+            }
+
             if (key == null)
             {
                 // print all configs
@@ -65,11 +70,9 @@ namespace gsudo.Commands
                 {
                     Logger.Instance.Log($"Global system settings requires elevation. Elevating...", LogLevel.Info);
                     InputArguments.Direct = true;
-                    return new RunCommand()
-                    {
-                        CommandToRun = new string[]
+                    return new RunCommand(commandToRun: new string[]
                             { $"\"{ProcessHelper.GetOwnExeName()}\"", "--global", "config", key, reset ? "--reset" : $"\"{unescapedValue}\""}
-                    }.Execute();
+                    ).Execute();
                 }
 
                 if (reset)

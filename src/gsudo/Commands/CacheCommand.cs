@@ -68,15 +68,12 @@ namespace gsudo.Commands
 
                     InputArguments.Wait = true;
                     InputArguments.Direct = true;
-                    return await new RunCommand() {CommandToRun = commandToRun, }
+                    return await new RunCommand(commandToRun)
                         .Execute().ConfigureAwait(false);
                 }
                 else
                 {
-                    if (!ServiceHelper.StartService(AllowedPid.Value, CacheDuration ?? Settings.CacheDuration, AllowedSid))
-                    {
-                        return Constants.GSUDO_ERROR_EXITCODE;
-                    }
+                    ServiceHelper.StartService(AllowedPid.Value, CacheDuration ?? Settings.CacheDuration, AllowedSid);
 
                     if (AllowedPid.Value != 0)
                         Logger.Instance.Log($"Elevation allowed for process Id {AllowedPid.Value} and children.",

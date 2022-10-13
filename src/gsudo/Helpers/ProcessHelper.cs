@@ -150,7 +150,7 @@ namespace gsudo.Helpers
                 if (IsShim(filename))
                     return GetParentProcessIdExcludingShim(parent);
             }
-            catch (Exception ex)
+            catch
             {
                 // For example: System.ArgumentException: Process with an Id of 18312 is not running.
                 return parentId;

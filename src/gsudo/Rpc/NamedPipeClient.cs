@@ -8,9 +8,9 @@ namespace gsudo.Rpc
 {
     class NamedPipeClient : IRpcClient
     {
-        public async Task<Connection> Connect(int? clientPid, bool failFast)
+        public async Task<Connection> Connect(int? clientPid)
         {
-            int timeoutMilliseconds = failFast ? 300 : 5000;
+            int timeoutMilliseconds;
             var server = ".";
 
             string pipeName = null;
@@ -22,21 +22,18 @@ namespace gsudo.Rpc
             {
                 if (clientPid.HasValue)
                 {
-                    pipeName = NamedPipeNameFactory.GetPipeName(user, clientPid.Value);
-                    if (!NamedPipeUtils.ExistsNamedPipe(pipeName) && failFast)
-                    {
-                        // fail fast without timeout.
-                        return null;
-                    }
+                    timeoutMilliseconds = 5000; // service just started. Larger Timeout 
+                    pipeName = NamedPipeNameFactory.GetPipeName(user, clientPid.Value, InputArguments.UserSid);
                 }
                 else
                 {
+                    timeoutMilliseconds = 300;
                     var callerProcessId = Process.GetCurrentProcess().Id;
                     int maxRecursion = 20;
                     while (callerProcessId > 0 && maxRecursion-- > 0)
                     {
                         callerProcessId = ProcessHelper.GetParentProcessId(callerProcessId);
-                        pipeName = NamedPipeNameFactory.GetPipeName(user, callerProcessId);
+                        pipeName = NamedPipeNameFactory.GetPipeName(user, callerProcessId, InputArguments.UserSid);
                         // Does the pipe exists?
                         if (NamedPipeUtils.ExistsNamedPipe(pipeName))
                             break;
@@ -73,27 +70,28 @@ namespace gsudo.Rpc
             }
         }
 
-        public static bool IsServiceAvailable(int? pid = null, string sid = null)
+        public static bool IsServiceAvailable(int? callerPid = null, string callerSid = null, string targetSid = null)
         {
             string pipeName = null;
 
-            pid = pid ?? ProcessHelper.GetParentProcessId(Process.GetCurrentProcess().Id);
-            sid = sid ?? System.Security.Principal.WindowsIdentity.GetCurrent().User.Value;
+            callerPid = callerPid ?? ProcessHelper.GetParentProcessId(Process.GetCurrentProcess().Id);
+            callerSid = callerSid ?? System.Security.Principal.WindowsIdentity.GetCurrent().User.Value;
+            targetSid = targetSid ?? InputArguments.UserSid ?? callerSid;
 
-            int maxRecursion = 20;
-            while (pid.Value > 0 && maxRecursion-- > 0)
+            int maxIterations = 20;
+            while (callerPid.Value > 0 && maxIterations-- > 0)
             {
-                pipeName = NamedPipeNameFactory.GetPipeName(sid, pid.Value);
+                pipeName = NamedPipeNameFactory.GetPipeName(callerSid, callerPid.Value, targetSid);
                 // Does the pipe exists?
                 if (NamedPipeUtils.ExistsNamedPipe(pipeName))
                     break;
 
-                pid = ProcessHelper.GetParentProcessId(pid.Value);
+                callerPid = ProcessHelper.GetParentProcessId(callerPid.Value);
                 pipeName = null;
                 // try grandfather.
             }
 
-            return pipeName != null ;
+            return pipeName != null;
         }
     }
 }

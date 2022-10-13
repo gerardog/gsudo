@@ -10,54 +10,32 @@ namespace gsudo.Helpers
 {
     internal static class ServiceHelper
     {
-        internal static bool IsServiceAvailable()
-        {
-            return NamedPipeClient.IsServiceAvailable();
-        }
-
         internal static IRpcClient GetRpcClient()
         {
             // future Tcp implementations should be plugged here.
             return new NamedPipeClient();
         }
 
-        internal static async Task<Connection> ConnectStartElevatedService()
+        internal static async Task<Connection> Connect(int? callingPid)
         {
-            var callingPid = ProcessHelper.GetCallerPid();
-
-            Logger.Instance.Log($"Caller PID: {callingPid}", LogLevel.Debug);
-
-            if (InputArguments.IntegrityLevel.HasValue && InputArguments.IntegrityLevel.Value == IntegrityLevel.System && !InputArguments.RunAsSystem)
-            {
-                Logger.Instance.Log($"Elevating as System because of IntegrityLevel=System parameter.", LogLevel.Warning);
-                InputArguments.RunAsSystem = true;
-            }
-
             IRpcClient rpcClient = GetRpcClient();
 
-            Connection connection = null;
             try
             {
-                connection = await rpcClient.Connect(null, true).ConfigureAwait(false);
+                return await rpcClient.Connect(callingPid).ConfigureAwait(false);
             }
             catch (System.IO.IOException) { }
             catch (TimeoutException) { }
             catch (Exception ex)
             {
-                Logger.Instance.Log(ex.ToString(), LogLevel.Warning);
+                if (callingPid.HasValue)
+                    Logger.Instance.Log(ex.ToString(), LogLevel.Warning);
             }
 
-            if (connection == null) // service is not running or listening.
-            {
-                if (!StartService(callingPid, singleUse: InputArguments.KillCache))
-                    return null;
-
-                connection = await rpcClient.Connect(callingPid, false).ConfigureAwait(false);
-            }
-            return connection;
+            return null;
         }
 
-        internal static bool StartService(int? allowedPid, TimeSpan? cacheDuration = null, string allowedSid=null, bool singleUse = false)
+        internal static void StartService(int? allowedPid, TimeSpan? cacheDuration = null, string allowedSid = null, bool singleUse = false)
         {
             allowedPid = allowedPid ?? Process.GetCurrentProcess().GetCacheableRootProcessId();
             allowedSid = allowedSid ?? Process.GetProcessById(allowedPid.Value).GetProcessUser().User.Value;
@@ -70,13 +48,13 @@ namespace gsudo.Helpers
             //            if (InputArguments.IntegrityLevel.HasValue) @params += $"-i {InputArguments.IntegrityLevel.Value} ";
             if (InputArguments.RunAsSystem && allowedSid != System.Security.Principal.WindowsIdentity.GetCurrent().User.Value) @params += "-s ";
             if (InputArguments.TrustedInstaller) @params += "--ti ";
-            if (!string.IsNullOrEmpty(InputArguments.User)) @params += $"-u {InputArguments.User} ";
+            if (!string.IsNullOrEmpty(InputArguments.UserName)) @params += $"-u {InputArguments.UserName} ";
 
             verb = "gsudoservice";
 
             if (!cacheDuration.HasValue || singleUse)
             {
-                if (!Settings.CacheMode.Value.In(Enums.CacheMode.Auto) || singleUse)
+                if (!Settings.CacheMode.Value.In(CredentialsCache.CacheMode.Auto) || singleUse)
                 {
                     verb = "gsudoelevate";
                     cacheDuration = TimeSpan.Zero;
@@ -89,48 +67,38 @@ namespace gsudo.Helpers
 
             string commandLine = $"{@params}{verb} {allowedPid} {allowedSid} {Settings.LogLevel} {Settings.TimeSpanWithInfiniteToString(cacheDuration.Value)}";
 
-            bool success = false;
-
-            try
+            string ownExe = ProcessHelper.GetOwnExeName();
+            if (InputArguments.TrustedInstaller && isAdmin && !WindowsIdentity.GetCurrent().Claims.Any(c => c.Value == Constants.TI_SID))
             {
-                string ownExe = ProcessHelper.GetOwnExeName();
-                if (InputArguments.TrustedInstaller && isAdmin && !WindowsIdentity.GetCurrent().Claims.Any(c => c.Value == Constants.TI_SID))
+                StartTrustedInstallerService(commandLine, allowedPid.Value);
+            }
+            else if (InputArguments.RunAsSystem && isAdmin)
+            {
+                ProcessFactory.StartAsSystem(ownExe, commandLine, Environment.CurrentDirectory, !InputArguments.Debug).Close();
+            }
+            else if (InputArguments.UserName != null)
+            {
+                if (isAdmin)
                 {
-                    return StartTrustedInstallerService(commandLine, allowedPid.Value);
+                    var password = ConsoleHelper.ReadConsolePassword();
+                    ProcessFactory.StartWithCredentials(ownExe, commandLine, InputArguments.UserName, password);
                 }
-                else if (InputArguments.RunAsSystem && isAdmin)
+                else if(ProcessHelper.IsMemberOfLocalAdmins())
                 {
-                    success = null != ProcessFactory.StartAsSystem(ownExe, commandLine, Environment.CurrentDirectory, !InputArguments.Debug);
-                }
-                else if (InputArguments.User != null)
-                {
-                    Console.Write($"Password for user {InputArguments.User}: ");
-                    SecureString password = ConsoleHelper.ReadConsolePassword();
-
-                    success = null != ProcessFactory.StartWithCredentials(ownExe, commandLine, InputArguments.User, password);
-                }
-                else
-                {
-                    success = null != ProcessFactory.StartElevatedDetached(ownExe, commandLine, !InputArguments.Debug);
+                    // First elevate in place, then 
+                    // Call: gsudo gsudo -u UserName MyCommand
+                    ProcessFactory.StartAttached(ownExe, $"-d {ArgumentsHelper.Quote(ownExe)} {commandLine}");
                 }
             }
-            catch (System.ComponentModel.Win32Exception ex)
+            else
             {
-                Logger.Instance.Log(ex.Message, LogLevel.Error);
-                return false;
-            }
-
-            if (!success)
-            {
-                Logger.Instance.Log("Failed to start service process.", LogLevel.Error);
-                return false;
+                _ = ProcessFactory.StartElevatedDetached(ownExe, commandLine, !InputArguments.Debug);
             }
 
             Logger.Instance.Log("Service process started.", LogLevel.Debug);
-            return true;
         }
 
-        private static bool StartTrustedInstallerService(string commandLine, int pid)
+        private static void StartTrustedInstallerService(string commandLine, int pid)
         {
             string name = $"gsudo TI Cache for PID {pid}";
 
@@ -143,7 +111,7 @@ namespace gsudo.Helpers
                 : ProcessFactory.StartRedirected("schtasks", args, null);
 
             p.WaitForExit();
-            if (p.ExitCode != 0) return false;
+            if (p.ExitCode != 0) throw new ApplicationException($"Error creating a scheduled task for TrustedInstaller: {p.ExitCode}");
 
             try
             {
@@ -152,7 +120,7 @@ namespace gsudo.Helpers
                     ? ProcessFactory.StartAttached("schtasks", args)
                     : ProcessFactory.StartRedirected("schtasks", args, null);
                 p.WaitForExit();
-                if (p.ExitCode != 0) return false;
+                if (p.ExitCode != 0) throw new ApplicationException($"Error starting scheduled task for TrustedInstaller: {p.ExitCode}");
             }
             finally
             {
@@ -162,8 +130,6 @@ namespace gsudo.Helpers
                     : ProcessFactory.StartRedirected("schtasks", args, null);
                 p.WaitForExit();
             }
-
-            return true;
         }
     }
 }

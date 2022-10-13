@@ -51,9 +51,8 @@ namespace gsudo.Commands
 
             Logger.Instance.Log("Command to run: " + commandToElevate, LogLevel.Info);
 
-            return new RunCommand()
-                { CommandToRun = ArgumentsHelper.SplitArgs(commandToElevate) }
-            .Execute();
+            return new RunCommand(commandToRun: ArgumentsHelper.SplitArgs(commandToElevate))
+                .Execute();
         }
 
         class NativeMethods

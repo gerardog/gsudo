@@ -1,28 +1,36 @@
 ﻿using gsudo.Helpers;
+using System.Security;
 
 namespace gsudo
 {
     public static class InputArguments
     {
+        // Show debug info
         public static bool Debug { get; internal set; }
+
+        // Open in new window
         public static bool NewWindow { get; internal set; }
+
+        // Wait for new process to end
         public static bool Wait { get; internal set; }
+
+        // Elevate as NT Authority\System
         public static bool RunAsSystem { get; internal set; }
+
+        // In `gsudo config x 
         public static bool Global { get; internal set; }
         public static bool KillCache { get; internal set; }
         public static bool Direct { get; internal set; }
         public static IntegrityLevel? IntegrityLevel { get; internal set; }
         public static bool TrustedInstaller { get; internal set; }
-        public static string User 
-        {
-            set => user = LoginHelper.UserNameToSid(value);
-            get => user;            
-        }
-        private static string user;
+
+
+        public static string UserName { get; internal set; }
+        public static string UserSid { get; internal set; }
 
         public static IntegrityLevel GetIntegrityLevel() => (RunAsSystem ? gsudo.IntegrityLevel.System : IntegrityLevel ?? gsudo.IntegrityLevel.High);
 
-        internal static void Clear()
+        internal static void Clear() // added for tests repeatability
         {
             Debug = false;
             NewWindow = false;
@@ -33,7 +41,8 @@ namespace gsudo
             Direct = false; 
             TrustedInstaller = false;
             IntegrityLevel = null;
-            user = null;
+            UserName = null;
+            UserSid = null;
         }
     }
 }

@@ -8,11 +8,11 @@ namespace gsudo.Rpc
 {
     static class NamedPipeNameFactory
     {
-        public static string GetPipeName(string allowedSid, int allowedPid)
+        public static string GetPipeName(string allowedSid, int allowedPid, string targetSid )
         {
             if (allowedPid < 0) allowedPid = 0;
 
-            var data = $"{allowedSid}_{allowedPid}{(InputArguments.TrustedInstaller ? "_TI" : string.Empty)}";
+            var data = $"{allowedSid}_{targetSid}_{allowedPid}_{(InputArguments.TrustedInstaller ? "_TI" : string.Empty)}";
 #if !DEBUG
             data = GetHash(data);
 #endif
@@ -35,18 +35,21 @@ namespace gsudo.Rpc
 
         private static string GetPipePrefix()
         {
-            if (!string.IsNullOrEmpty(InputArguments.User))
+            const string PROTECTED = "ProtectedPrefix\\Administrators\\gsudo";
+            const string REGULAR = "gsudo";
+            if (!string.IsNullOrEmpty(InputArguments.UserName))
             {
-                if (InputArguments.User == WindowsIdentity.GetCurrent().Name)
+                if (InputArguments.UserName == WindowsIdentity.GetCurrent().Name)
                     if (!ProcessHelper.IsMemberOfLocalAdmins())
-                        return "gsudo";
+                        return REGULAR;
                     else
-                        return "ProtectedPrefix\\Administrators\\gsudo";
+                        return PROTECTED;
 
-                return "ProtectedPrefix\\Administrators\\gsudo";
+                // we dont know if InputArguments.User is Admin
+                return REGULAR;
             }
             else
-                return "ProtectedPrefix\\Administrators\\gsudo";
+                return PROTECTED;
         }    
     }
 }
