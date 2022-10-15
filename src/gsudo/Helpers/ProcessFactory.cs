@@ -14,8 +14,6 @@ using static gsudo.Native.TokensApi;
 
 namespace gsudo.Helpers
 {
-    //https://csharp.hotexamples.com/examples/CSCreateLowIntegrityProcess/PROCESS_INFORMATION/-/php-process_information-class-examples.html
-
     public static class ProcessFactory
     {
         public static Process StartElevatedDetached(string filename, string arguments, bool hidden)

@@ -29,8 +29,7 @@ namespace gsudo.Commands
             if (!ConsoleApi.AttachConsole(-1))
             {
                 ConsoleApi.AllocConsole();
-                Logger.Instance.Log($"Failed to attach console: {new Win32Exception()}", LogLevel.Error);
-                return Task.FromResult(Constants.GSUDO_ERROR_EXITCODE);
+                throw new ApplicationException($"Failed to attach console: {new Win32Exception()}");
             }
 
             var app = CommandToRun.First();

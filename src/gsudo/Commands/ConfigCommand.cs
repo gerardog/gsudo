@@ -37,10 +37,7 @@ namespace gsudo.Commands
             Settings.AllKeys.TryGetValue(key, out setting);
 
             if (setting == null)
-            {
-                Logger.Instance.Log($"Invalid Setting '{key}'.", LogLevel.Error);
-                return Task.FromResult(Constants.GSUDO_ERROR_EXITCODE);
-            }
+                throw new ApplicationException($"Invalid Setting '{key}'.");
 
             if (value != null && value.Any()) // Write Setting
             {

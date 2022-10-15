@@ -36,6 +36,9 @@ namespace gsudo.Commands
             if (isElevationRequired & ProcessHelper.GetCurrentIntegrityLevel() < (int)IntegrityLevel.Medium)
                 throw new ApplicationException("Sorry, gsudo doesn't allow to elevate from low integrity level."); // This message is not a security feature, but a nicer error message. It would have failed anyway since the named pipe's ACL restricts it.
 
+            if (isRunningAsDesiredUser && isShellElevation && !InputArguments.NewWindow)
+                throw new ApplicationException("Already running as the specified user/permission-level (and no command specified). Exiting...");
+
             CommandToRun = CommandToRunGenerator.AugmentCommand(CommandToRun.ToArray());
 
             bool isWindowsApp = ProcessFactory.IsWindowsApp(CommandToRun.FirstOrDefault());
@@ -73,12 +76,6 @@ namespace gsudo.Commands
 
             Logger.Instance.Log($"Command to run: {elevationRequest.FileName} {elevationRequest.Arguments}", LogLevel.Debug);
 
-            if (isRunningAsDesiredUser && isShellElevation && !InputArguments.NewWindow)
-            {
-                Logger.Instance.Log("Already running as the specified user/permission-level (and no command specified). Exiting...", LogLevel.Error);
-                return Constants.GSUDO_ERROR_EXITCODE;
-            }
-
             if (isRunningAsDesiredUser || !isElevationRequired) // already elevated or running as correct user. No service needed.
             {
                 return RunWithoutService(exeName, GetArguments(), elevationRequest);
@@ -97,7 +94,7 @@ namespace gsudo.Commands
                 elevationRequest.Prompt = Settings.PipedPrompt;
         }
 
-        /// Starts a cache session
+        /// Starts a cache sessioBn
         private async Task<int> RunUsingService(ElevationRequest elevationRequest)
         {
             Logger.Instance.Log($"Using Console mode {elevationRequest.Mode}", LogLevel.Debug);
@@ -119,10 +116,7 @@ namespace gsudo.Commands
                     connection = await ServiceHelper.Connect(callingPid).ConfigureAwait(false);
 
                     if (connection == null) // service is not running or listening.
-                    {
-                        Logger.Instance.Log("Unable to connect to the elevated service.", LogLevel.Error);
-                        return Constants.GSUDO_ERROR_EXITCODE;
-                    }
+                        throw new ApplicationException("Unable to connect to the elevated service.");
                 }
 
                 var renderer = GetRenderer(connection, elevationRequest);
@@ -235,7 +229,7 @@ namespace gsudo.Commands
             if ((int)InputArguments.GetIntegrityLevel() != ProcessHelper.GetCurrentIntegrityLevel())
                 return false;
 
-            if (InputArguments.UserName != WindowsIdentity.GetCurrent().Owner.ToString())
+            if (!string.IsNullOrEmpty(InputArguments.UserName) && InputArguments.UserName != WindowsIdentity.GetCurrent().Owner.ToString())
                 return false;
 
             return true;
