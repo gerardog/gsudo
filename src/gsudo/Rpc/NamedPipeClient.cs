@@ -35,6 +35,9 @@ namespace gsudo.Rpc
                         callerProcessId = ProcessHelper.GetParentProcessId(callerProcessId);
                         pipeName = NamedPipeNameFactory.GetPipeName(user, callerProcessId, InputArguments.UserSid);
                         // Does the pipe exists?
+#if DEBUG
+                        Logger.Instance.Log($"Looking for Named Pipe \"{pipeName}\".", LogLevel.Debug);
+#endif
                         if (NamedPipeUtils.ExistsNamedPipe(pipeName))
                             break;
 

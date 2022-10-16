@@ -37,7 +37,7 @@ namespace gsudo.Rpc
         {
             const string PROTECTED = "ProtectedPrefix\\Administrators\\gsudo";
             const string REGULAR = "gsudo";
-            if (!string.IsNullOrEmpty(InputArguments.UserName))
+            if (InputArguments.UserName != null)
             {
                 if (InputArguments.UserName == WindowsIdentity.GetCurrent().Name)
                     if (!ProcessHelper.IsMemberOfLocalAdmins())

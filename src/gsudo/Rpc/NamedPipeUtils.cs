@@ -34,9 +34,6 @@ namespace gsudo.Rpc
             var namedPipes = new List<string>();
             Native.FileApi.WIN32_FIND_DATA lpFindFileData;
 
-#if DEBUG
-            Logger.Instance.Log($"Looking for Named Pipe \"{name}\".", LogLevel.Debug);
-#endif
             var ptr = Native.FileApi.FindFirstFile($@"\\.\pipe\{GetRootFolder(name)}*", out lpFindFileData);
             do
             {

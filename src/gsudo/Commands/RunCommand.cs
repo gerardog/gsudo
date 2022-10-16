@@ -2,6 +2,7 @@
 using gsudo.Native;
 using gsudo.ProcessRenderers;
 using gsudo.Rpc;
+using gsudo.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -98,8 +99,6 @@ namespace gsudo.Commands
         private async Task<int> RunUsingService(ElevationRequest elevationRequest)
         {
             Logger.Instance.Log($"Using Console mode {elevationRequest.Mode}", LogLevel.Debug);
-
-            var cmd = CommandToRun.FirstOrDefault();
 
             Rpc.Connection connection = null;
             try
@@ -229,7 +228,7 @@ namespace gsudo.Commands
             if ((int)InputArguments.GetIntegrityLevel() != ProcessHelper.GetCurrentIntegrityLevel())
                 return false;
 
-            if (!string.IsNullOrEmpty(InputArguments.UserName) && InputArguments.UserName != WindowsIdentity.GetCurrent().Owner.ToString())
+            if (InputArguments.UserName != null && InputArguments.UserName != WindowsIdentity.GetCurrent().Owner.ToString())
                 return false;
 
             return true;
@@ -248,7 +247,7 @@ namespace gsudo.Commands
             if (integrityLevel == IntegrityLevel.MediumRestricted)
                 return true;
 
-            if (!string.IsNullOrEmpty(InputArguments.UserName) && (integrityLevel < IntegrityLevel.High))
+            if (InputArguments.UserName != null && (integrityLevel < IntegrityLevel.High))
                 return true;
 
             return (int)integrityLevel > ProcessHelper.GetCurrentIntegrityLevel();

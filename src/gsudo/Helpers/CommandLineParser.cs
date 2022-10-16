@@ -104,9 +104,7 @@ namespace gsudo.Helpers
             }
             else if (IsOptionMatchWithArgument(argWord, "u", "--user", out optionArg))
             {
-                InputArguments.UserName = LoginHelper.ValidateUserName(optionArg);
-                InputArguments.UserSid = LoginHelper.GetSidFromUserName(InputArguments.UserName);
-
+                InputArguments.SetUserName(optionArg);
                 skipRemainingChars = true;
             }
             else if (match("n", "--new")) { InputArguments.NewWindow = true; }
@@ -219,7 +217,7 @@ namespace gsudo.Helpers
                     }
                     else if (IsOptionMatchWithArgument(arg, "u", "--user", out v))
                     {
-                        InputArguments.UserName = v;
+                        InputArguments.SetUserName(v);
                     }
                     else if (IsOptionMatchWithArgument(arg, "d", "--duration", out v))
                     {
