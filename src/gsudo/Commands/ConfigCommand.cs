@@ -63,7 +63,7 @@ namespace gsudo.Commands
                     InputArguments.Global = true;
                 }
 
-                if (InputArguments.Global && !ProcessHelper.IsAdministrator())
+                if (InputArguments.Global && !SecurityHelper.IsAdministrator())
                 {
                     Logger.Instance.Log($"Global system settings requires elevation. Elevating...", LogLevel.Info);
                     InputArguments.Direct = true;

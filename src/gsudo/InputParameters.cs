@@ -18,7 +18,7 @@ namespace gsudo
         // Elevate as NT Authority\System
         public static bool RunAsSystem { get; internal set; }
 
-        // In `gsudo config x 
+        // In `gsudo --global config Key Value` --global means save as machine setting. 
         public static bool Global { get; internal set; }
         public static bool KillCache { get; internal set; }
         public static bool Direct { get; internal set; }

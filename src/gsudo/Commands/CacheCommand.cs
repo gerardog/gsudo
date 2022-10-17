@@ -57,7 +57,7 @@ namespace gsudo.Commands
                     return 1;
                 }
 
-                if (!ProcessHelper.IsAdministrator() && NamedPipeClient.IsServiceAvailable(AllowedPid, AllowedSid))
+                if (!SecurityHelper.IsAdministrator() && NamedPipeClient.IsServiceAvailable(AllowedPid, AllowedSid))
                 {
                     var commandToRun = new List<string>();
                     commandToRun.Add($"\"{ProcessHelper.GetOwnExeName()}\"");

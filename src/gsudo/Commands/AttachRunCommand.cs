@@ -36,7 +36,7 @@ namespace gsudo.Commands
             var args = string.Join(" ", CommandToRun.Skip(1).ToArray());
 
             if (InputArguments.IntegrityLevel.HasValue &&
-                (int) InputArguments.IntegrityLevel != ProcessHelper.GetCurrentIntegrityLevel() &&
+                (int) InputArguments.IntegrityLevel != SecurityHelper.GetCurrentIntegrityLevel() &&
                 Environment.GetEnvironmentVariable("gsudoAttachRun") != "1")
             {
                 Environment.SetEnvironmentVariable("gsudoAttachRun", "1"); // prevents infinite loop on machines with UAC disabled.

@@ -24,7 +24,7 @@ namespace gsudo.Tests
         //[TestMethod]
         public void Cmd_AdminUserTest()
         {
-            Assert.IsTrue(ProcessHelper.IsAdministrator(), "This test suite is intended to be run as an administrator, otherwise it will not work.");
+            Assert.IsTrue(SecurityHelper.IsAdministrator(), "This test suite is intended to be run as an administrator, otherwise it will not work.");
         }
 
         [TestMethod]

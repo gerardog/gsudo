@@ -41,7 +41,7 @@ namespace gsudo.Tests
             File.WriteAllText($"{_sIn}", inputScript + "\r\nExit /b %errorlevel%\r\n");
 
             _process = ProcessFactory.StartDetached(_batchFile, arguments, Environment.CurrentDirectory, false);
-            _testProcessHandle = new SafeProcessHandle(_process.Handle, false);
+            _testProcessHandle = _process.GetSafeProcessHandle();
 
             ProcessId = (uint) _process.Id;
 
