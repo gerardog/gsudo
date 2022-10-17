@@ -1,4 +1,5 @@
 ﻿using gsudo.Rpc;
+using Microsoft.Win32.SafeHandles;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -16,13 +17,13 @@ namespace gsudo.Helpers
             return new NamedPipeClient();
         }
 
-        internal static async Task<Connection> Connect(int? callingPid)
+        internal static async Task<Connection> Connect(int? callingPid = null, SafeProcessHandle serviceHandle = null)
         {
             IRpcClient rpcClient = GetRpcClient();
 
             try
             {
-                return await rpcClient.Connect(callingPid).ConfigureAwait(false);
+                return await rpcClient.Connect(callingPid, serviceHandle).ConfigureAwait(false);
             }
             catch (System.IO.IOException) { }
             catch (TimeoutException) { }
@@ -35,20 +36,21 @@ namespace gsudo.Helpers
             return null;
         }
 
-        internal static void StartService(int? allowedPid, TimeSpan? cacheDuration = null, string allowedSid = null, bool singleUse = false)
+        internal static SafeProcessHandle StartService(int? allowedPid, TimeSpan? cacheDuration = null, string allowedSid = null, bool singleUse = false)
         {
             allowedPid = allowedPid ?? Process.GetCurrentProcess().GetCacheableRootProcessId();
             allowedSid = allowedSid ?? Process.GetProcessById(allowedPid.Value).GetProcessUser().User.Value;
 
             string verb;
+            SafeProcessHandle ret;
 
             Logger.Instance.Log($"Caller SID: {allowedSid}", LogLevel.Debug);
 
             var @params = InputArguments.Debug ? "--debug " : string.Empty;
-            //            if (InputArguments.IntegrityLevel.HasValue) @params += $"-i {InputArguments.IntegrityLevel.Value} ";
-            if (InputArguments.RunAsSystem && allowedSid != System.Security.Principal.WindowsIdentity.GetCurrent().User.Value) @params += "-s ";
+            if (!InputArguments.RunAsSystem && InputArguments.IntegrityLevel.HasValue) @params += $"-i {InputArguments.IntegrityLevel.Value} ";
+            if (InputArguments.RunAsSystem && allowedSid != WindowsIdentity.GetCurrent().User.Value) @params += "-s ";
             if (InputArguments.TrustedInstaller) @params += "--ti ";
-            if (!string.IsNullOrEmpty(InputArguments.UserName)) @params += $"-u {InputArguments.UserName} ";
+            if (InputArguments.UserName != null) @params += $"-u {InputArguments.UserName} ";
 
             verb = "gsudoservice";
 
@@ -63,7 +65,7 @@ namespace gsudo.Helpers
                     cacheDuration = Settings.CacheDuration;
             }
 
-            bool isAdmin = ProcessHelper.IsHighIntegrity();
+            bool isAdmin = SecurityHelper.IsHighIntegrity();
 
             string commandLine = $"{@params}{verb} {allowedPid} {allowedSid} {Settings.LogLevel} {Settings.TimeSpanWithInfiniteToString(cacheDuration.Value)}";
 
@@ -71,31 +73,35 @@ namespace gsudo.Helpers
             if (InputArguments.TrustedInstaller && isAdmin && !WindowsIdentity.GetCurrent().Claims.Any(c => c.Value == Constants.TI_SID))
             {
                 StartTrustedInstallerService(commandLine, allowedPid.Value);
+                ret = null;
             }
             else if (InputArguments.RunAsSystem && isAdmin)
             {
-                ProcessFactory.StartAsSystem(ownExe, commandLine, Environment.CurrentDirectory, !InputArguments.Debug).Close();
+                ret = ProcessFactory.StartAsSystem(ownExe, commandLine, Environment.CurrentDirectory, !InputArguments.Debug);
             }
-            else if (InputArguments.UserName != null)
+            else if (InputArguments.UserSid != null)
             {
-                if (isAdmin)
+                if (InputArguments.UserName != WindowsIdentity.GetCurrent().Name)
                 {
+                    Console.Error.Write($"Password for user {InputArguments.UserName}: ");
                     var password = ConsoleHelper.ReadConsolePassword();
-                    ProcessFactory.StartWithCredentials(ownExe, commandLine, InputArguments.UserName, password);
+                    ret = ProcessFactory.StartWithCredentials(ownExe, commandLine, InputArguments.UserName, password).GetSafeProcessHandle();
                 }
-                else if(ProcessHelper.IsMemberOfLocalAdmins())
+                else
                 {
-                    // First elevate in place, then 
-                    // Call: gsudo gsudo -u UserName MyCommand
-                    ProcessFactory.StartAttached(ownExe, $"-d {ArgumentsHelper.Quote(ownExe)} {commandLine}");
+                    if (SecurityHelper.IsMemberOfLocalAdmins() && InputArguments.GetIntegrityLevel() >= IntegrityLevel.High)
+                        ret = ProcessFactory.StartElevatedDetached(ownExe, commandLine, !InputArguments.Debug).GetSafeProcessHandle();
+                    else
+                        ret = ProcessFactory.StartDetached(ownExe, commandLine, null, !InputArguments.Debug).GetSafeProcessHandle();
                 }
             }
             else
             {
-                _ = ProcessFactory.StartElevatedDetached(ownExe, commandLine, !InputArguments.Debug);
+                ret = ProcessFactory.StartElevatedDetached(ownExe, commandLine, !InputArguments.Debug).GetSafeProcessHandle();                
             }
 
             Logger.Instance.Log("Service process started.", LogLevel.Debug);
+            return ret;
         }
 
         private static void StartTrustedInstallerService(string commandLine, int pid)

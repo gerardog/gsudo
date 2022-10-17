@@ -1,4 +1,6 @@
 ﻿using gsudo.Helpers;
+using gsudo.Native;
+using Microsoft.Win32.SafeHandles;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
@@ -8,7 +10,7 @@ namespace gsudo.Rpc
 {
     class NamedPipeClient : IRpcClient
     {
-        public async Task<Connection> Connect(int? clientPid)
+        public async Task<Connection> Connect(int? clientPid, SafeProcessHandle serviceProcessHandle)
         {
             int timeoutMilliseconds;
             var server = ".";
@@ -22,8 +24,20 @@ namespace gsudo.Rpc
             {
                 if (clientPid.HasValue)
                 {
+                    int retryLefts = 3;
+                    do
+                    {
+                        if (ProcessApi.WaitForSingleObject(serviceProcessHandle.DangerousGetHandle(), 1) == 0) // original service process is dead, but may have started an elevated service that we don't have handle.
+                            retryLefts--;
+
+                        pipeName = FindService(user, clientPid.Value);
+
+                        if (pipeName == null)
+                            await Task.Delay(50).ConfigureAwait(false);
+                    }
+                    while (pipeName == null && retryLefts>0);
+
                     timeoutMilliseconds = 5000; // service just started. Larger Timeout 
-                    pipeName = NamedPipeNameFactory.GetPipeName(user, clientPid.Value, InputArguments.UserSid);
                 }
                 else
                 {
@@ -33,16 +47,14 @@ namespace gsudo.Rpc
                     while (callerProcessId > 0 && maxRecursion-- > 0)
                     {
                         callerProcessId = ProcessHelper.GetParentProcessId(callerProcessId);
-                        pipeName = NamedPipeNameFactory.GetPipeName(user, callerProcessId, InputArguments.UserSid);
-                        // Does the pipe exists?
-#if DEBUG
-                        Logger.Instance.Log($"Looking for Named Pipe \"{pipeName}\".", LogLevel.Debug);
-#endif
-                        if (NamedPipeUtils.ExistsNamedPipe(pipeName))
-                            break;
 
-                        pipeName = null;
-                        // try grandfather.
+                        // Search for Credentials Cache
+
+                        //Try Admin
+                        pipeName = FindService(user, callerProcessId);
+
+                        if (pipeName!=null)
+                            break;
                     }
                 }
 
@@ -73,24 +85,44 @@ namespace gsudo.Rpc
             }
         }
 
-        public static bool IsServiceAvailable(int? callerPid = null, string callerSid = null, string targetSid = null)
+        public static string FindService(string user, int clientPid, string userSid = null)
+        {
+            userSid = userSid ?? InputArguments.UserSid;
+            string pipeName;
+
+            if (!InputArguments.IntegrityLevel.HasValue || InputArguments.IntegrityLevel.Value >= IntegrityLevel.High)
+            {
+                pipeName = NamedPipeNameFactory.GetPipeName(user, clientPid, userSid, true);
+                if (NamedPipeUtils.ExistsNamedPipe(pipeName))
+                    return pipeName;
+            }
+
+            if (!InputArguments.IntegrityLevel.HasValue || InputArguments.IntegrityLevel.Value < IntegrityLevel.High)
+            {
+                pipeName = NamedPipeNameFactory.GetPipeName(user, clientPid, userSid, false);
+                if (NamedPipeUtils.ExistsNamedPipe(pipeName))
+                    return pipeName;
+            }
+
+            return null;                
+        }
+
+        public static bool IsServiceAvailable(int? allowedPid = null, string allowedSid = null, string targetSid = null)
         {
             string pipeName = null;
 
-            callerPid = callerPid ?? ProcessHelper.GetParentProcessId(Process.GetCurrentProcess().Id);
-            callerSid = callerSid ?? System.Security.Principal.WindowsIdentity.GetCurrent().User.Value;
-            targetSid = targetSid ?? InputArguments.UserSid ?? callerSid;
+            allowedPid = allowedPid ?? ProcessHelper.GetParentProcessId(Process.GetCurrentProcess().Id);
+            allowedSid = allowedSid ?? System.Security.Principal.WindowsIdentity.GetCurrent().User.Value;
+            targetSid = targetSid ?? InputArguments.UserSid ?? allowedSid;
 
             int maxIterations = 20;
-            while (callerPid.Value > 0 && maxIterations-- > 0)
+            while (allowedPid.Value > 0 && maxIterations-- > 0)
             {
-                pipeName = NamedPipeNameFactory.GetPipeName(callerSid, callerPid.Value, targetSid);
-                // Does the pipe exists?
-                if (NamedPipeUtils.ExistsNamedPipe(pipeName))
+                pipeName = NamedPipeClient.FindService(allowedSid, allowedPid.Value, targetSid);
+                if (pipeName != null)
                     break;
 
-                callerPid = ProcessHelper.GetParentProcessId(callerPid.Value);
-                pipeName = null;
+                allowedPid = ProcessHelper.GetParentProcessId(allowedPid.Value);
                 // try grandfather.
             }
 

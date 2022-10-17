@@ -79,7 +79,7 @@ namespace gsudo.Rpc
                 PipeAccessRights.FullControl, 
                 System.Security.AccessControl.AccessControlType.Deny));
 
-            var pipeName = NamedPipeNameFactory.GetPipeName(_allowedSid, _allowedPid, InputArguments.UserSid);
+            var pipeName = NamedPipeNameFactory.GetPipeName(_allowedSid, _allowedPid, InputArguments.UserSid, SecurityHelper.IsHighIntegrity());
             Logger.Instance.Log($"Listening on named pipe {pipeName}.", LogLevel.Debug);
 
             Logger.Instance.Log($"Access allowed only for ProcessID {_allowedPid} and children", LogLevel.Debug);

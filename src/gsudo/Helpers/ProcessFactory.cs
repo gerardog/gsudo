@@ -104,15 +104,27 @@ namespace gsudo.Helpers
             Logger.Instance.Log($"Starting process as {user}: {filename} {arguments}", LogLevel.Debug);
             var usr = InputArguments.UserName.Split('\\');
 
-            return Process.Start(new ProcessStartInfo()
+            try
             {
-                UserName = usr[1],
-                Domain = usr[0],
-                Password = password,
-                Arguments = arguments,
-                FileName = filename,
-            });
+                return Process.Start(new ProcessStartInfo()
+                {
+                    UserName = usr[1],
+                    Domain = usr[0],
+                    Password = password,
+                    Arguments = arguments,
+                    FileName = filename,
+                    LoadUserProfile = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = !InputArguments.Debug,
+                });
+            }
+            catch(Win32Exception ex)
+            {
+                if (ex.NativeErrorCode == 1326)
+                    throw new ApplicationException("The user name or password is incorrect.");
 
+                throw;
+            }
         }
 
         public static bool IsWindowsApp(string exe)
@@ -200,7 +212,7 @@ namespace gsudo.Helpers
         {
             // must return a process Handle because we cant create a Process() from a handle and get the exit code. 
             Logger.Instance.Log($"{nameof(StartAttachedWithIntegrity)}: {appToRun} {args}", LogLevel.Debug);
-            int currentIntegrity = ProcessHelper.GetCurrentIntegrityLevel();
+            int currentIntegrity = SecurityHelper.GetCurrentIntegrityLevel();
             SafeTokenHandle newToken;
 
             if ((int)integrityLevel == currentIntegrity)

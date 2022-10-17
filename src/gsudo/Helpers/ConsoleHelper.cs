@@ -100,16 +100,16 @@ namespace gsudo.Helpers
 
                 if (key == ConsoleKey.Backspace && pass.Length > 0)
                 {
-                    Console.Write("\b \b");
+                    Console.Error.Write("\b \b");
                     pass.RemoveAt(pass.Length - 1);
                 }
                 else if (!char.IsControl(keyInfo.KeyChar))
                 {
-                    Console.Write("*");
+                    Console.Error.Write("*");
                     pass.AppendChar(keyInfo.KeyChar);
                 }
             } while (key != ConsoleKey.Enter);
-            Console.Write("\n");
+            Console.Error.Write("\n");
             return pass;
         }
     }

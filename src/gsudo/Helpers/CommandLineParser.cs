@@ -150,6 +150,7 @@ namespace gsudo.Helpers
                     && !InputArguments.Wait
                     && !InputArguments.TrustedInstaller
                     && !InputArguments.Direct
+                    && InputArguments.UserName == null
                     )
                 {
                     // support for "-k" as command

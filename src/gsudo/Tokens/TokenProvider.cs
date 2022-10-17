@@ -116,6 +116,13 @@ namespace gsudo.Tokens
             return tm.Duplicate(MAXIMUM_ALLOWED);
         }
 
+        public static TokenProvider CreateFromLogin(string user, string password)
+        {
+            throw new NotImplementedException();
+            var tm = new TokenProvider();
+            return tm.Duplicate(MAXIMUM_ALLOWED);
+        }
+
         public TokenProvider Duplicate(uint desiredAccess = 0x02000000)
         {
             if (!TokensApi.DuplicateTokenEx(Token.DangerousGetHandle(), desiredAccess, IntPtr.Zero,
@@ -199,7 +206,7 @@ namespace gsudo.Tokens
 
         internal static TokenProvider CreateUnelevated(IntegrityLevel level)
         {
-            if (ProcessHelper.IsAdministrator())
+            if (SecurityHelper.IsAdministrator())
             {
                 // Have you impersonated system first?
                 if (!WindowsIdentity.GetCurrent().IsSystem)
@@ -339,15 +346,18 @@ namespace gsudo.Tokens
             if (!NativeMethods.LookupPrivilegeValue(null, securityEntity.ToString(), ref locallyUniqueIdentifier))
                 throw new Win32Exception();
 
-            var TOKEN_PRIVILEGES = new NativeMethods.TOKEN_PRIVILEGES();
-            TOKEN_PRIVILEGES.PrivilegeCount = 1;
-            TOKEN_PRIVILEGES.Attributes = NativeMethods.SE_PRIVILEGE_ENABLED;
-            TOKEN_PRIVILEGES.Luid = locallyUniqueIdentifier;
+            var tp = new NativeMethods.TOKEN_PRIVILEGES();
+            tp.PrivilegeCount = 1;
+            tp.Privileges = new NativeMethods.LUID_AND_ATTRIBUTES[1];
+            tp.Privileges[0].Attributes = NativeMethods.SE_PRIVILEGE_ENABLED;
+            tp.Privileges[0].Luid = locallyUniqueIdentifier;
 
-            if (!NativeMethods.AdjustTokenPrivileges(Token.DangerousGetHandle(), false, ref TOKEN_PRIVILEGES, 1024,
-                IntPtr.Zero, IntPtr.Zero))
+            if (!NativeMethods.AdjustTokenPrivileges(Token.DangerousGetHandle(), false, ref tp, 0, IntPtr.Zero, IntPtr.Zero))
                 if (throwOnFailure)
                     throw new Win32Exception();
+
+            if (throwOnFailure && ConsoleApi.GetLastError() != 0)
+                    throw new Win32Exception(); //throw new Exception("The token does not have the specified privilege. \n");
 
             return this;
         }

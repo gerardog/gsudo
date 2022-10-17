@@ -7,6 +7,7 @@ using gsudo.ProcessHosts;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Linq;
 using gsudo.Helpers;
+using gsudo.CredentialsCache;
 #if NETCOREAPP
 using System.Text.Json;
 #endif
@@ -22,6 +23,8 @@ namespace gsudo.Commands
         public bool SingleUse { get; set; }
 
         Timer ShutdownTimer;
+        private IRpcServer _server;
+
         void EnableTimer()
         {
             if (CacheDuration != TimeSpan.MaxValue) 
@@ -34,7 +37,8 @@ namespace gsudo.Commands
         {
             // service mode
             if (LogLvl.HasValue) Settings.LogLevel.Value = LogLvl.Value;
-            
+            if (!SecurityHelper.IsMemberOfLocalAdmins()) InputArguments.IntegrityLevel = IntegrityLevel.Medium;
+
             Console.Title = "gsudo Service";
 
             Commands.HelpCommand.ShowVersion();
@@ -42,10 +46,15 @@ namespace gsudo.Commands
             if (InputArguments.Debug) await new StatusCommand().Execute().ConfigureAwait(false);
             Console.WriteLine();
 
+            /*
             if ((InputArguments.TrustedInstaller && !System.Security.Principal.WindowsIdentity.GetCurrent().Claims.Any(c => c.Value == Constants.TI_SID))
-                || (InputArguments.RunAsSystem && !System.Security.Principal.WindowsIdentity.GetCurrent().IsSystem))
+                || (InputArguments.RunAsSystem && !System.Security.Principal.WindowsIdentity.GetCurrent().IsSystem)
+                || (InputArguments.UserName != null && !SecurityHelper.IsAdministrator() && SecurityHelper.IsMemberOfLocalAdmins()) 
+                )*/
+            if (!RunCommand.IsRunningAsDesiredUser())
             {
-                ServiceHelper.StartService(AllowedPid, CacheDuration, singleUse: SingleUse, allowedSid: AllowedSid);
+                Logger.Instance.Log("This service is not running with desired credentials. Starting a new service instance.", LogLevel.Info);
+                ServiceHelper.StartService(AllowedPid, CacheDuration, AllowedSid, SingleUse);
                 return 0;
             }
 
@@ -55,25 +64,26 @@ namespace gsudo.Commands
             if (CacheDuration == TimeSpan.Zero)
                 CacheDuration = TimeSpan.FromSeconds(10);
 
-            using (IRpcServer server = CreateServer())
+            using (_server = CreateServer())
             {
                 try
                 {
-                    cacheLifetime.OnCacheClear += server.Close;
-                    ShutdownTimer = new Timer((o) => server.Close(), null, Timeout.Infinite, Timeout.Infinite); // 10 seconds for initial connection or die.
-                    server.ConnectionAccepted += (o, connection) => AcceptConnection(connection).ConfigureAwait(false).GetAwaiter().GetResult();
-                    server.ConnectionClosed += (o, connection) => EnableTimer();
+                    cacheLifetime.OnCacheClear += _server.Close;
+                    ShutdownTimer = new Timer((o) => _server.Close(), null, Timeout.Infinite, Timeout.Infinite); // 10 seconds for initial connection or die.
+                    _server.ConnectionAccepted += (o, connection) => AcceptConnection(connection).ConfigureAwait(false).GetAwaiter().GetResult();
+                    _server.ConnectionClosed += (o, connection) => EnableTimer();
 
                     Logger.Instance.Log($"Service will shutdown if idle for {CacheDuration}", LogLevel.Debug);
                     EnableTimer();
-                    await server.Listen().ConfigureAwait(false);
+                    await _server.Listen().ConfigureAwait(false);
                 }
                 catch (System.OperationCanceledException) { }
                 finally
                 {
-                    cacheLifetime.OnCacheClear -= server.Close;
+                    cacheLifetime.OnCacheClear -= _server.Close;
                 }
             }
+            _server = null;
 
             Logger.Instance.Log("Service stopped", LogLevel.Info);
             return 0;
@@ -89,17 +99,21 @@ namespace gsudo.Commands
                 if (request.KillCache) throw new OperationCanceledException();
 
                 IProcessHost applicationHost = CreateProcessHost(request);
+                bool replaceService = !applicationHost.SupportsSimultaneousElevations && Settings.CacheMode.Value == CacheMode.Auto && !SingleUse;
 
-                if (!applicationHost.SupportsSimultaneousElevations && Settings.CacheMode.Value==CredentialsCache.CacheMode.Auto && !SingleUse)
-                {
-                    ServiceHelper.StartService(AllowedPid, CacheDuration, AllowedSid);
-                }
+                // This can create too many gsudo service instances when in attached mode.
+                // TODO: Maybe we can only do this if... ¿our parent PID is not gsudo?
+                if (replaceService)
+                    ServiceHelper.StartService(AllowedPid, CacheDuration, AllowedSid, SingleUse);
 
                 if (!string.IsNullOrEmpty(request.Prompt))
                     Environment.SetEnvironmentVariable("PROMPT",
                         Environment.ExpandEnvironmentVariables(request.Prompt));
 
                 await applicationHost.Start(connection, request).ConfigureAwait(false);
+
+                if (replaceService)
+                    _server.Close();
             }
             catch (OperationCanceledException)
             {

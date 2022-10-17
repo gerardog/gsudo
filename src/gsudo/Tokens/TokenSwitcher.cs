@@ -18,9 +18,14 @@ namespace gsudo.Tokens
                 tokenInfo.Token = desiredToken.DangerousGetHandle();
                 tokenInfo.Thread = IntPtr.Zero;
 
+                // We need System account to replace  process
+                // To set an elevated process token we don't need to impersonate System...
+                // But to set a System token to a process, we do need SeAssignPrimaryTokenPrivilege.
                 TokenProvider
                     .CreateFromSystemAccount()
-                    .EnablePrivilege(Privilege.SeAssignPrimaryTokenPrivilege, true)
+                    .EnablePrivilege(Privilege.SeAssignPrimaryTokenPrivilege, false)
+                    .EnablePrivilege(Privilege.SeTcbPrivilege, false)
+                    .EnablePrivilege(Privilege.SeIncreaseQuotaPrivilege, false)
                     .Impersonate(() =>
                     {
                         IntPtr hProcess = ProcessApi.OpenProcess(ProcessApi.PROCESS_SET_INFORMATION, true,
@@ -91,7 +96,7 @@ namespace gsudo.Tokens
             else
             {
                 tm = TokenProvider.CreateFromCurrentProcessToken(TokenProvider.MAXIMUM_ALLOWED);
-                if (ProcessHelper.GetCurrentIntegrityLevel() != (int)elevationRequest.IntegrityLevel)
+                if (SecurityHelper.GetCurrentIntegrityLevel() != (int)elevationRequest.IntegrityLevel)
                 {
                     tm.SetIntegrity(elevationRequest.IntegrityLevel);
                 }
