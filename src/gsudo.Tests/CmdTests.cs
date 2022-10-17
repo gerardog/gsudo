@@ -102,12 +102,12 @@ namespace gsudo.Tests
         public void Cmd_WindowsAppWaitTest()
         {
             bool stillWaiting = false;
-            var p = new TestProcess("gsudo \"c:\\Program Files (x86)\\Windows NT\\Accessories\\wordpad.exe\"");
+            var p = new TestProcess("gsudo -w \"c:\\Program Files (x86)\\Windows NT\\Accessories\\wordpad.exe\"");
             try
             {
                 p.WaitForExit(3000);
             }
-            finally
+            catch
             {
                 stillWaiting = true;
             }

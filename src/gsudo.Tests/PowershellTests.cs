@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using gsudo.Commands;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 
 namespace gsudo.Tests
@@ -11,7 +12,24 @@ namespace gsudo.Tests
 
         public PowerShellCoreTests()
         {
-            PS_FILENAME = "pwsh.exe";
+                PS_FILENAME = "pwsh.exe";
+        }
+    }
+
+    [TestClass]
+    public class PowerShellCoreAttachedTests : PowerShellTests
+    {
+        [ClassInitialize]
+        public static new void ClassInitialize(TestContext context)
+        {
+            TestShared.StartCacheSession();
+            new ConfigCommand() { key = "ForceAttachedConsole", value = new string[] { "true" } }.Execute();
+        }
+
+        [ClassCleanup]
+        public static new void ClassCleanup()
+        {
+            new ConfigCommand() { key = "ForceAttachedConsole", value = new string[] { "--reset" } }.Execute();
         }
     }
 
