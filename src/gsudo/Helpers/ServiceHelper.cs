@@ -38,8 +38,10 @@ namespace gsudo.Helpers
 
         internal static SafeProcessHandle StartService(int? allowedPid, TimeSpan? cacheDuration = null, string allowedSid = null, bool singleUse = false)
         {
+            var currentSid = WindowsIdentity.GetCurrent().User.Value;
+
             allowedPid = allowedPid ?? Process.GetCurrentProcess().GetCacheableRootProcessId();
-            allowedSid = allowedSid ?? Process.GetProcessById(allowedPid.Value).GetProcessUser().User.Value;
+            allowedSid = allowedSid ?? Process.GetProcessById(allowedPid.Value)?.GetProcessUser()?.User.Value ?? currentSid;
 
             string verb;
             SafeProcessHandle ret;
@@ -48,7 +50,7 @@ namespace gsudo.Helpers
 
             var @params = InputArguments.Debug ? "--debug " : string.Empty;
             if (!InputArguments.RunAsSystem && InputArguments.IntegrityLevel.HasValue) @params += $"-i {InputArguments.IntegrityLevel.Value} ";
-            if (InputArguments.RunAsSystem && allowedSid != WindowsIdentity.GetCurrent().User.Value) @params += "-s ";
+            if (InputArguments.RunAsSystem && allowedSid != currentSid) @params += "-s ";
             if (InputArguments.TrustedInstaller) @params += "--ti ";
             if (InputArguments.UserName != null) @params += $"-u {InputArguments.UserName} ";
 
