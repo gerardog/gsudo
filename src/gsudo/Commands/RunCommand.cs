@@ -87,9 +87,7 @@ namespace gsudo.Commands
 
         private static void SetRequestPrompt(ElevationRequest elevationRequest)
         {
-            if ((int)InputArguments.GetIntegrityLevel() < (int)IntegrityLevel.High)
-                elevationRequest.Prompt = Environment.GetEnvironmentVariable("PROMPT", EnvironmentVariableTarget.User) ?? Environment.GetEnvironmentVariable("PROMPT", EnvironmentVariableTarget.Machine) ?? "$P$G";
-            else if (elevationRequest.Mode != ElevationRequest.ConsoleMode.Piped || InputArguments.NewWindow)
+            if (elevationRequest.Mode != ElevationRequest.ConsoleMode.Piped || InputArguments.NewWindow)
                 elevationRequest.Prompt = Settings.Prompt;
             else
                 elevationRequest.Prompt = Settings.PipedPrompt;
@@ -139,10 +137,7 @@ namespace gsudo.Commands
             // No need to escalate. Run in-process
             Native.ConsoleApi.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, true);
 
-            if (!string.IsNullOrEmpty(elevationRequest.Prompt))
-            {
-                Environment.SetEnvironmentVariable("PROMPT", Environment.ExpandEnvironmentVariables(elevationRequest.Prompt));
-            }
+            ConsoleHelper.SetPrompt(elevationRequest);
 
             if (sameIntegrity)
             {
@@ -173,7 +168,7 @@ namespace gsudo.Commands
             }
             else // lower integrity
             {
-                if (elevationRequest.IntegrityLevel<IntegrityLevel.High && !elevationRequest.NewWindow)
+                if (elevationRequest.IntegrityLevel < IntegrityLevel.High && !elevationRequest.NewWindow)
                     RemoveAdminPrefixFromConsoleTitle();
 
                 var p = ProcessFactory.StartAttachedWithIntegrity(InputArguments.GetIntegrityLevel(), exeName, args, elevationRequest.StartFolder, InputArguments.NewWindow, !InputArguments.NewWindow);
@@ -247,7 +242,7 @@ namespace gsudo.Commands
             if (integrityLevel == IntegrityLevel.MediumRestricted)
                 return true;
 
-            if (InputArguments.UserName != null && (integrityLevel < IntegrityLevel.High))
+            if (InputArguments.UserName != null)
                 return true;
 
             return (int)integrityLevel > SecurityHelper.GetCurrentIntegrityLevel();
@@ -263,7 +258,14 @@ namespace gsudo.Commands
             if (Settings.ForcePipedConsole)
                 return ElevationRequest.ConsoleMode.Piped;
 
-            if (Settings.ForceVTConsole)
+            // When running as other user => 
+            bool runningAsOtherUser = InputArguments.UserName != null || // Elevating as someone else, we don't want to user caller profile and just switch tokens, We want to use target user profile.
+                                      !SecurityHelper.IsAdministrator(); // And if caller is not elevated => attach mode works.
+
+            bool runningAsOtherUserButElevated = InputArguments.UserName != null ||   
+                                                 SecurityHelper.IsAdministrator(); // => If caller is elevated, attach mode fails if target user is not elevated, so go with VT/piped modes.
+
+            if (Settings.ForceVTConsole || runningAsOtherUserButElevated)
             {
                 if (Console.IsErrorRedirected && Console.IsOutputRedirected)
                 {
@@ -281,10 +283,6 @@ namespace gsudo.Commands
                 return ElevationRequest.ConsoleMode.VT;
             }
 
-            bool runningAsOtherUser = !SecurityHelper.IsMemberOfLocalAdmins() ||
-                                        InputArguments.UserName != null;
-            
-            // Running as other user => Force attached mode, so the new process has admin user env vars. (See #113)
             if (Settings.ForceAttachedConsole || runningAsOtherUser)
             {
                 if (Console.IsErrorRedirected
@@ -299,8 +297,6 @@ namespace gsudo.Commands
 
                 return ElevationRequest.ConsoleMode.Attached;
             }
-
-
 
             return ElevationRequest.ConsoleMode.TokenSwitch;
         }

@@ -106,10 +106,7 @@ namespace gsudo.Commands
                 if (replaceService)
                     ServiceHelper.StartService(AllowedPid, CacheDuration, AllowedSid, SingleUse);
 
-                if (!string.IsNullOrEmpty(request.Prompt))
-                    Environment.SetEnvironmentVariable("PROMPT",
-                        Environment.ExpandEnvironmentVariables(request.Prompt));
-
+                ConsoleHelper.SetPrompt(request);
                 await applicationHost.Start(connection, request).ConfigureAwait(false);
 
                 if (replaceService)

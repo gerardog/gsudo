@@ -85,23 +85,29 @@ namespace gsudo.Rpc
             }
         }
 
-        public static string FindService(string user, int clientPid, string userSid = null)
+        public static string FindService(string allowedSid, int allowedPid, string targetUserSid = null)
         {
-            userSid = userSid ?? InputArguments.UserSid;
+            targetUserSid = targetUserSid ?? InputArguments.UserSid;
             string pipeName;
 
             if (!InputArguments.IntegrityLevel.HasValue || InputArguments.IntegrityLevel.Value >= IntegrityLevel.High)
             {
-                pipeName = NamedPipeNameFactory.GetPipeName(user, clientPid, userSid, true);
+                pipeName = NamedPipeNameFactory.GetPipeName(allowedSid, allowedPid, targetUserSid, true);
                 if (NamedPipeUtils.ExistsNamedPipe(pipeName))
+                {
+                    InputArguments.IntegrityLevel = InputArguments.IntegrityLevel ?? IntegrityLevel.High;
                     return pipeName;
+                }
             }
 
             if (!InputArguments.IntegrityLevel.HasValue || InputArguments.IntegrityLevel.Value < IntegrityLevel.High)
             {
-                pipeName = NamedPipeNameFactory.GetPipeName(user, clientPid, userSid, false);
+                pipeName = NamedPipeNameFactory.GetPipeName(allowedSid, allowedPid, targetUserSid, false);
                 if (NamedPipeUtils.ExistsNamedPipe(pipeName))
+                {
+                    InputArguments.IntegrityLevel = InputArguments.IntegrityLevel ?? IntegrityLevel.Low;
                     return pipeName;
+                }
             }
 
             return null;                

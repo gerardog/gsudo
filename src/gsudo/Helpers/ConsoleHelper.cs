@@ -9,6 +9,11 @@ namespace gsudo.Helpers
 {
     class ConsoleHelper
     { 
+        static ConsoleHelper()
+        {
+            IgnoreConsoleCancelKeyPress += IgnoreConsoleCancelKeyPressMethod; // ensure no garbage collection
+        }
+
         public static bool EnableVT()
         {
             var hStdOut = Native.ConsoleApi.GetStdHandle(Native.ConsoleApi.STD_OUTPUT_HANDLE);
@@ -37,11 +42,6 @@ namespace gsudo.Helpers
                 return true;
 
             return false;
-        }
-
-        static ConsoleHelper()
-        {
-            IgnoreConsoleCancelKeyPress += IgnoreConsoleCancelKeyPressMethod;
         }
 
         public static uint[] GetConsoleAttachedPids()
@@ -89,8 +89,10 @@ namespace gsudo.Helpers
             }
         }
 
-        internal static SecureString ReadConsolePassword()
+        internal static SecureString ReadConsolePassword(string userName)
         {
+            Console.Error.Write($"Password for user {userName}: ");
+
             var pass = new SecureString();
             ConsoleKey key;
             do
@@ -111,6 +113,17 @@ namespace gsudo.Helpers
             } while (key != ConsoleKey.Enter);
             Console.Error.Write("\n");
             return pass;
+        }
+
+        internal static void SetPrompt(ElevationRequest elevationRequest)
+        {
+            if (!string.IsNullOrEmpty(elevationRequest.Prompt))
+            {
+                if (SecurityHelper.GetCurrentIntegrityLevel() < (int)IntegrityLevel.High)
+                    Environment.SetEnvironmentVariable("PROMPT", Environment.GetEnvironmentVariable("PROMPT", EnvironmentVariableTarget.User) ?? Environment.GetEnvironmentVariable("PROMPT", EnvironmentVariableTarget.Machine) ?? "$P$G");
+                else
+                    Environment.SetEnvironmentVariable("PROMPT", Environment.ExpandEnvironmentVariables(elevationRequest.Prompt));
+            }
         }
     }
 }

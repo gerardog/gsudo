@@ -85,8 +85,7 @@ namespace gsudo.Helpers
             {
                 if (InputArguments.UserName != WindowsIdentity.GetCurrent().Name)
                 {
-                    Console.Error.Write($"Password for user {InputArguments.UserName}: ");
-                    var password = ConsoleHelper.ReadConsolePassword();
+                    var password = ConsoleHelper.ReadConsolePassword(InputArguments.UserName);
                     ret = ProcessFactory.StartWithCredentials(ownExe, commandLine, InputArguments.UserName, password).GetSafeProcessHandle();
                 }
                 else

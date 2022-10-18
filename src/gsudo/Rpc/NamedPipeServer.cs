@@ -171,6 +171,13 @@ namespace gsudo.Rpc
             ProcessModule clientProcessMainModule = null;
 
             clientProcess = Process.GetProcessById(clientPid);
+
+            if (SecurityHelper.GetCurrentIntegrityLevel() <= (int)IntegrityLevel.Medium)
+            {
+                // not much to protect.
+                return true;
+            }
+            
             clientProcessMainModule = clientProcess.MainModule;
 
             if (_allowedExeLength != -1)
@@ -190,7 +197,7 @@ namespace gsudo.Rpc
                         LogLevel.Error);
                     return false;
                 }
-            }
+            }            
 #if !DEBUG
             if (clientProcessMainModule != null) 
             {
