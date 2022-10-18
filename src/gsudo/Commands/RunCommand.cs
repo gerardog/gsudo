@@ -259,10 +259,10 @@ namespace gsudo.Commands
                 return ElevationRequest.ConsoleMode.Piped;
 
             // When running as other user => 
-            bool runningAsOtherUser = InputArguments.UserName != null || // Elevating as someone else, we don't want to user caller profile and just switch tokens, We want to use target user profile.
+            bool runningAsOtherUser = InputArguments.UserName != null && // Elevating as someone else, we don't want to user caller profile and just switch tokens, We want to use target user profile.
                                       !SecurityHelper.IsAdministrator(); // And if caller is not elevated => attach mode works.
 
-            bool runningAsOtherUserButElevated = InputArguments.UserName != null ||   
+            bool runningAsOtherUserButElevated = InputArguments.UserName != null &&
                                                  SecurityHelper.IsAdministrator(); // => If caller is elevated, attach mode fails if target user is not elevated, so go with VT/piped modes.
 
             if (Settings.ForceVTConsole || runningAsOtherUserButElevated)
