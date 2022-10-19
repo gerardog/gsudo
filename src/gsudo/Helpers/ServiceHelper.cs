@@ -81,7 +81,7 @@ namespace gsudo.Helpers
             {
                 ret = ProcessFactory.StartAsSystem(ownExe, commandLine, Environment.CurrentDirectory, !InputArguments.Debug);
             }
-            else if (InputArguments.UserSid != null)
+            else if (InputArguments.UserName != null)
             {
                 if (InputArguments.UserName != WindowsIdentity.GetCurrent().Name)
                 {

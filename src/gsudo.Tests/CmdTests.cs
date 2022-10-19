@@ -42,10 +42,10 @@ namespace gsudo.Tests
             // TODO: Test --raw, --vt, --attached
             var testDir = Environment.CurrentDirectory;
             var p1 = new TestProcess(
-                             $"\"{testDir}\\gsudo\" cmd /c cd \r\n"
+                                       $"\"{testDir}\\gsudo\" cmd /c cd \r\n" // => show current path
                                      + $"cd .. \r\n"
                                      + $"\"{testDir}\\gsudo\" cmd /c cd \r\n"
-            );
+            ); ;
             p1.WaitForExit();
 
             var otherDir = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory,".."));

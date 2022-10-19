@@ -6,6 +6,7 @@ using static gsudo.Native.ConsoleApi;
 
 namespace gsudo.Commands
 {
+    // Required for sending Ctrl-C / Ctrl-Break to the elevated process on VT & piped Mode.
     class CtrlCCommand : ICommand
     {
         public int Pid { get; set; }
