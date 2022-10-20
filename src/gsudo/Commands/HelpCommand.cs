@@ -67,7 +67,7 @@ Configuration:
  --global\t\t\t\tAffects all users (overrides user settings)
 
 From PowerShell: 
- gsudo [options] [--loadProfile] [{ ScriptBlock }] -args $argument1, $argumentN
+ gsudo [options] [--loadProfile] { ScriptBlock } [-args $argument1 [..., $argumentN]]
     { ScriptBlock }\tMust be wrapped in { curly brackets }
     --loadProfile\tWhen elevating PowerShell commands, load user profile.
 
