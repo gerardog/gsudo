@@ -137,7 +137,7 @@ namespace gsudo.Commands
             // No need to escalate. Run in-process
             Native.ConsoleApi.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, true);
 
-            ConsoleHelper.SetPrompt(elevationRequest);
+            ConsoleHelper.SetPrompt(elevationRequest, InputArguments.GetIntegrityLevel() >= IntegrityLevel.High);
 
             if (sameIntegrity)
             {

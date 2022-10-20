@@ -7,7 +7,7 @@ namespace gsudo
         Untrusted = 0,
         Low = 4096,
         Medium = 8192,
-        MediumRestricted = 8193, // Experimental, like medium but with a token flagged as elevated. It can't elevate again using RunAs.
+        MediumRestricted = 8193, // Experimental, like medium but without the split token. It can call RunAs but won't elevate.
         MediumPlus = 8448,
         High = 12288,
         System = 16384,

@@ -16,6 +16,7 @@ namespace gsudo.Rpc
             var server = ".";
 
             string pipeName = null;
+            bool isHighIntegrity;
             string user = System.Security.Principal.WindowsIdentity.GetCurrent().User.Value;
             NamedPipeClientStream dataPipe = null;
             NamedPipeClientStream controlPipe = null;
@@ -30,7 +31,7 @@ namespace gsudo.Rpc
                         if (ProcessApi.WaitForSingleObject(serviceProcessHandle.DangerousGetHandle(), 1) == 0) // original service process is dead, but may have started an elevated service that we don't have handle.
                             retryLefts--;
 
-                        pipeName = FindService(user, clientPid.Value);
+                        pipeName = FindService(user, clientPid.Value, out isHighIntegrity);
 
                         if (pipeName == null)
                             await Task.Delay(50).ConfigureAwait(false);
@@ -41,6 +42,7 @@ namespace gsudo.Rpc
                 }
                 else
                 {
+                    isHighIntegrity = false;
                     timeoutMilliseconds = 300;
                     var callerProcessId = Process.GetCurrentProcess().Id;
                     int maxRecursion = 20;
@@ -51,7 +53,7 @@ namespace gsudo.Rpc
                         // Search for Credentials Cache
 
                         //Try Admin
-                        pipeName = FindService(user, callerProcessId);
+                        pipeName = FindService(user, callerProcessId, out isHighIntegrity);
 
                         if (pipeName!=null)
                             break;
@@ -68,7 +70,7 @@ namespace gsudo.Rpc
 
                 Logger.Instance.Log($"Connected via Named Pipe {pipeName}.", LogLevel.Debug);
 
-                var conn = new Connection(controlPipe, dataPipe);
+                var conn = new Connection(controlPipe, dataPipe, isHighIntegrity);
                 return conn;
             }
             catch (System.TimeoutException)
@@ -85,7 +87,7 @@ namespace gsudo.Rpc
             }
         }
 
-        public static string FindService(string allowedSid, int allowedPid, string targetUserSid = null)
+        public static string FindService(string allowedSid, int allowedPid, out bool isHighIntegrity, string targetUserSid = null)
         {
             targetUserSid = targetUserSid ?? InputArguments.UserSid;
             string pipeName;
@@ -95,6 +97,7 @@ namespace gsudo.Rpc
                 pipeName = NamedPipeNameFactory.GetPipeName(allowedSid, allowedPid, targetUserSid, true);
                 if (NamedPipeUtils.ExistsNamedPipe(pipeName))
                 {
+                    isHighIntegrity = true;
                     InputArguments.IntegrityLevel = InputArguments.IntegrityLevel ?? IntegrityLevel.High;
                     return pipeName;
                 }
@@ -105,11 +108,13 @@ namespace gsudo.Rpc
                 pipeName = NamedPipeNameFactory.GetPipeName(allowedSid, allowedPid, targetUserSid, false);
                 if (NamedPipeUtils.ExistsNamedPipe(pipeName))
                 {
+                    isHighIntegrity = false;
                     InputArguments.IntegrityLevel = InputArguments.IntegrityLevel ?? IntegrityLevel.Low;
                     return pipeName;
                 }
             }
 
+            isHighIntegrity = false;
             return null;                
         }
 
@@ -124,7 +129,7 @@ namespace gsudo.Rpc
             int maxIterations = 20;
             while (allowedPid.Value > 0 && maxIterations-- > 0)
             {
-                pipeName = NamedPipeClient.FindService(allowedSid, allowedPid.Value, targetSid);
+                pipeName = NamedPipeClient.FindService(allowedSid, allowedPid.Value, out _, targetSid);
                 if (pipeName != null)
                     break;
 

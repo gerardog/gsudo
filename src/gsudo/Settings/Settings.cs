@@ -90,16 +90,21 @@ namespace gsudo
                     CacheMode,
                     CacheDuration,
                     LogLevel,
+                    
                     Prompt,
                     PipedPrompt,
+
                     ForceAttachedConsole,
                     ForcePipedConsole,
                     ForceVTConsole,
+
                     CopyEnvironmentVariables,
                     CopyNetworkShares,
+
                     PowerShellLoadProfile,
                     SecurityEnforceUacIsolation,
-                    ExceptionList);
+                    ExceptionList
+                );
 
         internal static TimeSpan TimeSpanParseWithInfinite(string value)
         {

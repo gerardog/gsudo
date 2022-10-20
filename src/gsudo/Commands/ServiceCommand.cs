@@ -106,7 +106,7 @@ namespace gsudo.Commands
                 if (replaceService)
                     ServiceHelper.StartService(AllowedPid, CacheDuration, AllowedSid, SingleUse);
 
-                ConsoleHelper.SetPrompt(request);
+                ConsoleHelper.SetPrompt(request, connection.IsHighIntegrity);
                 await applicationHost.Start(connection, request).ConfigureAwait(false);
 
                 if (replaceService)
