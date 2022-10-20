@@ -6,73 +6,67 @@ hide_title: true
 ---
 ## How to Use
 
-```gsudo```  Opens your shell elevated in the current console.
+``` powershell
+gsudo [options]                  # Elevates your current shell
+gsudo [options] {command} [args] # Runs {command} with elevated permissions
+gsudo cache [on | off | help]    # Starts/Stops an elevated cache session. (reduced UAC popups)
+gsudo status                     # Shows current user, cache and console status.
+gsudo !!                         # Re-run last command as admin. (YMMV)
+```
 
-```gsudo [options] {command} [arguments]```
-Executes the specified command with elevated permissions.
+``` powershell
+General options:
+ -n | --new            # Starts the command in a new console (and returns immediately).
+ -w | --wait           # When in new console, force wait for the command to end.
 
-Most relevant **`[options]`**:
+Security options:
+ -i | --integrity {v}  # Specify integrity level: Untrusted, Low, Medium, MediumPlus, High (default), System
+ -u | --user {usr}     # Run as the specified user. Asks for password. For local admins shows UAC unless '-i Medium'
+ -s | --system         # Run as Local System account (NT AUTHORITY\SYSTEM).
+ --ti                  # Run as member of NT SERVICE\TrustedInstaller
+ -k                    # Kills all cached credentials. The next time gsudo is run a UAC popup will be appear.
 
-- **`-n | --new`**        Starts the command in a **new** console with elevated rights (and returns immediately).
-- **`-w | --wait`**       Force wait for the process to end (and return the exitcode).
-- **`-s | --system`**     Run As Local System account ("NT AUTHORITY\SYSTEM").
-- **`-i | --integrity {v}`**   Run command with a specific integrity level: `Low`, `Medium`, `MediumPlus`, `High` (default), `System`. For example, use `Low` to launch a restricted process, or use `Medium` to run without Admin rights. 
-- **`-d | --direct`**     Execute {command} directly. Does not wrap it with your current shell (Pwsh/WSL/MinGw/Yori/etc). Assumes it is a `CMD` command (eg. an `.EXE` file).
-- **`--copyns`**         Reconnect current connected network shares on the elevated session. Warning! This is verbose, affects the elevated user system-wide (other processes), and can prompt for credentials interactively.
-- **`--debug`**          Debug mode (verbose).
+Shell related options:
+ -d | --direct         # Execute {command} directly. Bypass shell wrapper (Pwsh/Yori/etc).
+ --loadProfile         # When elevating PowerShell commands, load user profile.
 
-```gsudo config```
-Show current user-settings.
+Other options:
+ --loglevel {val}      # Set minimum log level to display: All, Debug, Info, Warning, Error, None
+ --debug               # Enable debug mode.
+ --copyns              # Connect network drives to the elevated user. Warning: Verbose, interactive asks for credentials
+ --copyev              # (deprecated) Copy environment variables to the elevated process. (not needed on default console mode)
 
-```gsudo config {key} ["value" | --reset]```
-Read, write, or reset a user setting to the default value.
-
-```gsudo status```
-Show status information about current user, security, integrity level or other gsudo relevant data.
+```
 
 **Note:** You can use anywhere **the `sudo` alias** created by the installers.
 
-### Examples
+**Examples:**
 
 ``` powershell
-# elevate the current shell in the current console window (Cmd/PowerShell/Pwsh Core/Yori/Take Command/git-bash/cygwin)
-gsudo
+gsudo   # elevates the current shell in the current console window (Supports Cmd/PowerShell/Pwsh Core/Yori/Take Command/git-bash/cygwin)
+gsudo -n # launch the current shell elevated in a new console window
+gsudo -n -w powershell ./Do-Something.ps1 # launch in new window and wait for exit
+gsudo notepad %windir%\system32\drivers\etc\hosts # launch windows app
 
-# launch the current shell elevated in a new console window
-gsudo -n
+sudo notepad # sudo alias built-in
 
-# launch in new window and wait for exit
-gsudo -n -w powershell ./Do-Something.ps1
-
-# launch windows app
-gsudo notepad %windir%\system32\drivers\etc\hosts
-
-# sudo alias built-in with choco/scoop/manual installers: 
-sudo notepad %windir%\system32\drivers\etc\hosts
-
-# Cmd Commands:
-gsudo type MySecretFile.txt
-gsudo md "C:\Program Files\MyApp"
-
-# redirect/pipe input/output/error
+# redirect/pipe input/output/error example
 gsudo dir | findstr /c:"bytes free" > FreeSpace.txt
 
-# Elevate last command (sudo bang bang)
-gsudo !!
+gsudo config LogLevel "Error"          # Configure Reduced logging
+gsudo config Prompt "$P [elevated]$G " # Configure a custom Elevated Prompt
+gsudo config Prompt --reset            # Reset to default value
+
+# Enable credentials cache (less UAC popups):
+gsudo config CacheMode Auto
 ```
 
 ### Configuration
 
-``` powershell
-# See current configuration
-gsudo config
-# Configure Reduced logging
-gsudo config LogLevel "Error"
-# Configure a custom Elevated Prompt
-gsudo config Prompt "$P [elevated]$G "
-# Reset to default value
-gsudo config Prompt --reset
 
-# Enable credentials cache (less UAC popups):
-gsudo config CacheMode Auto
+``` powershell
+ gsudo config                          # Show current config settings & values.
+ gsudo config {key} [--global] [value] # Read or write a user setting
+ gsudo config {key} [--global] --reset # Reset config to default value
+ --global                              # Affects all users (overrides user settings)
 ```
