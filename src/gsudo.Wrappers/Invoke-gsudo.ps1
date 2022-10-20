@@ -7,24 +7,28 @@ Serializes a scriptblock and executes it in an elevated powershell.
 The ScriptBlock runs in a different process, so it can´t read/write variables from the invoking scope.
 If you reference a variable in a scriptblock using the `$using:variableName` it will be replaced with it´s serialized value.
 The elevated command can accept input from the pipeline with $Input. It will be serialized, so size matters.
-The script result is serialized, sent back to the non-elevated instance, and returned.
-Optionally you can check for "$LastExitCode -eq 999" to find out if gsudo failed to elevate (UAC popup cancelled) 
+The command result is serialized, sent back to the non-elevated instance, deserealized and returned.
+
+Optionally you can check for "$LastExitCode -eq 999" to find out if gsudo failed to elevate (for example, UAC popup cancelled) 
 
 .PARAMETER ScriptBlock
 Specifies a ScriptBlock that will be run in an elevated PowerShell instance. '
 e.g. { Get-Process Notepad }
 
 .PARAMETER ArgumentList
-An list of elements that will be accesible inside the script as: $args
+An list of elements that will be accesible inside the script as: $args[0] ... $args[n]
 
-.PARAMETER NoElevate
-A test mode where the command is executed out-of-scope but without real elevation: The serialization/marshalling is still done.
+.PARAMETER LoadProfile
+Load the user profile in the elevated powershell instance. (regardless of `gsudo config PowerShellLoadProfile`)
+
+.PARAMETER NoProfile
+Do not load the user profile in the elevated powershell instance. (regardless of `gsudo config PowerShellLoadProfile`)
 
 .INPUTS
 You can pipe any object to Invoke-Gsudo. It will be serialized and available in the userScript as $Input.
 
 .OUTPUTS
-Whatever the scriptblock returns. Use explicit "return" in your scriptblock. 
+Whatever the scriptblock returns.
 
 .EXAMPLE
 PS> Get-Process notepad | Invoke-gsudo { Stop-Process }
@@ -63,10 +67,9 @@ param
 	[switch]
 	$NoProfile = $false,
 	
-	#test mode
 	[Parameter()]
-	[switch]
-	$NoElevate = $false
+	[System.Management.Automation.PSCredential]
+	$Credential
 )
 
 # Replaces $using:variableName with the serialized value of $variableName.
@@ -137,57 +140,66 @@ if ($Debug) {
 	Write-Debug "Full Script to run on the isolated instance: { $remoteCmd }" 
 } 
 
-if($NoElevate) { 
-	# We could invoke using Invoke-Command:
-	#		$result = $InputObject | Invoke-Command (Deserialize-Scriptblock $remoteCmd) -ArgumentList $ArgumentList
-	# Or run in a Job to ensure same variable isolation:
+$pwsh = ("""$([System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName)""") # Get same running powershell EXE.
 
-	$job = Start-Job -ScriptBlock (Deserialize-Scriptblock $remoteCmd) -errorAction $errorAction | Wait-Job; 
-	$result = Receive-Job $job -errorAction $errorAction
+if ($host.Name -notmatch 'consolehost') { # Workaround for PowerShell ISE, or PS hosted inside other process
+	if ($PSVersionTable.PSVersion.Major -le 5) 
+		{ $pwsh = "powershell.exe" } 
+	else 
+		{ $pwsh = "pwsh.exe" }
+} 
+
+$windowTitle = $host.ui.RawUI.WindowTitle;
+
+$dbg = if ($debug) {"--debug "} else {" "}
+
+if ($LoadProfile -and (-not $NoProfile -or (gsudo.exe --loglevel None config PowerShellLoadProfile).Split(" = ")[1] -like "*true*")) {
+	$sNoProfile = ""
 } else {
-	$pwsh = ("""$([System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName)""") # Get same running powershell EXE.
-	
-	if ($host.Name -notmatch 'consolehost') { # Workaround for PowerShell ISE, or PS hosted inside other process
-		if ($PSVersionTable.PSVersion.Major -le 5) 
-			{ $pwsh = "powershell.exe" } 
-		else 
-			{ $pwsh = "pwsh.exe" }
-	} 
-	
-	$windowTitle = $host.ui.RawUI.WindowTitle;
-
-	$dbg = if ($debug) {"--debug "} else {" "}
-	
-	if ($LoadProfile -or ((gsudo.exe --loglevel None config Powershellloadprofile).Split(" = ")[1] -like "*true*" -and -not $NoProfile)) {
-		$sNoProfile = ""
-	} else {
-		$sNoProfile = "-NoProfile "
-	}
-	
-	$arguments = "-d --LogLevel Error $dbg$pwsh -nologo $sNoProfile-NonInteractive -OutputFormat Xml -InputFormat Text -encodedCommand IAAoACQAaQBuAHAAdQB0ACAAfAAgAE8AdQB0AC0AUwB0AHIAaQBuAGcAKQAgAHwAIABpAGUAeAAgAA==".Split(" ")
-
-	# Must Read: https://stackoverflow.com/questions/68136128/how-do-i-call-the-powershell-cli-robustly-with-respect-to-character-encoding-i?noredirect=1&lq=1
-	$result = $remoteCmd | & gsudo.exe $arguments *>&1
-	
-	$host.ui.RawUI.WindowTitle = $windowTitle;
+	$sNoProfile = "-NoProfile "
 }
 
-ForEach ($item in $result)
-{
-	if (
-	$item.psobject.Properties['Exception'] -and
-	($item.Exception.SerializedRemoteException.WasThrownFromThrowStatement -or
-	 $item.Exception.WasThrownFromThrowStatement)
-	)
+if ($credential) {
+	$currentSid = ([System.Security.Principal.WindowsIdentity]::GetCurrent()).User.Value;
+	$user = "-u $($credential.UserName) "
+	
+	# At the time of writing this, there is no way (considered secure) to send the password to gsudo. So instead of sending the password, lets start a credentials cache instance.	
+	Start-Process "gsudo.exe" -Args "$dbg -u $($credential.UserName) gsudoservice $PID $CurrentSid All 00:05:00" -credential $Credential -LoadUserProfile -WorkingDirectory "$env:windir" *> $null
+	# This may fail with `The specified drive root "C:\Users\gerar\AppData\Local\Temp\" either does not exist, or it is not a folder.` https://github.com/PowerShell/PowerShell/issues/18333
+	
+	#$p.WaitForExit();
+	Start-Sleep -Seconds 1
+} else {
+	$user = "";
+}
+
+$arguments = "-d --LogLevel Error $user$dbg$pwsh $sNoProfile -nologo -NonInteractive -OutputFormat Xml -InputFormat Text -encodedCommand IAAoACQAaQBuAHAAdQB0ACAAfAAgAE8AdQB0AC0AUwB0AHIAaQBuAGcAKQAgAHwAIABpAGUAeAAgAA==".Split(" ")
+# Must Read: https://stackoverflow.com/questions/68136128/how-do-i-call-the-powershell-cli-robustly-with-respect-to-character-encoding-i?noredirect=1&lq=1
+
+$result = $remoteCmd | & gsudo.exe $arguments *>&1
+
+$host.ui.RawUI.WindowTitle = $windowTitle;
+
+& {
+	Set-StrictMode -Off #within this scope
+
+	ForEach ($item in $result)
 	{
-		throw $item
-	}
-	if ($item -is [System.Management.Automation.ErrorRecord])
-	{ 
-		Write-Error $item
-	}
-	else 
-	{ 
-		Write-Output $item; 
+		if (
+		$item.psobject.Properties['Exception'] -and
+		($item.Exception.SerializedRemoteException.WasThrownFromThrowStatement -or
+		 $item.Exception.WasThrownFromThrowStatement)
+		)
+		{
+			throw $item
+		}
+		if ($item -is [System.Management.Automation.ErrorRecord])
+		{ 
+			Write-Error $item
+		}
+		else 
+		{ 
+			Write-Output $item; 
+		}
 	}
 }
