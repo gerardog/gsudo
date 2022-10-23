@@ -120,6 +120,11 @@ namespace gsudo
 
             return result.ToString();
         }
+
+        public static bool Contains(this string source, char pattern, StringComparison comparisonType)
+        {
+            return source.IndexOf(pattern.ToString(), comparisonType) >= 0;
+        }
 #endif
     }
 }

@@ -13,7 +13,8 @@ namespace gsudo.Helpers
         Yori,
         Wsl,
         Bash,
-        TakeCommand
+        TakeCommand,
+        WindowsApp
     }
 
     static class ShellHelper
@@ -51,7 +52,7 @@ namespace gsudo.Helpers
 
         public static bool IsIntialized { get; internal set; }
 
-         private static Shell Initialize(out string invokingShellFullPath)
+        private static Shell Initialize(out string invokingShellFullPath)
         {
             var parentProcess = Process.GetCurrentProcess().GetParentProcessExcludingShim();
 
@@ -118,6 +119,12 @@ namespace gsudo.Helpers
 
                             return Shell.PowerShellCore;
                         }
+                    }
+
+                    if (ProcessFactory.IsWindowsApp(invokingShellFullPath))
+                    {
+                        invokingShellFullPath = Environment.GetEnvironmentVariable("COMSPEC");
+                        return Shell.WindowsApp; // Called from explorer.exe, task mgr, etc.
                     }
                 }
             }

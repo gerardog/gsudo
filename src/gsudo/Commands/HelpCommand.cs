@@ -42,6 +42,8 @@ Usage:
 
 General options:
  -n | --new             Starts the command in a new console (and returns immediately).
+ --noexit               Keep elevated shell open after running {command}.
+ --noclose              When in new console, ask for keypress before closing the console.
  -w | --wait            When in new console, wait for the command to end.
 
 Security options:

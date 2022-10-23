@@ -1,4 +1,5 @@
 ﻿using gsudo.Helpers;
+using gsudo.AppSettings;
 
 namespace gsudo
 {
@@ -9,6 +10,10 @@ namespace gsudo
 
         // Open in new window
         public static bool NewWindow { get; internal set; }
+        
+        // When elevating a command, keep the elevated shell open afterwards.
+        public static bool NoExit { get; internal set; }
+        public static bool KeepWindowOpen { get; internal set; }
 
         // Wait for new process to end
         public static bool Wait { get; internal set; }

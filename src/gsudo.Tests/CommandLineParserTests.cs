@@ -16,7 +16,7 @@ namespace gsudo.Tests
             {
                 var runCmd = result as RunCommand;
                 Assert.IsNotNull(runCmd);
-                Assert.AreEqual("cmd /c echo 1 2 3 4", string.Join(" ", runCmd.CommandToRun));
+                Assert.AreEqual("\"C:\\Windows\\system32\\cmd.EXE\" /c echo 1 2 3 4", string.Join(" ", runCmd.UserCommand));
 
                 Assert.IsTrue(InputArguments.NewWindow);
                 Assert.IsTrue(InputArguments.Wait);
@@ -44,7 +44,7 @@ namespace gsudo.Tests
 
             var runCmd = ret as RunCommand;
             Assert.IsNotNull(runCmd);
-            Assert.AreEqual("cmd /c echo 1 2 3 4", string.Join(" ", runCmd.CommandToRun));
+            Assert.AreEqual("\"C:\\Windows\\system32\\cmd.EXE\" /c echo 1 2 3 4", string.Join(" ", runCmd.UserCommand));
 
             Assert.IsTrue(InputArguments.NewWindow);
             Assert.IsFalse(InputArguments.Wait);
@@ -65,7 +65,7 @@ namespace gsudo.Tests
 
             var runCmd = ret as RunCommand;
             Assert.IsNotNull(runCmd);
-            Assert.AreEqual("", string.Join(" ", runCmd.CommandToRun));
+            Assert.AreEqual("", string.Join(" ", runCmd.UserCommand));
 
             Assert.IsFalse(InputArguments.NewWindow);
             Assert.IsFalse(InputArguments.Wait);
@@ -84,7 +84,7 @@ namespace gsudo.Tests
             {
                 var runCmd = result as RunCommand;
                 Assert.IsNotNull(runCmd);
-                CollectionAssert.AreEqual(new string[] { "notepad", "\"1 2 3 4\"" }, runCmd.CommandToRun.ToArray());
+                CollectionAssert.AreEqual(new string[] { "\"C:\\windows\\system32\\notepad.exe\"", "\"1 2 3 4\"" }, runCmd.UserCommand.ToArray(), StringComparer.OrdinalIgnoreCase);
 
                 Assert.IsTrue(InputArguments.NewWindow);
                 Assert.IsTrue(InputArguments.Wait);
