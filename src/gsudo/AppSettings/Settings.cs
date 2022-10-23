@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using gsudo.AppSettings;
 using gsudo.CredentialsCache;
 using Microsoft.Win32;
 
@@ -30,7 +31,8 @@ namespace gsudo
         public static RegistrySetting<string> PipedPrompt { get; }
             = new RegistrySetting<string>(nameof(PipedPrompt), 
                 defaultValue: DefaultAsciiPrompt, 
-                deserializer: (s) => s);
+                deserializer: (s) => s
+                );
 
         public static RegistrySetting<string> Prompt { get; }
             = new RegistrySetting<string>(nameof(Prompt),
@@ -84,13 +86,28 @@ namespace gsudo
                 deserializer: (string s)=>s,
                 scope: RegistrySettingScope.GlobalOnly);
 
+        public static RegistrySetting<bool> NewWindow_Force { get; } =
+            new RegistrySetting<bool>(nameof(NewWindow_Force),
+                defaultValue: false,
+                deserializer: bool.Parse,
+                scope: RegistrySettingScope.Any);
+
+        public static RegistrySetting<CloseBehaviour> NewWindow_CloseBehaviour { get; } =
+            new RegistrySetting<CloseBehaviour>(nameof(NewWindow_CloseBehaviour),
+                defaultValue: CloseBehaviour.OsDefault,
+                deserializer: ExtensionMethods.ParseEnum<CloseBehaviour>,
+                scope: RegistrySettingScope.Any);
+
         public static IDictionary<string, RegistrySetting> AllKeys =>
             new Dictionary<string, RegistrySetting>(StringComparer.OrdinalIgnoreCase)
                 .Add(
                     CacheMode,
                     CacheDuration,
                     LogLevel,
-                    
+
+                    NewWindow_Force,
+                    NewWindow_CloseBehaviour,
+
                     Prompt,
                     PipedPrompt,
 

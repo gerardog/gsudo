@@ -7,6 +7,12 @@ namespace gsudo.Helpers
 {
     public static class ArgumentsHelper
     {
+        /// <summary>
+        /// Splits arguments. Quoted segments remain joined and quotes preserved.
+        /// </summary>
+        /// <example>
+        /// SplitArgs("\"my exe name\" \"my params\" OtherParam1") => new string[] { "\"my exe name\"", "\"my params\"", "OtherParam1"};
+        /// </example>
         public static IList<string> SplitArgs(string args)
         {   
             args = args.Trim();

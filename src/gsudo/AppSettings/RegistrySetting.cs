@@ -3,7 +3,7 @@ using System;
 using System.ComponentModel;
 using System.Linq;
 
-namespace gsudo
+namespace gsudo.AppSettings
 {
     public enum RegistrySettingScope { 
         /// <summary>
@@ -45,7 +45,7 @@ namespace gsudo
 
         public RegistrySetting(string name, Func<T> defaultValue, Func<string, T> deserializer, RegistrySettingScope scope = RegistrySettingScope.Any, Func<T,string> serializer = null)
         {
-            Name = name;
+            Name = name.Replace('_', '.');
             this.defaultValue = defaultValue;
             this.deserializer = deserializer;
             this.Scope = scope;
