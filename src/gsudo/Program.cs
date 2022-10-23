@@ -19,13 +19,18 @@ namespace gsudo
             ICommand cmd = null;
 
             var commandLine = ArgumentsHelper.GetRealCommandLine();
-            Logger.Instance.Log($"Command Line: {commandLine}", LogLevel.Debug);
-
             var args = ArgumentsHelper.SplitArgs(commandLine);
 
             try
             {
-                cmd = new CommandLineParser(args).Parse();
+                try
+                {
+                    cmd = new CommandLineParser(args).Parse();
+                }
+                finally
+                {
+                    Logger.Instance.Log($"Command Line: {commandLine}", LogLevel.Debug);
+                }
 
                 if (cmd != null)
                 {

@@ -8,13 +8,12 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security;
 using static gsudo.Native.ProcessApi;
 using static gsudo.Native.TokensApi;
 
 namespace gsudo.Helpers
 {
-    //https://csharp.hotexamples.com/examples/CSCreateLowIntegrityProcess/PROCESS_INFORMATION/-/php-process_information-class-examples.html
-
     public static class ProcessFactory
     {
         public static Process StartElevatedDetached(string filename, string arguments, bool hidden)
@@ -58,6 +57,7 @@ namespace gsudo.Helpers
 
         public static Process StartAttached(string filename, string arguments)
         {
+            Logger.Instance.Log($"Process Start: {filename} {arguments}", LogLevel.Debug    );
             var process = new Process();
             process.StartInfo = new ProcessStartInfo(filename)
             {
@@ -97,6 +97,34 @@ namespace gsudo.Helpers
             }
 
             return process;
+        }
+
+        public static Process StartWithCredentials(string filename, string arguments, string user, SecureString password)
+        {
+            Logger.Instance.Log($"Starting process as {user}: {filename} {arguments}", LogLevel.Debug);
+            var usr = InputArguments.UserName.Split('\\');
+
+            try
+            {
+                return Process.Start(new ProcessStartInfo()
+                {
+                    UserName = usr[1],
+                    Domain = usr[0],
+                    Password = password,
+                    Arguments = arguments,
+                    FileName = filename,
+                    LoadUserProfile = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = !InputArguments.Debug,
+                });
+            }
+            catch(Win32Exception ex)
+            {
+                if (ex.NativeErrorCode == 1326)
+                    throw new ApplicationException("The user name or password is incorrect.");
+
+                throw;
+            }
         }
 
         public static bool IsWindowsApp(string exe)
@@ -184,7 +212,7 @@ namespace gsudo.Helpers
         {
             // must return a process Handle because we cant create a Process() from a handle and get the exit code. 
             Logger.Instance.Log($"{nameof(StartAttachedWithIntegrity)}: {appToRun} {args}", LogLevel.Debug);
-            int currentIntegrity = ProcessHelper.GetCurrentIntegrityLevel();
+            int currentIntegrity = SecurityHelper.GetCurrentIntegrityLevel();
             SafeTokenHandle newToken;
 
             if ((int)integrityLevel == currentIntegrity)

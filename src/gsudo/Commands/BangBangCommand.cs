@@ -1,6 +1,7 @@
 ﻿using gsudo.Helpers;
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -13,6 +14,12 @@ namespace gsudo.Commands
 
         public Task<int> Execute()
         {
+            if (ShellHelper.InvokingShell.In (Shell.PowerShell, Shell.PowerShellCore, Shell.PowerShellCore623BuggedGlobalInstall))
+            {
+                var module = Path.Combine(Path.GetDirectoryName(ProcessHelper.GetOwnExeName()), "gsudoModule.psd1");
+                throw new ApplicationException($"To use `gsudo !!` from powershell, run or add the following line to your `$PROFILE:\n\n Import-Module '{ module }'");
+            }
+
             var caller = Process.GetCurrentProcess().GetShellProcess().MainModule.ModuleName;
             var length = (int)NativeMethods.GetConsoleCommandHistoryLength(caller);
 
@@ -51,9 +58,8 @@ namespace gsudo.Commands
 
             Logger.Instance.Log("Command to run: " + commandToElevate, LogLevel.Info);
 
-            return new RunCommand()
-                { CommandToRun = ArgumentsHelper.SplitArgs(commandToElevate) }
-            .Execute();
+            return new RunCommand(commandToRun: ArgumentsHelper.SplitArgs(commandToElevate))
+                .Execute();
         }
 
         class NativeMethods

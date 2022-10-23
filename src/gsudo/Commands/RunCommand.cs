@@ -2,38 +2,48 @@
 using gsudo.Native;
 using gsudo.ProcessRenderers;
 using gsudo.Rpc;
+using gsudo.Tokens;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Security.AccessControl;
 using System.Security.Principal;
-using System.Text;
 using System.Threading.Tasks;
-using gsudo.Enums;
 
 namespace gsudo.Commands
 {
     public class RunCommand : ICommand
     {
-        public IList<string> CommandToRun { get; set; }
+        public IList<string> CommandToRun { get; private set; }
         private string GetArguments() => GetArgumentsString(CommandToRun, 1);
+
+        public RunCommand(IList<string> commandToRun)
+        {
+            CommandToRun = commandToRun;
+        }
 
         public async Task<int> Execute()
         {
+            if (InputArguments.IntegrityLevel == IntegrityLevel.System && !InputArguments.RunAsSystem)
+            {
+                Logger.Instance.Log($"Elevating as System because of IntegrityLevel=System parameter.", LogLevel.Warning);
+                InputArguments.RunAsSystem = true;
+            }
+
             bool isRunningAsDesiredUser = IsRunningAsDesiredUser();
             bool isElevationRequired = IsElevationRequired();
             bool isShellElevation = !CommandToRun.Any(); // are we auto elevating the current shell?
 
-            if (isElevationRequired & ProcessHelper.GetCurrentIntegrityLevel() < (int)IntegrityLevel.Medium)
+            if (isElevationRequired & SecurityHelper.GetCurrentIntegrityLevel() < (int)IntegrityLevel.Medium)
                 throw new ApplicationException("Sorry, gsudo doesn't allow to elevate from low integrity level."); // This message is not a security feature, but a nicer error message. It would have failed anyway since the named pipe's ACL restricts it.
+
+            if (isRunningAsDesiredUser && isShellElevation && !InputArguments.NewWindow)
+                throw new ApplicationException("Already running as the specified user/permission-level (and no command specified). Exiting...");
 
             CommandToRun = CommandToRunGenerator.AugmentCommand(CommandToRun.ToArray());
 
             bool isWindowsApp = ProcessFactory.IsWindowsApp(CommandToRun.FirstOrDefault());
-            var elevationMode = GetElevationMode(isWindowsApp);
+            var elevationMode = GetElevationMode();
 
             CommandToRun = CommandToRunGenerator.FixCommandExceptions(CommandToRun);
 
@@ -67,46 +77,43 @@ namespace gsudo.Commands
 
             Logger.Instance.Log($"Command to run: {elevationRequest.FileName} {elevationRequest.Arguments}", LogLevel.Debug);
 
-            if (isRunningAsDesiredUser && isShellElevation && !InputArguments.NewWindow)
-            {
-                Logger.Instance.Log("Already running as the specified user/permission-level (and no command specified). Exiting...", LogLevel.Error);
-                return Constants.GSUDO_ERROR_EXITCODE;
-            } 
-            
             if (isRunningAsDesiredUser || !isElevationRequired) // already elevated or running as correct user. No service needed.
             {
                 return RunWithoutService(exeName, GetArguments(), elevationRequest);
             }
 
-            return await RunUsingElevatedService(elevationRequest).ConfigureAwait(false);
+            return await RunUsingService(elevationRequest).ConfigureAwait(false);
         }
 
         private static void SetRequestPrompt(ElevationRequest elevationRequest)
         {
-            if ((int)InputArguments.GetIntegrityLevel() < (int)IntegrityLevel.High)
-                elevationRequest.Prompt = Environment.GetEnvironmentVariable("PROMPT", EnvironmentVariableTarget.User) ?? Environment.GetEnvironmentVariable("PROMPT", EnvironmentVariableTarget.Machine) ?? "$P$G";
-            else if (elevationRequest.Mode != ElevationRequest.ConsoleMode.Piped || InputArguments.NewWindow)
+            if (elevationRequest.Mode != ElevationRequest.ConsoleMode.Piped || InputArguments.NewWindow)
                 elevationRequest.Prompt = Settings.Prompt;
             else
                 elevationRequest.Prompt = Settings.PipedPrompt;
         }
 
-        /// Starts a cache session
-        private async Task<int> RunUsingElevatedService(ElevationRequest elevationRequest)
+        /// Starts a cache sessioBn
+        private async Task<int> RunUsingService(ElevationRequest elevationRequest)
         {
             Logger.Instance.Log($"Using Console mode {elevationRequest.Mode}", LogLevel.Debug);
-
-            var cmd = CommandToRun.FirstOrDefault();
 
             Rpc.Connection connection = null;
             try
             {
-                connection = await ServiceHelper.ConnectStartElevatedService().ConfigureAwait(false);
+                var callingPid = ProcessHelper.GetCallerPid();
+
+                Logger.Instance.Log($"Caller PID: {callingPid}", LogLevel.Debug);
+
+                connection = await ServiceHelper.Connect().ConfigureAwait(false);
 
                 if (connection == null) // service is not running or listening.
                 {
-                    Logger.Instance.Log("Unable to connect to the elevated service.", LogLevel.Error);
-                    return Constants.GSUDO_ERROR_EXITCODE;
+                    var service = ServiceHelper.StartService(callingPid, singleUse: InputArguments.KillCache);
+                    connection = await ServiceHelper.Connect(callingPid, service).ConfigureAwait(false);
+
+                    if (connection == null) // service is not running or listening.
+                        throw new ApplicationException("Unable to connect to the elevated service.");
                 }
 
                 var renderer = GetRenderer(connection, elevationRequest);
@@ -126,15 +133,11 @@ namespace gsudo.Commands
 
         private static int RunWithoutService(string exeName, string args, ElevationRequest elevationRequest)
         {
-            Logger.Instance.Log("Already running as the specified user/permission-level. Running in-process...", LogLevel.Debug);
-            var sameIntegrity = (int)InputArguments.GetIntegrityLevel() == ProcessHelper.GetCurrentIntegrityLevel();
+            var sameIntegrity = (int)InputArguments.GetIntegrityLevel() == SecurityHelper.GetCurrentIntegrityLevel();
             // No need to escalate. Run in-process
             Native.ConsoleApi.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, true);
 
-            if (!string.IsNullOrEmpty(elevationRequest.Prompt))
-            {
-                Environment.SetEnvironmentVariable("PROMPT", Environment.ExpandEnvironmentVariables(elevationRequest.Prompt));
-            }
+            ConsoleHelper.SetPrompt(elevationRequest, InputArguments.GetIntegrityLevel() >= IntegrityLevel.High);
 
             if (sameIntegrity)
             {
@@ -165,7 +168,7 @@ namespace gsudo.Commands
             }
             else // lower integrity
             {
-                if (elevationRequest.IntegrityLevel<IntegrityLevel.High && !elevationRequest.NewWindow)
+                if (elevationRequest.IntegrityLevel < IntegrityLevel.High && !elevationRequest.NewWindow)
                     RemoveAdminPrefixFromConsoleTitle();
 
                 var p = ProcessFactory.StartAttachedWithIntegrity(InputArguments.GetIntegrityLevel(), exeName, args, elevationRequest.StartFolder, InputArguments.NewWindow, !InputArguments.NewWindow);
@@ -187,7 +190,7 @@ namespace gsudo.Commands
         // Enforce SecurityEnforceUacIsolation
         private void AdjustUacIsolationRequest(ElevationRequest elevationRequest, bool isShellElevation)
         {
-            if ((int)(InputArguments.GetIntegrityLevel()) >= ProcessHelper.GetCurrentIntegrityLevel())
+            if ((int)(InputArguments.GetIntegrityLevel()) >= SecurityHelper.GetCurrentIntegrityLevel())
             {
                 if (!elevationRequest.NewWindow)
                 {
@@ -217,7 +220,10 @@ namespace gsudo.Commands
             if (InputArguments.RunAsSystem && !WindowsIdentity.GetCurrent().IsSystem)
                 return false;
 
-            if ((int)InputArguments.GetIntegrityLevel() != ProcessHelper.GetCurrentIntegrityLevel())
+            if ((int)InputArguments.GetIntegrityLevel() != SecurityHelper.GetCurrentIntegrityLevel())
+                return false;
+
+            if (InputArguments.UserName != null && InputArguments.UserName != WindowsIdentity.GetCurrent().Name)
                 return false;
 
             return true;
@@ -236,7 +242,10 @@ namespace gsudo.Commands
             if (integrityLevel == IntegrityLevel.MediumRestricted)
                 return true;
 
-            return (int)integrityLevel > ProcessHelper.GetCurrentIntegrityLevel();
+            if (InputArguments.UserName != null)
+                return true;
+
+            return (int)integrityLevel > SecurityHelper.GetCurrentIntegrityLevel();
         }
 
         /// <summary>
@@ -244,28 +253,19 @@ namespace gsudo.Commands
         /// or enhanced, colorfull VT mode with nice TAB auto-complete.
         /// </summary>
         /// <returns></returns>
-        private static ElevationRequest.ConsoleMode GetElevationMode(bool isWindowsApp)
+        private static ElevationRequest.ConsoleMode GetElevationMode()
         {
-            if ((!ProcessHelper.IsMemberOfLocalAdmins() || // => Not local admin? Force attached mode, so the new process has admin user env vars. (See #113)
-                Settings.ForceAttachedConsole) && !Settings.ForcePipedConsole && !Settings.ForceVTConsole)
-            {
-                if (Console.IsErrorRedirected
-                    || Console.IsInputRedirected
-                    || Console.IsOutputRedirected)
-                {
-                    // Attached mode doesnt supports redirection.
-                    return ElevationRequest.ConsoleMode.Piped; 
-                }
-                if (InputArguments.TrustedInstaller)
-                    return ElevationRequest.ConsoleMode.VT; // workaround for #173
-
-                return ElevationRequest.ConsoleMode.Attached;
-            }
-
             if (Settings.ForcePipedConsole)
                 return ElevationRequest.ConsoleMode.Piped;
 
-            if (Settings.ForceVTConsole)
+            // When running as other user => 
+            bool runningAsOtherUser = InputArguments.UserName != null && // Elevating as someone else, we don't want to user caller profile and just switch tokens, We want to use target user profile.
+                                      !SecurityHelper.IsAdministrator(); // And if caller is not elevated => attach mode works.
+
+            bool runningAsOtherUserButElevated = InputArguments.UserName != null &&
+                                                 SecurityHelper.IsAdministrator(); // => If caller is elevated, attach mode fails if target user is not elevated, so go with VT/piped modes.
+
+            if (Settings.ForceVTConsole || runningAsOtherUserButElevated)
             {
                 if (Console.IsErrorRedirected && Console.IsOutputRedirected)
                 {
@@ -281,6 +281,21 @@ namespace gsudo.Commands
                 }
 
                 return ElevationRequest.ConsoleMode.VT;
+            }
+
+            if (Settings.ForceAttachedConsole || runningAsOtherUser)
+            {
+                if (Console.IsErrorRedirected
+                    || Console.IsInputRedirected
+                    || Console.IsOutputRedirected)
+                {
+                    // Attached mode doesnt supports redirection.
+                    return ElevationRequest.ConsoleMode.Piped; 
+                }
+                if (InputArguments.TrustedInstaller)
+                    return ElevationRequest.ConsoleMode.VT; // workaround for #173
+
+                return ElevationRequest.ConsoleMode.Attached;
             }
 
             return ElevationRequest.ConsoleMode.TokenSwitch;

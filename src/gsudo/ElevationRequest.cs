@@ -25,15 +25,15 @@ namespace gsudo
         [Serializable]
         internal enum ConsoleMode { 
             /// <summary>
-            /// Obsolete, Process started at the service, I/O streamed via named pipes.
+            /// Process started at the service, I/O streamed via named pipes.
             /// </summary>
             Piped,
             /// <summary>
-            /// Obsolete, Experimental, Process started at the service using PseudoConsole, VT100 I/O streamed via named pipes.
+            /// Process started at the service using PseudoConsole, VT100 I/O streamed via named pipes.
             /// </summary>
             VT,
             /// <summary>
-            /// Obsolete, Process started at the service, then attached to the caller console unsing APIs.
+            /// Process started at the service, then attached to the caller console unsing APIs.
             /// </summary>
             Attached,
             /// <summary>

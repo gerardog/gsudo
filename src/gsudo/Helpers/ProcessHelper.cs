@@ -7,14 +7,11 @@ using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Threading;
 using gsudo.Native;
-using System.Linq;
 
 namespace gsudo.Helpers
 {
-    public static class ProcessHelper
+    internal static class ProcessHelper
     {
-        private static int? _cacheGetCurrentIntegrityLevelCache;
-        private static bool? _cacheIsAdmin;
         private static string _cacheOwnExeName;
 
         public static string GetOwnExeName()
@@ -36,15 +33,14 @@ namespace gsudo.Helpers
             return exeName;
         }
 
-        public static string GetProcessUser(this Process process)
+        public static WindowsIdentity GetProcessUser(this Process process)
         {
             IntPtr processHandle = IntPtr.Zero;
             try
             {
                 OpenProcessToken(process.Handle, 8, out processHandle);
                 WindowsIdentity wi = new WindowsIdentity(processHandle);
-                string user = wi.Name;
-                return user; //.Contains(@"\") ? user.Substring(user.IndexOf(@"\", StringComparison.OrdinalIgnoreCase) + 1) : user;
+                return wi;
             }
             catch
             {
@@ -73,10 +69,9 @@ namespace gsudo.Helpers
 
         public static int GetCacheableRootProcessId(this Process process)
         {
-            var parent = GetParentProcessId(process);
-
             if (ShellHelper.InvokingShell == Shell.Bash)
             {
+                var parent = GetParentProcessId(process);
                 if (parent == 0) 
                     return process.Id;
 
@@ -97,10 +92,32 @@ namespace gsudo.Helpers
                 { }
 
                 return parent;
+            }
 
+            int pid = process.Id;
+            Process p = null;
+
+            while (p == null)
+            {
+                pid = GetParentProcessId(pid);
+                try
+                {
+                    p = Process.GetProcessById(pid);
+                }
+                catch
+                { }
+
+                if (p != null)
+                {
+                    string filename = null;
+                    try { filename = p.MainModule.FileName; } catch { }
+
+                    if (filename != null && !IsShim(filename))
+                        break;
+                }                
             }
         
-            return GetParentProcessIdExcludingShim(process);
+            return pid;
         }
 
         public static Process GetParentProcessExcludingShim(this Process process)
@@ -130,7 +147,7 @@ namespace gsudo.Helpers
                 if (IsShim(filename))
                     return GetParentProcessIdExcludingShim(parent);
             }
-            catch (Exception ex)
+            catch
             {
                 // For example: System.ArgumentException: Process with an Id of 18312 is not running.
                 return parentId;
@@ -139,6 +156,7 @@ namespace gsudo.Helpers
             return parentId;
         }
 
+        // This function is special because it can get the parent process of a process that no longer exists.
         public static int GetParentProcessId(int pid)
         {
             IntPtr hProcess = ProcessApi.OpenProcess(ProcessApi.PROCESS_QUERY_INFORMATION, true, (uint)pid);
@@ -178,35 +196,6 @@ namespace gsudo.Helpers
             return Process.GetCurrentProcess().GetCacheableRootProcessId();
         }
 
-        public static bool IsHighIntegrity()
-        {
-            return ProcessHelper.GetCurrentIntegrityLevel() >= (int)IntegrityLevel.High;
-        }
-
-        public static bool IsAdministrator()
-        {
-            if (_cacheIsAdmin.HasValue) return _cacheIsAdmin.Value;
-
-            try
-            {
-                WindowsIdentity identity = WindowsIdentity.GetCurrent();
-                WindowsPrincipal principal = new WindowsPrincipal(identity);
-                _cacheIsAdmin = principal.IsInRole(WindowsBuiltInRole.Administrator);
-                return _cacheIsAdmin.Value;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-        }
-
-        public static bool IsMemberOfLocalAdmins()
-        {
-            var principal = new WindowsPrincipal(WindowsIdentity.GetCurrent());
-            var claims = principal.Claims;
-            return claims.Any(c => c.Value == "S-1-5-32-544");
-        }
-
         public static void Terminate(this Process process)
         {
             if (process.HasExited) return;
@@ -236,36 +225,14 @@ namespace gsudo.Helpers
                 SafeWaitHandle = new SafeWaitHandle(processHandle, ownsHandle: false)
             };
 
+        public static SafeProcessHandle GetSafeProcessHandle(this Process p) => new SafeProcessHandle(p.Handle, true);
+
         public static AutoResetEvent GetProcessWaitHandle(this SafeProcessHandle processHandle) =>
             new AutoResetEvent(false)
             {
                 SafeWaitHandle = new SafeWaitHandle(processHandle.DangerousGetHandle(), ownsHandle: false)
             };
 
-        /// <summary>
-        /// The function gets the integrity level of the current process.
-        /// </summary>
-        /// <returns>
-        /// Returns the integrity level of the current process. It is usually one of
-        /// these values:
-        ///
-        ///    SECURITY_MANDATORY_UNTRUSTED_RID - means untrusted level
-        ///    SECURITY_MANDATORY_LOW_RID - means low integrity level.
-        ///    SECURITY_MANDATORY_MEDIUM_RID - means medium integrity level.
-        ///    SECURITY_MANDATORY_HIGH_RID - means high integrity level.
-        ///    SECURITY_MANDATORY_SYSTEM_RID - means system integrity level.
-        ///
-        /// </returns>
-        /// <exception cref="System.ComponentModel.Win32Exception">
-        /// When any native Windows API call fails, the function throws a Win32Exception
-        /// with the last error code.
-        /// </exception>
-        static internal int GetCurrentIntegrityLevel()
-        {
-            if (_cacheGetCurrentIntegrityLevelCache.HasValue) return _cacheGetCurrentIntegrityLevelCache.Value;
-
-            return GetProcessIntegrityLevel(ProcessApi.GetCurrentProcess());
-        }
 
         static internal int GetProcessIntegrityLevel(IntPtr processHandle)
         {
@@ -363,7 +330,7 @@ namespace gsudo.Helpers
                 }
             }
 
-            return (_cacheGetCurrentIntegrityLevelCache = IL).Value;
+            return IL;
         }
 
         /// <summary>

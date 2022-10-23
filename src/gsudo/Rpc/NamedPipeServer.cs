@@ -79,7 +79,9 @@ namespace gsudo.Rpc
                 PipeAccessRights.FullControl, 
                 System.Security.AccessControl.AccessControlType.Deny));
 
-            var pipeName = NamedPipeNameFactory.GetPipeName(_allowedSid, _allowedPid);
+            bool isHighIntegrity = SecurityHelper.IsHighIntegrity();
+
+            var pipeName = NamedPipeNameFactory.GetPipeName(_allowedSid, _allowedPid, InputArguments.UserSid, isHighIntegrity);
             Logger.Instance.Log($"Listening on named pipe {pipeName}.", LogLevel.Debug);
 
             Logger.Instance.Log($"Access allowed only for ProcessID {_allowedPid} and children", LogLevel.Debug);
@@ -116,7 +118,7 @@ namespace gsudo.Rpc
 
                         if (dataPipe.IsConnected && controlPipe.IsConnected && !_cancellationTokenSource.IsCancellationRequested)
                         {
-                            var connection = new Connection(controlPipe, dataPipe);
+                            var connection = new Connection(controlPipe, dataPipe, isHighIntegrity);
 
                             ConnectionKeepAliveThread.Start(connection);
 
@@ -171,6 +173,13 @@ namespace gsudo.Rpc
             ProcessModule clientProcessMainModule = null;
 
             clientProcess = Process.GetProcessById(clientPid);
+
+            if (SecurityHelper.GetCurrentIntegrityLevel() <= (int)IntegrityLevel.Medium)
+            {
+                // not much to protect.
+                return true;
+            }
+            
             clientProcessMainModule = clientProcess.MainModule;
 
             if (_allowedExeLength != -1)
@@ -190,7 +199,7 @@ namespace gsudo.Rpc
                         LogLevel.Error);
                     return false;
                 }
-            }
+            }            
 #if !DEBUG
             if (clientProcessMainModule != null) 
             {

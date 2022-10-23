@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using gsudo.Enums;
+using gsudo.CredentialsCache;
 using gsudo.Helpers;
 using gsudo.Rpc;
 
@@ -19,6 +19,7 @@ namespace gsudo.Commands
     {
         public CacheCommandAction? Action { get; set; }
         public int? AllowedPid { get; set; }
+        public string AllowedSid { get; set; }
         public TimeSpan? CacheDuration { get; set; }
 
         public async Task<int> Execute()
@@ -56,8 +57,7 @@ namespace gsudo.Commands
                     return 1;
                 }
 
-
-                if (!ProcessHelper.IsAdministrator() && NamedPipeClient.IsServiceAvailable())
+                if (!SecurityHelper.IsAdministrator() && NamedPipeClient.IsServiceAvailable(AllowedPid, AllowedSid))
                 {
                     var commandToRun = new List<string>();
                     commandToRun.Add($"\"{ProcessHelper.GetOwnExeName()}\"");
@@ -68,15 +68,13 @@ namespace gsudo.Commands
 
                     InputArguments.Wait = true;
                     InputArguments.Direct = true;
-                    return await new RunCommand() {CommandToRun = commandToRun, }
+                    return await new RunCommand(commandToRun)
                         .Execute().ConfigureAwait(false);
                 }
                 else
                 {
-                    if (!ServiceHelper.StartElevatedService(AllowedPid.Value, CacheDuration ?? Settings.CacheDuration))
-                    {
-                        return Constants.GSUDO_ERROR_EXITCODE;
-                    }
+                    ServiceHelper.StartService(AllowedPid.Value, CacheDuration ?? Settings.CacheDuration, AllowedSid);
+
                     if (AllowedPid.Value != 0)
                         Logger.Instance.Log($"Elevation allowed for process Id {AllowedPid.Value} and children.",
                             LogLevel.Info);
@@ -87,7 +85,7 @@ namespace gsudo.Commands
                         LogLevel.Warning);
 
                     // wait until the cache service becomes available (2 seconds max)
-                    for (int i=0; i<40 && !NamedPipeClient.IsServiceAvailable(AllowedPid); i++)
+                    for (int i=0; i<40 && !NamedPipeClient.IsServiceAvailable(AllowedPid, AllowedSid); i++)
                         await Task.Delay(50).ConfigureAwait(false);
                 }
 

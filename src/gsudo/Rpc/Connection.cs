@@ -14,11 +14,12 @@ namespace gsudo.Rpc
     {
         private PipeStream _dataStream;
         private PipeStream _controlStream;
-
-        public Connection(PipeStream ControlStream, PipeStream DataStream)
+        public bool IsHighIntegrity { get; }
+        public Connection(PipeStream ControlStream, PipeStream DataStream, bool isHighIntegrity)
         {
             _dataStream = DataStream;
             _controlStream = ControlStream;
+            IsHighIntegrity = isHighIntegrity;
         }
 
         public Stream DataStream => _dataStream;

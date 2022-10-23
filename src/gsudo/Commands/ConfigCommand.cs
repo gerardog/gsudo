@@ -16,6 +16,11 @@ namespace gsudo.Commands
         {
             RegistrySetting setting = null;
 
+            if (key.In("-h", "/h", "/?", "-?", "--help", "help"))
+            {
+                return new HelpCommand().Execute();
+            }
+
             if (key == null)
             {
                 // print all configs
@@ -32,10 +37,7 @@ namespace gsudo.Commands
             Settings.AllKeys.TryGetValue(key, out setting);
 
             if (setting == null)
-            {
-                Logger.Instance.Log($"Invalid Setting '{key}'.", LogLevel.Error);
-                return Task.FromResult(Constants.GSUDO_ERROR_EXITCODE);
-            }
+                throw new ApplicationException($"Invalid Setting '{key}'.");
 
             if (value != null && value.Any()) // Write Setting
             {
@@ -61,15 +63,13 @@ namespace gsudo.Commands
                     InputArguments.Global = true;
                 }
 
-                if (InputArguments.Global && !ProcessHelper.IsAdministrator())
+                if (InputArguments.Global && !SecurityHelper.IsAdministrator())
                 {
                     Logger.Instance.Log($"Global system settings requires elevation. Elevating...", LogLevel.Info);
                     InputArguments.Direct = true;
-                    return new RunCommand()
-                    {
-                        CommandToRun = new string[]
+                    return new RunCommand(commandToRun: new string[]
                             { $"\"{ProcessHelper.GetOwnExeName()}\"", "--global", "config", key, reset ? "--reset" : $"\"{unescapedValue}\""}
-                    }.Execute();
+                    ).Execute();
                 }
 
                 if (reset)
@@ -77,7 +77,7 @@ namespace gsudo.Commands
                 else 
                     setting.Save(unescapedValue, InputArguments.Global);
 
-                if (setting.Name == Settings.CacheMode.Name && unescapedValue.In(Enums.CacheMode.Disabled.ToString()))
+                if (setting.Name == Settings.CacheMode.Name && unescapedValue.In(CredentialsCache.CacheMode.Disabled.ToString()))
                     new KillCacheCommand().Execute();
                 if (setting.Name.In (Settings.CacheDuration.Name, Settings.SecurityEnforceUacIsolation.Name))
                     new KillCacheCommand().Execute();

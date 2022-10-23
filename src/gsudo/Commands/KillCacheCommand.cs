@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using gsudo.CredentialsCache;
 
 namespace gsudo.Commands
 {
@@ -39,8 +40,7 @@ namespace gsudo.Commands
             }
             catch (Exception ex)
             {
-                Logger.Instance.Log($"Failed to invalidate Credentials Cache: {ex.ToString()}", LogLevel.Error);
-                return Task.FromResult(Constants.GSUDO_ERROR_EXITCODE);
+                throw new ApplicationException($"Failed to invalidate Credentials Cache: {ex.ToString()}");
             }
         }
     }

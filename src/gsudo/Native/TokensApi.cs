@@ -64,10 +64,10 @@ namespace gsudo.Native
 
         public enum SECURITY_IMPERSONATION_LEVEL
         {
-            SecurityAnonymous,
-            SecurityIdentification,
-            SecurityImpersonation,
-            SecurityDelegation
+            SecurityAnonymous = 0,
+            SecurityIdentification = 1,
+            SecurityImpersonation = 2,
+            SecurityDelegation = 3
         }
 
         public enum TOKEN_TYPE

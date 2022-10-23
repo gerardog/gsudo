@@ -93,6 +93,7 @@ $hash = gsudo "(Get-FileHash '$file' -Algorithm $algorithm).Hash"
 - Current Location is preserved for non-FileSystem providers.
 - `$ErrorActionPreference` is preserved.  
 - If your command requires accessing a function on your `$PROFILE` add the `-LoadProfile` parameter. [See More](#loading-your-ps-profile-on-command-elevations).
+- Add `-Credential` to specify a user & password to run.
 
 Examples:
 

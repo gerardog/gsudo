@@ -24,7 +24,7 @@ namespace gsudo.Tests
         //[TestMethod]
         public void Cmd_AdminUserTest()
         {
-            Assert.IsTrue(ProcessHelper.IsAdministrator(), "This test suite is intended to be run as an administrator, otherwise it will not work.");
+            Assert.IsTrue(SecurityHelper.IsAdministrator(), "This test suite is intended to be run as an administrator, otherwise it will not work.");
         }
 
         [TestMethod]
@@ -42,10 +42,10 @@ namespace gsudo.Tests
             // TODO: Test --raw, --vt, --attached
             var testDir = Environment.CurrentDirectory;
             var p1 = new TestProcess(
-                             $"\"{testDir}\\gsudo\" cmd /c cd \r\n"
+                                       $"\"{testDir}\\gsudo\" cmd /c cd \r\n" // => show current path
                                      + $"cd .. \r\n"
                                      + $"\"{testDir}\\gsudo\" cmd /c cd \r\n"
-            );
+            ); ;
             p1.WaitForExit();
 
             var otherDir = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory,".."));
@@ -102,12 +102,12 @@ namespace gsudo.Tests
         public void Cmd_WindowsAppWaitTest()
         {
             bool stillWaiting = false;
-            var p = new TestProcess("gsudo \"c:\\Program Files (x86)\\Windows NT\\Accessories\\wordpad.exe\"");
+            var p = new TestProcess("gsudo -w \"c:\\Program Files (x86)\\Windows NT\\Accessories\\wordpad.exe\"");
             try
             {
                 p.WaitForExit(3000);
             }
-            finally
+            catch
             {
                 stillWaiting = true;
             }
@@ -120,16 +120,17 @@ namespace gsudo.Tests
         [TestMethod]
         public void Cmd_WindowsAppNoWaitTest()
         {
-            var p = new TestProcess("gsudo notepad");
+            var p = new TestProcess("gsudo \"c:\\Program Files (x86)\\Windows NT\\Accessories\\wordpad.exe\"");
             try
             {
                 p.WaitForExit();
             }
             finally
             {
-                Process.Start("gsudo", "taskkill.exe /FI \"WINDOWTITLE eq Untitled - Notepad\" ").WaitForExit();
-                p.WaitForExit();
+                Process.Start("gsudo", "taskkill.exe /IM Wordpad.exe").WaitForExit();
             }
+
+            p.WaitForExit();
         }
 
         [TestMethod]

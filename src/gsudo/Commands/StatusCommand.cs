@@ -17,7 +17,7 @@ namespace gsudo.Commands
             Console.WriteLine($"Caller Pid: {ProcessHelper.GetCallerPid()}");
 
             var id = WindowsIdentity.GetCurrent();
-            bool isAdmin = ProcessHelper.IsAdministrator();
+            bool isAdmin = SecurityHelper.IsAdministrator();
             Console.Write($"Running as:\n  User: ");
 
             if (isAdmin)
@@ -31,11 +31,11 @@ namespace gsudo.Commands
             if (isAdmin)
                 Console.ForegroundColor = ConsoleColor.Red;
 
-            Console.WriteLine(ProcessHelper.IsAdministrator());
+            Console.WriteLine(SecurityHelper.IsAdministrator());
             Console.ResetColor();
 
             Console.Write($"  Integrity Level: ");
-            var integrity = ProcessHelper.GetCurrentIntegrityLevel();
+            var integrity = SecurityHelper.GetCurrentIntegrityLevel();
             var integrityString = string.Empty;
 
             if (Enum.IsDefined(typeof(IntegrityLevel), integrity))
@@ -98,7 +98,7 @@ namespace gsudo.Commands
 
                     try
                     {
-                        username = p.GetProcessUser() ?? unknown;
+                        username = p.GetProcessUser()?.Name ?? unknown;
                     }
                     catch
                     { }

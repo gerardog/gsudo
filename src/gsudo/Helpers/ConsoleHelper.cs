@@ -2,12 +2,18 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security;
 using static gsudo.Native.ConsoleApi;
 
 namespace gsudo.Helpers
 {
     class ConsoleHelper
     { 
+        static ConsoleHelper()
+        {
+            IgnoreConsoleCancelKeyPress += IgnoreConsoleCancelKeyPressMethod; // ensure no garbage collection
+        }
+
         public static bool EnableVT()
         {
             var hStdOut = Native.ConsoleApi.GetStdHandle(Native.ConsoleApi.STD_OUTPUT_HANDLE);
@@ -36,11 +42,6 @@ namespace gsudo.Helpers
                 return true;
 
             return false;
-        }
-
-        static ConsoleHelper()
-        {
-            IgnoreConsoleCancelKeyPress += IgnoreConsoleCancelKeyPressMethod;
         }
 
         public static uint[] GetConsoleAttachedPids()
@@ -85,6 +86,43 @@ namespace gsudo.Helpers
                 height = Console.WindowHeight;
                 cursorLeftPos = Console.CursorLeft;
                 cursorTopPos = Console.CursorTop;
+            }
+        }
+
+        internal static SecureString ReadConsolePassword(string userName)
+        {
+            Console.Error.Write($"Password for user {userName}: ");
+
+            var pass = new SecureString();
+            ConsoleKey key;
+            do
+            {
+                var keyInfo = Console.ReadKey(intercept: true);
+                key = keyInfo.Key;
+
+                if (key == ConsoleKey.Backspace && pass.Length > 0)
+                {
+                    Console.Error.Write("\b \b");
+                    pass.RemoveAt(pass.Length - 1);
+                }
+                else if (!char.IsControl(keyInfo.KeyChar))
+                {
+                    Console.Error.Write("*");
+                    pass.AppendChar(keyInfo.KeyChar);
+                }
+            } while (key != ConsoleKey.Enter);
+            Console.Error.Write("\n");
+            return pass;
+        }
+
+        internal static void SetPrompt(ElevationRequest elevationRequest, bool isElevated)
+        {
+            if (!string.IsNullOrEmpty(elevationRequest.Prompt))
+            {
+                if (!isElevated)
+                    Environment.SetEnvironmentVariable("PROMPT", Environment.GetEnvironmentVariable("PROMPT", EnvironmentVariableTarget.User) ?? Environment.GetEnvironmentVariable("PROMPT", EnvironmentVariableTarget.Machine) ?? "$P$G");
+                else
+                    Environment.SetEnvironmentVariable("PROMPT", Environment.ExpandEnvironmentVariables(elevationRequest.Prompt));
             }
         }
     }

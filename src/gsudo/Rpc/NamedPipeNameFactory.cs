@@ -1,18 +1,25 @@
-﻿using System.Globalization;
+﻿using gsudo.Helpers;
+using System;
+using System.Globalization;
+using System.Security.Principal;
 using System.Text;
 
 namespace gsudo.Rpc
 {
     static class NamedPipeNameFactory
     {
-        public static string GetPipeName(string connectingUser, int connectingPid)
+        public static string GetPipeName(string allowedSid, int allowedPid, string targetSid, bool isAdmin)
         {
-            if (connectingPid < 0) connectingPid = 0;
-            var data = $"{connectingUser}_{connectingPid}{(InputArguments.TrustedInstaller ? "_TI" : string.Empty)}";
+            if (allowedPid < 0) allowedPid = 0;
+
+            var ti = InputArguments.TrustedInstaller ? "_TI" : string.Empty;
+            var admin = !isAdmin ? "_NonAdmin" : string.Empty;
+
+            var data = $"{allowedSid}_{targetSid}_{allowedPid}_{ti}{admin}";
 #if !DEBUG
             data = GetHash(data);
 #endif
-            return $"{GetPipePrefix()}_{data}";
+            return $"{GetPipePrefix(isAdmin)}_{data}";
         }
 
         private static string GetHash(string data)
@@ -29,12 +36,14 @@ namespace gsudo.Rpc
             }
         }
 
-        private static string GetPipePrefix()
+        private static string GetPipePrefix(bool isAdmin)
         {
-//            if ((InputArguments.GetIntegrityLevel()) >= IntegrityLevel.High)
-                return "ProtectedPrefix\\Administrators\\gsudo";
-//            else
-//                return "gsudo";
-        }
+            const string PROTECTED = "ProtectedPrefix\\Administrators\\gsudo";
+            const string REGULAR = "gsudo";
+            if (isAdmin)
+                return PROTECTED;
+            else
+                return REGULAR;
+        }    
     }
 }

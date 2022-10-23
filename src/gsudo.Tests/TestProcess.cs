@@ -13,7 +13,6 @@ namespace gsudo.Tests
         public uint ProcessId { get; set; }
         public int ExitCode;
 
-        static int TestNumber = 1;
         private readonly string _testId = Random.Shared.Next(1,999999).ToString() ;// DateTime.Now.ToString("yyyyMMddHHmmssff");
         string _sIn => $"in{_testId}";
         string _sOut => $"out{_testId}";
