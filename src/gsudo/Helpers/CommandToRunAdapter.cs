@@ -13,36 +13,75 @@ using System.Threading.Tasks;
 
 namespace gsudo.Helpers
 {
-    internal class CommandToRunGenerator
+    /// <summary>
+    /// Interpret user entered command, as a `current-shell` command
+    /// and convert it into a Win32 process we can invoke with arguments.
+    /// 
+    /// For example:
+    ///   - In CMD
+    ///         C:\>gsudo md Folder => cmd /c md Folder
+    ///   - In Windows PowerShell
+    ///         PS C:\> gsudo New-Item -Path .\TestFolder -ItemType Directory     => powershell.exe -NoLogo -Command "New-Item -Path .\TestFolder -ItemType Directory"
+    ///   - In PowerShell Core
+    ///         PS C:\> gsudo New-Item -Path .\TestFolder -ItemType Directory     => pwsh.exe -NoLogo -Command "New-Item -Path .\TestFolder -ItemType Directory"
+    /// </summary>
+
+    internal class CommandToRunBuilder
     {
         static readonly HashSet<string> CmdCommands = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "ASSOC", "BREAK", "CALL", "CD", "CHDIR", "CLS", "COLOR", "COPY", "DATE", "DEL", "DIR", "ECHO", "ENDLOCAL", "ERASE", "EXIT", "FOR", "FTYPE", "GOTO", "IF", "MD", "MKDIR", "MKLINK", "MOVE", "PATH", "PAUSE", "POPD", "PROMPT", "PUSHD", "RD", "REM", "REN", "RENAME", "RMDIR", "SET", "SETLOCAL", "SHIFT", "START", "TIME", "TITLE", "TYPE", "VER", "VERIFY", "VOL" };
         static readonly HashSet<string> CreateProcessSupportedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ".CMD", ".EXE", ".BAT", ".COM" };
 
-        /// <summary>
-        /// Interpret user entered command, as a `current-shell` command
-        /// and convert it into a Win32 process we can invoke with arguments.
-        /// 
-        /// For example:
-        ///   - In CMD
-        ///         C:\>gsudo md Folder => cmd /c md Folder
-        ///   - In Windows PowerShell
-        ///         PS C:\> gsudo New-Item -Path .\TestFolder -ItemType Directory     => powershell.exe -NoLogo -Command "New-Item -Path .\TestFolder -ItemType Directory"
-        ///   - In PowerShell Core
-        ///         PS C:\> gsudo New-Item -Path .\TestFolder -ItemType Directory     => pwsh.exe -NoLogo -Command "New-Item -Path .\TestFolder -ItemType Directory"
-        /// </summary>
-        internal static string[] AugmentCommand(string[] args)
+        IList<string> command;
+        IList<string> preCommands = new List<string>();
+        IList<string> postCommands = new List<string>();
+
+        private bool isShellElevation;
+        private bool isWindowsApp;
+        private bool keepShellOpen;
+        private bool keepWindowOpen;
+        private bool mustWrap;
+        private bool buildCompleted;
+        public bool IsWindowsApp { get; private set; }
+
+
+        public CommandToRunBuilder(IList<string> command)
         {
-            string currentShellExeName = ShellHelper.InvokingShellFullPath;
-            Shell currentShell = ShellHelper.InvokingShell;
+            isShellElevation = command.Count == 0;
+            //--noExit
+            keepShellOpen = InputArguments.NoExit ||
+                (InputArguments.NewWindow && Settings.NewWindow_CloseBehaviour == AppSettings.CloseBehaviour.KeepShellOpen)
+                && !isShellElevation
+                ;
 
-            if (currentShellExeName[0] != '"' && currentShellExeName.Contains(' '))
-                { currentShellExeName = $"\"{currentShellExeName}\""; }
+            //--noClose
+            keepWindowOpen = !keepShellOpen
+                         && !isShellElevation
+                         && (InputArguments.NewWindow || Settings.NewWindow_Force)
+                         && (InputArguments.KeepWindowOpen || Settings.NewWindow_CloseBehaviour == AppSettings.CloseBehaviour.PressKeyToClose);
 
-            Logger.Instance.Log($"Invoking Shell: {currentShell}", LogLevel.Debug);
+            IsWindowsApp = command.Any() && ProcessFactory.IsWindowsApp(command.First());
 
+            this.command = ApplyShell(command);
+            /*
+             * keepShellOpen is like "cmd /k command", the elevated cmd will remain open (/k);
+             * keepWindowOpen is like "cmd /c 'command & pause'", press a key to close.
+            */
+        }
+
+        private IList<string> ApplyShell(IList<string> args)
+        {
+            var _currentShellFileName = ShellHelper.InvokingShellFullPath;
+            var _currentShell = ShellHelper.InvokingShell;
+
+            Logger.Instance.Log($"Invoking Shell: {_currentShell}", LogLevel.Debug);
+
+            if (_currentShellFileName[0] != '"' && _currentShellFileName.Contains(' ', StringComparison.Ordinal))
+                _currentShellFileName = $"\"{_currentShellFileName}\"";
+
+            var cmd_c = keepShellOpen ? "/k" : "/c";
             if (!InputArguments.Direct)
             {
-                if (currentShell == Shell.PowerShellCore623BuggedGlobalInstall)
+                if (_currentShell == Shell.PowerShellCore623BuggedGlobalInstall)
                 {
                     // PowerShell Core 6.0.0 to 6.2.3 does not supports command line arguments.
 
@@ -66,35 +105,38 @@ namespace gsudo.Helpers
 
                     var newArgs = new List<string>
                     {
-                        currentShellExeName
+                        _currentShellFileName
                     };
-                    newArgs.AddMany(args);
+                    newArgs.AddRange(args);
 
                     return newArgs.ToArray();
                 }
-                else if (currentShell.In(Shell.PowerShell, Shell.PowerShellCore))
+                else if (_currentShell.In(Shell.PowerShell, Shell.PowerShellCore))
                 {
                     var newArgs = new List<string>
                     {
-                        currentShellExeName,
+                        _currentShellFileName,
                         "-NoLogo"
                     };
 
-                    if (args.Length > 0)
+
+                    if (args.Any())
                     {
+                        if (keepShellOpen)
+                            newArgs.Add("-NoExit");
+
                         if (!Settings.PowerShellLoadProfile)
                             newArgs.Add("-NoProfile");
 
                         if (args[0] == "-encodedCommand")
                         {
-                            newArgs.AddMany(args);
+                            newArgs.AddRange(args);
                         }
                         else
                         {
                             newArgs.Add("-Command");
 
-                            int last = args.Length - 1;
-
+                            int last = args.Count - 1;
 
                             if (args[0].StartsWith("\"", StringComparison.Ordinal) &&
                                 args[last].EndsWith("\"", StringComparison.Ordinal))
@@ -107,10 +149,10 @@ namespace gsudo.Helpers
                             if (args[last].EndsWith("\\", StringComparison.Ordinal))
                                 args[last] += "\\";
 
-                            if (currentShell == Shell.PowerShell) // Windows Powershell extra issues (not core)
+                            if (_currentShell == Shell.PowerShell) // Windows Powershell extra issues (not core)
                             {
                                 //See https://stackoverflow.com/a/59960203/97471
-                                for (int i = 0; i < args.Length; i++)
+                                for (int i = 0; i < args.Count; i++)
                                     if (args[i].EndsWith("\\\"", StringComparison.Ordinal))
                                         args[i] = args[i].Substring(0, args[i].Length - 2) + "\\\\\"";
                             }
@@ -126,15 +168,15 @@ namespace gsudo.Helpers
 
                     return newArgs.ToArray();
                 }
-                else if (currentShell == Shell.Yori)
+                else if (_currentShell == Shell.Yori)
                 {
-                    if (args.Length == 0)
-                        return new[] { currentShellExeName };
+                    if (args.Count == 0)
+                        return new[] { _currentShellFileName };
                     else
-                        return new[] { currentShellExeName, "-c" }
+                        return new[] { _currentShellFileName, keepShellOpen ? "-k" : "-c" }
                             .Concat(args).ToArray();
                 }
-                else if (currentShell == Shell.Wsl)
+                else if (_currentShell == Shell.Wsl)
                 {
                     // these variables should come from WSL, via gsudo.extras\gsudo bash script
                     string wsl_distro = Environment.GetEnvironmentVariable("WSL_DISTRO_NAME");
@@ -142,48 +184,48 @@ namespace gsudo.Helpers
 
                     if (!string.IsNullOrEmpty(wsl_user) && !string.IsNullOrEmpty(wsl_distro))
                     {
-                        return new[] { currentShellExeName, // wsl.exe
+                        return new[] { _currentShellFileName, // wsl.exe
                                         "-d", wsl_distro,
                                         "-u", wsl_user,
                                         "--" }
                                         .Concat(args).ToArray();
                     }
                 }
-                else if (currentShell == Shell.Bash)
+                else if (_currentShell == Shell.Bash)
                 {
-                    if (args.Length == 0)
-                        return new[] { currentShellExeName };
+                    if (args.Count == 0)
+                        return new[] { _currentShellFileName };
                     else
-                        return new[] { currentShellExeName, "-c",
+                        return new[] { _currentShellFileName, "-c",
                             $"\"{ String.Join(" ", args).ReplaceOrdinal("\"", "\\\"") }\"" };
                 }
-                else if (currentShell == Shell.TakeCommand)
+                else if (_currentShell == Shell.TakeCommand)
                 {
-                    if (args.Length == 0)
-                        return new[] { currentShellExeName, "/k" };
+                    if (args.Count == 0)
+                        return new[] { _currentShellFileName, "/k" };
                     else
-                        return new[] { currentShellExeName, "/c" }
+                        return new[] { _currentShellFileName, cmd_c }
                             .Concat(args).ToArray();
                 }
             }
 
             // We will use CMD.
-            if (currentShell != Shell.Cmd)
+            if (_currentShell != Shell.Cmd)
             {
                 // Let's find Cmd.Exe
-                currentShellExeName = $"\"{Environment.GetEnvironmentVariable("COMSPEC")}\"";
+                _currentShellFileName = $"\"{Environment.GetEnvironmentVariable("COMSPEC")}\"";
             }
 
-            if (args.Length == 0)
+            if (args.Count == 0)
             {
                 return new string[]
-                    { currentShellExeName, "/k" };
+                    { _currentShellFileName, "/k" };
             }
             else
             {
                 if (CmdCommands.Contains(args[0])) // We want cmd commands to be run with CMD /c, not search for .EXE
                     return new string[]
-                        { currentShellExeName, "/c" }
+                        { _currentShellFileName, cmd_c }
                         .Concat(args).ToArray();
 
                 var exename = ProcessFactory.FindExecutableInPath(ArgumentsHelper.UnQuote(args[0]));
@@ -198,15 +240,15 @@ namespace gsudo.Helpers
                     // Or a non-executable file with a valid file association..
                     // Let CMD decide that... Invoke using "CMD /C" prefix ..
                     return new string[]
-                        { currentShellExeName, "/c" }
+                        { _currentShellFileName, cmd_c }
                         .Concat(args).ToArray();
                 }
             }
         }
 
-        internal static IList<string> FixCommandExceptions(IList<string> args)
+        private void FixCommandExceptions()
         {
-            string targetFullPath = args.First().UnQuote();
+            string targetFullPath = command.First().UnQuote();
             string targetFileName = Path.GetFileName(targetFullPath);
 
             var ExceptionDict = Settings.ExceptionList.Value
@@ -225,11 +267,12 @@ namespace gsudo.Helpers
                targetFullPath.IndexOf("\\WindowsApps\\", StringComparison.OrdinalIgnoreCase) >= 0) // Terrible but cheap Microsoft Store App detection.
             {
                 Logger.Instance.Log("Applying workaround for target app installed via MSStore.", LogLevel.Debug);
+                mustWrap = true;
 
-                return new string[] {
-                    Environment.GetEnvironmentVariable("COMSPEC"),
-                    "/s /c" ,
-                    $"\"{string.Join(" ", args)}\""};
+                //return new string[] {
+                //    Environment.GetEnvironmentVariable("COMSPEC"),
+                //    "/s /c" ,
+                //    $"\"{string.Join(" ", command)}\""};
             }
             else if (ExceptionDict.ContainsKey(targetFileName))
             {
@@ -239,28 +282,29 @@ namespace gsudo.Helpers
                 // ISSUE 3: https://github.com/gerardog/gsudo/issues/180
                 //      Strange console "Access Denied" error while 
 
-                string action = ExceptionDict[targetFileName];
+                mustWrap = true;
 
-                if (string.IsNullOrEmpty(action))
-                    action = $"\"{Environment.GetEnvironmentVariable("COMSPEC")}\" /s /c \"{{0}}\"";
+                //string action = ExceptionDict[targetFileName];
 
-                Logger.Instance.Log($"Found {targetFileName} in Exception List with Action=\"{action}\".", LogLevel.Debug);
+                //if (string.IsNullOrEmpty(action))
+                //    action = $"\"{Environment.GetEnvironmentVariable("COMSPEC")}\" /s /c \"{{0}}\"";
+
+                //Logger.Instance.Log($"Found {targetFileName} in Exception List with Action=\"{action}\".", LogLevel.Debug);
                 
-                return ArgumentsHelper.SplitArgs(String.Format(CultureInfo.InvariantCulture, action, string.Join(" ", args))).ToList();
+                //return ArgumentsHelper.SplitArgs(String.Format(CultureInfo.InvariantCulture, action, string.Join(" ", command))).ToList();
             }
-            else
-                return args;
             // -- End of workaround.
         }
-
 
         /// <summary>
         /// Copy environment variables and network shares to the destination user context
         /// </summary>
         /// <remarks>CopyNetworkShares is *the best I could do*. Too much verbose, asks for passwords, etc. Far from ideal.</remarks>
         /// <returns>a modified args list</returns>
-        internal static IList<string> AddCopyEnvironment(IList<string> args, ElevationRequest.ConsoleMode mode)
+        internal void AddCopyEnvironment(ElevationRequest.ConsoleMode mode)
         {
+            if (buildCompleted) throw new InvalidOperationException();
+
             if (Settings.CopyEnvironmentVariables || Settings.CopyNetworkShares)
             {
                 var silent = InputArguments.Debug ? string.Empty : "@";
@@ -305,8 +349,9 @@ namespace gsudo.Helpers
 #endif
 
                 string tempBatName = Path.Combine(
-                    tempFolder,
-                    $"{Guid.NewGuid()}.bat");
+                                            tempFolder,
+                                            $"{Guid.NewGuid()}.bat"
+                                        ).Quote();
 
                 File.WriteAllText(tempBatName, sb.ToString());
 
@@ -315,15 +360,49 @@ namespace gsudo.Helpers
 
                 new FileInfo(tempBatName).SetAccessControl(fSecurity);
 
+                preCommands.Add(tempBatName);
+                preCommands.Add("del / q { tempBatName}");
 
-                return new string[] {
-                    Environment.GetEnvironmentVariable("COMSPEC"),
-                    "/s /c" ,
-                    $"\"{tempBatName} & del /q {tempBatName} & {string.Join(" ",args)}\""
-                };
+                /*
+
+                } */
             }
-            return args;
+            //return command;
         }
 
+        internal void Build()
+        {
+            if (buildCompleted) throw new InvalidOperationException();
+            buildCompleted = true;
+
+            FixCommandExceptions();
+        
+            if (keepWindowOpen && !isWindowsApp)
+                postCommands.Add("pause");
+
+            if (mustWrap || preCommands.Any() || postCommands.Any())
+            {
+                var all = preCommands
+                            .Concat(new[] { string.Join(" ", command) })
+                            .Concat(postCommands);
+
+                command = new string[] {
+                    Environment.GetEnvironmentVariable("COMSPEC"),
+                    "/s /c",
+                    $"\"{String.Join (" & ", all)}\""};
+            }
+        }
+
+        public string GetExeName()
+        {
+            if (!buildCompleted) throw new InvalidOperationException();
+            return command.First();
+        }
+        
+        public string GetArgumentsAsString()
+        {
+            if (!buildCompleted) throw new InvalidOperationException();
+            return string.Join(" ", command.Skip(1).ToArray());
+        }
     }
 }

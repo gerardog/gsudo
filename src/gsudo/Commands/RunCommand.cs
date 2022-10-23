@@ -14,12 +14,13 @@ namespace gsudo.Commands
 {
     public class RunCommand : ICommand
     {
-        public IList<string> CommandToRun { get; private set; }
-        private string GetArguments() => GetArgumentsString(CommandToRun, 1);
+        public IList<string> UserCommand { get; private set; }
+        CommandToRunBuilder commandBuilder;
 
         public RunCommand(IList<string> commandToRun)
         {
-            CommandToRun = commandToRun;
+            UserCommand = commandToRun;
+            commandBuilder = new CommandToRunBuilder(commandToRun);
         }
 
         public async Task<int> Execute()
@@ -32,36 +33,31 @@ namespace gsudo.Commands
 
             bool isRunningAsDesiredUser = IsRunningAsDesiredUser();
             bool isElevationRequired = IsElevationRequired();
-            bool isShellElevation = !CommandToRun.Any(); // are we auto elevating the current shell?
+            bool isShellElevation = !UserCommand.Any(); // are we auto elevating the current shell?
 
             if (isElevationRequired & SecurityHelper.GetCurrentIntegrityLevel() < (int)IntegrityLevel.Medium)
                 throw new ApplicationException("Sorry, gsudo doesn't allow to elevate from low integrity level."); // This message is not a security feature, but a nicer error message. It would have failed anyway since the named pipe's ACL restricts it.
 
             if (isRunningAsDesiredUser && isShellElevation && !InputArguments.NewWindow)
                 throw new ApplicationException("Already running as the specified user/permission-level (and no command specified). Exiting...");
-
-            CommandToRun = CommandToRunGenerator.AugmentCommand(CommandToRun.ToArray());
-
-            bool isWindowsApp = ProcessFactory.IsWindowsApp(CommandToRun.FirstOrDefault());
+            
             var elevationMode = GetElevationMode();
 
-            CommandToRun = CommandToRunGenerator.FixCommandExceptions(CommandToRun);
-
             if (!isRunningAsDesiredUser)
-                CommandToRun = CommandToRunGenerator.AddCopyEnvironment(CommandToRun, elevationMode);
+                commandBuilder.AddCopyEnvironment(elevationMode);
 
-            var exeName = CommandToRun.FirstOrDefault();
+            commandBuilder.Build();
 
             int consoleHeight, consoleWidth;
             ConsoleHelper.GetConsoleInfo(out consoleWidth, out consoleHeight, out _, out _);
 
             var elevationRequest = new ElevationRequest()
             {
-                FileName = exeName,
-                Arguments = GetArguments(),
+                FileName = commandBuilder.GetExeName(),
+                Arguments = commandBuilder.GetArgumentsAsString(),
                 StartFolder = Environment.CurrentDirectory,
                 NewWindow = InputArguments.NewWindow,
-                Wait = (!isWindowsApp && !InputArguments.NewWindow) || InputArguments.Wait,
+                Wait = (!commandBuilder.IsWindowsApp && !InputArguments.NewWindow) || InputArguments.Wait,
                 Mode = elevationMode,
                 ConsoleProcessId = Process.GetCurrentProcess().Id,
                 IntegrityLevel = InputArguments.GetIntegrityLevel(),
@@ -79,7 +75,7 @@ namespace gsudo.Commands
 
             if (isRunningAsDesiredUser || !isElevationRequired) // already elevated or running as correct user. No service needed.
             {
-                return RunWithoutService(exeName, GetArguments(), elevationRequest);
+                return RunWithoutService(elevationRequest);
             }
 
             return await RunUsingService(elevationRequest).ConfigureAwait(false);
@@ -93,7 +89,7 @@ namespace gsudo.Commands
                 elevationRequest.Prompt = Settings.PipedPrompt;
         }
 
-        /// Starts a cache sessioBn
+        // Starts a cache session
         private async Task<int> RunUsingService(ElevationRequest elevationRequest)
         {
             Logger.Instance.Log($"Using Console mode {elevationRequest.Mode}", LogLevel.Debug);
@@ -112,7 +108,7 @@ namespace gsudo.Commands
                     var service = ServiceHelper.StartService(callingPid, singleUse: InputArguments.KillCache);
                     connection = await ServiceHelper.Connect(callingPid, service).ConfigureAwait(false);
 
-                    if (connection == null) // service is not running or listening.
+                    if (connection == null) // still not listening.
                         throw new ApplicationException("Unable to connect to the elevated service.");
                 }
 
@@ -131,7 +127,7 @@ namespace gsudo.Commands
             }
         }
 
-        private static int RunWithoutService(string exeName, string args, ElevationRequest elevationRequest)
+        private static int RunWithoutService(ElevationRequest elevationRequest)
         {
             var sameIntegrity = (int)InputArguments.GetIntegrityLevel() == SecurityHelper.GetCurrentIntegrityLevel();
             // No need to escalate. Run in-process
@@ -143,7 +139,7 @@ namespace gsudo.Commands
             {
                 if (elevationRequest.NewWindow)
                 {
-                    using (var process = ProcessFactory.StartDetached(exeName, args, Environment.CurrentDirectory, false))
+                    using (var process = ProcessFactory.StartDetached(elevationRequest.FileName, elevationRequest.Arguments, Environment.CurrentDirectory, false))
                     {
                         if (elevationRequest.Wait)
                         {
@@ -157,7 +153,7 @@ namespace gsudo.Commands
                 }
                 else
                 {
-                    using (Process process = ProcessFactory.StartAttached(exeName, args))
+                    using (Process process = ProcessFactory.StartAttached(elevationRequest.FileName, elevationRequest.Arguments))
                     {
                         process.WaitForExit();
                         var exitCode = process.ExitCode;
@@ -171,7 +167,7 @@ namespace gsudo.Commands
                 if (elevationRequest.IntegrityLevel < IntegrityLevel.High && !elevationRequest.NewWindow)
                     RemoveAdminPrefixFromConsoleTitle();
 
-                var p = ProcessFactory.StartAttachedWithIntegrity(InputArguments.GetIntegrityLevel(), exeName, args, elevationRequest.StartFolder, InputArguments.NewWindow, !InputArguments.NewWindow);
+                var p = ProcessFactory.StartAttachedWithIntegrity(InputArguments.GetIntegrityLevel(), elevationRequest.FileName, elevationRequest.Arguments, elevationRequest.StartFolder, InputArguments.NewWindow, !InputArguments.NewWindow);
                 if (p == null || p.IsInvalid)
                     return Constants.GSUDO_ERROR_EXITCODE;
 
@@ -322,13 +318,6 @@ namespace gsudo.Commands
                 return new PipedClientRenderer(connection);
             else
                 return new VTClientRenderer(connection, elevationRequest);
-        }
-
-        private static string GetArgumentsString(IEnumerable<string> args, int v)
-        {
-            if (args == null) return null;
-            if (args.Count() <= v) return string.Empty;
-            return string.Join(" ", args.Skip(v).ToArray());
         }
 
         private static void RemoveAdminPrefixFromConsoleTitle()
