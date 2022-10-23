@@ -1,4 +1,5 @@
-﻿using gsudo.Helpers;
+﻿using gsudo.AppSettings;
+using gsudo.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +20,14 @@ namespace gsudo.Commands
             if (key.In("-h", "/h", "/?", "-?", "--help", "help"))
             {
                 return new HelpCommand().Execute();
+            }
+
+            if (key != null && key.Contains('=', StringComparison.Ordinal))
+            {
+                var list = new List<string>{ key.Substring(key.IndexOf("=", StringComparison.Ordinal) + 1) };
+                list.AddRange(value);
+                value = list; // in net7 => value.Prepend(key.Substring(key.IndexOf("=", StringComparison.Ordinal) + 1))
+                key = key.Substring(0, key.IndexOf("=", StringComparison.Ordinal));
             }
 
             if (key == null)
@@ -46,6 +55,9 @@ namespace gsudo.Commands
                     InputArguments.Global = true;
                     value = value.Where(v => !v.In("--global"));
                 }
+
+                if (value.FirstOrDefault() == "=")
+                    value = value.Skip(1);
 
                 bool reset = value.Any(v => v.In("--reset"));
                 value = value.Where(v => !v.In("--reset"));
