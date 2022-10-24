@@ -94,10 +94,12 @@ gsudo !!                         # Re-run last command as admin. (YMMV)
 General options:
  -n | --new            # Starts the command in a new console (and returns immediately).
  -w | --wait           # When in new console, force wait for the command to end.
+ --noclose             # When in new console, ask for keypress before closing the console. 
+ --noexit              # Keep elevated shell open after running {command}.
 
 Security options:
- -i | --integrity {v}  # Specify integrity level: Untrusted, Low, Medium, MediumPlus, High (default), System
  -u | --user {usr}     # Run as the specified user. Asks for password. For local admins shows UAC unless '-i Medium'
+ -i | --integrity {v}  # Specify integrity level: Untrusted, Low, Medium, MediumPlus, High (default), System
  -s | --system         # Run as Local System account (NT AUTHORITY\SYSTEM).
  --ti                  # Run as member of NT SERVICE\TrustedInstaller
  -k                    # Kills all cached credentials. The next time gsudo is run a UAC popup will be appear.
