@@ -36,7 +36,6 @@ namespace gsudo.Helpers
         IList<string> postCommands = new List<string>();
 
         private bool isShellElevation;
-        private bool isWindowsApp;
         private bool keepShellOpen;
         private bool keepWindowOpen;
         private bool mustWrap;
@@ -59,9 +58,9 @@ namespace gsudo.Helpers
                          && (InputArguments.NewWindow || Settings.NewWindow_Force)
                          && (InputArguments.KeepWindowOpen || Settings.NewWindow_CloseBehaviour == AppSettings.CloseBehaviour.PressKeyToClose);
 
-            IsWindowsApp = command.Any() && ProcessFactory.IsWindowsApp(command.First());
-
             this.command = ApplyShell(command);
+
+            IsWindowsApp = command.Any() && ProcessFactory.IsWindowsApp(command.First());
             /*
              * keepShellOpen is like "cmd /k command", the elevated cmd will remain open (/k);
              * keepWindowOpen is like "cmd /c 'command & pause'", press a key to close.
@@ -118,7 +117,6 @@ namespace gsudo.Helpers
                         _currentShellFileName,
                         "-NoLogo"
                     };
-
 
                     if (args.Any())
                     {
@@ -207,6 +205,14 @@ namespace gsudo.Helpers
                         return new[] { _currentShellFileName, cmd_c }
                             .Concat(args).ToArray();
                 }
+                else if (_currentShell == Shell.NuShell)
+                {
+                    if (args.Count == 0)
+                        return new[] { _currentShellFileName };
+                    else
+                        return new[] { _currentShellFileName, keepShellOpen ? "-e" : "-c",
+                                $"\"{ String.Join(" ", args).ReplaceOrdinal("\\", "\\\\").ReplaceOrdinal("\"", "\"\"")}\"" };
+                }
             }
 
             // We will use CMD.
@@ -229,7 +235,8 @@ namespace gsudo.Helpers
                         .Concat(args).ToArray();
 
                 var exename = ProcessFactory.FindExecutableInPath(ArgumentsHelper.UnQuote(args[0]));
-                if (exename != null && CreateProcessSupportedExtensions.Contains(Path.GetExtension(exename)))
+                var shell = ShellHelper.DetectShellByFileName(exename);
+                if ((shell.HasValue && args.Count == 1) || (!keepShellOpen && exename != null && CreateProcessSupportedExtensions.Contains(Path.GetExtension(exename))))
                 {
                     args[0] = $"\"{exename}\"";
                     return args;
@@ -377,7 +384,7 @@ namespace gsudo.Helpers
 
             FixCommandExceptions();
         
-            if (keepWindowOpen && !isWindowsApp)
+            if (keepWindowOpen && !IsWindowsApp)
                 postCommands.Add("pause");
 
             if (mustWrap || preCommands.Any() || postCommands.Any())
