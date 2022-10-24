@@ -34,8 +34,20 @@ namespace gsudo.Helpers
 
             // syntax: gsudo [options] [verb] [command to run]:
 
-            return ParseOptions()  // Parse [options]
-                   ?? ParseVerb(); // Parse [verb]:
+            ICommand command = ParseOptions();  // Parse [options]
+            
+            if (command == null)
+                command = ParseVerb(); // Parse [verb]:
+
+            ThrowIfInvalidInput();
+
+            return command;
+        }
+
+        private void ThrowIfInvalidInput()
+        {
+            if ((InputArguments.TrustedInstaller || InputArguments.RunAsSystem || InputArguments.IntegrityLevel >= IntegrityLevel.System) && InputArguments.UserName != null)
+                throw new ApplicationException("Can't use '-u' with `-s` or `--ti`.");
         }
 
         private string DeQueueArg()
