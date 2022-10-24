@@ -59,7 +59,7 @@ jobs:
         name: Installer
         path: ./artifacts/gsudoSetup.msi             
     - name: Create Release
-      uses: ncipollo/release-action@v1.10.0
+      uses: ncipollo/release-action@v1.11.1
       with:
         artifacts: "artifacts/*.*"
         token: ${{ secrets.GITHUB_TOKEN  }}
@@ -71,6 +71,7 @@ jobs:
         commit: ${{env.GITHUB_SHA}}
         allowUpdates: true 
         omitBodyDuringUpdate: true 
+        omitDraftDuringUpdate: true
         replacesArtifacts: true
 
   chocolatey:
