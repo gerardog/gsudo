@@ -116,7 +116,7 @@ Other options:
 
 ```
 
-## Config
+#### Config
 
 ``` powershell
  gsudo config                          # Show current config settings & values.
