@@ -50,7 +50,7 @@ namespace gsudo.Helpers
 
             var @params = InputArguments.Debug ? "--debug " : string.Empty;
             if (!InputArguments.RunAsSystem && InputArguments.IntegrityLevel.HasValue) @params += $"-i {InputArguments.IntegrityLevel.Value} ";
-            if (InputArguments.RunAsSystem && allowedSid != currentSid) @params += "-s ";
+            if (InputArguments.RunAsSystem) @params += "-s ";
             if (InputArguments.TrustedInstaller) @params += "--ti ";
             if (InputArguments.UserName != null) @params += $"-u {InputArguments.UserName} ";
 

@@ -57,6 +57,9 @@ namespace gsudo.Commands
             if (!RunCommand.IsRunningAsDesiredUser())
             {
                 Logger.Instance.Log("This service is not running with desired credentials. Starting a new service instance.", LogLevel.Info);
+#if DEBUG
+                await Task.Delay(2000);
+#endif
                 ServiceHelper.StartService(AllowedPid, CacheDuration, AllowedSid, SingleUse);
                 return 0;
             }
