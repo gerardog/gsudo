@@ -124,7 +124,7 @@ namespace gsudo.Rpc
 
             allowedPid = allowedPid ?? ProcessHelper.GetParentProcessId(Process.GetCurrentProcess().Id);
             allowedSid = allowedSid ?? System.Security.Principal.WindowsIdentity.GetCurrent().User.Value;
-            targetSid = targetSid ?? InputArguments.UserSid ?? allowedSid;
+            targetSid = targetSid ?? InputArguments.UserSid;
 
             int maxIterations = 20;
             while (allowedPid.Value > 0 && maxIterations-- > 0)
