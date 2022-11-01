@@ -30,9 +30,10 @@ function gsudo {
 	}
 }
 
-function Split-Gsudo { & wt -w 0 sp gsudo pwsh -c ";" @args  }
+function Test-IsGsudoCacheAvailable {
+    [bool]((& 'gsudo.exe' status) -like "*Available for this process: True*")
+}
 
 $gsudoVerbose=$true;
 
-Export-ModuleMember -function Invoke-Gsudo, gsudo, Split-Gsudo -Variable gsudoVerbose
-
+Export-ModuleMember -function Invoke-Gsudo, gsudo, Test-IsGsudoCacheAvailable -Variable gsudoVerbose
