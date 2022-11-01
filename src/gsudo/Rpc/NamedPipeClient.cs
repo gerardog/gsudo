@@ -126,6 +126,9 @@ namespace gsudo.Rpc
             allowedSid = allowedSid ?? System.Security.Principal.WindowsIdentity.GetCurrent().User.Value;
             targetSid = targetSid ?? InputArguments.UserSid;
 
+            if (NamedPipeClient.FindService(allowedSid, 0, out _, targetSid) != null)
+                return true;
+
             int maxIterations = 20;
             while (allowedPid.Value > 0 && maxIterations-- > 0)
             {
@@ -134,7 +137,6 @@ namespace gsudo.Rpc
                     break;
 
                 allowedPid = ProcessHelper.GetParentProcessId(allowedPid.Value);
-                // try grandfather.
             }
 
             return pipeName != null;
