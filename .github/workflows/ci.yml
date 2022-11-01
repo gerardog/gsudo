@@ -18,7 +18,7 @@ on:
 jobs:
   test:
     name: Test
-    runs-on: windows-2019
+    runs-on: windows-latest
     permissions:
       id-token: write
       contents: read
@@ -76,8 +76,8 @@ jobs:
     - name: Get project version
       id: getversion
       run: |
-           echo "::set-output name=version::$(gitversion /showvariable LegacySemVer)"
-           echo "::set-output name=version_MajorMinorPatch::$(gitversion /showvariable MajorMinorPatch)"    
+           echo "version=$(gitversion /showvariable LegacySemVer)" >> $GITHUB_OUTPUT
+           echo "version_MajorMinorPatch=$(gitversion /showvariable MajorMinorPatch)" >> $GITHUB_OUTPUT
     - name: Build
       run: ./build/01-build.ps1
     - name: Upload build artifacts
