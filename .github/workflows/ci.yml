@@ -18,7 +18,7 @@ on:
 jobs:
   test:
     name: Test
-    runs-on: windows-latest
+    runs-on: windows-2019
     permissions:
       id-token: write
       contents: read
