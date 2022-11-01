@@ -25,11 +25,11 @@ Just prepend `gsudo` (or the `sudo` alias) to your command and it will run eleva
   - [Features](#features)
   - [Installation](#installation)
   - [Usage](#usage)
-  - [Config](#config)
     - [Usage from PowerShell / PowerShell Core](#usage-from-powershell--powershell-core)
       - [gsudo PowerShell Module](#gsudo-powershell-module)
       - [PowerShell Alias](#powershell-alias)
     - [Usage from WSL (Windows Subsystem for Linux)](#usage-from-wsl-windows-subsystem-for-linux)
+  - [Configuration](#configuration)
   - [Credentials Cache](#credentials-cache)
   - [Known issues](#known-issues)
   - [FAQ](#faq)
@@ -56,10 +56,10 @@ Just prepend `gsudo` (or the `sudo` alias) to your command and it will run eleva
 
 ## Features
 
-- Elevated commands are shown in the current user-level console. No new window. (Unless you specify `-n` which opens a new window.)
+- Elevated commands are shown in the current console. No new window (unless you specify `-n`)
 - [Credentials cache](#credentials-cache): `gsudo` can elevate many times showing only one UAC pop-up if the user opts-in to enable the cache.
-- Supports CMD commands: `gsudo md folder` (no need to use the longer form `gsudo cmd.exe /c md folder`)
-- Elevates [PowerShell/PowerShell Core commands](#usage-from-powershell--powershell-core), [WSL commands](#usage-from-wsl-windows-subsystem-for-linux), Bash for Windows (Git-Bash/MinGW/MSYS2/Cygwin), Yori or Take Command shell commands.
+- Detects your current shell (Supports [`CMD`](#usage), [`PowerShell`](#usage-from-powershell--powershell-core), [`WSL`](#usage-from-wsl-windows-subsystem-for-linux), `Bash for Windows` (Git-Bash/MinGW/MSYS2/Cygwin), `Yori`, `Take Command` and `NuShell`), and elevates your command correctly.
+
 - Supports being used on scripts:
   - Outputs StdOut/StdErr can be piped or captured (e.g. `gsudo dir | findstr /c:"bytes free" > FreeSpace.txt`) and exit codes too (`%errorlevel%`). If `gsudo` fails to elevate, the exit code will be 999.
   - If `gsudo` is invoked from an already elevated console, it will just run the command (it won't fail). So, you don't have to worry if you run `gsudo` or a script that uses `gsudo` from an already elevated console. (The UAC popup will not appear, as no elevation is required)
@@ -67,6 +67,8 @@ Just prepend `gsudo` (or the `sudo` alias) to your command and it will run eleva
 - `gsudo !!` elevates the last executed command. Works on CMD, Git-Bash, MinGW, Cygwin (and PowerShell with [gsudo module](#gsudomodule) only)
 
 ## Installation
+
+Note: `gsudo` is portable. No windows service is required or system change is done, except adding it to the Path.
 
 - Using [Scoop](https://scoop.sh): `scoop install gsudo`
 - Using [WinGet](https://github.com/microsoft/winget-cli/releases) `winget install gerardog.gsudo`
@@ -78,14 +80,12 @@ Just prepend `gsudo` (or the `sudo` alias) to your command and it will run eleva
 PowerShell -Command "Set-ExecutionPolicy RemoteSigned -scope Process; [Net.ServicePointManager]::SecurityProtocol = 'Tls12'; iwr -useb https://raw.githubusercontent.com/gerardog/gsudo/master/installgsudo.ps1 | iex"
 ```
 
-Note: gsudo is portable. No windows service is required or system change is done, except adding gsudo to the Path.
-
 ## Usage
 
 ``` powershell
 gsudo [options]                  # Elevates your current shell
 gsudo [options] {command} [args] # Runs {command} with elevated permissions
-gsudo cache [on | off | help]    # Starts/Stops an elevated cache session. (reduced UAC popups)
+gsudo cache [on | off | help]    # Starts/Stops a credentials cache session. (less UAC popups)
 gsudo status                     # Shows current user, cache and console status.
 gsudo !!                         # Re-run last command as admin. (YMMV)
 ```
@@ -93,9 +93,9 @@ gsudo !!                         # Re-run last command as admin. (YMMV)
 ``` powershell
 General options:
  -n | --new            # Starts the command in a new console (and returns immediately).
- -w | --wait           # When in new console, force wait for the command to end.
- --noclose             # When in new console, ask for keypress before closing the console. 
- --noexit              # Keep elevated shell open after running {command}.
+ -w | --wait           # When in new console, wait for the command to end.
+ --noexit              # After running a command, keep the elevated shell open.
+ --noclose             # After running a command in a new console, ask for keypress before closing the console/window.
 
 Security options:
  -u | --user {usr}     # Run as the specified user. Asks for password. For local admins shows UAC unless '-i Medium'
@@ -105,7 +105,7 @@ Security options:
  -k                    # Kills all cached credentials. The next time gsudo is run a UAC popup will be appear.
 
 Shell related options:
- -d | --direct         # Execute {command} directly. Bypass shell wrapper (Pwsh/Yori/etc).
+ -d | --direct         # Skips Shell detection. Asume CMD shell or CMD {command}.
  --loadProfile         # When elevating PowerShell commands, load user profile.
 
 Other options:
@@ -113,16 +113,6 @@ Other options:
  --debug               # Enable debug mode.
  --copyns              # Connect network drives to the elevated user. Warning: Verbose, interactive asks for credentials
  --copyev              # (deprecated) Copy environment variables to the elevated process. (not needed on default console mode)
-
-```
-
-#### Config
-
-``` powershell
- gsudo config                          # Show current config settings & values.
- gsudo config {key} [--global] [value] # Read or write a user setting
- gsudo config {key} [--global] --reset # Reset config to default value
- --global                              # Affects all users (overrides user settings)
 ```
 
 **Note:** You can use anywhere **the `sudo` alias** created by the installers.
@@ -257,6 +247,15 @@ elif [ $retval -eq $((999 % 256)) ]; then # gsudo failure exit code (999) is rea
 else
     echo "Command failed with exit code $retval";
 fi;
+```
+
+## Configuration
+
+``` powershell
+ gsudo config                          # Show current config settings & values.
+ gsudo config {key} [--global] [value] # Read or write a user setting
+ gsudo config {key} [--global] --reset # Reset config to default value
+ --global                              # Affects all users (overrides user settings)
 ```
 
 ## Credentials Cache

@@ -6,6 +6,8 @@ hide_title: true
 ---
 ## How to Use
 
+**Note:** You can use anywhere **the `sudo` alias** created by the installers.
+
 ``` powershell
 gsudo [options]                  # Elevates your current shell
 gsudo [options] {command} [args] # Runs {command} with elevated permissions
@@ -17,17 +19,19 @@ gsudo !!                         # Re-run last command as admin. (YMMV)
 ``` powershell
 General options:
  -n | --new            # Starts the command in a new console (and returns immediately).
- -w | --wait           # When in new console, force wait for the command to end.
-
+ -w | --wait           # When in new console, wait for the command to end.
+ --noexit              # After running a command, keep the elevated shell open.
+ --noclose             # After running a command in a new console, ask for keypress before closing the console/window. 
+ 
 Security options:
  -i | --integrity {v}  # Specify integrity level: Untrusted, Low, Medium, MediumPlus, High (default), System
- -u | --user {usr}     # Run as the specified user. Asks for password. For local admins shows UAC unless '-i Medium'
+ -u | --user {usr}     # Run as the specified user. Asks for password. For local admins it shows a UAC unless '-i Medium'
  -s | --system         # Run as Local System account (NT AUTHORITY\SYSTEM).
  --ti                  # Run as member of NT SERVICE\TrustedInstaller
  -k                    # Kills all cached credentials. The next time gsudo is run a UAC popup will be appear.
 
 Shell related options:
- -d | --direct         # Execute {command} directly. Bypass shell wrapper (Pwsh/Yori/etc).
+ -d | --direct         # Skips Shell detection. Asume CMD shell or CMD {command}.
  --loadProfile         # When elevating PowerShell commands, load user profile.
 
 Other options:
@@ -38,7 +42,6 @@ Other options:
 
 ```
 
-**Note:** You can use anywhere **the `sudo` alias** created by the installers.
 
 **Examples:**
 

@@ -34,9 +34,10 @@ It is designed so it is easy to install, easy to use, and feels familiar with ot
     - [CMD](usage)
     - [PowerShell](usage/powershell)
     - [WSL](usage/wsl)
-    - [Bash for Windows (MSYS2 / MinGW / Git-Bash / Cygwin)](usage/bash-for-windows) 
+    - [Bash for Windows (MSYS2 / MinGW / Git-Bash / Cygwin)](usage/bash-for-windows)
     - Yori
     - Take Command
+    - NuShell
 
 - If no command is specified, it starts an elevated shell.
  
@@ -44,9 +45,10 @@ It is designed so it is easy to install, easy to use, and feels familiar with ot
 - Supports being used on scripts:
   - Returns the command exit code (`%errorlevel%`). If `gsudo` fails to elevate, the exit code will be 999.
   - If `gsudo` is invoked from an already elevated console, it will run the command as-is (won't throw error). So, don't worry if you run `gsudo` or a script that uses `gsudo` when already elevated. (No elevation is required, no UAC popup)
-- `gsudo !!` elevates the last run command. Works on CMD, Git-Bash, MinGW, MSYS2, Cygwin (and PowerShell with [gsudo module](usage/powershell#powershell-profile-config) only)
   
-Read [How to Use](usage) for your favorite shell to see additional features. 
+- Use `gsudo !!` to elevate the last ran command. Works on CMD, Git-Bash, MinGW, MSYS2, Cygwin (and PowerShell with [gsudo module](usage/powershell#powershell-profile-config) only)
+  
+Read [How to Use](usage) for your favorite shell to see additional features.
 
 ### Demo
 
