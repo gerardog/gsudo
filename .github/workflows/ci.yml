@@ -24,18 +24,18 @@ jobs:
       contents: read
       checks: write    
     steps:
-    - uses: actions/setup-dotnet@v2
+    - uses: actions/setup-dotnet@latest
       with:
         dotnet-version: '7.0.x'
         include-prerelease: true 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@latest
       with: 
         fetch-depth: 0    
     - name: Run Tests
       id: tests
       run: ./build/02-test.ps1
     - name: Test Report DotNet
-      uses: dorny/test-reporter@v1.5.0
+      uses: dorny/test-reporter@latest
       if: success() || failure()
       with:
         name: TestsResults (dotnet)
@@ -43,7 +43,7 @@ jobs:
         reporter: dotnet-trx
         fail-on-error: true
     - name: Test Report PowerShell v5
-      uses: dorny/test-reporter@v1.5.0
+      uses: dorny/test-reporter@latest
       if: success() || failure()
       with:
         name: TestsResults (PowerShell v5)
@@ -51,7 +51,7 @@ jobs:
         reporter: java-junit
         fail-on-error: true
     - name: Test Report PowerShell v7
-      uses: dorny/test-reporter@v1.5.0
+      uses: dorny/test-reporter@latest
       if: success() || failure()
       with:
         name: TestsResults (PowerShell v7)
@@ -62,11 +62,11 @@ jobs:
     name: Build
     runs-on: windows-latest
     steps:
-    - uses: actions/setup-dotnet@v2
+    - uses: actions/setup-dotnet@latest
       with:
         dotnet-version: '7.0.x'
         include-prerelease: true 
-    - uses: actions/checkout@v2   
+    - uses: actions/checkout@latest
       with: 
         fetch-depth: 0
     - name: Install dependencies
@@ -76,8 +76,8 @@ jobs:
     - name: Get project version
       id: getversion
       run: |
-           echo "::set-output name=version::$(gitversion /showvariable LegacySemVer)"
-           echo "::set-output name=version_MajorMinorPatch::$(gitversion /showvariable MajorMinorPatch)"    
+           echo "version=$(gitversion /showvariable LegacySemVer)" >> $GITHUB_OUTPUT
+           echo "version_MajorMinorPatch=$(gitversion /showvariable MajorMinorPatch)" >> $GITHUB_OUTPUT
     - name: Build
       run: ./build/01-build.ps1
     - name: Upload build artifacts
