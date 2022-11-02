@@ -39,4 +39,8 @@ Describe "PS Gsudo (PSv$($PSVersionTable.PSVersion.Major))" {
 		$result -is [System.String] | Should -Be $true
 	}
 
+	It "Return can be captured." {
+		$result = gsudo {Get-Command Get-Help}
+		$result.CommandType -eq [System.Management.Automation.CommandTypes]::Cmdlet | Should -BeTrue
+	}
 }

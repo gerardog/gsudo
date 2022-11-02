@@ -95,7 +95,7 @@ namespace gsudo.Tests
 
                 Assert.Fail("Process still active!");
             }
-
+            System.Threading.Thread.Sleep(200);
             Debug.WriteLine($"Process Std Output:\n{GetStdOut()}");
             //Debug.WriteLine($"Process Std Error:\n{GetStdErr()}");
             //NativeMethods.GetExitCodeProcess(_testProcessHandle, out ExitCode);

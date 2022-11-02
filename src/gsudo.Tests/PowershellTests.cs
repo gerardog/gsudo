@@ -92,12 +92,10 @@ exit
             Assert.AreEqual(0, p.ExitCode);
         }
 
+        [TestMethod]
         public void PS_EchoSingleQuotesTest()
         {
-            var p = new TestProcess($@"{PS_FILENAME} {PS_ARGS}
-./gsudo 'echo 1 ''2 3'''
-exit
-");
+            var p = new TestProcess($"{PS_FILENAME} {PS_ARGS}\r\n./gsudo 'echo 1 ''2 3'''\r\nexit\r\n");
 
             p.WaitForExit();
 
@@ -111,10 +109,7 @@ exit
         [TestMethod]
         public virtual void PS_EchoDoubleQuotesTest()
         {
-            var p = new TestProcess(
-$@"{PS_FILENAME} {PS_ARGS}
-./gsudo 'echo 1 ""2 3""'
-exit");
+            var p = new TestProcess($"{PS_FILENAME} {PS_ARGS}\r\n./gsudo 'echo 1 \"2 3\"'\r\nexit");
             p.WaitForExit();
             p.GetStdOut()
                 .AssertHasLine("1")
