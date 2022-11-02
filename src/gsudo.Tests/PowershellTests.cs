@@ -92,7 +92,6 @@ exit
             Assert.AreEqual(0, p.ExitCode);
         }
 
-        [TestMethod]
         public void PS_EchoSingleQuotesTest()
         {
             var p = new TestProcess($@"{PS_FILENAME} {PS_ARGS}
