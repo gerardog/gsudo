@@ -24,6 +24,7 @@ namespace gsudo.Commands
 
         Timer ShutdownTimer;
         private IRpcServer _server;
+        private bool serviceAlreadyReplacedOnce;
 
         void EnableTimer()
         {
@@ -109,14 +110,17 @@ namespace gsudo.Commands
 
                 // This can create too many gsudo service instances when in attached mode.
                 // TODO: Maybe we can only do this if... ¿our parent PID is not gsudo?
-                if (replaceService)
+                if (replaceService & !serviceAlreadyReplacedOnce)
+                {
+                    serviceAlreadyReplacedOnce = true;
                     ServiceHelper.StartService(AllowedPid, CacheDuration, AllowedSid, SingleUse);
+                }
 
                 ConsoleHelper.SetPrompt(request, connection.IsHighIntegrity);
                 await applicationHost.Start(connection, request).ConfigureAwait(false);
 
-                if (replaceService)
-                    _server.Close();
+                //if (replaceService)
+                //    _server.Close();
             }
             catch (OperationCanceledException)
             {
