@@ -12,8 +12,9 @@ namespace gsudo
         public static bool NewWindow { get; internal set; }
         
         // When elevating a command, keep the elevated shell open afterwards.
-        public static bool NoExit { get; internal set; }
+        public static bool KeepShellOpen { get; internal set; }
         public static bool KeepWindowOpen { get; internal set; }
+        public static bool CloseNewWindow { get; internal set; }
 
         // Wait for new process to end
         public static bool Wait { get; internal set; }

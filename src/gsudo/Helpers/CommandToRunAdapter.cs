@@ -38,6 +38,7 @@ namespace gsudo.Helpers
         private bool isShellElevation;
         private bool keepShellOpen;
         private bool keepWindowOpen;
+
         private bool mustWrap;
         private bool buildCompleted;
         public bool IsWindowsApp { get; private set; }
@@ -46,14 +47,20 @@ namespace gsudo.Helpers
         public CommandToRunBuilder(IList<string> command)
         {
             isShellElevation = command.Count == 0;
-            //--noExit
-            keepShellOpen = InputArguments.NoExit ||
-                (InputArguments.NewWindow && Settings.NewWindow_CloseBehaviour == AppSettings.CloseBehaviour.KeepShellOpen)
-                && !isShellElevation
-                ;
 
-            //--noClose
+            //--keepShell
+            keepShellOpen =
+                !isShellElevation && // isShellElevation is processed before keepShellOpen, so this line is unnecessary.
+                !InputArguments.CloseNewWindow &&
+                !InputArguments.KeepWindowOpen && // allow overrides
+                (
+                    InputArguments.KeepShellOpen ||
+                    (InputArguments.NewWindow && Settings.NewWindow_CloseBehaviour == AppSettings.CloseBehaviour.KeepShellOpen && !isShellElevation)
+                );
+
+            //--keepWindow
             keepWindowOpen = !keepShellOpen
+                         && !InputArguments.CloseNewWindow
                          && !isShellElevation
                          && (InputArguments.NewWindow || Settings.NewWindow_Force)
                          && (InputArguments.KeepWindowOpen || Settings.NewWindow_CloseBehaviour == AppSettings.CloseBehaviour.PressKeyToClose);
@@ -168,7 +175,7 @@ namespace gsudo.Helpers
                 }
                 else if (_currentShell == Shell.Yori)
                 {
-                    if (args.Count == 0)
+                    if (isShellElevation)
                         return new[] { _currentShellFileName };
                     else
                         return new[] { _currentShellFileName, keepShellOpen ? "-k" : "-c" }
@@ -191,7 +198,7 @@ namespace gsudo.Helpers
                 }
                 else if (_currentShell == Shell.Bash)
                 {
-                    if (args.Count == 0)
+                    if (isShellElevation)
                         return new[] { _currentShellFileName };
                     else
                         return new[] { _currentShellFileName, "-c",
@@ -199,7 +206,7 @@ namespace gsudo.Helpers
                 }
                 else if (_currentShell == Shell.TakeCommand)
                 {
-                    if (args.Count == 0)
+                    if (isShellElevation)
                         return new[] { _currentShellFileName, "/k" };
                     else
                         return new[] { _currentShellFileName, cmd_c }
@@ -207,7 +214,7 @@ namespace gsudo.Helpers
                 }
                 else if (_currentShell == Shell.NuShell)
                 {
-                    if (args.Count == 0)
+                    if (isShellElevation)
                         return new[] { _currentShellFileName };
                     else
                         return new[] { _currentShellFileName, keepShellOpen ? "-e" : "-c",
@@ -222,7 +229,7 @@ namespace gsudo.Helpers
                 _currentShellFileName = $"\"{Environment.GetEnvironmentVariable("COMSPEC")}\"";
             }
 
-            if (args.Count == 0)
+            if (isShellElevation)
             {
                 return new string[]
                     { _currentShellFileName, "/k" };
@@ -385,7 +392,12 @@ namespace gsudo.Helpers
             FixCommandExceptions();
         
             if (keepWindowOpen && !IsWindowsApp)
+            {
+                // Using "`& pause " makes cmd eat the exit code
+                postCommands.Add("set errl = !ErrorLevel!");
                 postCommands.Add("pause");
+                postCommands.Add("exit /b !errl!");
+            }
 
             if (mustWrap || preCommands.Any() || postCommands.Any())
             {
@@ -395,7 +407,7 @@ namespace gsudo.Helpers
 
                 command = new string[] {
                     Environment.GetEnvironmentVariable("COMSPEC"),
-                    "/s /c",
+                    "/v:on /s /c",
                     $"\"{String.Join (" & ", all)}\""};
             }
         }

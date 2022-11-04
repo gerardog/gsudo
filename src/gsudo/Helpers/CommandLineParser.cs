@@ -126,10 +126,9 @@ namespace gsudo.Helpers
             else if (match("n", "--new")) { InputArguments.NewWindow = true; }
             else if (match("w", "--wait")) { InputArguments.Wait = true; }
 
-            else if (match(null, "--noexit")) { InputArguments.NoExit = true; InputArguments.KeepWindowOpen = false; }
-            else if (match(null, "--exit")) { InputArguments.NoExit = false;}
-            else if (match(null, "--noclose")) { InputArguments.KeepWindowOpen = true; InputArguments.NoExit = false; }
-            else if (match(null, "--close")) { InputArguments.KeepWindowOpen = false; }
+            else if (match(null, "--keepshell")) { InputArguments.KeepShellOpen = true; InputArguments.KeepWindowOpen = false; }
+            else if (match(null, "--keepwindow")) { InputArguments.KeepWindowOpen = true; InputArguments.KeepShellOpen = false; }
+            else if (match(null, "--close")) { InputArguments.CloseNewWindow = true; InputArguments.KeepWindowOpen = false; InputArguments.KeepShellOpen = false; }
 
             else if (match("s", "--system")) { InputArguments.RunAsSystem = true; }
             else if (match("d", "--direct")) { InputArguments.Direct = true; }
