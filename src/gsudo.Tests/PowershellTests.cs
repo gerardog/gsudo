@@ -16,7 +16,7 @@ namespace gsudo.Tests
         }
     }
 
-    [TestClass]
+    
     public class PowerShellCoreAttachedTests : PowerShellTests
     {
         [ClassInitialize]
