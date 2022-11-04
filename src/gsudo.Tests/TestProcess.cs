@@ -38,7 +38,7 @@ namespace gsudo.Tests
                 $"gsudo -i medium  {shell} < \"{_sIn}\" > \"{_sOut}\" 2>&1\r\n" +
                 "exit /b %errorlevel%\r\n");
 
-            File.WriteAllText($"{_sIn}", inputScript + "\r\nExit /b %errorlevel%\r\n");
+            File.WriteAllText($"{_sIn}", inputScript + "\r\nExit %errorlevel%\r\n");
 
             _process = ProcessFactory.StartDetached(_batchFile, arguments, Environment.CurrentDirectory, false);
             _testProcessHandle = new SafeProcessHandle(_process.Handle, false);

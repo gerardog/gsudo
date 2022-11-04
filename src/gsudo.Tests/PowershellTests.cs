@@ -16,20 +16,12 @@ namespace gsudo.Tests
         }
     }
 
-    
+    [TestClass]
     public class PowerShellCoreAttachedTests : PowerShellTests
     {
-        [ClassInitialize]
-        public static new void ClassInitialize(TestContext context)
+        public PowerShellCoreAttachedTests()
         {
-            TestShared.StartCacheSession();
-            new ConfigCommand() { key = "ForceAttachedConsole", value = new string[] { "true" } }.Execute();
-        }
-
-        [ClassCleanup]
-        public static new void ClassCleanup()
-        {
-            new ConfigCommand() { key = "ForceAttachedConsole", value = new string[] { "--reset" } }.Execute();
+            GSUDO_ARGS = "--attached ";
         }
     }
 
@@ -41,6 +33,7 @@ namespace gsudo.Tests
 
         internal string PS_FILENAME = "PowerShell.exe";
         internal string PS_ARGS = "-NoExit -NoLogo -NoProfile -Command Set-ExecutionPolicy UnRestricted -Scope CurrentUser; function Prompt { return '# '}";
+        internal string GSUDO_ARGS = "";
 
         static PowerShellTests()
         {
@@ -56,7 +49,7 @@ namespace gsudo.Tests
         [TestMethod]
         public void PS_CommandLineEchoSingleQuotesTest()
         {
-            var p = new TestProcess("gsudo powershell -noprofile -NoLogo -command echo 1 '2 3'");
+            var p = new TestProcess($"gsudo {GSUDO_ARGS}powershell -noprofile -NoLogo -command echo 1 '2 3'");
             p.WaitForExit();
             p.GetStdOut()
                 .AssertHasLine("1")
@@ -67,7 +60,7 @@ namespace gsudo.Tests
         [TestMethod]
         public void PS_CommandLineEchoDoubleQuotesTest()
         {
-            var p = new TestProcess("gsudo powershell -noprofile -NoLogo -command echo 1 '\\\"2 3\\\"'");
+            var p = new TestProcess($"gsudo {GSUDO_ARGS}powershell -noprofile -NoLogo -command echo 1 '\\\"2 3\\\"'");
             p.WaitForExit();
             p.GetStdOut()
                 .AssertHasLine("1")
@@ -79,7 +72,7 @@ namespace gsudo.Tests
         public void PS_EchoNoQuotesTest()
         {
             var p = new TestProcess(
-                $@"./gsudo 'echo 1 2 3'
+                $@"./gsudo {GSUDO_ARGS}'echo 1 2 3'
 exit
 ", $"{PS_FILENAME} {PS_ARGS}");
             p.WaitForExit();
@@ -95,7 +88,7 @@ exit
         [TestMethod]
         public void PS_EchoSingleQuotesTest()
         {
-            var p = new TestProcess($"./gsudo 'echo 1 ''2 3'''\r\nexit\r\n", $"{PS_FILENAME} {PS_ARGS}");
+            var p = new TestProcess($"./gsudo {GSUDO_ARGS}'echo 1 ''2 3'''\r\nexit\r\n", $"{PS_FILENAME} {PS_ARGS}");
 
             p.WaitForExit();
 
@@ -109,7 +102,7 @@ exit
         [TestMethod]
         public virtual void PS_EchoDoubleQuotesTest()
         {
-            var p = new TestProcess($"./gsudo 'echo 1 \"2 3\"'\r\nexit", $"{PS_FILENAME} {PS_ARGS}");
+            var p = new TestProcess($"./gsudo {GSUDO_ARGS}'echo 1 \"2 3\"'\r\nexit", $"{PS_FILENAME} {PS_ARGS}");
             p.WaitForExit();
             p.GetStdOut()
                 .AssertHasLine("1")
@@ -122,7 +115,7 @@ exit
         [TestMethod]
         public void PS_WriteProgress()
         {
-            var p = new TestProcess($"{PS_FILENAME} {PS_ARGS}\r\n./gsudo Write-Progress -Activity \"Test\"; exit\r\n");
+            var p = new TestProcess($"{PS_FILENAME} {PS_ARGS}\r\n./gsudo {GSUDO_ARGS}Write-Progress -Activity \"Test\"; exit\r\n");
             p.WaitForExit();
             Assert.IsFalse(p.GetStdOut().Contains("internal error", StringComparison.OrdinalIgnoreCase));
         }
