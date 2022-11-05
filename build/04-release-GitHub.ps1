@@ -1,4 +1,5 @@
 pushd $PSScriptRoot\..
+function _exit {exit $args[0] }
 
 if ($env:version) {
 	"- Getting version from env:version"
@@ -24,11 +25,11 @@ $outdir = "$PSScriptRoot\..\artifacts"
 
 "- Building Installer"
 (gc src\gsudo.Installer\Constants.Template.wxi) -replace '#VERSION#', "$version" | Out-File -encoding UTF8 src\gsudo.Installer\Constants.wxi
-& $msbuild /t:Rebuild /p:Configuration=Release src\gsudo.Installer.sln /v:Minimal /p:OutputPath=$outdir || (popd && exit 1)
+& $msbuild /t:Rebuild /p:Configuration=Release src\gsudo.Installer.sln /v:Minimal /p:OutputPath=$outdir || $(popd && _exit 1)
 rm .\artifacts\gsudoSetup.wixpdb
 
 "- Code Signing Installer"
-& $PSScriptRoot\03-sign.ps1 artifacts\gsudoSetup.msi || (popd && exit 1)
+& $PSScriptRoot\03-sign.ps1 artifacts\gsudoSetup.msi || $(popd && _exit 1)
 (Get-FileHash artifacts\gsudoSetup.msi).hash > artifacts\gsudoSetup.msi.sha256
 
 popd
