@@ -30,7 +30,7 @@ jobs:
       contents: write      
     steps:
     - name: Install dependencies
-      run: choco install GitVersion.Portable --confirm --no-progress
+      run: choco install GitVersion.Portable wixtoolset --confirm --no-progress
     - uses: actions/checkout@v2
       with: 
         fetch-depth: 0
