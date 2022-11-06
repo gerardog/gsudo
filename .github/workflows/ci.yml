@@ -76,8 +76,8 @@ jobs:
     - name: Get project version
       id: getversion
       run: |
-           echo "version=$(gitversion /showvariable LegacySemVer)" >> $GITHUB_OUTPUT
-           echo "version_MajorMinorPatch=$(gitversion /showvariable MajorMinorPatch)" >> $GITHUB_OUTPUT
+           echo "::set-output name=version::$(gitversion /showvariable LegacySemVer)"
+           echo "::set-output name=version_MajorMinorPatch::$(gitversion /showvariable MajorMinorPatch)"    
     - name: Build
       run: ./build/01-build.ps1
     - name: Upload build artifacts
