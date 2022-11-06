@@ -14,7 +14,7 @@ jobs:
       checks: write
 
   release:
-    name: Sign & Release to GitHub
+    name: Draft Release
     #if: github.ref == 'refs/heads/master' && github.repository == 'gerardog/gsudo'
     if: github.repository == 'gerardog/gsudo'
     runs-on: windows-latest
@@ -39,7 +39,7 @@ jobs:
         name: Binaries
         path: ./artifacts
     - name: Decode certificate
-      # First encode and upload as environment secret using: [convert]::ToBase64String((Get-Content .\code_signing.pfx -AsByteStream))
+      # Certificate encoded and uploaded as environment secret using: [convert]::ToBase64String((Get-Content .\code_signing.pfx -AsByteStream))
       run: |
         $pfx_cert_byte = [System.Convert]::FromBase64String("${{ secrets.p_f_x }}")
         $_ = mkdir (split-path -parent $env:cert_path) -ErrorAction Ignore
@@ -59,7 +59,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: Installer
-        path: ./artifacts/gsudoSetup.msi             
+        path: ./artifacts/gsudoSetup.msi
     - name: Create Release
       uses: ncipollo/release-action@v1.11.1
       with:
@@ -76,18 +76,31 @@ jobs:
         omitDraftDuringUpdate: true
         replacesArtifacts: true
 
-  chocolatey:
-    name: Pack & Release to Chocolatey
+  publish:
+    name: Publish + Push to Choco & Winget
     #if: github.ref == 'refs/heads/master' && github.repository == 'gerardog/gsudo'
     if: github.repository == 'gerardog/gsudo'
     runs-on: windows-latest
     needs: [build, release]
+    permissions:
+      contents: write
     environment:
       name: release-chocolatey
     env:
       version: ${{ needs.build.outputs.version }}
       version_MajorMinorPatch: ${{ needs.build.outputs.version_MajorMinorPatch }}
     steps:
+    - name: Publish Release
+      uses: ncipollo/release-action@v1.10.0
+      with:
+        token: ${{ secrets.GITHUB_TOKEN  }}
+        name: gsudo v${{env.version}}
+        tag: v${{env.version}}
+        commit: ${{env.GITHUB_SHA}}
+        draft: false
+        allowUpdates: true 
+        omitBodyDuringUpdate: true
+        omitPrereleaseDuringUpdate: true
     - uses: actions/checkout@v2
       with: 
         fetch-depth: 0
@@ -103,10 +116,16 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: Binaries
-        path: ./artifacts       
+        path: ./artifacts
+    - name: WinGet Releaser
+      uses: vedantmgoyal2009/winget-releaser@v1
+      with: 
+        token: ${{ secrets.WINGET_RELEASER_TOKEN }}
+        identifier: gerardog.gsudo
+        installers-regex: '\.msi$' # Only .msi files
 
   docs:
-    needs: release
+    needs: publish
     uses: ./.github/workflows/docs.yml
     permissions:
       id-token: write
