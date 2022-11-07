@@ -32,7 +32,17 @@ namespace gsudo.Helpers
             else
                 process.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
 
-            process.Start();
+            try
+            {
+                process.Start();
+            }
+            catch (Win32Exception ex)
+            {
+                if (ex.NativeErrorCode == 1223)
+                    throw new ApplicationException("The operation was canceled by the user.");
+
+                throw;
+            }
             return process;
         }
 
