@@ -365,7 +365,7 @@ namespace gsudo.Helpers
                 string tempBatName = Path.Combine(
                                             tempFolder,
                                             $"{Guid.NewGuid()}.bat"
-                                        ).Quote();
+                                        );
 
                 File.WriteAllText(tempBatName, sb.ToString());
 
@@ -373,9 +373,9 @@ namespace gsudo.Helpers
                 fSecurity.AddAccessRule(new System.Security.AccessControl.FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), System.Security.AccessControl.FileSystemRights.FullControl, System.Security.AccessControl.AccessControlType.Allow));
 
                 new FileInfo(tempBatName).SetAccessControl(fSecurity);
-
+                tempBatName = tempBatName.Quote();
                 preCommands.Add(tempBatName);
-                preCommands.Add("del / q { tempBatName}");
+                preCommands.Add($"del / q {tempBatName}");
 
                 /*
 
