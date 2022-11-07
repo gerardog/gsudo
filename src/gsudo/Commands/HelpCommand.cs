@@ -40,11 +40,12 @@ Usage:
  gsudo status\t\t\t\tShows current user, cache and console status.
  gsudo !!\t\t\t\tRe-run last command as admin. (YMMV)
 
-General options:
+New Window options:
  -n | --new             Starts the command in a new console (and returns immediately).
- --noexit               Keep elevated shell open after running {command}.
- --noclose              When in new console, ask for keypress before closing the console.
- -w | --wait            When in new console, wait for the command to end.
+ -w | --wait            When in new console, wait for the command to end and return the exitcode.
+ --keepShell            Keep elevated shell open after running {command}.
+ --keepWindow           When in new console, ask for keypress before closing the console.
+ --close                Override settings and always close new window at end.
 
 Security options:
  -i | --integrity {v}   Run with integrity level: Untrusted, Low, Medium, MediumPlus, High (default), System
