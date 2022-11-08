@@ -20,15 +20,14 @@ It is designed so it is easy to install, easy to use, and feels familiar with ot
 ### Features
 
 - It is a proper `sudo for windows`:
-  - Executes the desired command with elevated permissions.
+  - Executes the desired command with elevated permissions (or as another user).
   - Elevated commands are shown in the current user-level console. No new window. (Unless you specify `-n`)
   - Full console support: Colors, full keyboard, auto-completion, etc.
   - Supports I/O redirection.
   - Handles Ctrl-C properly
   - Supports worldwide encodings & codepages
 - Uses the current shell to interpet the command to elevate:
-  - `gsudo {command}` uses a new instance of the invoking shell to elevate the command.
-  
+  - `gsudo {command}` uses a new instance of the invoking shell to elevate the command.  
     For example, in PowerShell `gsudo mkdir x` becames `pwsh -c "mkdir x"`, while in CMD it becames `cmd /c "mkdir x"`.
   - Supported Shells:
     - [CMD](usage)
@@ -38,9 +37,7 @@ It is designed so it is easy to install, easy to use, and feels familiar with ot
     - Yori
     - Take Command
     - NuShell
-
-- If no command is specified, it starts an elevated shell.
- 
+- If no command is specified, it starts an elevated shell. 
 - [Credentials cache](#credentials-cache): `gsudo` can elevate many times showing only one UAC pop-up if the user opts-in to enable the cache.
 - Supports being used on scripts:
   - Returns the command exit code (`%errorlevel%`). If `gsudo` fails to elevate, the exit code will be 999.

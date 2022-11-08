@@ -40,7 +40,9 @@ gsudo command3 # Elevation without popup
 gsudo cache off # (or gsudo -k) Ends the cache session. Next elevation will show a UAC popup.
 ```
 
-- **Disabled:** Every elevation request shows a UAC popup. Attempts to start a Cache Session throws error. 
+- **Disabled:** Every elevation request shows a UAC popup. Attempts to start a Cache Session throws error.
+
+---
 
 Use `gsudo cache on|off` to start/stop a cache session manually (i.e. allow/disallow elevation of the current process with no additional UAC popups).
 
