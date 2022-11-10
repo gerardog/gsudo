@@ -12,7 +12,7 @@ In gsudo v2, a new setting was introduced to force elevations in a new window. T
 gsudo config NewWindow.Force true
 ```
 
-The problem with this approach is that some elevations complete too quickly and the new window may close abruptly. So to leave time to verify the window result, combine it with one of the following new switches:
+The problem with this approach is that some elevations complete too quickly and the new window may close abruptly. So to leave time to verify the window result combine it with one of the following new switches:
 
 - `--KeepWindow`: After running a command in a new console, ask for keypress before closing the console/window.
 - `--KeepShell`: After running a command, keep the elevated shell open.

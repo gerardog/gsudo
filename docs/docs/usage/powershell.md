@@ -5,20 +5,22 @@ title: Usage from PowerShell
 ---
 ## Usage from PowerShell
 
-:::warning
+:::caution
 
-If you installed `PowerShell Core` as a `dotnet global tool` (using `dotnet tool install PowerShell`) [you will have issues](https://github.com/PowerShell/PowerShell/issues/11747). Please install with any another installation method such as: `winget install Microsoft.PowerShell` / `choco install pwsh` / [Download from GitHub](https://github.com/PowerShell/PowerShell/releases/latest) / [Microsoft Store](https://apps.microsoft.com/store/detail/powershell/9MZ1SNWT0N5D)
+If you installed `PowerShell Core` as a `dotnet global tool` [you will have issues](https://github.com/PowerShell/PowerShell/issues/11747). 
+
+You can check by running `dotnet tool list --global`. If so, uninstall and use any another installation method such as: `winget install Microsoft.PowerShell` / `choco install pwsh` / [Download from GitHub](https://github.com/PowerShell/PowerShell/releases/latest) / [Microsoft Store](https://apps.microsoft.com/store/detail/powershell/9MZ1SNWT0N5D)
 
 :::
 
 When the current shell is `PowerShell`, gsudo can be used in the following ways:
 
 - Call `gsudo` to start an elevated PowerShell session.
-- To elevate a command, use:
-  - [`gsudo { ScriptBlock }`](#using-gsudo-scriptblock-syntax) => New, suggested syntax.
-  - [`gsudo 'string command'`](#using-gsudo-command-syntax) => Old, legacy syntax.
-  - [`Invoke-gsudo` function](#using-invoke-gsudo-function) is a wrapper with better serialization.
-  
+- To elevate a command, any of the following syntaxes:
+  1. [`gsudo { ScriptBlock }`](#using-gsudo-scriptblock-syntax) => Best performance.
+  2. [`Invoke-gsudo` function](#using-invoke-gsudo-function) wrapper with PowerShell native syntax.
+  3. [`gsudo 'string command'`](#using-gsudo-command-syntax) => Old, legacy syntax.
+
 - You can [add `gsudo` PowerShell Module](#powershell-profile-config) to your `$PROFILE`
   - This enables to use `gsudo !!` to elevate last command.
   
@@ -26,22 +28,32 @@ When the current shell is `PowerShell`, gsudo can be used in the following ways:
   
   `command1 | gsudo elevatedCommand2 | command3`
 
-  Or you can elevate the whole pipeline if you put it inside a [script block](#using-gsudo-scriptblock-syntax).  
+  Or you can elevate the whole pipeline if you put it inside a [script block](#using-gsudo-scriptblock-syntax) as in: `gsudo {command1 | command2 | command3}`
+
+- `gsudo` uses PowerShell's bult-in serialization, which can be **really slow** with big object graphs, like all the machine process tree returned by `Get-Process`.
 ---
 
 ### Using `gsudo {ScriptBlock}` syntax
 
-- New! *recommended* way (added in gsudo v1.6.0)
+``` powershell
+# Syntax:
+gsudo [-nwskd] [--loadProfile] 
+      [-u|--user {username}] [--integrity {i}] [--ti]
+      { ScriptBlock } [-args $argument1[..., $argumentN]] ;
+```
+
 - Express the command to elevate as a PowerShell ScriptBlock, between `{braces}`. PowerShell will parse it and auto-complete commands.
 - The ScriptBlock can use literals, but can't access parent or global scope variables (remember it runs in another process). To parametrize the script, you can pass values with `-args` parameter and access them via `$args` array. If you find this painfull, try [`Invoke-gsudo`](#using-invoke-gsudo-function).
-  
+- If the result is not captured in a variable, you get best performance, as all serialization is avoided (the output is print in the console).
+
   ``` powershell
   gsudo { Get-Process "chrome" }
   gsudo { Get-Process $args } -args "chrome"
-  gsudo { echo $args[0] $args[1] } -args "Hello", "World"  
+  gsudo { echo $args[0] $args[1] } -args "Hello", "World"
   ```
 
-- Output can be captured as PSObjects.
+- If the result is captured, serialization is slower but automatic & transparent (you receive PSObjects).
+
   ``` powershell
   $services = gsudo { Get-Service 'WSearch', 'Winmgmt'} 
   Write-Output $services.DisplayName
@@ -55,7 +67,7 @@ When the current shell is `PowerShell`, gsudo can be used in the following ways:
   get-process winword | gsudo { $input | Stop-Process }
   ```
 
-Examples:
+Example:
   
   ``` powershell
   $file='C:\My Secret.txt'; 
@@ -66,32 +78,33 @@ Examples:
 
 ---
 
-### Using `gsudo 'command'` syntax
+### Using `Invoke-gsudo` function:
 
-- This is the old syntax. Is still supported but not recommended.
-- Express the command to elevate as a string literal (between `'quotes'`). (And properly escaping your quotes, if needed).
-- Outputs are strings, not PSObjects.
-- The command can use literals, but can't access parent or global scope variables. To parametrize the script, you can use string substitution:
-  
 ``` powershell
-$file='C:\My Secret.txt'; 
-$algorithm='md5';
+# Syntax:
+Invoke-Gsudo [-ScriptBlock] <ScriptBlock> 
+            [[-ArgumentList] <Object[]>] 
+            [-InputObject <PSObject>] 
+            [-LoadProfile | -NoProfile <# default #>] 
+            [-Credential <PSCredential>]
 
-$hash = gsudo "(Get-FileHash '$file' -Algorithm $algorithm).Hash"
+# Example:
+$MyString = "Hello World"
+Invoke-Gsudo { Write-Output $using:MyString }             
 ```
 
----
+**`Invoke-gsudo`** is a wrapper function of `gsudo` with the following characteristics:
 
-### Using `Invoke-gsudo` function
+- Native PowerShell function syntax.
 
-**`Invoke-gsudo`** is a wrapper function of `gsudo` with the following benefits:
+- Automatic serialization of inputs, outputs and pipeline objects. The results are serialized and returned (as a `PSObject` or `PSObject[]`). The serialization is mandatory so this can be slower than  [`gsudo {ScriptBlock}` syntax](#using-gsudo-scriptblock-syntax).
 
-- Automatic serialization of inputs, outputs and pipeline objects. The results are serialized and returned (as a `PSObject` or `PSObject[]`).
 - The command can't access parent or global scope variables. To parametrize the script, you can:
-  - Mention your `$variable` as `$using:variableName` and its serialized value will be applied.
+  - 🚀 Mention your `$variable` as `$using:variableName` and its serialized value will be applied.
   - Pass values with `-args` parameter and access them via `$args` array.
-- Current Location is preserved for non-FileSystem providers.
-- `$ErrorActionPreference` is preserved.  
+- Your current context is better preserved and forwarded to the elevated process:
+  - Current Location for non-FileSystem providers.
+  - `$ErrorActionPreference`.  
 - If your command requires accessing a function on your `$PROFILE` add the `-LoadProfile` parameter. [See More](#loading-your-ps-profile-on-command-elevations).
 - Add `-Credential` to specify a user & password to run.
 
@@ -108,6 +121,22 @@ Invoke-gsudo { Remove-Item $using:folder }
 # The result is serialized (PSObject) with properties.
 (Invoke-gsudo { Get-ChildItem $using:folder }).LastWriteTime
 ```
+
+### Using `gsudo 'command'` syntax
+
+- This is the old syntax. Is still supported but not recommended.
+- Prepend `gsudo`, your command must be surrounded by quotes if it contains in of `'"`
+- Express the command to elevate as a string literal (between `'quotes'`). (And properly escaping your quotes, if needed).
+- Outputs are strings, not PSObjects.
+- The command can use literals, but can't access parent or global scope variables. To parametrize the script, you can use string substitution:
+  
+``` powershell
+$file='C:\My Secret.txt'; 
+$algorithm='md5';
+
+$hash = gsudo "(Get-FileHash '$file' -Algorithm $algorithm).Hash"
+```
+---
 
 ### Test elevation success
 
@@ -147,10 +176,6 @@ gsudo -d dir C:\
   - `Set-Alias 'sudo' 'Invoke-gsudo'`
 :::
 
-<!-- :::caution
-- Windows PowerShell (5.x) and PowerShell Core (>6.x) have different `$PROFILE` configuration files, so follow this steps on the version that you use, or both.
-:::
- -->
 ## Loading your PS Profile on command elevations
 
 When elevating commands, elevation is called with the `-NoProfile` argument. This means the elevated instance won't load your `$PROFILE`. If your command requires your PowerShell profile loaded you can:
@@ -163,6 +188,7 @@ When elevating commands, elevation is called with the `-NoProfile` argument. Thi
 
 - Per command, when using `Invoke-gsudo`, add `-LoadProfile`:
   
-      PS C:\> Invoke-Gsudo { echo (1+1) } -LoadProfile
-
+  ``` powershell
+  PS C:\> Invoke-Gsudo { echo (1+1) } -LoadProfile
+  ```
 - Set as a permanent setting with: `gsudo config PowerShellLoadProfile true`
