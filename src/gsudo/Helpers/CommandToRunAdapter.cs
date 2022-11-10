@@ -375,13 +375,8 @@ namespace gsudo.Helpers
                 new FileInfo(tempBatName).SetAccessControl(fSecurity);
                 tempBatName = tempBatName.Quote();
                 preCommands.Add(tempBatName);
-                preCommands.Add($"del / q {tempBatName}");
-
-                /*
-
-                } */
+                preCommands.Add($"del /q {tempBatName}");
             }
-            //return command;
         }
 
         internal void Build()
