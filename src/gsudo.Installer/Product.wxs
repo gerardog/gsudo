@@ -5,12 +5,17 @@
   <Product Id="*" Name="gsudo v$(env.version)" Language="1033" Version="$(env.version_MajorMinorPatch)"
            UpgradeCode="567b5616-d362-484e-b6ff-7c1875cf0aee" Manufacturer="gerardog">
 
-    <Package InstallerVersion="200"
+	  
+
+	  <Package InstallerVersion="200"
              Compressed="yes"
              InstallScope="perMachine"
              Manufacturer="Gerardo Grignoli"
              Description="gsudo is a sudo-equivalent for windows" />
 
+	<Property Id="REBOOT" Value="ReallySuppress" />
+	<Property Id="MSIRESTARTMANAGERCONTROL" Value="Disable" />
+	  
     <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
     <MediaTemplate EmbedCab="yes" />
 
@@ -40,7 +45,9 @@
     <InstallExecuteSequence>
       <Custom Action="CreateSudoExeLink" Before="InstallFinalize">NOT Installed</Custom>
       <Custom Action="RemoveSudoExeLink" After="InstallInitialize">Installed AND NOT REINSTALL</Custom>
-    </InstallExecuteSequence>
+	  <Custom Action="CreateSudoCurrentFolderLink" Before="InstallFinalize">NOT Installed</Custom>
+      <Custom Action="RemoveSudoCurrentFolderLink" After="InstallInitialize">Installed AND NOT REINSTALL</Custom>
+	</InstallExecuteSequence>
 
   </Product>
 
@@ -58,11 +65,12 @@
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder">
         <Directory Id="INSTALLFOLDER" Name="gsudo">
+		  <Directory Id="VERSIONFOLDER" Name="$(env.version)">
 
           <Component Id="GSudoPath" Guid="923f225a-75cd-4fca-ad48-a4161187f7a4">
             <CreateFolder />
             <Environment Id="SET_ENV" Action="set" Name="PATH" Part="last" Permanent="no" System="yes"
-                         Value="[INSTALLFOLDER]" />
+                         Value="[INSTALLFOLDER]Current" />
           </Component>
 
           <Component Id="GSudoExe" Guid="bec137e1-06e2-4efb-aea9-30306cc01c87">
@@ -88,7 +96,8 @@
             <File Id="GSudoModule" KeyPath="yes" 	Name="gsudoModule.psm1" Source="..\..\artifacts\x64\gsudoModule.psm1" />
             <File Id="InvokeGSudo" KeyPath="no" 	Name="invoke-gsudo.ps1" Source="..\..\artifacts\x64\invoke-gsudo.ps1" />
           </Component>
-
+			  
+		  </Directory>
         </Directory>
       </Directory>
     </Directory>
@@ -96,17 +105,30 @@
 
   <Fragment>
     <CustomAction Id="CreateSudoExeLink"
-                  Directory="INSTALLFOLDER"
-                  ExeCommand='cmd /c mklink sudo.exe "[INSTALLFOLDER]gsudo.exe"'
+                  Directory="VERSIONFOLDER"
+                  ExeCommand='cmd /c mklink sudo.exe "[VERSIONFOLDER]gsudo.exe"'
                   Execute="deferred"
                   Return="ignore"
                   Impersonate="no" />
     <CustomAction Id="RemoveSudoExeLink"
-                  Directory="INSTALLFOLDER"
+                  Directory="VERSIONFOLDER"
                   ExeCommand='cmd /c DEL sudo.exe'
                   Execute="deferred"
                   Return="ignore"
                   Impersonate="no" />
+
+	  <CustomAction Id="CreateSudoCurrentFolderLink"
+					Directory="INSTALLFOLDER"
+					ExeCommand='cmd /c mklink /D "[INSTALLFOLDER]Current" "[VERSIONFOLDER]"'
+					Execute="deferred"
+					Return="ignore"
+					Impersonate="no" />
+	  <CustomAction Id="RemoveSudoCurrentFolderLink"
+					Directory="INSTALLFOLDER"
+					ExeCommand='cmd /c RD /S /Q "[INSTALLFOLDER]Current"'
+					Execute="deferred"
+					Return="ignore"
+					Impersonate="no" />
   </Fragment>
 
 </Wix>
