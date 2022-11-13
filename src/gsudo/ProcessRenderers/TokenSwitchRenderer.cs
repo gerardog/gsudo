@@ -22,6 +22,7 @@ namespace gsudo.ProcessRenderers
         private readonly SafeProcessHandle _process;
         private readonly ProcessApi.PROCESS_INFORMATION _processInformation;
         private readonly ManualResetEventSlim tokenSwitchSuccessEvent = new ManualResetEventSlim(false);
+        private JobObject _job;
 
         internal TokenSwitchRenderer(Connection connection, ElevationRequest elevationRequest)
         {
@@ -56,6 +57,13 @@ namespace gsudo.ProcessRenderers
             }
 
             _process = ProcessFactory.CreateProcessAsUserWithFlags(exeName, args, dwCreationFlags, out _processInformation);
+            
+            if (elevationRequest.Wait)
+            {
+                _job = new JobObject();
+                Logger.Instance.Log($"Created JobObject", LogLevel.Debug);
+                _job.AddProcess(_process.DangerousGetHandle());
+            }
 
             elevationRequest.TargetProcessId = _processInformation.dwProcessId;
             if (!elevationRequest.NewWindow)
