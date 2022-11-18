@@ -28,12 +28,7 @@ namespace gsudo.Helpers
         {
             get
             {
-                if (!IsIntialized)
-                {
-                    _invokingShell = Initialize(out _invokingShellFullPath);
-                    IsIntialized = true;
-                }
-
+                if (!IsIntialized) Initialize();
                 return _invokingShellFullPath;
             }
         }
@@ -42,19 +37,20 @@ namespace gsudo.Helpers
         {
             get
             {
-                if (!IsIntialized)
-                {
-                    _invokingShell = Initialize(out _invokingShellFullPath);
-                    IsIntialized = true;
-                }
-
+                if (!IsIntialized) Initialize();
                 return _invokingShell.Value;
             }
         }
 
         private static bool IsIntialized { get; set; }
 
-        private static Shell Initialize(out string invokingShellFullPath)
+        private static void Initialize()
+        {
+            _invokingShell = InitializeInternal(out _invokingShellFullPath);
+            IsIntialized = true;
+        }
+
+        private static Shell InitializeInternal(out string invokingShellFullPath)
         {
             var parentProcess = Process.GetCurrentProcess().GetParentProcessExcludingShim();
 
@@ -63,36 +59,33 @@ namespace gsudo.Helpers
                 invokingShellFullPath = parentProcess.GetExeName();
 
                 var shell = DetectShellByFileName(invokingShellFullPath);
-                
+
                 if (shell.HasValue)
                     return shell.Value;
-                else
+                // Depending on how pwsh was installed, Pwsh.exe -calls-> dotnet -calls-> gsudo.
+                var grandParentProcess = parentProcess.GetParentProcessExcludingShim();
+                if (grandParentProcess != null)
                 {
-                    // Depending on how pwsh was installed, Pwsh.exe -calls-> dotnet -calls-> gsudo.
-                    var grandParentProcess = parentProcess.GetParentProcessExcludingShim();
-                    if (grandParentProcess != null)
+                    var grandParentExeName = Path.GetFileName(grandParentProcess.GetExeName()).ToUpperInvariant();
+                    if (grandParentExeName == "PWSH.EXE" || grandParentExeName == "PWSH")
                     {
-                        var grandParentExeName = Path.GetFileName(grandParentProcess.GetExeName()).ToUpperInvariant();
-                        if (grandParentExeName == "PWSH.EXE" || grandParentExeName == "PWSH")
+                        invokingShellFullPath = grandParentProcess.GetExeName();
+
+                        Version fileVersion = GetInvokingShellVersion();
+
+                        if (fileVersion <= new Version(6, 2, 3) && invokingShellFullPath.EndsWith(".dotnet\\tools\\pwsh.exe", StringComparison.OrdinalIgnoreCase))
                         {
-                            invokingShellFullPath = grandParentProcess.GetExeName();
-
-                            FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(invokingShellFullPath);
-
-                            if (Version.Parse(versionInfo.FileVersion) <= Version.Parse("6.2.3.0") && invokingShellFullPath.EndsWith(".dotnet\\tools\\pwsh.exe", StringComparison.OrdinalIgnoreCase))
-                            {
-                                return Helpers.Shell.PowerShellCore623BuggedGlobalInstall;
-                            }
-
-                            return Helpers.Shell.PowerShellCore;
+                            return Helpers.Shell.PowerShellCore623BuggedGlobalInstall;
                         }
-                    }
 
-                    if (ProcessFactory.IsWindowsApp(invokingShellFullPath))
-                    {
-                        invokingShellFullPath = Environment.GetEnvironmentVariable("COMSPEC");
-                        return Helpers.Shell.WindowsApp; // Called from explorer.exe, task mgr, etc.
+                        return Helpers.Shell.PowerShellCore;
                     }
+                }
+
+                if (ProcessFactory.IsWindowsApp(invokingShellFullPath))
+                {
+                    invokingShellFullPath = Environment.GetEnvironmentVariable("COMSPEC");
+                    return Helpers.Shell.WindowsApp; // Called from explorer.exe, task mgr, etc.
                 }
             }
 
@@ -101,6 +94,15 @@ namespace gsudo.Helpers
             // => Assume CMD.
             invokingShellFullPath = Environment.GetEnvironmentVariable("COMSPEC");
             return Helpers.Shell.Cmd;
+        }
+    
+
+        public static Version GetInvokingShellVersion()
+        {
+            if (!IsIntialized) Initialize();
+            FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(_invokingShellFullPath);
+            var fileVersion = new Version(versionInfo.FileMajorPart, versionInfo.FileMinorPart, versionInfo.FileBuildPart);
+            return fileVersion;
         }
 
         public static Shell? DetectShellByFileName(string filename)
