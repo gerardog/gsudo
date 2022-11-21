@@ -99,7 +99,6 @@ namespace gsudo.Helpers
 
         public static Version GetInvokingShellVersion()
         {
-            if (!IsIntialized) Initialize();
             FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(_invokingShellFullPath);
             var fileVersion = new Version(versionInfo.FileMajorPart, versionInfo.FileMinorPart, versionInfo.FileBuildPart);
             return fileVersion;
