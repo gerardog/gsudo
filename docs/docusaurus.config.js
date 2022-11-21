@@ -31,7 +31,7 @@ const config = {
           showReadingTime: true,
           // Please change this to your repo.
           editUrl:
-            'https://github.com/gerardog/gsudo/tree/docs/docs/blog/',
+            'https://github.com/gerardog/gsudo/tree/master/docs/blog/',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
