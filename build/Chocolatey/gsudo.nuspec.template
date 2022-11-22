@@ -34,7 +34,7 @@
     <docsUrl>https://gerardog.github.io/gsudo/</docsUrl>
     <!--<mailingListUrl></mailingListUrl>-->
     <bugTrackerUrl>https://github.com/gerardog/gsudo/issues</bugTrackerUrl>
-    <tags>sudo for windows run elevated user command runas powershell wsl</tags>
+    <tags>sudo for windows run elevated command runas powershell wsl</tags>
     <summary>gsudo is a `sudo` for Windows with a similar user-experience as *nix sudo.</summary>
     <description>
 `gsudo` allows to run commands with elevated permissions within the current console. 
