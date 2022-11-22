@@ -163,9 +163,12 @@ namespace gsudo.Helpers
                             }
                             // ----
 
-                            string pscommand = string.Join(" ", args)
-                                            .ReplaceOrdinal("\"", "\\\"")
-                                            .Quote();
+                            string pscommand = string.Join(" ", args);
+
+                            if (ShellHelper.GetInvokingShellVersion() < new Version(7, 3, 0))
+                                pscommand = pscommand.ReplaceOrdinal("\"", "\\\"");
+
+                            pscommand = pscommand.Quote();
 
                             newArgs.Add(pscommand);
                         }

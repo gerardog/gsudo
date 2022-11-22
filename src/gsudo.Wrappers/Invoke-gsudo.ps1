@@ -140,7 +140,7 @@ if ($Debug) {
 	Write-Debug "Full Script to run on the isolated instance: { $remoteCmd }" 
 } 
 
-$pwsh = ("""$([System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName)""") # Get same running powershell EXE.
+$pwsh = ("$([System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName)") # Get same running powershell EXE.
 
 if ($host.Name -notmatch 'consolehost') { # Workaround for PowerShell ISE, or PS hosted inside other process
 	if ($PSVersionTable.PSVersion.Major -le 5) 
@@ -150,18 +150,12 @@ if ($host.Name -notmatch 'consolehost') { # Workaround for PowerShell ISE, or PS
 } 
 
 $windowTitle = $host.ui.RawUI.WindowTitle;
-
-$dbg = if ($debug) {"--debug "} else {" "}
-
-if ($LoadProfile -and (-not $NoProfile -or (gsudo.exe --loglevel None config PowerShellLoadProfile).Split(" = ")[1] -like "*true*")) {
-	$sNoProfile = ""
-} else {
-	$sNoProfile = "-NoProfile "
-}
+$arguments = "-d", "--LogLevel", "Error"
 
 if ($credential) {
 	$currentSid = ([System.Security.Principal.WindowsIdentity]::GetCurrent()).User.Value;
 	$user = "-u $($credential.UserName) "
+	$arguments += "-u", $credential.UserName
 	
 	# At the time of writing this, there is no way (considered secure) to send the password to gsudo. So instead of sending the password, lets start a credentials cache instance.	
 	Start-Process "gsudo.exe" -Args "$dbg -u $($credential.UserName) gsudoservice $PID $CurrentSid All 00:05:00" -credential $Credential -LoadUserProfile -WorkingDirectory "$env:windir" *> $null
@@ -173,10 +167,20 @@ if ($credential) {
 	$user = "";
 }
 
-$arguments = "-d --LogLevel Error $user$dbg$pwsh $sNoProfile -nologo -NonInteractive -OutputFormat Xml -InputFormat Text -encodedCommand IAAoACQAaQBuAHAAdQB0ACAAfAAgAE8AdQB0AC0AUwB0AHIAaQBuAGcAKQAgAHwAIABpAGUAeAAgAA==".Split(" ")
+if ($debug) { $arguments += "--debug"}
+
+$arguments += $pwsh
+
+if ($LoadProfile -and (-not $NoProfile -or (gsudo.exe --loglevel None config PowerShellLoadProfile).Split(" = ")[1] -like "*true*")) {
+} else {
+	$arguments += "-NoProfile"
+}
+
+$arguments += "-NoLogo", "-NonInteractive", "-OutputFormat", "Xml", "-InputFormat", "Text", "-encodedCommand", "IAAoACQAaQBuAHAAdQB0ACAAfAAgAE8AdQB0AC0AUwB0AHIAaQBuAGcAKQAgAHwAIABpAGUAeAAgAA=="
+
 # Must Read: https://stackoverflow.com/questions/68136128/how-do-i-call-the-powershell-cli-robustly-with-respect-to-character-encoding-i?noredirect=1&lq=1
 
-$result = $remoteCmd | & gsudo.exe $arguments *>&1
+$result = $remoteCmd | & gsudo.exe @arguments *>&1
 
 $host.ui.RawUI.WindowTitle = $windowTitle;
 
