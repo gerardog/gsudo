@@ -3,7 +3,7 @@
 $packageName = 'gsudo'
 $softwareName = 'gsudo v*' #part or all of the Display Name as you see it in Programs and Features. It should be enough to be unique
 $installerType = 'MSI'
-$silentArgs = '/qn /norestart'
+$silentArgs = '/qb /norestart'
 # https://msdn.microsoft.com/en-us/library/aa376931(v=vs.85).aspx
 $validExitCodes = @(0, 3010, 1605, 1614, 1641)
 
