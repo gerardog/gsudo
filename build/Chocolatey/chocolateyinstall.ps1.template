@@ -84,7 +84,7 @@ $packageArgs = @{
   checksum64    = '#SHA#'
   checksumType64= 'sha256'
 
-  silentArgs    = "" # ALLUSERS=1 DISABLEDESKTOPSHORTCUT=1 ADDDESKTOPICON=0 ADDSTARTMENU=0
+  silentArgs    = "/qn /norestart" # ALLUSERS=1 DISABLEDESKTOPSHORTCUT=1 ADDDESKTOPICON=0 ADDSTARTMENU=0
   validExitCodes= @(0, 3010, 1641)
 }
 
@@ -101,8 +101,10 @@ Install-ChocolateyPackage @packageArgs
 Update-SessionEnvironment
 
 if (Get-Module gsudoModule) {
-	if ((get-Module gsudoModule).Path) 
-	"  Import-Module `'$((Get-Command gsudoModule.psd1).Source)`'"
+	if ((Split-Path (Get-Module gsudoModule).Path -Parent) -ne (Split-Path (Get-Command gsudoModule.psd1).	Source -Parent)) {
+		"IMPORTANT! Please update your `$PROFILE: Use the following gsudoModule path."
+		"  Import-Module `'$((Get-Command gsudoModule.psd1).Source)`'"
+	}
 } else {
 	& { 
 	"PowerShell users: To use enhanced gsudo and Invoke-Gsudo cmdlet, add the following line to your `$PROFILE"
@@ -110,6 +112,6 @@ if (Get-Module gsudoModule) {
 	"Or run: "
 	"  Get-Command gsudoModule.psd1 | % { Write-Output `"``nImport-Module ```"`$(`$_.Source)```"`" | Add-Content `$PROFILE }"
 	} 
-Write-Output "`ngsudo successfully installed. Please restart your consoles to use gsudo.`n"
-
+	
+Write-Output "`nPlease restart your consoles to use gsudo.`n"
 }
