@@ -16,7 +16,7 @@ if ($env:version) {
 Get-ChildItem .\artifacts\ -File | Remove-Item                  # Remove files on artifacts root
 Get-ChildItem .\artifacts\ -Filter *.pdb -Recurse | Remove-Item # Remove *.pdb on subfolders
 
-Compress-Archive -Path ./artifacts/x86,./artifacts/x64,./artifacts/net46-AnyCpu -DestinationPath "artifacts/gsudo.v$($version).zip" -force -CompressionLevel Optimal
+Compress-Archive -Path ./artifacts/x86,./artifacts/x64,./artifacts/arm64 -DestinationPath "artifacts/gsudo.v$($version).zip" -force -CompressionLevel Optimal
 (Get-FileHash artifacts\gsudo.v$($version).zip).hash > artifacts\gsudo.v$($version).zip.sha256
 
 $msbuild = &"${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -prerelease -products * -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe

@@ -30,10 +30,8 @@ $files = @(
 "artifacts\x64\*.p*1" 
 "artifacts\x86\*.exe", 
 "artifacts\x86\*.p*1", 
-#"artifacts\arm64\*.exe", 
-#"artifacts\arm64\*.p*1", 
-"artifacts\net46-AnyCpu\*.exe", 
-"artifacts\net46-AnyCpu\*.p*1"
+"artifacts\arm64\*.exe", 
+"artifacts\arm64\*.p*1"
 ) -join " "
 
 # Accept $args override.
