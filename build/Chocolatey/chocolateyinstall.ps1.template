@@ -100,12 +100,14 @@ Install-ChocolateyPackage @packageArgs
 
 Update-SessionEnvironment
 
+$ErrorActionPreference = 'SilentlyContinue';
+
 if (Get-Module gsudoModule) {
 	if ((Split-Path (Get-Module gsudoModule).Path -Parent) -ne (Split-Path (Get-Command gsudoModule.psd1).	Source -Parent)) {
 		"IMPORTANT! Please update your `$PROFILE: Use the following gsudoModule path."
 		"  Import-Module `'$((Get-Command gsudoModule.psd1).Source)`'"
 	}
-} else {
+} elseif (Get-Command gsudoModule.psd1) {
 	& { 
 	"PowerShell users: To use enhanced gsudo and Invoke-Gsudo cmdlet, add the following line to your `$PROFILE"
 	"  Import-Module `'$((Get-Command gsudoModule.psd1).Source)`'"
