@@ -117,7 +117,7 @@
 
 	  <CustomAction Id="CreateSudoCurrentFolderLink"
 					Directory="INSTALLFOLDER"
-					ExeCommand='cmd /c mklink /D "[INSTALLFOLDER]Current" "[VERSIONFOLDER]"'
+					ExeCommand='cmd /c mklink /J "[INSTALLFOLDER]Current" "[VERSIONFOLDER]"'
 					Execute="deferred"
 					Return="ignore"
 					Impersonate="no" />
