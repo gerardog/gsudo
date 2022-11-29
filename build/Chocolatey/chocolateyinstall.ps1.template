@@ -1,0 +1,119 @@
+﻿function MarkFileDelete {
+param(
+    [parameter(Mandatory=$true)]
+	[string] $path
+)
+
+Add-Type @'
+    using System;
+    using System.Text;
+    using System.Runtime.InteropServices;
+       
+    public class Posh
+    {
+        public enum MoveFileFlags
+        {
+            MOVEFILE_DELAY_UNTIL_REBOOT         = 0x00000004
+        }
+ 
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        static extern bool MoveFileEx(string lpExistingFileName, string lpNewFileName, MoveFileFlags dwFlags);
+        
+        public static bool MarkFileDelete (string sourcefile)
+        {
+            return MoveFileEx(sourcefile, null, MoveFileFlags.MOVEFILE_DELAY_UNTIL_REBOOT);         
+        }
+    }
+'@
+	$deleteResult = [Posh]::MarkFileDelete($path)
+	
+    if ($deleteResult) {
+        write-Warning "(Delete of $path failed: Will be deleted at next boot.)"
+    } else {
+		write-Warning "(Error marking $path for deletion at next boot.)"
+    }
+}
+
+Import-Module (Join-Path (Split-Path -parent $MyInvocation.MyCommand.Definition) "Uninstall-ChocolateyPath.psm1")
+
+# ********* Uninstall previous versions from $(Get-ToolsLocation)\gsudo
+
+$installPath = "$(Get-ToolsLocation)\gsudo"
+Uninstall-ChocolateyPath "$installPath\Current" 'Machine'
+
+$ErrorActionPreference="Ignore"
+
+# Delete symlinks in Pwsh 5.
+Get-ChildItem $installPath -Recurse |? LinkType -eq 'SymbolicLink'|%{$_.Delete()}
+# Delete the rest.
+Remove-Item $installPath -Recurse -Force -ErrorAction Ignore
+Remove-Item $installPath -Recurse -Force -ErrorAction Ignore
+
+if (Test-Path $installPath) {
+	# Files are in use so delete failed.
+	# Rename used files and directories. 
+
+    Get-ChildItem $installPath -Recurse -Exclude "*.deleteMe" | Sort-Object -Descending {(++$script:i)} | % { Rename-Item -Path $_.FullName -NewName ($_.Name + ".deleteMe")  ; } *> $NULL
+	# Mark remaining for delete after restart.
+	Get-ChildItem $installPath -Recurse | % { MarkFileDelete ( $_.FullName) }
+	MarkFileDelete ( $installPath );
+}
+
+# ********* Install new versions using From GitHub's .MSI file. ** Based From Choco MSI Template.
+
+$ErrorActionPreference = 'Stop';
+
+$packageName= 'gsudo'
+$toolsDir   = "$(Split-Path -parent $MyInvocation.MyCommand.Definition)"
+#$fileLocation = Join-Path $toolsDir 'NAME_OF_EMBEDDED_INSTALLER_FILE'
+
+$packageArgs = @{
+  packageName   = $packageName
+  unzipLocation = $toolsDir
+  fileType      = 'MSI'
+  url           = 'https://github.com/gerardog/gsudo/releases/download/v#VERSION#/gsudoSetup.msi' # download url, HTTPS preferred
+  url64bit      = 'https://github.com/gerardog/gsudo/releases/download/v#VERSION#/gsudoSetup.msi' # 64bit URL here (HTTPS preferred) or remove - if installer contains both (very rare), use $url
+#  url           = '[[Url]]' # download url, HTTPS preferred
+#  url64bit      = '[[Url64]]' # 64bit URL here (HTTPS preferred) or remove - if installer contains both (very rare), use $url  
+  #file         = $fileLocation
+
+  softwareName  = 'gsudo v*' #part or all of the Display Name as you see it in Programs and Features. It should be enough to be unique
+
+  checksum      = '#SHA#'
+  checksumType  = 'sha256' #default is md5, can also be sha1, sha256 or sha512
+  checksum64    = '#SHA#'
+  checksumType64= 'sha256'
+
+  silentArgs    = "/qn /norestart" # ALLUSERS=1 DISABLEDESKTOPSHORTCUT=1 ADDDESKTOPICON=0 ADDSTARTMENU=0
+  validExitCodes= @(0, 3010, 1641)
+}
+
+#https://chocolatey.org/docs/helpers-install-chocolatey-package
+Install-ChocolateyPackage @packageArgs
+## If you are making your own internal packages (organizations), you can embed the installer or
+## put on internal file share and use the following instead (you'll need to add $file to the above)
+# https://chocolatey.org/docs/helpers-install-chocolatey-install-package
+#Install-ChocolateyInstallPackage @packageArgs
+
+# gsudo powershell module banner.
+"";
+
+Update-SessionEnvironment
+
+$ErrorActionPreference = 'SilentlyContinue';
+
+if (Get-Module gsudoModule) {
+	if ((Split-Path (Get-Module gsudoModule).Path -Parent) -ne (Split-Path (Get-Command gsudoModule.psd1).	Source -Parent)) {
+		"IMPORTANT! Please update your `$PROFILE: Use the following gsudoModule path."
+		"  Import-Module `'$((Get-Command gsudoModule.psd1).Source)`'"
+	}
+} elseif (Get-Command gsudoModule.psd1) {
+	& { 
+	"PowerShell users: To use enhanced gsudo and Invoke-Gsudo cmdlet, add the following line to your `$PROFILE"
+	"  Import-Module `'$((Get-Command gsudoModule.psd1).Source)`'"
+	"Or run: "
+	"  Get-Command gsudoModule.psd1 | % { Write-Output `"``nImport-Module ```"`$(`$_.Source)```"`" | Add-Content `$PROFILE }"
+	} 
+	
+Write-Output "`nPlease restart your consoles to use gsudo.`n"
+}

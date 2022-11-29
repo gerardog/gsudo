@@ -8,10 +8,4 @@ if (Get-Process gsudo 2> $null) {
 	}
 }
 
-$ToolsLocation = Get-ToolsLocation 
-if ([System.Environment]::CurrentDirectory -like "$ToolsLocation*") {
-	Write-Output -Verbose "Changing directory to $ToolsLocation to ensure successfull install/upgrade."
-	Set-Location $ToolsLocation
-}
-
 $ErrorActionPreference = 'Continue'

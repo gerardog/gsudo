@@ -24,12 +24,17 @@ if ($env:version) {
 "- Cleaning Choco template folder"
 git clean .\Build\Chocolatey\gsudo -xf
 
-"- Adding Artifacts"
-cp artifacts\x?? .\Build\Chocolatey\gsudo\tools -Recurse -Force -Exclude *.pdb
 Get-ChildItem .\build\Chocolatey\gsudo\tools\ -Recurse -Filter *.exe | % { ni "$($_.FullName).ignore" } > $null
 
 # Generate gsudo.nuspec
 (Get-Content  Build\Chocolatey\gsudo.nuspec.template) -replace '#VERSION#', "$version" | Out-File -encoding UTF8 .\Build\Chocolatey\gsudo\gsudo.nuspec
+
+# Generate chocolateyinstall.ps1
+(Get-Content .\build\Chocolatey\chocolateyinstall.ps1.template) `
+	-replace '#VERSION#', "$version" `
+	-replace '#SHA#', (Get-FileHash .\artifacts\gsudoSetup.msi).Hash | 
+		Out-File -encoding UTF8 .\build\Chocolatey\gsudo\tools\chocolateyinstall.ps1
+
 # Generate Tools\VERIFICATION.txt
 Get-Content .\Build\Chocolatey\verification.txt.template | Out-File -encoding UTF8 .\Build\Chocolatey\gsudo\Tools\VERIFICATION.txt
 
