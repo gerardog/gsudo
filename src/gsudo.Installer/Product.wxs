@@ -49,6 +49,7 @@
       <ComponentRef Id="GSudoPath" />
       <ComponentRef Id="GSudoExe" />
       <ComponentRef Id="GSudoExeX86" />
+      <ComponentRef Id="GSudoExeARM64" />
 	  <ComponentRef Id="GSudoBash" />
 	  <ComponentRef Id="GSudoPowerShell" />
 	</ComponentGroup>
@@ -67,11 +68,18 @@
 
           <Component Id="GSudoExe" Guid="bec137e1-06e2-4efb-aea9-30306cc01c87">
             <Condition>
-              <![CDATA[VersionNT64]]>
+              <![CDATA[(VersionNT64) AND NOT(%PROCESSOR_ARCHITECTURE~="ARM64")]]>
             </Condition>
             <File Id="GSudoExe" KeyPath="yes" Name="gsudo.exe" Source="..\..\artifacts\x64\gsudo.exe"/>
           </Component>
-		  
+
+          <Component Id="GSudoExeARM64" Guid="bec137e1-06e2-4efb-aea9-30306cc01c85">
+            <Condition>
+              <![CDATA[(VersionNT64) AND (%PROCESSOR_ARCHITECTURE~="ARM64")]]>
+            </Condition>
+            <File Id="GSudoExeARM64" KeyPath="yes" Name="gsudo.exe" Source="..\..\artifacts\arm64\gsudo.exe"/>
+          </Component>
+
           <Component Id="GSudoExeX86" Guid="bec137e1-06e2-4efb-aea9-30306cc01c86">
             <Condition>
               <![CDATA[NOT(VersionNT64)]]>
