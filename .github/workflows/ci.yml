@@ -70,7 +70,7 @@ jobs:
       with: 
         fetch-depth: 0
     - name: Install dependencies
-      run: choco install GitVersion.Portable ilmerge --confirm --no-progress
+      run: choco install GitVersion.Portable ilmerge il-repack --confirm --no-progress
     - name: Update project version
       run: gitversion /l console /output buildserver /updateAssemblyInfo /verbosity minimal
     - name: Get project version

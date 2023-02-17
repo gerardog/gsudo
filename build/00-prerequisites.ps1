@@ -1,4 +1,4 @@
-choco install ilmerge 
+choco install il-repack 
 choco install GitVersion.Portable
 choco install wixtoolset
 choco install hub
