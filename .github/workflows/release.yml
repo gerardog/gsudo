@@ -30,7 +30,7 @@ jobs:
       contents: write      
     steps:
     - name: Install dependencies
-      run: choco install GitVersion.Portable wixtoolset --confirm --no-progress
+      run: choco install NuGet.CommandLine GitVersion.Portable wixtoolset --confirm --no-progress
     - uses: actions/checkout@v2
       with: 
         fetch-depth: 0
@@ -110,6 +110,8 @@ jobs:
         path: ./artifacts
     - name: Import Chocolatey Api Key
       run: choco apikey --key ${{ secrets.CHOCOLATEY_APIKEY }} --source https://push.chocolatey.org/
+    - name: Import Nuget Api Key
+      run: nuget setapikey ${{ secrets.NUGET_APIKEY }} 
     - name: Build Package for Chocolatey & Upload
       run: ./build/05-release-Chocolatey.ps1
     - name: Upload build artifacts

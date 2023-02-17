@@ -6,9 +6,9 @@ if (! (Test-IsAdmin)) {
 	throw "Must be admin to properly test generated package"
 }
 
-Get-Item .\artifacts\x64\gsudo.exe > $null || $(throw "Missing binaries/artifacts")
+pushd $PSScriptRoot\.. 
 
-pushd $PSScriptRoot\..
+Get-Item .\artifacts\x64\gsudo.exe > $null || $(throw "Missing binaries/artifacts")
 
 if ($env:version) {
 	"- Getting version from env:version"
@@ -21,8 +21,9 @@ if ($env:version) {
 }
 "- Using version number v$version / v$version_MajorMinorPatch"
 
-"- Cleaning Choco template folder"
+"- Cleaning Choco & Nuget template folder"
 git clean .\Build\Chocolatey\gsudo -xf
+git clean .\Build\Nuget\gsudo -xf
 
 "- Adding Artifacts"
 cp artifacts\x?? .\Build\Chocolatey\gsudo\tools -Recurse -Force -Exclude *.pdb
@@ -32,6 +33,8 @@ Get-ChildItem .\build\Chocolatey\gsudo\tools\ -Recurse -Filter *.exe | % { ni "$
 (Get-Content  Build\Chocolatey\gsudo.nuspec.template) -replace '#VERSION#', "$version" | Out-File -encoding UTF8 .\Build\Chocolatey\gsudo\gsudo.nuspec
 # Generate Tools\VERIFICATION.txt
 Get-Content .\Build\Chocolatey\verification.txt.template | Out-File -encoding UTF8 .\Build\Chocolatey\gsudo\Tools\VERIFICATION.txt
+
+(Get-Content  Build\Nuget\gsudo.nuspec.template) -replace '#VERSION#', "$version" | Out-File -encoding UTF8 .\Build\Nuget\gsudo.nuspec
 
 "- Calculating Hashes "
 
@@ -47,7 +50,11 @@ Get-childitem *.bak -Recurse | Remove-Item
 mkdir Artifacts\Chocolatey -Force > $null
 & choco pack .\Build\Chocolatey\gsudo\gsudo.nuspec -outdir="$((get-item Artifacts\Chocolatey).FullName)" || $(throw "Choco pack failed.")
 
-"- Testing package"
+"- Packing v$version to nuget"
+mkdir Artifacts\Nuget -Force > $null
+& nuget pack .\Build\Nuget\gsudo.nuspec -OutputDirectory "$((get-item Artifacts\Nuget).FullName)" || $(throw "Nuget pack failed.")
+
+"- Testing choco package"
 if (choco list -lo | Where-object { $_.StartsWith("gsudo") }) {
 	choco upgrade gsudo --failonstderr -s Artifacts\Chocolatey -f -pre --confirm || $(throw "Choco upgrade failed.")
 } else {
@@ -57,7 +64,8 @@ if (choco list -lo | Where-object { $_.StartsWith("gsudo") }) {
 if($(choco apikey).Count -lt 2) { throw "Missing Chocolatey ApiKey. Use: choco apikey -k <your key here> -s https://push.chocolatey.org/" }
 
 "`n- Uploading v$version to chocolatey"
-choco push artifacts\Chocolatey\gsudo.$($version).nupkg  || $(throw "Choco push failed.")
+:: choco push artifacts\Chocolatey\gsudo.$($version).nupkg  || $(throw "Choco push failed.")
+
 	
 "- Success"
 popd
