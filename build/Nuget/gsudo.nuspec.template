@@ -50,6 +50,7 @@ Examples
   <files>
     <file src="..\..\artifacts\x64\gsudo.exe" target="x64" />
     <file src="..\..\artifacts\x86\gsudo.exe" target="x86" />
-    <file src="..\..\artifacts\net46-anycpu\gsudo.exe" target="AnyCpu" />
+    <file src="..\..\artifacts\arm64\gsudo.exe" target="Arm64" />
+	<file src="..\..\artifacts\net46-anycpu\gsudo.exe" target="AnyCpu" />
   </files>
 </package>
