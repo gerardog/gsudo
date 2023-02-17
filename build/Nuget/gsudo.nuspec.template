@@ -44,13 +44,13 @@ Examples
     <releaseNotes>http://github.com/gerardog/gsudo/releases/v#VERSION#</releaseNotes>
 
 	<contentFiles>
-		<files include="gsudo.exe" buildAction="None" copyToOutput="true"/>
+		<files include="any/any/gsudo/**/gsudo.exe" buildAction="None" copyToOutput="true" flatten="false"/>
 	</contentFiles>
   </metadata>
   <files>
-    <file src="..\..\artifacts\x64\gsudo.exe" target="x64" />
-    <file src="..\..\artifacts\x86\gsudo.exe" target="x86" />
-    <file src="..\..\artifacts\arm64\gsudo.exe" target="Arm64" />
-	<file src="..\..\artifacts\net46-anycpu\gsudo.exe" target="AnyCpu" />
+    <file src="..\..\artifacts\x64\gsudo.exe" target="contentFiles\any\any\gsudo\x64" />
+    <file src="..\..\artifacts\x86\gsudo.exe" target="contentFiles\any\any\gsudo\x86" />
+	<file src="..\..\artifacts\arm64\gsudo.exe" target="contentFiles\any\any\gsudo\arm64" />
+    <file src="..\..\artifacts\net46-anycpu\gsudo.exe" target="contentFiles\any\any\gsudo\net46-AnyCpu" />
   </files>
 </package>
