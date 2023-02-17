@@ -126,6 +126,32 @@ jobs:
         identifier: gerardog.gsudo
         installers-regex: '\.msi$' # Only .msi files
 
+  publishNuget:
+    name: Push to Nuget
+    #if: github.ref == 'refs/heads/master' && github.repository == 'gerardog/gsudo'
+    if: github.repository == 'gerardog/gsudo'
+    runs-on: windows-latest
+    needs: [build, release]
+    permissions:
+      contents: write
+    environment:
+      name: release-nuget
+    env:
+      version: ${{ needs.build.outputs.version }}
+      version_MajorMinorPatch: ${{ needs.build.outputs.version_MajorMinorPatch }}
+    steps:
+    - uses: actions/checkout@v2
+      with: 
+        fetch-depth: 0
+    - uses: actions/download-artifact@v3
+      with:
+        name: Binaries
+        path: ./artifacts
+    - name: Import Nuget Api Key
+      run: nuget setapikey ${{ secrets.NUGET_APIKEY }} 
+    - name: Build Package for Nuget & Upload
+      run: ./build/06-release-Nuget.ps1
+        
   docs:
     needs: publish
     uses: ./.github/workflows/docs.yml
