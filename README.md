@@ -305,9 +305,9 @@ How to use, very briefly:
 
   No. `gsudo` reminds of the original sudo regarding user expectations. Many `sudo` features are `*nix` specific and could never have a `Windows` counterpart. Other features (such as `sudoers`) could potentially be implemented but are not at this point.
 
-- Does it work in Windows 7/8?
+- What are the requirements? Does it work in Windows 7/8?
 
-  Yes, it works from Win7 SP1 onwards, except the credentials cache.
+  It works on Win7 SP1 onwards. Some features may only work in Windows 10/11, like elevating as TrustedInstaller.
 
 - How do I return to the previous security level after using gsudo?
 
