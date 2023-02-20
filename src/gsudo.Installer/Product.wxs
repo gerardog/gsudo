@@ -3,7 +3,7 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 
   <Product Id="*" Name="gsudo v$(env.version)" Language="1033" Version="$(env.version_MajorMinorPatch)"
-           UpgradeCode="567b5616-d362-484e-b6ff-7c1875cf0aee" Manufacturer="gerardog">
+           UpgradeCode="567b5616-d362-484e-b6ff-7c1875cf0aee" Manufacturer="Gerardo Grignoli">
 
     <Package InstallerVersion="200"
              Compressed="yes"

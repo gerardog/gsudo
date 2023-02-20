@@ -30,7 +30,7 @@ jobs:
       contents: write      
     steps:
     - name: Install dependencies
-      run: choco install GitVersion.Portable wixtoolset --confirm --no-progress
+      run: choco install GitVersion.Portable --version 5.6.11 --confirm --no-progress; choco install NuGet.CommandLine GitVersion.Portable wixtoolset --confirm --no-progress
     - uses: actions/checkout@v2
       with: 
         fetch-depth: 0
@@ -110,6 +110,8 @@ jobs:
         path: ./artifacts
     - name: Import Chocolatey Api Key
       run: choco apikey --key ${{ secrets.CHOCOLATEY_APIKEY }} --source https://push.chocolatey.org/
+    - name: Import Nuget Api Key
+      run: nuget setapikey ${{ secrets.NUGET_APIKEY }} 
     - name: Build Package for Chocolatey & Upload
       run: ./build/05-release-Chocolatey.ps1
     - name: Upload build artifacts
@@ -124,6 +126,32 @@ jobs:
         identifier: gerardog.gsudo
         installers-regex: '\.msi$' # Only .msi files
 
+  publishNuget:
+    name: Push to Nuget
+    #if: github.ref == 'refs/heads/master' && github.repository == 'gerardog/gsudo'
+    if: github.repository == 'gerardog/gsudo'
+    runs-on: windows-latest
+    needs: [build, release]
+    permissions:
+      contents: write
+    environment:
+      name: release-nuget
+    env:
+      version: ${{ needs.build.outputs.version }}
+      version_MajorMinorPatch: ${{ needs.build.outputs.version_MajorMinorPatch }}
+    steps:
+    - uses: actions/checkout@v2
+      with: 
+        fetch-depth: 0
+    - uses: actions/download-artifact@v3
+      with:
+        name: Binaries
+        path: ./artifacts
+    - name: Import Nuget Api Key
+      run: nuget setapikey ${{ secrets.NUGET_APIKEY }} 
+    - name: Build Package for Nuget & Upload
+      run: ./build/06-release-Nuget.ps1
+        
   docs:
     needs: publish
     uses: ./.github/workflows/docs.yml
