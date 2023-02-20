@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk" DefaultTargets="Pack">
+
+  <PropertyGroup>
+    <Version>1.0.0.0</Version>
+    <Company>GerardoGrignoli</Company>
+    <Authors>GerardoGrignoli</Authors>
+    <Description>gsudo</Description>
+    <PackageId>gsudo</PackageId>
+    <PackageTags>gsudo;sudo;runas</PackageTags>
+    <Description>gsudo</Description>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <NoBuild>true</NoBuild>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <IncludeSymbols>false</IncludeSymbols>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackFrameworkReferences>false</PackFrameworkReferences>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)\..\..\artifacts\net46-AnyCpu\gsudo.exe" Pack="true">
+      <PackagePath>runtimes\win-anycpu\native\gsudo.exe</PackagePath>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)\..\..\artifacts\x86\gsudo.exe" Pack="true">
+      <PackagePath>runtimes\win-x86\native\gsudo.exe</PackagePath>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)\..\..\artifacts\x64\gsudo.exe" Pack="true">
+      <PackagePath>runtimes\win-x64\native\gsudo.exe</PackagePath>
+    </Content>
+    <Content Include="$(MSBuildThisFileDirectory)\..\..\artifacts\arm64\gsudo.exe" Pack="true">
+      <PackagePath>runtimes\win-arm64\native\gsudo.exe</PackagePath>
+    </Content>
+    <Content Include="gsudo.targets" PackagePath="build/gsudo.targets" Pack="true" />
+  </ItemGroup>
+
+</Project>

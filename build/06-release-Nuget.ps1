@@ -16,15 +16,11 @@ if ($env:version) {
 "- Cleaning Nuget template folder"
 git clean .\Build\Nuget\gsudo -xf
 
-"- Generate gsudo.nuspec"
-(Get-Content  Build\Nuget\gsudo.nuspec.template) -replace '#VERSION#', "$version" | Out-File -encoding UTF8 .\Build\Nuget\gsudo.nuspec
-
-
 "- Packing v$version to nuget"
-mkdir Artifacts\Nuget -Force > $null
-& nuget pack .\Build\Nuget\gsudo.nuspec -OutputDirectory "$((get-item Artifacts\Nuget).FullName)" || $(throw "Nuget pack failed.")
+dotnet build .\Build\Nuget\gsudo.csproj /p:Version=$version -o artifacts\Nuget || $(throw "Nuget pack failed.")
 
 "`n- Uploading v$version to Nuget"
+gi "artifacts\nuget\gsudo.$($version).nupkg" || $(throw "Nuget push failed.")
 nuget push artifacts\nuget\gsudo.$($version).nupkg -Source https://api.nuget.org/v3/index.json || $(throw "Nuget push failed.")
 
 	
