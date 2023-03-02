@@ -37,6 +37,7 @@ else
 	"PowerShell users: To use enhanced gsudo and Invoke-Gsudo cmdlet, add the following line to your `$PROFILE"
 	"  Import-Module '${Env:ProgramFiles(x86)}\gsudo\gsudoModule.psd1'"
 	"Or run: "
+	"  New-Item -Type Directory (`$PROFILE | Split-Path) -ErrorAction Ignore"
 	"  Write-Output `"``nImport-Module '${Env:ProgramFiles(x86)}\gsudo\gsudoModule.psd1'`" | Add-Content `$PROFILE"
 	
 	Remove-Item $fileName 
