@@ -341,21 +341,16 @@ namespace gsudo.Helpers
         /// <returns></returns>
         private static bool IsShim(string fileName)
         {
-            Console.Write($"Is Shim {fileName} ");
             try
             {
                 if (!fileName.Equals(ProcessHelper.GetOwnExeName(), StringComparison.OrdinalIgnoreCase)
                     && (fileName.EndsWith("\\SUDO.EXE", StringComparison.OrdinalIgnoreCase) ||
                         fileName.EndsWith("\\GSUDO.EXE", StringComparison.OrdinalIgnoreCase)
                         ))
-                {
-                    Console.WriteLine($"true");
                     return true;
-                }
             }
             catch { } // fails to get parent.MainModule if our parent process is elevated and we are not.
 
-            Console.WriteLine($"false");
             return false;
         }
     }
