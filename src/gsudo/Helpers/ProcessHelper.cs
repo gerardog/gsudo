@@ -97,7 +97,7 @@ namespace gsudo.Helpers
             int pid = process.Id;
             Process p = null;
 
-            while (p == null)
+            while (p == null && pid > 0)
             {
                 pid = GetParentProcessId(pid);
                 try
@@ -114,7 +114,8 @@ namespace gsudo.Helpers
 
                     if (filename != null && !IsShim(filename))
                         break;
-                }                
+                }
+                p = null;
             }
         
             return pid;
@@ -340,16 +341,21 @@ namespace gsudo.Helpers
         /// <returns></returns>
         private static bool IsShim(string fileName)
         {
+            Console.Write($"Is Shim {fileName} ");
             try
             {
                 if (!fileName.Equals(ProcessHelper.GetOwnExeName(), StringComparison.OrdinalIgnoreCase)
                     && (fileName.EndsWith("\\SUDO.EXE", StringComparison.OrdinalIgnoreCase) ||
                         fileName.EndsWith("\\GSUDO.EXE", StringComparison.OrdinalIgnoreCase)
                         ))
+                {
+                    Console.WriteLine($"true");
                     return true;
+                }
             }
             catch { } // fails to get parent.MainModule if our parent process is elevated and we are not.
 
+            Console.WriteLine($"false");
             return false;
         }
     }
