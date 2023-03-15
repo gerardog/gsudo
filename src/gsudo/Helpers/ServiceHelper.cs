@@ -36,7 +36,7 @@ namespace gsudo.Helpers
             return null;
         }
 
-        internal static SafeProcessHandle StartService(int? allowedPid, TimeSpan? cacheDuration = null, string allowedSid = null, bool singleUse = false)
+        internal static SafeProcessHandle StartService(int? allowedPid, TimeSpan? cacheDuration = null, string allowedSid = null, bool singleUse = false, ElevationRequest request = null)
         {
             var currentSid = WindowsIdentity.GetCurrent().User.Value;
 
@@ -70,6 +70,12 @@ namespace gsudo.Helpers
             bool isAdmin = SecurityHelper.IsHighIntegrity();
 
             string commandLine = $"{@params}{verb} {allowedPid} {allowedSid} {Settings.LogLevel} {Settings.TimeSpanWithInfiniteToString(cacheDuration.Value)}";
+
+            if (request != null)
+            {
+                // gerardog/gsudo#235 - show elevation cmd on elevate.
+                commandLine += $" -- {request.FileName} {request.Arguments}";
+            }
 
             string ownExe = ProcessHelper.GetOwnExeName();
             if (InputArguments.TrustedInstaller && isAdmin && !WindowsIdentity.GetCurrent().Claims.Any(c => c.Value == Constants.TI_SID))
