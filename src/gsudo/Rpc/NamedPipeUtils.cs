@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace gsudo.Rpc
 {
@@ -31,24 +32,25 @@ namespace gsudo.Rpc
 
         public static bool ExistsNamedPipe(string name)
         {
-            var namedPipes = new List<string>();
-            Native.FileApi.WIN32_FIND_DATA lpFindFileData;
-
-            var ptr = Native.FileApi.FindFirstFile($@"\\.\pipe\{GetRootFolder(name)}*", out lpFindFileData);
-            do
+            //Logger.Instance.Log($"Searching for {name}", LogLevel.Debug);
+            try
             {
-                if (lpFindFileData.cFileName.EndsWith(name, StringComparison.Ordinal))
+                return System.IO.Directory.GetFiles("\\\\.\\\\pipe\\", name).Any();
+            }
+            catch
+            {
+                // Windows 7 workaround
+                foreach (var pipe in System.IO.Directory.GetFiles("\\\\.\\\\pipe\\"))
                 {
-                    Native.FileApi.FindClose(ptr);
-                    Logger.Instance.Log($"Found Named Pipe \"{name}\".", LogLevel.Debug);
-                    return true;
+                    if (pipe.EndsWith(name, StringComparison.Ordinal))
+                    {
+                        //Logger.Instance.Log($"Found Named Pipe {name}", LogLevel.Debug);
+                        return true;
+                    }
                 }
             }
-            while (Native.FileApi.FindNextFile(ptr, out lpFindFileData));
 
-            Native.FileApi.FindClose(ptr);
             return false;
-
         }
 
         static string GetRootFolder(string path)

@@ -3,7 +3,7 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 
   <Product Id="*" Name="gsudo v$(env.version)" Language="1033" Version="$(env.version_MajorMinorPatch)"
-           UpgradeCode="567b5616-d362-484e-b6ff-7c1875cf0aee" Manufacturer="gerardog">
+           UpgradeCode="567b5616-d362-484e-b6ff-7c1875cf0aee" Manufacturer="Gerardo Grignoli">
 
 	  <Package InstallerVersion="200"
              Compressed="yes"
@@ -54,6 +54,7 @@
       <ComponentRef Id="GSudoPath" />
       <ComponentRef Id="GSudoExe" />
       <ComponentRef Id="GSudoExeX86" />
+      <ComponentRef Id="GSudoExeARM64" />
 	  <ComponentRef Id="GSudoBash" />
 	  <ComponentRef Id="GSudoPowerShell" />
 	</ComponentGroup>
@@ -73,11 +74,18 @@
 
           <Component Id="GSudoExe" Guid="">
             <Condition>
-              <![CDATA[VersionNT64]]>
+              <![CDATA[(VersionNT64) AND NOT(%PROCESSOR_ARCHITECTURE~="ARM64")]]>
             </Condition>
             <File Id="GSudoExe" KeyPath="yes" Name="gsudo.exe" Source="..\..\artifacts\x64\gsudo.exe"/>
           </Component>
-		  
+
+          <Component Id="GSudoExeARM64" Guid="bec137e1-06e2-4efb-aea9-30306cc01c85">
+            <Condition>
+              <![CDATA[(VersionNT64) AND (%PROCESSOR_ARCHITECTURE~="ARM64")]]>
+            </Condition>
+            <File Id="GSudoExeARM64" KeyPath="yes" Name="gsudo.exe" Source="..\..\artifacts\arm64\gsudo.exe"/>
+          </Component>
+
           <Component Id="GSudoExeX86" Guid="">
             <Condition>
               <![CDATA[NOT(VersionNT64)]]>

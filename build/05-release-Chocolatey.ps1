@@ -6,9 +6,9 @@ if (! (Test-IsAdmin)) {
 	throw "Must be admin to properly test generated package"
 }
 
-Get-Item .\artifacts\x64\gsudo.exe > $null || $(throw "Missing binaries/artifacts")
-
 pushd $PSScriptRoot\..
+
+Get-Item .\artifacts\x64\gsudo.exe > $null || $(throw "Missing binaries/artifacts")
 
 if ($env:version) {
 	"- Getting version from env:version"

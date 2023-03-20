@@ -2,7 +2,6 @@
 
 [![Join the chat at https://gitter.im/gsudo/community](https://badges.gitter.im/gsudo/community.svg)](https://gitter.im/gsudo/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![CI Build](../../actions/workflows/ci.yml/badge.svg?branch=master)](../../actions/workflows/ci.yml)
-[![Release](../../actions/workflows/release.yml/badge.svg)](../../actions/workflows/release.yml)
 [![Chocolatey Downloads](https://img.shields.io/chocolatey/dt/gsudo?label=Chocolatey%20Downloads)](https://community.chocolatey.org/packages/gsudo)
 [![GitHub Downloads](https://img.shields.io/github/downloads/gerardog/gsudo/total?label=GitHub%20Downloads)](https://github.com/gerardog/gsudo/releases/latest)
 
@@ -306,9 +305,9 @@ How to use, very briefly:
 
   No. `gsudo` reminds of the original sudo regarding user expectations. Many `sudo` features are `*nix` specific and could never have a `Windows` counterpart. Other features (such as `sudoers`) could potentially be implemented but are not at this point.
 
-- Does it work in Windows 7/8?
+- What are the requirements? Does it work in Windows 7/8?
 
-  Yes, it works from Win7 SP1 onwards, except the credentials cache.
+  It works on Win7 SP1 onwards. Some features may only work in Windows 10/11, like elevating as TrustedInstaller.
 
 - How do I return to the previous security level after using gsudo?
 
