@@ -25,15 +25,16 @@ Get-Item ".\src\gsudo.Installer\bin\", ".\src\gsudo.Installer\obj\" -ErrorAction
 (gc src\gsudo.Installer\Constants.Template.wxi) -replace '#VERSION#', "$version" | Out-File -encoding UTF8 src\gsudo.Installer\Constants.wxi
 
 "- Building Installer arm64"
-dotnet build .\src\gsudo\gsudo.csproj -c Release -o .\artifacts -p:Platform=arm64 -v minimal -p:WarningLevel=0 || $(popd && _exit 1)
+dotnet build .\src\gsudo.Installer\gsudomsi.wixproj -c Release -o .\artifacts -p:Platform=arm64 -v minimal -p:WarningLevel=0 || $(popd && _exit 1)
 "- Building Installer x64"
-dotnet build .\src\gsudo\gsudo.csproj -c Release -o .\artifacts -p:Platform=x64   -v minimal -p:WarningLevel=0 || $(popd && _exit 1)
+dotnet build .\src\gsudo.Installer\gsudomsi.wixproj -c Release -o .\artifacts -p:Platform=x64   -v minimal -p:WarningLevel=0 || $(popd && _exit 1)
 "- Building Installer x86"
-dotnet build .\src\gsudo\gsudo.csproj -c Release -o .\artifacts -p:Platform=x86   -v minimal -p:WarningLevel=0 || $(popd && _exit 1)
+dotnet build .\src\gsudo.Installer\gsudomsi.wixproj -c Release -o .\artifacts -p:Platform=x86   -v minimal -p:WarningLevel=0 || $(popd && _exit 1)
 
-rm .\artifacts\gsudoSetup.wixpdb
+Remove-Item .\artifacts\*.wixpdb
 
-"- Code Signing Installer"
+"- Code Sign Installer"
+
 & $PSScriptRoot\03-sign.ps1 artifacts\gsudoSetup-arm64.msi || $(popd && _exit 1)
 & $PSScriptRoot\03-sign.ps1 artifacts\gsudoSetup-x64.msi || $(popd && _exit 1)
 & $PSScriptRoot\03-sign.ps1 artifacts\gsudoSetup-x86.msi || $(popd && _exit 1)
