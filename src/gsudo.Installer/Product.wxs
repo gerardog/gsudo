@@ -1,15 +1,14 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
 
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <?if $(sys.BUILDARCH) = "arm64"?>
+  <?define installerVer = "500"?>
+  <?else?>
+  <?define installerVer = "400"?>
+  <?endif?>
 
-  <Product Id="*" Name="gsudo v$(env.version)" Language="1033" Version="$(env.version_MajorMinorPatch)"
-           UpgradeCode="567b5616-d362-484e-b6ff-7c1875cf0aee" Manufacturer="Gerardo Grignoli">
+  <Package Name="gsudo v$(env.version)" Language="1033" Version="$(env.version_MajorMinorPatch)" UpgradeCode="567b5616-d362-484e-b6ff-7c1875cf0aee" Manufacturer="Gerardo Grignoli" InstallerVersion="$(installerVer)">
 
-    <Package InstallerVersion="200"
-             Compressed="yes"
-             InstallScope="perMachine"
-             Manufacturer="Gerardo Grignoli"
-             Description="gsudo is a sudo-equivalent for windows" />
+    <SummaryInformation Description="gsudo is a sudo-equivalent for windows" />
 
     <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
     <MediaTemplate EmbedCab="yes" />
@@ -18,103 +17,106 @@
       <ComponentGroupRef Id="GSudo" />
     </Feature>
 
-    <UIRef Id="WixUI_InstallDir" />
-	
-	<!-- Skip license dialog -->
-	<UI>
-		<Publish Dialog="WelcomeDlg"
-				 Control="Next"
-				 Event="NewDialog"
-				 Value="InstallDirDlg"
-				 Order="2">1</Publish>
-		<Publish Dialog="InstallDirDlg"
-				 Control="Back"
-				 Event="NewDialog"
-				 Value="WelcomeDlg"
-				 Order="2">1</Publish>
-	</UI>				 
-	
-    <WixVariable Id="WixUILicenseRtf" Value="..\..\vendor\LICENSE.rtf" />
+    <ui:WixUI Id="WixUI_InstallDir" />
+
+    <!-- Skip license dialog -->
+    <UI>
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" Order="2" />
+      <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2" />
+    </UI>
+
+    <WixVariable Id="WixUILicenseRtf" Value="vendor\LICENSE.rtf" />
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
 
     <InstallExecuteSequence>
-      <Custom Action="CreateSudoExeLink" Before="InstallFinalize">NOT Installed</Custom>
-      <Custom Action="RemoveSudoExeLink" After="InstallInitialize">Installed AND NOT REINSTALL</Custom>
+      <!-- https://stackoverflow.com/a/17608049/97471 -->
+      <Custom Action="CreateSudoExeLink" Before="InstallFinalize" Condition="NOT Installed" />
+      <Custom Action="RemoveSudoExeLink" After="InstallInitialize" Condition="Installed AND NOT REINSTALL" />
+      <Custom Action="CreateSudoCurrentFolderLink" Before="InstallFinalize" Condition="NOT Installed" />
+      <Custom Action="RemoveSudoCurrentFolderLink" After="InstallInitialize" Condition="Installed AND NOT REINSTALL" />
+      <Custom Action="RemoveInstallFolder" After="InstallInitialize" Condition="REMOVE AND NOT UPGRADINGPRODUCTCODE" />
     </InstallExecuteSequence>
+  </Package>
 
-  </Product>
+  <Fragment>
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="INSTALLFOLDER" Name="gsudo">
+        <Directory Id="VERSIONFOLDER" Name="$(env.version)"/>
+      </Directory>
+    </StandardDirectory>
+  </Fragment>
 
   <Fragment>
     <ComponentGroup Id="GSudo">
       <ComponentRef Id="GSudoPath" />
+
+      <?if $(sys.BUILDARCH) = "x64"?>
       <ComponentRef Id="GSudoExe" />
+      <?elseif $(sys.BUILDARCH) = "x86"?>
       <ComponentRef Id="GSudoExeX86" />
+      <?elseif $(sys.BUILDARCH) = "arm64"?>
       <ComponentRef Id="GSudoExeARM64" />
-	  <ComponentRef Id="GSudoBash" />
-	  <ComponentRef Id="GSudoPowerShell" />
-	</ComponentGroup>
+      <?else?>
+      <?error Platform $(sys.BUILDARCH) is not supported?>
+      <?endif?>
+
+      <ComponentRef Id="GSudoBash" />
+      <ComponentRef Id="GSudoPowerShell" />
+      <ComponentRef Id="GSudoModule" />
+      <ComponentRef Id="InvokeGSudo" />
+    </ComponentGroup>
   </Fragment>
 
   <Fragment>
-    <Directory Id="TARGETDIR" Name="SourceDir">
-      <Directory Id="ProgramFilesFolder">
-        <Directory Id="INSTALLFOLDER" Name="gsudo">
-
-          <Component Id="GSudoPath" Guid="923f225a-75cd-4fca-ad48-a4161187f7a4">
-            <CreateFolder />
-            <Environment Id="SET_ENV" Action="set" Name="PATH" Part="last" Permanent="no" System="yes"
-                         Value="[INSTALLFOLDER]" />
-          </Component>
-
-          <Component Id="GSudoExe" Guid="bec137e1-06e2-4efb-aea9-30306cc01c87">
-            <Condition>
-              <![CDATA[(VersionNT64) AND NOT(%PROCESSOR_ARCHITECTURE~="ARM64")]]>
-            </Condition>
-            <File Id="GSudoExe" KeyPath="yes" Name="gsudo.exe" Source="..\..\artifacts\x64\gsudo.exe"/>
-          </Component>
-
-          <Component Id="GSudoExeARM64" Guid="bec137e1-06e2-4efb-aea9-30306cc01c85">
-            <Condition>
-              <![CDATA[(VersionNT64) AND (%PROCESSOR_ARCHITECTURE~="ARM64")]]>
-            </Condition>
-            <File Id="GSudoExeARM64" KeyPath="yes" Name="gsudo.exe" Source="..\..\artifacts\arm64\gsudo.exe"/>
-          </Component>
-
-          <Component Id="GSudoExeX86" Guid="bec137e1-06e2-4efb-aea9-30306cc01c86">
-            <Condition>
-              <![CDATA[NOT(VersionNT64)]]>
-            </Condition>
-            <File Id="GSudoExeX86" KeyPath="yes" Name="gsudo.exe" Source="..\..\artifacts\x86\gsudo.exe" />
-          </Component>
-
-          <Component Id="GSudoBash" Guid="3d6047df-a14c-484d-9ded-77761d03197a">
-            <File Id="GSudoBash" KeyPath="yes" Name="gsudo" Source="..\..\artifacts\x64\gsudo" />
-          </Component>
-
-          <Component Id="GSudoPowerShell" Guid="99d35b52-4b20-42d3-afad-11a98cab2fd3">
-            <File Id="GSudoModuleDef" KeyPath="no" 	Name="gsudoModule.psd1" Source="..\..\artifacts\x64\gsudoModule.psd1" />
-            <File Id="GSudoModule" KeyPath="yes" 	Name="gsudoModule.psm1" Source="..\..\artifacts\x64\gsudoModule.psm1" />
-            <File Id="InvokeGSudo" KeyPath="no" 	Name="invoke-gsudo.ps1" Source="..\..\artifacts\x64\invoke-gsudo.ps1" />
-          </Component>
-
-        </Directory>
-      </Directory>
-    </Directory>
+    <Launch Message="This package is not intended for your platform. Please select the relevant package." Condition="(VersionNT64) AND NOT(%PROCESSOR_ARCHITECTURE~=&quot;ARM64&quot;)"/>
+    <Component Id="GSudoExe" Directory="VERSIONFOLDER">
+      <File Id="GSudoExe" Name="gsudo.exe" Source="..\..\artifacts\x64\gsudo.exe" />
+    </Component>
   </Fragment>
 
   <Fragment>
-    <CustomAction Id="CreateSudoExeLink"
-                  Directory="INSTALLFOLDER"
-                  ExeCommand='cmd /c mklink sudo.exe "[INSTALLFOLDER]gsudo.exe"'
-                  Execute="deferred"
-                  Return="ignore"
-                  Impersonate="no" />
-    <CustomAction Id="RemoveSudoExeLink"
-                  Directory="INSTALLFOLDER"
-                  ExeCommand='cmd /c DEL sudo.exe'
-                  Execute="deferred"
-                  Return="ignore"
-                  Impersonate="no" />
+    <Launch Message="This package is not intended for your platform. Please select the relevant package." Condition="(VersionNT64) AND (%PROCESSOR_ARCHITECTURE~=&quot;ARM64&quot;)"/>
+    <Component Id="GSudoExeARM64" Directory="VERSIONFOLDER">
+      <File Id="GSudoExeARM64" Name="gsudo.exe" Source="..\..\artifacts\arm64\gsudo.exe" />
+    </Component>
+  </Fragment>
+
+  <Fragment>
+    <Launch Message="This package is not intended for your platform. Please select the relevant package." Condition="NOT(VersionNT64)"/>
+    <Component Id="GSudoExeX86" Directory="VERSIONFOLDER">
+      <File Id="GSudoExeX86" Name="gsudo.exe" Source="..\..\artifacts\x86\gsudo.exe" />
+    </Component>
+  </Fragment>
+
+  <Fragment>
+    <Component Id="GSudoPath" Guid="923f225a-75cd-4fca-ad48-a4161187f7a4" Directory="INSTALLFOLDER">
+      <CreateFolder />
+      <Environment Id="SET_ENV" Action="set" Name="PATH" Part="last" Permanent="no" System="yes" Value="[INSTALLFOLDER]Current" />
+    </Component>
+
+    <Component Id="GSudoBash" Directory="VERSIONFOLDER">
+      <File Id="GSudoBash" Name="gsudo" Source="..\..\artifacts\x64\gsudo" />
+    </Component>
+
+    <Component Id="GSudoPowerShell" Directory="VERSIONFOLDER">
+      <File Id="GSudoModuleDef" Name="gsudoModule.psd1" Source="..\..\artifacts\x64\gsudoModule.psd1" />
+    </Component>
+
+    <Component Id="GSudoModule" Directory="VERSIONFOLDER">
+      <File Id="GSudoModule" Name="gsudoModule.psm1" Source="..\..\artifacts\x64\gsudoModule.psm1" />
+    </Component>
+
+    <Component Id="InvokeGSudo" Directory="VERSIONFOLDER">
+      <File Id="InvokeGSudo" Name="invoke-gsudo.ps1" Source="..\..\artifacts\x64\invoke-gsudo.ps1" />
+    </Component>
+  </Fragment>
+
+  <Fragment>
+    <CustomAction Id="CreateSudoExeLink" Directory="VERSIONFOLDER" ExeCommand="cmd /c mklink sudo.exe &quot;[VERSIONFOLDER]gsudo.exe&quot;" Execute="deferred" Return="ignore" Impersonate="no" />
+    <CustomAction Id="RemoveSudoExeLink" Directory="VERSIONFOLDER" ExeCommand="cmd /c DEL sudo.exe" Execute="deferred" Return="ignore" Impersonate="no" />
+    <CustomAction Id="CreateSudoCurrentFolderLink" Directory="INSTALLFOLDER" ExeCommand="cmd /c mklink /J &quot;[INSTALLFOLDER]Current&quot; &quot;[VERSIONFOLDER]&quot;" Execute="deferred" Return="ignore" Impersonate="no" />
+    <CustomAction Id="RemoveSudoCurrentFolderLink" Directory="INSTALLFOLDER" ExeCommand="cmd /c RD /S /Q &quot;[INSTALLFOLDER]Current&quot;" Execute="deferred" Return="ignore" Impersonate="no" />
+    <CustomAction Id="RemoveInstallFolder" Directory="INSTALLFOLDER" ExeCommand="cmd /c RD /S /Q &quot;[INSTALLFOLDER]&quot;" Execute="deferred" Return="ignore" Impersonate="no" />
   </Fragment>
 
 </Wix>
