@@ -51,15 +51,15 @@ jobs:
       with:
         name: Binaries
         path: ./artifacts       
-    - name: Package for GitHub Release
-      run: ./build/04-release-GitHub.ps1
+    - name: Build Installer
+      run: ./build/04-build-installer.ps1
     - name: Remove the pfx
       run: Remove-Item -path $env:cert_path
     - name: Upload installer artifacts
       uses: actions/upload-artifact@v3
       with:
         name: Installer
-        path: ./artifacts/gsudoSetup.msi
+        path: ./artifacts/gsudoSetup-*.msi
     - name: Create Release
       uses: ncipollo/release-action@v1.11.1
       with:
