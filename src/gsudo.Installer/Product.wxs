@@ -69,21 +69,21 @@
 
   <Fragment>
     <Launch Message="This package is not intended for your platform. Please select the relevant package." Condition="(VersionNT64) AND NOT(%PROCESSOR_ARCHITECTURE~=&quot;ARM64&quot;)"/>
-    <Component Id="GSudoExe" Directory="INSTALLFOLDER">
+    <Component Id="GSudoExe" Directory="VERSIONFOLDER">
       <File Id="GSudoExe" Name="gsudo.exe" Source="..\..\artifacts\x64\gsudo.exe" />
     </Component>
   </Fragment>
 
   <Fragment>
     <Launch Message="This package is not intended for your platform. Please select the relevant package." Condition="(VersionNT64) AND (%PROCESSOR_ARCHITECTURE~=&quot;ARM64&quot;)"/>
-    <Component Id="GSudoExeARM64" Directory="INSTALLFOLDER">
+    <Component Id="GSudoExeARM64" Directory="VERSIONFOLDER">
       <File Id="GSudoExeARM64" Name="gsudo.exe" Source="..\..\artifacts\arm64\gsudo.exe" />
     </Component>
   </Fragment>
 
   <Fragment>
     <Launch Message="This package is not intended for your platform. Please select the relevant package." Condition="NOT(VersionNT64)"/>
-    <Component Id="GSudoExeX86" Directory="INSTALLFOLDER">
+    <Component Id="GSudoExeX86" Directory="VERSIONFOLDER">
       <File Id="GSudoExeX86" Name="gsudo.exe" Source="..\..\artifacts\x86\gsudo.exe" />
     </Component>
   </Fragment>
@@ -94,19 +94,19 @@
       <Environment Id="SET_ENV" Action="set" Name="PATH" Part="last" Permanent="no" System="yes" Value="[INSTALLFOLDER]Current" />
     </Component>
 
-    <Component Id="GSudoBash" Directory="INSTALLFOLDER">
+    <Component Id="GSudoBash" Directory="VERSIONFOLDER">
       <File Id="GSudoBash" Name="gsudo" Source="..\..\artifacts\x64\gsudo" />
     </Component>
 
-    <Component Id="GSudoPowerShell" Directory="INSTALLFOLDER">
+    <Component Id="GSudoPowerShell" Directory="VERSIONFOLDER">
       <File Id="GSudoModuleDef" Name="gsudoModule.psd1" Source="..\..\artifacts\x64\gsudoModule.psd1" />
     </Component>
 
-    <Component Id="GSudoModule" Directory="INSTALLFOLDER">
+    <Component Id="GSudoModule" Directory="VERSIONFOLDER">
       <File Id="GSudoModule" Name="gsudoModule.psm1" Source="..\..\artifacts\x64\gsudoModule.psm1" />
     </Component>
 
-    <Component Id="InvokeGSudo" Directory="INSTALLFOLDER">
+    <Component Id="InvokeGSudo" Directory="VERSIONFOLDER">
       <File Id="InvokeGSudo" Name="invoke-gsudo.ps1" Source="..\..\artifacts\x64\invoke-gsudo.ps1" />
     </Component>
   </Fragment>
