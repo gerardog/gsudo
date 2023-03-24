@@ -51,15 +51,15 @@ jobs:
       with:
         name: Binaries
         path: ./artifacts       
-    - name: Build Installer
-      run: ./build/04-build-installer.ps1
+    - name: Package for GitHub Release
+      run: ./build/04-release-GitHub.ps1
     - name: Remove the pfx
       run: Remove-Item -path $env:cert_path
     - name: Upload installer artifacts
       uses: actions/upload-artifact@v3
       with:
         name: Installer
-        path: ./artifacts/gsudo.setup*.msi
+        path: ./artifacts/gsudoSetup-*.msi
     - name: Create Release
       uses: ncipollo/release-action@v1.11.1
       with:
@@ -110,8 +110,6 @@ jobs:
         path: ./artifacts
     - name: Import Chocolatey Api Key
       run: choco apikey --key ${{ secrets.CHOCOLATEY_APIKEY }} --source https://push.chocolatey.org/
-    - name: Import Nuget Api Key
-      run: nuget setapikey ${{ secrets.NUGET_APIKEY }} 
     - name: Build Package for Chocolatey & Upload
       run: ./build/05-release-Chocolatey.ps1
     - name: Upload build artifacts
