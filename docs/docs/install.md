@@ -30,7 +30,7 @@ Or:
   </TabItem>
   <TabItem value="W8" label="Windows 8.1">
 
-- Download `gsudoSetup.msi` from the [latest release](https://github.com/gerardog/gsudo/releases/latest), and run.
+- Download `gsudo.Setup.[platform].msi` from the [latest release](https://github.com/gerardog/gsudo/releases/latest), and run.
 
 
   </TabItem>
@@ -38,7 +38,7 @@ Or:
 
 
 - Enable TLS 1.2 using [Microsoft "Easy Fix"](https://support.microsoft.com/en-us/topic/update-to-enable-tls-1-1-and-tls-1-2-as-default-secure-protocols-in-winhttp-in-windows-c4bd73d2-31d7-761e-0178-11268bb10392#bkmk_easy)
-- Download `gsudoSetup.msi` from the [latest release](https://github.com/gerardog/gsudo/releases/latest), and run.
+- Download `gsudo.Setup.[platform].msi` from the [latest release](https://github.com/gerardog/gsudo/releases/latest), and run.
 - You probably want to update PowerShell up to 5.1
 
 

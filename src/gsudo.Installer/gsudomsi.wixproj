@@ -1,6 +1,6 @@
 <Project Sdk="WixToolset.Sdk/4.0.0-rc.3">
   <PropertyGroup>
-    <OutputName>gsudoSetup-$(Platform)</OutputName>
+    <OutputName>gsudo.setup.$(Platform)</OutputName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DefineConstants>Debug</DefineConstants>

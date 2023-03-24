@@ -16,8 +16,8 @@ if ($env:version) {
 Get-ChildItem .\artifacts\ -File | Remove-Item                  # Remove files on artifacts root
 Get-ChildItem .\artifacts\ -Filter *.pdb -Recurse | Remove-Item # Remove *.pdb on subfolders
 
-Compress-Archive -Path ./artifacts/x86,./artifacts/x64,./artifacts/arm64,./artifacts/net46-AnyCpu -DestinationPath "artifacts/gsudo.v$($version).zip" -force -CompressionLevel Optimal
-(Get-FileHash artifacts\gsudo.v$($version).zip).hash > artifacts\gsudo.v$($version).zip.sha256
+Compress-Archive -Path ./artifacts/x86,./artifacts/x64,./artifacts/arm64,./artifacts/net46-AnyCpu -DestinationPath "artifacts/gsudo.portable.zip" -force -CompressionLevel Optimal
+(Get-FileHash artifacts\gsudo.portable.zip).hash > artifacts\gsudo.portable.zip.sha256
 
 "- Cleaning bin & obj folders"
 Get-Item ".\src\gsudo.Installer\bin\", ".\src\gsudo.Installer\obj\" -ErrorAction Ignore | Remove-Item -Recurse -Force
@@ -35,11 +35,7 @@ Remove-Item .\artifacts\*.wixpdb
 
 "- Code Sign Installer"
 
-& $PSScriptRoot\03-sign.ps1 artifacts\gsudoSetup-arm64.msi || $(popd && _exit 1)
-& $PSScriptRoot\03-sign.ps1 artifacts\gsudoSetup-x64.msi || $(popd && _exit 1)
-& $PSScriptRoot\03-sign.ps1 artifacts\gsudoSetup-x86.msi || $(popd && _exit 1)
-(Get-FileHash artifacts\gsudoSetup-arm64.msi).hash > artifacts\gsudoSetup-arm64.msi.sha256
-(Get-FileHash artifacts\gsudoSetup-x64.msi).hash > artifacts\gsudoSetup-x64.msi.sha256
-(Get-FileHash artifacts\gsudoSetupp-x86.msi).hash > artifacts\gsudoSetupp-x86.msi.sha256
+& $PSScriptRoot\03-sign.ps1 artifacts\*.msi || $(popd && _exit 1)
+Get-Item .\artifacts\*.msi | % {(Get-FileHash $_).Hash > "$_.sha256"}
 
 popd
