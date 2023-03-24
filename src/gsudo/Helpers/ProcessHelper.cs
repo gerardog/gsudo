@@ -97,7 +97,7 @@ namespace gsudo.Helpers
             int pid = process.Id;
             Process p = null;
 
-            while (p == null)
+            while (p == null && pid > 0)
             {
                 pid = GetParentProcessId(pid);
                 try
@@ -114,7 +114,8 @@ namespace gsudo.Helpers
 
                     if (filename != null && !IsShim(filename))
                         break;
-                }                
+                }
+                p = null;
             }
         
             return pid;

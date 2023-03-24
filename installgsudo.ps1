@@ -1,6 +1,14 @@
+if ([System.Environment]::GetEnvironmentVariable("PROCESSOR_ARCHITECTURE", "Machine") -eq "ARM64") { 
+	$architecture='arm64' 
+} elseif (! [System.Environment]::Is64BitOperatingSystem) {
+	$architecture='x86' 
+} else { 
+	$architecture='x64'
+}
+
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $release = Invoke-RestMethod -Method Get -Uri "https://api.github.com/repos/gerardog/gsudo/releases/latest"
-$asset = $release.assets | Where-Object name -like "gsudoSetup.msi"
+$asset = $release.assets | Where-Object name -like "gsudo.setup.$architecture.msi"
 $fileName = "$env:TEMP\$($asset.name)"
 
 Write-Output "Downloading $($asset.name)"
