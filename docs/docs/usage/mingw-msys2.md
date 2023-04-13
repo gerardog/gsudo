@@ -10,7 +10,7 @@ Prepend `gsudo` to elevate `bash` commands (unless `-d` is used to elevate CMD c
 
 ## Bash Profile Config
 
-There is an issue with `bash for windows` shells: The process tree is splitted when invoking `bash` scripts such as the `gsudo` wrapper, that invalidates the Credentials Cache.
+There is an issue with `bash for windows` shells: The process tree is split when invoking `bash` scripts such as the `gsudo` wrapper, that invalidates the Credentials Cache.
 You need to add this function to your `.bashrc` profile (to skip the wrapper):
 
 ```bash
