@@ -57,7 +57,7 @@ namespace gsudo.Helpers
 
         public static Process GetShellProcess(this Process process)
         {
-            if (ShellHelper.InvokingShell!=Shell.Bash)
+            if (ShellHelper.InvokingShell != Shell.Bash)
                 return GetParentProcessExcludingShim(process);
 
             // Unable to get a caller pid for the cache.
@@ -71,27 +71,30 @@ namespace gsudo.Helpers
         {
             if (ShellHelper.InvokingShell == Shell.Bash)
             {
-                var parent = GetParentProcessId(process);
-                if (parent == 0) 
+                var parentId = GetParentProcessId(process);
+                if (parentId == 0) 
                     return process.Id;
 
                 try
                 {
-                    var pparent = Process.GetProcessById(parent);
-                    if (pparent.MainModule.FileName.EndsWith("\\BASH.EXE", StringComparison.OrdinalIgnoreCase))
+                    var parentProcess = Process.GetProcessById(parentId);
+                    var parentProcessFileName = parentProcess.MainModule.FileName;
+                    if (parentProcessFileName.EndsWith("\\BASH.EXE", StringComparison.OrdinalIgnoreCase) ||
+                        parentProcessFileName.EndsWith("\\SH.EXE", StringComparison.OrdinalIgnoreCase)
+                        )
                     {
-                        var grandparent = GetParentProcess(pparent);
-                        if (!grandparent.MainModule.FileName.EndsWith("\\BASH.EXE", StringComparison.OrdinalIgnoreCase))
+                        var grandparent = GetParentProcess(parentProcess);
+                        if (!grandparent.MainModule.FileName.EndsWith("SH.EXE", StringComparison.OrdinalIgnoreCase))
                         {
-                            return parent;
+                            return parentId;
                         }
-                        return GetCacheableRootProcessId(pparent);
+                        return GetCacheableRootProcessId(parentProcess);
                     }
                 }
                 catch
                 { }
 
-                return parent;
+                return parentId;
             }
 
             int pid = process.Id;

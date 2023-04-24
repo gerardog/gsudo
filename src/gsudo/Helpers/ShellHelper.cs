@@ -75,17 +75,17 @@ namespace gsudo.Helpers
 
                         if (fileVersion <= new Version(6, 2, 3) && invokingShellFullPath.EndsWith(".dotnet\\tools\\pwsh.exe", StringComparison.OrdinalIgnoreCase))
                         {
-                            return Helpers.Shell.PowerShellCore623BuggedGlobalInstall;
+                            return Shell.PowerShellCore623BuggedGlobalInstall;
                         }
 
-                        return Helpers.Shell.PowerShellCore;
+                        return Shell.PowerShellCore;
                     }
                 }
 
                 if (ProcessFactory.IsWindowsApp(invokingShellFullPath))
                 {
                     invokingShellFullPath = Environment.GetEnvironmentVariable("COMSPEC");
-                    return Helpers.Shell.WindowsApp; // Called from explorer.exe, task mgr, etc.
+                    return Shell.WindowsApp; // Called from explorer.exe, task mgr, etc.
                 }
             }
 
@@ -93,7 +93,7 @@ namespace gsudo.Helpers
             // (We couldnt get info about caller process).
             // => Assume CMD.
             invokingShellFullPath = Environment.GetEnvironmentVariable("COMSPEC");
-            return Helpers.Shell.Cmd;
+            return Shell.Cmd;
         }
     
 
@@ -109,37 +109,40 @@ namespace gsudo.Helpers
             if (string.IsNullOrEmpty(filename)) return null;
             var parentExeName = Path.GetFileName(filename).ToUpperInvariant();
 
+            if (parentExeName.EndsWith(".EXE", StringComparison.Ordinal)) // trim ending (this happens when invoking gsudo 32 bits build from cmd 64 bits)
+                parentExeName = parentExeName.Substring(0, parentExeName.Length - 4);
+
             // If user is running gsudo x86-version on x64 windows (not recommedned),
             // Open process fails, and so we fail to get the process FullName (it just returns filename without extension).
-            if (parentExeName == "POWERSHELL.EXE" || parentExeName == "POWERSHELL")
+            if (parentExeName == "POWERSHELL")
             {
-                return Helpers.Shell.PowerShell;
+                return Shell.PowerShell;
             }
-            else if (parentExeName == "PWSH.EXE" || parentExeName == "PWSH")
+            else if (parentExeName == "PWSH")
             {
-                return Helpers.Shell.PowerShellCore;
+                return Shell.PowerShellCore;
             }
-            else if (parentExeName == "YORI.EXE" || parentExeName == "YORI")
+            else if (parentExeName == "YORI")
             {
-                return Helpers.Shell.Yori;
+                return Shell.Yori;
             }
-            else if (parentExeName == "WSL.EXE" || parentExeName == "WSL")
+            else if (parentExeName == "WSL")
             {
-                return Helpers.Shell.Wsl;
+                return Shell.Wsl;
             }
-            else if (parentExeName == "BASH.EXE" || parentExeName == "BASH")
+            else if (parentExeName == "BASH" || parentExeName == "SH")
             {
-                return Helpers.Shell.Bash;
+                return Shell.Bash;
             }
-            else if (parentExeName == "TCC.EXE" || parentExeName == "TCC")
+            else if (parentExeName == "TCC")
             {
-                return Helpers.Shell.TakeCommand;
+                return Shell.TakeCommand;
             }
-            else if (parentExeName == "NU.EXE" || parentExeName == "NU")
+            else if (parentExeName == "NU")
             {
-                return Helpers.Shell.NuShell;
+                return Shell.NuShell;
             }
-            else if (parentExeName == "CMD.EXE" || parentExeName == "CMD")
+            else if (parentExeName == "CMD")
             {
                 // CMD.EXE can be
                 //   %windir%\System32\cmd.exe => 64-bit CMD.
@@ -149,7 +152,7 @@ namespace gsudo.Helpers
                 // So lets keep shellFullPath = ParentProcess.FullPath
                 // (instead of using COMSPEC)
                 // in order to keep the same bitness.
-                return Helpers.Shell.Cmd;
+                return Shell.Cmd;
             }
             else
                 return null;
