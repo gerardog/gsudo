@@ -13,6 +13,7 @@ namespace gsudo.Helpers
         Yori,
         Wsl,
         Bash,
+        BusyBox,
         TakeCommand,
         NuShell,
 
@@ -130,9 +131,13 @@ namespace gsudo.Helpers
             {
                 return Shell.Wsl;
             }
-            else if (parentExeName == "BASH" || parentExeName == "SH")
+            else if (parentExeName.In("BASH", "ASH", "SH"))
             {
                 return Shell.Bash;
+            }
+            else if (parentExeName.In("BUSYBOX", "BUSYBOX64"))
+            {
+                return Shell.BusyBox;
             }
             else if (parentExeName == "TCC")
             {
