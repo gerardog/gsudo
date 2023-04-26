@@ -104,7 +104,7 @@ Security options:
  -k                    # Kills all cached credentials. The next time gsudo is run a UAC popup will be appear.
 
 Shell related options:
- -d | --direct         # Skips Shell detection. Asume CMD shell or CMD {command}.
+ -d | --direct         # Skips Shell detection. Assume CMD shell or CMD {command}.
  --loadProfile         # When elevating PowerShell commands, load user profile.
 
 Other options:
@@ -168,7 +168,7 @@ There are 3 possible syntaxes to elevate commands.
    ```
 
    - Avoids serializing the output objects if the result is not captured, which can improve performance like 100x when working with big outputs.
-   - If { scriptblock } is ommitted, it elevates PowerShell.
+   - If { scriptblock } is omitted, it elevates PowerShell.
 
 2. **Invoke-gsudo** wrapper function:
 

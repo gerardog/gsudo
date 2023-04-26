@@ -27,7 +27,7 @@ Please do the following:
 
 What we promise:
 
-- We will respond to your report as quickly as possible, tipically between 5 business days, with our evaluation of the report and an expected resolution date,
+- We will respond to your report as quickly as possible, typically between 5 business days, with our evaluation of the report and an expected resolution date,
 - We will not take any legal action against you in regard to the report,
 - We will handle your report with strict confidentiality, and not pass on your personal details to third parties without your permission,
 - We will keep you informed of the progress towards resolving the problem.

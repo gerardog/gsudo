@@ -6,7 +6,7 @@ tags: []
 ---
 
 
-The first gsudo versions were made in 2019, around the release of .NET Core 3. I tried to figure out how .NET Core's redistribution model worked, but it didn't worked for me. One should either redistribute the full runtime, or ask the user to manually download and install it. There was another option: to build a self-cointained app (with runtime embedded) but that increased the output size by more than 80mb!
+The first gsudo versions were made in 2019, around the release of .NET Core 3. I tried to figure out how .NET Core's redistribution model worked, but it didn't worked for me. One should either redistribute the full runtime, or ask the user to manually download and install it. There was another option: to build a self-contained app (with runtime embedded) but that increased the output size by more than 80mb!
 
 The alternative was to target .NET Framework v4.6. This version is bundled with every Windows 10/11. When targeting it, gsudo build output size was around 100kb. The app on v4.6 loaded faster, so targeting v4.6 seemed logical. It was small, fast, and the installation didn't required any big runtime redistribution or additional steps.
 

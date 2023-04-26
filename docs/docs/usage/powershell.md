@@ -30,7 +30,7 @@ When the current shell is `PowerShell`, gsudo can be used in the following ways:
 
   Or you can elevate the whole pipeline if you put it inside a [script block](#using-gsudo-scriptblock-syntax) as in: `gsudo {command1 | command2 | command3}`
 
-- `gsudo` uses PowerShell's bult-in serialization, which can be **really slow** with big object graphs, like all the machine process tree returned by `Get-Process`.
+- `gsudo` uses PowerShell's built-in serialization, which can be **really slow** with big object graphs, like all the machine process tree returned by `Get-Process`.
 ---
 
 ### Using `gsudo {ScriptBlock}` syntax

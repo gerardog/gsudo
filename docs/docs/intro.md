@@ -26,7 +26,7 @@ It is designed so it is easy to install, easy to use, and feels familiar with ot
   - Supports I/O redirection.
   - Handles Ctrl-C properly
   - Supports worldwide encodings & codepages
-- Uses the current shell to interpet the command to elevate:
+- Uses the current shell to interpret the command to elevate:
   - `gsudo {command}` uses a new instance of the invoking shell to elevate the command.  
     For example, in PowerShell `gsudo mkdir x` becames `pwsh -c "mkdir x"`, while in CMD it becames `cmd /c "mkdir x"`.
   - Supported Shells:

@@ -10,7 +10,7 @@ assignees: ''
 Your issue may already be reported!
 Before creating one, please search  https://github.com/gerardog/gsudo/issues?q= 
 -->
-<!-- If the issue ocurred using the 'sudo' alias, please retry using `gsudo` instead, and let me know if that fixes it. -->
+<!-- If the issue occurred using the 'sudo' alias, please retry using `gsudo` instead, and let me know if that fixes it. -->
 
 ## Issue Description
 <!-- What were you trying to do? What happened? And what were you expecting?  -->
