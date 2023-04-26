@@ -55,7 +55,7 @@ Security options:
  -k | --reset-timestamp Kills all cached credentials. The next time gsudo is run a UAC popup will be appear.
 
 Shell related options:
- -d | --direct          Skip Shell detection. Asume CMD shell or CMD {command}.
+ -d | --direct          Skip Shell detection. Assume CMD shell or CMD {command}.
 
 Other options:
  --loglevel {val}       Set minimum log level to display: All, Debug, Info, Warning, Error, None
