@@ -10,7 +10,7 @@ To answer this question, we first have to take a look back at the history.
 
 In August 2002, Chris Paget released a white paper describing a form of attack against event-driven systems that he termed Shatter Attack. It allowed processes in the same session to bypass security restrictions by abusing Windows Message loop.
 
-Microsoft response was to add "User Interface Privilege Isolation" (UIPI) and the "User Access Control" (UAC) popup to the next mayor release: Windows Vista. Privileged processes would then run "elevated" at high integrity level, out of reach of processes at lower, non-admin, levels.
+Microsoft response was to add "User Interface Privilege Isolation" (UIPI) and the "User Access Control" (UAC) popup to the next major release: Windows Vista. Privileged processes would then run "elevated" at high integrity level, out of reach of processes at lower, non-admin, levels.
 
 I assume that at this point Microsoft decided not to make a `sudo` tool for windows. It would be an unwanted bridge between two worlds that intended to isolate.
 
