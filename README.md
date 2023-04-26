@@ -12,7 +12,7 @@ Just prepend `gsudo` (or the `sudo` alias) to your command and it will run eleva
 
 **Why use `gsudo` instead of `some-other-sudo`?**
 
-`gsudo` is very easy to install and use. Its similarities with Unix/Linux sudo make the experience a breeze. It detects your current shell and elevates accordingly (as native shell commands). (Supports `Cmd`, `PowerShell`, `git-bash`, `MinGW`, `Cygwin`, `Yori`, `Take Command`)
+`gsudo` is very easy to install and use. Its similarities with Unix/Linux sudo make the experience a breeze. It detects your current shell and elevates accordingly (as native shell commands). (Supports `Cmd`, `PowerShell`, `WSL`, `git-bash`, `MinGW`, `Cygwin`, `Yori`, `Take Command`)
 
 ## Table of contents
 
@@ -48,8 +48,8 @@ Just prepend `gsudo` (or the `sudo` alias) to your command and it will run eleva
 
 ## Please support gsudo! 💵
 
-- Please consider [sponsoring gsudo](https://gerardog.github.io/gsudo/sponsor). It helps to cover the yearly renewal of the code-signing certificate.
-- No money? No problem! Please give us a star! ⭐
+- Please give us a star! ⭐
+- Maybe [sponsoring gsudo](https://gerardog.github.io/gsudo/sponsor)?
 
 ---
 
