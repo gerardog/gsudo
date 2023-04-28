@@ -207,6 +207,14 @@ namespace gsudo.Helpers
                         return new[] { _currentShellFileName, "-c",
                             $"\"{ String.Join(" ", args).ReplaceOrdinal("\"", "\\\"") }\"" };
                 }
+                else if (_currentShell == Shell.BusyBox)
+                {
+                    if (isShellElevation)
+                        return new[] { _currentShellFileName, "sh" };
+                    else
+                        return new[] { _currentShellFileName, "sh", "-c",
+                            $"\"{ String.Join(" ", args).ReplaceOrdinal("\"", "\\\"") }\"" };
+                }
                 else if (_currentShell == Shell.TakeCommand)
                 {
                     if (isShellElevation)
