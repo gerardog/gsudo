@@ -406,17 +406,21 @@ namespace gsudo.Helpers
                 postCommands.Add("exit /b !errl!");
             }
 
+            bool bNetworkfolder = Environment.CurrentDirectory.StartsWith(@"\\", StringComparison.Ordinal);
+            bool bIsCmdExe = ArgumentsHelper.UnQuote(command.First()).EndsWith("cmd.exe", StringComparison.OrdinalIgnoreCase);
+
+            if (bNetworkfolder && (bIsCmdExe || mustWrap))
+            {
+	            Logger.Instance.Log($"The current directory '{Environment.CurrentDirectory}' is a network folder. Mapping as a network drive.", LogLevel.Debug);
+	            // Prepending PUSHD command. It maps network folders magically!
+	            preCommands.Insert(0, $"pushd \"{Environment.CurrentDirectory}\"");
+	            postCommands.Add("popd");
+	            // And set current directory to local folder to avoid CMD warning message
+	            Environment.CurrentDirectory = Environment.GetEnvironmentVariable("SystemRoot");
+            }
+
             if (mustWrap || preCommands.Any() || postCommands.Any())
             {
-                if (Environment.CurrentDirectory.StartsWith(@"\\", StringComparison.Ordinal))
-                {
-                    Logger.Instance.Log($"The current directory '{Environment.CurrentDirectory}' is a network folder. Mapping as a network drive.", LogLevel.Debug);
-                    // Prepending PUSHD command. It maps network folders magically!
-                    preCommands.Insert(0, $"PUSHD \"{Environment.CurrentDirectory}\"");
-                    // And set current directory to local folder to avoid CMD warning message
-                    Environment.CurrentDirectory = Environment.GetEnvironmentVariable("SystemRoot");
-                }
-
                 var all = preCommands
                             .Concat(new[] { string.Join(" ", command) })
                             .Concat(postCommands);
