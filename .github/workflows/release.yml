@@ -118,7 +118,7 @@ jobs:
         name: Binaries
         path: ./artifacts
     - name: WinGet Releaser
-      uses: vedantmgoyal2009/winget-releaser@v1
+      uses: vedantmgoyal2009/winget-releaser@v2
       with: 
         token: ${{ secrets.WINGET_RELEASER_TOKEN }}
         identifier: gerardog.gsudo
