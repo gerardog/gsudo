@@ -26,6 +26,8 @@ jobs:
       cert_key: ${{ secrets.P_F_X_Key }}
       version: ${{ needs.build.outputs.version }}
       version_MajorMinorPatch: ${{ needs.build.outputs.version_MajorMinorPatch }}
+      is_prerelease: ${{ needs.build.outputs.is_prerelease }}
+      
     permissions:
       contents: write      
     steps:
@@ -123,6 +125,7 @@ jobs:
         token: ${{ secrets.WINGET_RELEASER_TOKEN }}
         identifier: gerardog.gsudo
         installers-regex: '\.msi$' # Only .msi files
+      if: ${{ steps.getversion.outputs.is_prerelease == 'false' }}
 
   publishNuget:
     name: Push to Nuget
