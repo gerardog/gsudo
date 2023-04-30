@@ -195,6 +195,7 @@ namespace gsudo.Helpers
                         return new[] { _currentShellFileName, // wsl.exe
                                         "-d", wsl_distro,
                                         "-u", wsl_user,
+                                        "--cd", Environment.CurrentDirectory,
                                         "--" }
                                         .Concat(args).ToArray();
                     }
@@ -407,6 +408,15 @@ namespace gsudo.Helpers
 
             if (mustWrap || preCommands.Any() || postCommands.Any())
             {
+                if (Environment.CurrentDirectory.StartsWith(@"\\", StringComparison.Ordinal))
+                {
+                    Logger.Instance.Log($"The current directory '{Environment.CurrentDirectory}' is a network folder. Mapping as a network drive.", LogLevel.Debug);
+                    // Prepending PUSHD command. It maps network folders magically!
+                    preCommands.Insert(0, $"PUSHD \"{Environment.CurrentDirectory}\"");
+                    // And set current directory to local folder to avoid CMD warning message
+                    Environment.CurrentDirectory = Environment.GetEnvironmentVariable("SystemRoot");
+                }
+
                 var all = preCommands
                             .Concat(new[] { string.Join(" ", command) })
                             .Concat(postCommands);
