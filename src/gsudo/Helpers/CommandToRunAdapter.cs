@@ -195,7 +195,7 @@ namespace gsudo.Helpers
                         return new[] { _currentShellFileName, // wsl.exe
                                         "-d", wsl_distro,
                                         "-u", wsl_user,
-                                        "--cd", Environment.CurrentDirectory,
+                                        $"--cd \"{Environment.CurrentDirectory }\"",
                                         "--" }
                                         .Concat(args).ToArray();
                     }
