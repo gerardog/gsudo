@@ -79,13 +79,14 @@ jobs:
     - name: Get project version
       id: getversion
       run: |
-           echo "version=$(gitversion /showvariable LegacySemVer)" >> $GITHUB_OUTPUT
-           echo "version_MajorMinorPatch=$(gitversion /showvariable MajorMinorPatch)" >> $GITHUB_OUTPUT
+           echo "version=$(gitversion /showvariable LegacySemVer)" >> "$GITHUB_OUTPUT"
+           echo "version_MajorMinorPatch=$(gitversion /showvariable MajorMinorPatch)" >> "$GITHUB_OUTPUT"
            if ("$(gitversion /showvariable PreReleaseTag)" -eq "") {
-             echo "is_prerelease=0" >> $GITHUB_OUTPUT
+             echo "is_prerelease=0" >> "$GITHUB_OUTPUT"
            } else {
-             echo "is_prerelease=1" >> $GITHUB_OUTPUT
+             echo "is_prerelease=1" >> "$GITHUB_OUTPUT"
            }
+           get-content  "$GITHUB_OUTPUT"
     - name: Build
       run: ./build/01-build.ps1
     - name: Upload build artifacts
