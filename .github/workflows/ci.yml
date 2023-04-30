@@ -79,12 +79,12 @@ jobs:
     - name: Get project version
       id: getversion
       run: |
-           echo "::set-output name=version::$(gitversion /showvariable LegacySemVer)"
-           echo "::set-output name=version_MajorMinorPatch::$(gitversion /showvariable MajorMinorPatch)"
+           echo "version=$(gitversion /showvariable LegacySemVer)" >> $GITHUB_OUTPUT
+           echo "version_MajorMinorPatch=$(gitversion /showvariable MajorMinorPatch)" >> $GITHUB_OUTPUT
            if ("$(gitversion /showvariable PreReleaseTag)" -eq "") {
-             echo "::set-output name=is_prerelease::false"
+             echo "is_prerelease=0" >> $GITHUB_OUTPUT
            } else {
-             echo "::set-output name=is_prerelease::true"
+             echo "is_prerelease=1" >> $GITHUB_OUTPUT
            }
     - name: Build
       run: ./build/01-build.ps1
@@ -96,3 +96,4 @@ jobs:
     outputs:
       version:                 ${{ steps.getversion.outputs.version }}
       version_MajorMinorPatch: ${{ steps.getversion.outputs.version_MajorMinorPatch }}
+      is_prerelease: ${{ steps.getversion.outputs.is_prerelease }}
