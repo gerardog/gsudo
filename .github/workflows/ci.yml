@@ -14,6 +14,9 @@ on:
       version_MajorMinorPatch:
         description: "Version (without prerelease tag)"
         value: ${{ jobs.build.outputs.version_MajorMinorPatch }}
+      is_prerelease:
+        description: "Version prerelease ($true or $false)"
+        value: ${{ jobs.build.outputs.is_prerelease }}
 
 jobs:
   test:
@@ -76,8 +79,14 @@ jobs:
     - name: Get project version
       id: getversion
       run: |
-           echo "::set-output name=version::$(gitversion /showvariable LegacySemVer)"
-           echo "::set-output name=version_MajorMinorPatch::$(gitversion /showvariable MajorMinorPatch)"    
+           echo "version=$(gitversion /showvariable LegacySemVer)" >> "$env:GITHUB_OUTPUT"
+           echo "version_MajorMinorPatch=$(gitversion /showvariable MajorMinorPatch)" >> "$env:GITHUB_OUTPUT"
+           if ("$(gitversion /showvariable PreReleaseTag)" -eq "") {
+             echo "is_prerelease=false" >> "$env:GITHUB_OUTPUT"
+           } else {
+             echo "is_prerelease=true" >> "$env:GITHUB_OUTPUT"
+           }
+           get-content  "$env:GITHUB_OUTPUT"
     - name: Build
       run: ./build/01-build.ps1
     - name: Upload build artifacts
@@ -88,3 +97,4 @@ jobs:
     outputs:
       version:                 ${{ steps.getversion.outputs.version }}
       version_MajorMinorPatch: ${{ steps.getversion.outputs.version_MajorMinorPatch }}
+      is_prerelease: ${{ steps.getversion.outputs.is_prerelease }}

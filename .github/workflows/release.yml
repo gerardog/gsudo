@@ -26,6 +26,8 @@ jobs:
       cert_key: ${{ secrets.P_F_X_Key }}
       version: ${{ needs.build.outputs.version }}
       version_MajorMinorPatch: ${{ needs.build.outputs.version_MajorMinorPatch }}
+      is_prerelease: ${{ needs.build.outputs.is_prerelease }}
+      
     permissions:
       contents: write      
     steps:
@@ -61,12 +63,13 @@ jobs:
         name: Installer
         path: ./artifacts/*.msi
     - name: Create Release
-      uses: ncipollo/release-action@v1.11.1
+      uses: ncipollo/release-action@v1.12.0
       with:
         artifacts: "artifacts/*.*"
         token: ${{ secrets.GITHUB_TOKEN  }}
         draft: true
-        prerelease: true
+        prerelease: ${{ env.is_prerelease }}
+        make_latest: false
         generateReleaseNotes: true
         name: gsudo v${{env.version}}
         tag: v${{env.version}}
@@ -77,7 +80,7 @@ jobs:
         replacesArtifacts: true
 
   publish:
-    name: Publish + Push to Choco & Winget
+    name: Publish Release
     #if: github.ref == 'refs/heads/master' && github.repository == 'gerardog/gsudo'
     if: github.repository == 'gerardog/gsudo'
     runs-on: windows-latest
@@ -85,22 +88,41 @@ jobs:
     permissions:
       contents: write
     environment:
-      name: release-chocolatey
+      name: release-github-publish
     env:
       version: ${{ needs.build.outputs.version }}
       version_MajorMinorPatch: ${{ needs.build.outputs.version_MajorMinorPatch }}
+      is_prerelease: ${{ needs.build.outputs.is_prerelease }}
     steps:
     - name: Publish Release
-      uses: ncipollo/release-action@v1.10.0
+      uses: ncipollo/release-action@v1.12.0
       with:
         token: ${{ secrets.GITHUB_TOKEN  }}
         name: gsudo v${{env.version}}
         tag: v${{env.version}}
         commit: ${{env.GITHUB_SHA}}
         draft: false
+        prerelease: ${{ env.is_prerelease }}
+        make_latest: ${{ !env.is_prerelease }}
         allowUpdates: true 
         omitBodyDuringUpdate: true
         omitPrereleaseDuringUpdate: true
+
+  publishChocoWinGet:
+    name: Push to Chocolatey & Winget
+    #if: github.ref == 'refs/heads/master' && github.repository == 'gerardog/gsudo'
+    if: github.repository == 'gerardog/gsudo'
+    runs-on: windows-latest
+    needs: [build, publish]
+    permissions:
+      contents: write
+    environment:
+      name: release-chocolatey
+    env:
+      version: ${{ needs.build.outputs.version }}
+      version_MajorMinorPatch: ${{ needs.build.outputs.version_MajorMinorPatch }}
+      is_prerelease: ${{ needs.build.outputs.is_prerelease }}
+    steps:
     - uses: actions/checkout@v2
       with: 
         fetch-depth: 0
@@ -119,6 +141,7 @@ jobs:
         path: ./artifacts
     - name: WinGet Releaser
       uses: vedantmgoyal2009/winget-releaser@v2
+      if: ${{ env.is_prerelease == false }}
       with: 
         token: ${{ secrets.WINGET_RELEASER_TOKEN }}
         identifier: gerardog.gsudo
@@ -129,7 +152,7 @@ jobs:
     #if: github.ref == 'refs/heads/master' && github.repository == 'gerardog/gsudo'
     if: github.repository == 'gerardog/gsudo'
     runs-on: windows-latest
-    needs: [build, release]
+    needs: [build, publish]
     permissions:
       contents: write
     environment:
