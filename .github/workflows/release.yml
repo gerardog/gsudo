@@ -63,12 +63,13 @@ jobs:
         name: Installer
         path: ./artifacts/*.msi
     - name: Create Release
-      uses: ncipollo/release-action@v1.11.1
+      uses: ncipollo/release-action@v1.12.0
       with:
         artifacts: "artifacts/*.*"
         token: ${{ secrets.GITHUB_TOKEN  }}
         draft: true
         prerelease: ${{ env.is_prerelease }}
+        make_latest: false
         generateReleaseNotes: true
         name: gsudo v${{env.version}}
         tag: v${{env.version}}
@@ -94,7 +95,7 @@ jobs:
       is_prerelease: ${{ needs.build.outputs.is_prerelease }}
     steps:
     - name: Publish Release
-      uses: ncipollo/release-action@v1.10.0
+      uses: ncipollo/release-action@v1.12.0
       with:
         token: ${{ secrets.GITHUB_TOKEN  }}
         name: gsudo v${{env.version}}
@@ -102,6 +103,7 @@ jobs:
         commit: ${{env.GITHUB_SHA}}
         draft: false
         prerelease: ${{ env.is_prerelease }}
+        make_latest: ${{ !env.is_prerelease }}
         allowUpdates: true 
         omitBodyDuringUpdate: true
         omitPrereleaseDuringUpdate: true
@@ -139,7 +141,7 @@ jobs:
         path: ./artifacts
     - name: WinGet Releaser
       uses: vedantmgoyal2009/winget-releaser@v2
-      if: ${{ env.is_prerelease == 0 }}
+      if: ${{ env.is_prerelease == false }}
       with: 
         token: ${{ secrets.WINGET_RELEASER_TOKEN }}
         identifier: gerardog.gsudo
