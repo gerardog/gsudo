@@ -79,7 +79,7 @@ jobs:
         replacesArtifacts: true
 
   publish:
-    name: Publish
+    name: Publish Release
     #if: github.ref == 'refs/heads/master' && github.repository == 'gerardog/gsudo'
     if: github.repository == 'gerardog/gsudo'
     runs-on: windows-latest
@@ -101,12 +101,13 @@ jobs:
         tag: v${{env.version}}
         commit: ${{env.GITHUB_SHA}}
         draft: false
+        prerelease: ${{ env.is_prerelease }}
         allowUpdates: true 
         omitBodyDuringUpdate: true
         omitPrereleaseDuringUpdate: true
 
   publishChocoWinGet:
-    name: Push to Choco & Winget
+    name: Push to Chocolatey & Winget
     #if: github.ref == 'refs/heads/master' && github.repository == 'gerardog/gsudo'
     if: github.repository == 'gerardog/gsudo'
     runs-on: windows-latest
