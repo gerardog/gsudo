@@ -30,7 +30,7 @@ But that insulation quickly proved weak. Let me [quote Raymond Chen from Microso
 >
 > The reason why all the other options collapse into Meh is that the `Notify only when apps try to change settings` option can be subverted by any app simply by injecting a thread into (...)
 
-And, up to this day, Windows 10 & 11, defaults to "Meh". Microsoft default is: lesser security at the expense of user convenience.
+And, up to this day, Windows 10 & 11, defaults to "Meh". Microsoft default is: user convenience at the expense of lesser security.
 
 ---
 ![Vista UAC](../static/img/Vista-UAC.png)
