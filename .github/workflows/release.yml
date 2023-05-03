@@ -110,7 +110,6 @@ jobs:
 
   publishChocoWinGet:
     name: Push to Chocolatey & Winget
-    #if: github.ref == 'refs/heads/master' && github.repository == 'gerardog/gsudo'
     if: github.repository == 'gerardog/gsudo'
     runs-on: windows-latest
     needs: [build, publish]
@@ -141,7 +140,7 @@ jobs:
         path: ./artifacts
     - name: WinGet Releaser
       uses: vedantmgoyal2009/winget-releaser@v2
-      if: ${{ !env.is_prerelease }
+      if: ${{ !env.is_prerelease }}
       with: 
         token: ${{ secrets.WINGET_RELEASER_TOKEN }}
         identifier: gerardog.gsudo
@@ -149,7 +148,6 @@ jobs:
 
   publishNuget:
     name: Push to Nuget
-    #if: github.ref == 'refs/heads/master' && github.repository == 'gerardog/gsudo'
     if: github.repository == 'gerardog/gsudo'
     runs-on: windows-latest
     needs: [build, publish]
