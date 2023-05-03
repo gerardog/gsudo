@@ -1,0 +1,20 @@
+name: Winget manual dispatch
+
+on:
+  workflow_dispatch: 
+
+  publishToWinGet:
+    name: Push to Winget
+    if: github.repository == 'gerardog/gsudo'
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    environment:
+      name: release-chocolatey
+    steps:
+    - name: WinGet Releaser
+      uses: vedantmgoyal2009/winget-releaser@v2
+      with: 
+        token: ${{ secrets.WINGET_RELEASER_TOKEN }}
+        identifier: gerardog.gsudo
+        installers-regex: '\.msi$' # Only .msi files
