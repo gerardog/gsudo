@@ -3,6 +3,7 @@ name: Winget manual dispatch
 on:
   workflow_dispatch: 
 
+jobs:
   publishToWinGet:
     name: Push to Winget
     if: github.repository == 'gerardog/gsudo'
