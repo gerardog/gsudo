@@ -141,7 +141,7 @@ jobs:
         path: ./artifacts
     - name: WinGet Releaser
       uses: vedantmgoyal2009/winget-releaser@v2
-      if: ${{ env.is_prerelease == false }}
+      if: ${{ !env.is_prerelease }
       with: 
         token: ${{ secrets.WINGET_RELEASER_TOKEN }}
         identifier: gerardog.gsudo
