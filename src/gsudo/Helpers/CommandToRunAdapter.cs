@@ -355,9 +355,9 @@ namespace gsudo.Helpers
                         var error = FileApi.WNetGetConnection(drive.Name.Substring(0, 2), tmpSb, ref size);
                         if (error == 0)
                         {
-                            sb.AppendLine($"{silent}ECHO Connecting {drive.Name.Substring(0, 2)} to {tmpSb.ToString()} 1>&2");
+                            sb.AppendLine($"{silent}ECHO Connecting {drive.Name.Substring(0, 2)} to \"{tmpSb.ToString()}\" 1>&2");
                             sb.AppendLine($"{silent}NET USE /D {drive.Name.Substring(0, 2)} >NUL 2>NUL");
-                            sb.AppendLine($"{silent}NET USE {drive.Name.Substring(0, 2)} {tmpSb.ToString()} 1>&2");
+                            sb.AppendLine($"{silent}NET USE {drive.Name.Substring(0, 2)} \"{tmpSb.ToString()}\" 1>&2");
                         }
                     }
                 }
