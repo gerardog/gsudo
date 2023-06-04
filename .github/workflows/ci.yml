@@ -5,7 +5,10 @@ on:
     branches:
       - '**'
     tags-ignore:
-      - '**'    
+      - '**'
+  pull_request:
+    branches:
+      - '**'
   workflow_call:
     outputs:
       version:
