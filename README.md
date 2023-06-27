@@ -8,7 +8,7 @@
 **gsudo** is a `sudo` equivalent for Windows, with a similar user-experience as the original Unix/Linux sudo.
 Allows you to run a command with elevated permissions, or to elevate the current shell, in the current console window or a new one.
 
-Just prepend `gsudo` (or the `sudo` alias) to your command and it will run elevated. For PowerShell use `gsudo { ScriptBlock }` syntax. 
+Just [prepend `gsudo`](#usage) (or the `sudo` alias) to your command and it will run elevated. For PowerShell use `gsudo { ScriptBlock }` [syntax](#usage-from-powershell--powershell-core). 
 
 One UAC popup will appear each time. You can see less popups if you enable [gsudo cache](#credentials-cache).
 
@@ -18,9 +18,7 @@ It detects your current shell and elevates your command as native shell commands
 
 - [gsudo - a sudo for Windows](#gsudo---a-sudo-for-windows)
   - [Table of contents](#table-of-contents)
-  - [Documentation](#documentation)
   - [Demo](#demo)
-  - [Please support gsudo! 💵](#please-support-gsudo-)
   - [Features](#features)
   - [Installation](#installation)
   - [Usage](#usage)
@@ -31,12 +29,11 @@ It detects your current shell and elevates your command as native shell commands
   - [Credentials Cache](#credentials-cache)
   - [Known issues](#known-issues)
   - [FAQ](#faq)
+  - [Please support gsudo! 💵](#please-support-gsudo-)
 
 ---
 
-## Documentation
-
-**NEW!** Extended documentation available at: <https://gerardog.github.io/gsudo/>
+⭐ Extended documentation available at: [<https://gerardog.github.io/gsudo/>](https://gerardog.github.io/gsudo/docs/intro)
 
 ## Demo
 
