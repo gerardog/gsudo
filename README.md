@@ -6,13 +6,13 @@
 [![GitHub Downloads](https://img.shields.io/github/downloads/gerardog/gsudo/total?label=GitHub%20Downloads)](https://github.com/gerardog/gsudo/releases/latest)
 
 **gsudo** is a `sudo` equivalent for Windows, with a similar user-experience as the original Unix/Linux sudo.
-Allows to run commands with elevated permissions, or to elevate the current shell, in the current console window or a new one.
+Allows you to run a command with elevated permissions, or to elevate the current shell, in the current console window or a new one.
 
-Just prepend `gsudo` (or the `sudo` alias) to your command and it will run elevated. One UAC popup will appear each time. You can see less popups if you enable [gsudo cache](#credentials-cache).
+Just prepend `gsudo` (or the `sudo` alias) to your command and it will run elevated. For PowerShell use `gsudo { ScriptBlock }` syntax. 
 
-**Why use `gsudo` instead of `some-other-sudo`?**
+One UAC popup will appear each time. You can see less popups if you enable [gsudo cache](#credentials-cache).
 
-`gsudo` is very easy to install and use. Its similarities with Unix/Linux sudo make the experience a breeze. It detects your current shell and elevates accordingly (as native shell commands). (Supports `Cmd`, `PowerShell`, `WSL`, `git-bash`, `MinGW`, `Cygwin`, `Yori`, `Take Command`)
+It detects your current shell and elevates your command as native shell commands. (Supports `Cmd`, `PowerShell`, `WSL`, `git-bash`, `MinGW`, `Cygwin`, `Yori`, `Take Command`, `BusyBox` & `NuShell`.) 
 
 ## Table of contents
 
@@ -26,7 +26,6 @@ Just prepend `gsudo` (or the `sudo` alias) to your command and it will run eleva
   - [Usage](#usage)
     - [Usage from PowerShell / PowerShell Core](#usage-from-powershell--powershell-core)
       - [PowerShell Module](#powershell-module)
-      - [PowerShell Alias](#powershell-alias)
     - [Usage from WSL (Windows Subsystem for Linux)](#usage-from-wsl-windows-subsystem-for-linux)
   - [Configuration](#configuration)
   - [Credentials Cache](#credentials-cache)
@@ -42,14 +41,8 @@ Just prepend `gsudo` (or the `sudo` alias) to your command and it will run eleva
 ## Demo
 
 ![gsudo demo](demo.gif)
+
 (with `gsudo config CacheMode auto`)
-
----
-
-## Please support gsudo! 💵
-
-- Please give us a star! ⭐
-- Maybe [sponsoring gsudo](https://gerardog.github.io/gsudo/sponsor)?
 
 ---
 
@@ -141,13 +134,15 @@ gsudo config CacheMode Auto
 
 `gsudo` detects if invoked from PowerShell and elevates PS commands (unless `-d` is used to elevate CMD commands).
 
-The command to elevate will ran in a different process, so it **can't access the parent `$variables` and scope.**
+The command to elevate will run in a different process, so it **can't access the parent `$variables` and scope.**
 
-There are 3 possible syntaxes to elevate commands.
-
-1. **Wrap command in {curly braces}**. (recommended, faster!)
-
+To elevate a commands or script block: **Wrap it in {curly braces}**.
    ``` powershell
+   # Syntax:
+   gsudo { ScriptBlock }
+   gsudo [options] { ScriptBlock } [-args $argument1[..., $argumentN]] ;
+
+   # Examples:
    gsudo { Write-Output "Hello World" }
 
    # Pass arguments with -args
@@ -160,19 +155,15 @@ There are 3 possible syntaxes to elevate commands.
 
    # Inputs too: Example elevated iteration of a list.
    Get-ChildItem . | gsudo { $Input.CreationTime}
-
-   # Syntax:
-   gsudo [-nwskd] [--loadProfile] 
-         [-u|--user {username}] [--integrity {i}] [--ti]
-         { ScriptBlock } [-args $argument1[..., $argumentN]] ;
    ```
 
-   - Avoids serializing the output objects if the result is not captured, which can improve performance like 100x when working with big outputs.
-   - If { scriptblock } is omitted, it elevates PowerShell.
-
-2. **Invoke-gsudo** wrapper function:
+Alternate syntaxes:
+<details>
+  <summary>2. Invoke-gsudo wrapper function: (much slower)</summary>
 
    ``` powershell
+   # Pass values (not variables by reference) by prefixing `$using:`. I.E.
+
    $MyString = "Hello World"
    Invoke-Gsudo { Write-Output $using:MyString }  
 
@@ -184,19 +175,24 @@ There are 3 possible syntaxes to elevate commands.
                 [-Credential <PSCredential>]
    ```
 
-    - Native PowerShell syntax and auto serialization of inputs & outputs. 
-    - You can prefix variables with the `Using` scope modifier (like `$using:variableName`) and their serialized value is applied.
+    - PowerShell function.
+    - Performs auto serialization of inputs & outputs. 
+    - You can prefix variables with the `$using:` scope modifier (like `$using:variableName`) and their serialized value is applied.
     - Use `-LoadProfile` or `-NoProfile` to override profile loading or not.
     - Use `-Credential` option for Run As User (same as `-u` but for `Get-Credentials`).
     - Better forwarding of your current context to the elevated instance (current Location, $ErrorActionPreference)
+</details>
 
-3. Manual string interpolation => (Not recommended, character escaping hell)
+<details>
+  <summary>3. Manual string interpolation. (not recommended) </summary>
+  I don't recommend this approach as it is really hard to do proper escape all special characters. 
 
    ``` PowerShell
    Usage: gsudo 'string literal'
 
    # Variable substitutions example:
-   $file='C:\My Secret.txt'; $algorithm='md5';
+   $file='C:\My Secret.txt'; 
+   $algorithm='md5';
    $hash = gsudo "(Get-FileHash '$file' -Algorithm $algorithm).Hash"
    # or 
    $hash = gsudo "(Get-FileHash ""$file"" -Algorithm $algorithm).Hash"
@@ -204,13 +200,13 @@ There are 3 possible syntaxes to elevate commands.
 
    - Accepts a string literal with the command to elevate.
    - Returns a list of strings.
+</details>
 
 #### PowerShell Module
 
 - <a name="gsudomodule"></a> Optional: Import module `gsudoModule.psd1` into your Profile:
-  - Enables `gsudo !!` for PS
-  - Auto-complete for `Invoke-gsudo`.
-
+  - Enables `gsudo !!` on Powershell, to elevate the last executed command.
+ 
   ``` Powershell
   # Add the following line to your $PROFILE 
   Import-Module (Get-Command 'gsudoModule.psd1').Source
@@ -218,14 +214,6 @@ There are 3 possible syntaxes to elevate commands.
   # Or run:
   Get-Command gsudoModule.psd1 | % { Write-Output "`nImport-Module `"$($_.Source)`"" | Add-Content $PROFILE }
   ```
-
-#### PowerShell Alias
-
-- Optional: You can create a custom alias `sudo` for `gsudo` or `Invoke-gsudo` as you prefer, by adding one of these lines to your $PROFILE:
-
-  - `Set-Alias 'sudo' 'gsudo'` or
-  - `Set-Alias 'sudo' 'Invoke-gsudo'`
-  
 ---
 
 ### Usage from WSL (Windows Subsystem for Linux)
@@ -267,19 +255,22 @@ fi;
 
 ## Credentials Cache
 
-The `Credentials Cache`, if enabled and active, allows to elevate several times from a parent process with only one UAC pop-up.  
+The `Credentials Cache`, if enabled and active, allows to elevate several times from a parent process with only one UAC pop-up. After 5 minutes without elevations, the cache session closes automatically (Configurable timeout via `gsudo config CacheDuration`).
 
-It is convenient, but it's safe only if you are not already hosting a malicious process: No matter how secure gsudo itself is, a malicious process could trick the allowed process (e.g. Cmd/Powershell) and force a running gsudo cache instance to elevate silently. 
+While this  very convenient, it's important to understand its potential security risks. Even if gsudo itself is secure, the inherent vulnerability lies in the host process. If your system is already compromised by a malicious process, it can manipulate the permitted process (e.g., Cmd/Powershell) and force an active gsudo cache instance to elevate privileges without triggering a UAC prompt.
 
-How to use, very briefly:
+This risk is the trade-off for using the Credentials Cache. The cache is safe to use as long as you are confident there are no malicious processes running on your system.
 
-- Manually start/stop a cache session with `gsudo cache {on | off}`.
-- Stop all cache sessions with `gsudo -k`.
-- Available Cache Modes:
-  - `Disabled:` Every elevation shows a UAC popup.
-  - `Explicit:` (default) Every elevation shows a UAC popup, unless a cache session is started with `gsudo cache on`
-  - `Auto:` Simil-unix-sudo. The first elevation shows a UAC Popup and starts a cache session automatically.
-- Change Cache mode with `gsudo config CacheMode Disabled|Explicit|Auto`
+Here are the `Credentials Cache` Modes:
+- `Explicit:` (default) Every elevation shows a UAC popup, unless a cache session is started manually...
+  - To start or stop a cache session run: `gsudo cache {on | off}`
+  - This is the default mode. (Use `gsudo config CacheMode Explicit` to revert to this value).
+- `Auto:` Similar to unix-sudo. The first elevation shows a UAC popup and **starts a cache session automatically**.
+  - Run `gsudo config CacheMode Auto` to use this mode.
+- `Disabled:` Every elevation shows a UAC popup, and tryoing to start a cache session will throw an error..
+  - Run `gsudo config CacheMode Disabled` to use this mode.
+
+In any case, you can stop all cache sessions with `gsudo -k`.
 
 [Learn more](https://gerardog.github.io/gsudo/docs/credentials-cache)
 
@@ -312,3 +303,9 @@ How to use, very briefly:
 - How do I return to the previous security level after using gsudo?
 
   In the same way as you would with `Unix/Linux sudo`: `gsudo` does not alter the current process, instead it launches a new process with different permissions/integrity level. To go back to the previous level, just end the new process. For `Command Prompt` or `PowerShell` just type `exit`.
+
+## Please support gsudo! 💵
+
+- Please give us a star! ⭐
+- Help spread the word by mentioning `gsudo` in social networks!
+- [Sponsor or Donate](https://gerardog.github.io/gsudo/sponsor)
