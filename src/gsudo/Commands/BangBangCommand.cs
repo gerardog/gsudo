@@ -16,7 +16,7 @@ namespace gsudo.Commands
         {
             if (ShellHelper.InvokingShell.In (Shell.PowerShell, Shell.PowerShellCore, Shell.PowerShellCore623BuggedGlobalInstall))
             {
-                var module = Path.Combine(Path.GetDirectoryName(ProcessHelper.GetOwnExeName()), "gsudoModule.psd1");
+                var module = Path.Combine(Path.GetDirectoryName(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName), "gsudoModule.psd1");
                 throw new ApplicationException($"To use `gsudo !!` from powershell, run or add the following line to your `$PROFILE:\n\n Import-Module '{ module }'");
             }
 
