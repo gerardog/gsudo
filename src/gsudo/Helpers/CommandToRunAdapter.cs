@@ -250,8 +250,8 @@ namespace gsudo.Helpers
             {
                 if (CmdCommands.Contains(args[0])) // We want cmd commands to be run with CMD /c, not search for .EXE
                     return new string[]
-                        { _currentShellFileName, cmd_c }
-                        .Concat(args).ToArray();
+                        { _currentShellFileName, "/s", cmd_c,
+                        ArgumentsHelper.Quote(ArgumentsHelper.UnQuote(string.Join(" ", args.ToArray()))) };
 
                 var exename = ProcessFactory.FindExecutableInPath(ArgumentsHelper.UnQuote(args[0]));
                 var shell = ShellHelper.DetectShellByFileName(exename);
@@ -266,8 +266,8 @@ namespace gsudo.Helpers
                     // Or a non-executable file with a valid file association..
                     // Let CMD decide that... Invoke using "CMD /C" prefix ..
                     return new string[]
-                        { _currentShellFileName, cmd_c }
-                        .Concat(args).ToArray();
+                        { _currentShellFileName, "/s", cmd_c,
+                        ArgumentsHelper.Quote(ArgumentsHelper.UnQuote(string.Join(" ", args.ToArray()))) };
                 }
             }
         }
