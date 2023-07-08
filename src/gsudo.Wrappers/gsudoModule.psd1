@@ -69,13 +69,13 @@ Copyright = '(c) Gerardo Grignoli. All rights reserved.'
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = 'gsudo', 'invoke-gsudo', 'Test-IsGsudoCacheAvailable'
+FunctionsToExport = 'gsudo', 'invoke-gsudo', 'Test-IsGsudoCacheAvailable', 'Test-IsProcessElevated', 'Test-IsAdminMember', 'gsudoPrompt'
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()
 
 # Variables to export from this module
-VariablesToExport = 'gsudoVerbose'
+VariablesToExport = 'gsudoVerbose', 'gsudoAutoComplete'
 
 # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
 AliasesToExport = @()
