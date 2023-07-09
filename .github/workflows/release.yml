@@ -67,7 +67,7 @@ jobs:
         artifacts: "artifacts/*.*"
         token: ${{ secrets.GITHUB_TOKEN  }}
         draft: true
-        prerelease: ${{ env.is_prerelease=='true' }}
+        prerelease: ${{ env.is_prerelease==1 }}
         make_latest: false
         generateReleaseNotes: true
         name: gsudo v${{env.version}}
@@ -101,8 +101,8 @@ jobs:
         tag: v${{env.version}}
         commit: ${{env.GITHUB_SHA}}
         draft: false
-        prerelease: ${{ env.is_prerelease == 'true'}}
-        makelatest: ${{ env.is_prerelease == 'false'}}
+        prerelease: ${{ env.is_prerelease == 1}}
+        makelatest: ${{ env.is_prerelease == 0}}
         allowUpdates: true 
         omitBodyDuringUpdate: true
         omitPrereleaseDuringUpdate: true
@@ -139,7 +139,7 @@ jobs:
         path: ./artifacts
     - name: WinGet Releaser
       uses: vedantmgoyal2009/winget-releaser@v2
-      if: ${{ env.is_prerelease == 'false' }}
+      if: ${{ env.is_prerelease == 0 }}
       with: 
         token: ${{ secrets.WINGET_RELEASER_TOKEN }}
         identifier: gerardog.gsudo
