@@ -14,7 +14,7 @@ jobs:
       checks: write
 
   release:
-    name: Draft Release
+    name: Build Installer & Draft Release
     #if: github.ref == 'refs/heads/master' && github.repository == 'gerardog/gsudo'
     if: github.repository == 'gerardog/gsudo'
     runs-on: windows-latest
@@ -27,7 +27,6 @@ jobs:
       version: ${{ needs.build.outputs.version }}
       version_MajorMinorPatch: ${{ needs.build.outputs.version_MajorMinorPatch }}
       is_prerelease: ${{ needs.build.outputs.is_prerelease }}
-      
     permissions:
       contents: write      
     steps:
@@ -68,7 +67,7 @@ jobs:
         artifacts: "artifacts/*.*"
         token: ${{ secrets.GITHUB_TOKEN  }}
         draft: true
-        prerelease: ${{ env.is_prerelease }}
+        prerelease: ${{ env.is_prerelease=='true' }}
         make_latest: false
         generateReleaseNotes: true
         name: gsudo v${{env.version}}
@@ -102,8 +101,8 @@ jobs:
         tag: v${{env.version}}
         commit: ${{env.GITHUB_SHA}}
         draft: false
-        prerelease: ${{ env.is_prerelease }}
-        makelatest: ${{ !env.is_prerelease }}
+        prerelease: ${{ env.is_prerelease == 'true'}}
+        makelatest: ${{ env.is_prerelease == 'false'}}
         allowUpdates: true 
         omitBodyDuringUpdate: true
         omitPrereleaseDuringUpdate: true
@@ -140,7 +139,7 @@ jobs:
         path: ./artifacts
     - name: WinGet Releaser
       uses: vedantmgoyal2009/winget-releaser@v2
-      if: ${{ !env.is_prerelease }}
+      if: ${{ env.is_prerelease == 'false' }}
       with: 
         token: ${{ secrets.WINGET_RELEASER_TOKEN }}
         identifier: gerardog.gsudo

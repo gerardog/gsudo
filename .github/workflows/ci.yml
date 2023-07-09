@@ -85,9 +85,9 @@ jobs:
            echo "version=$(gitversion /showvariable LegacySemVer)" >> "$env:GITHUB_OUTPUT"
            echo "version_MajorMinorPatch=$(gitversion /showvariable MajorMinorPatch)" >> "$env:GITHUB_OUTPUT"
            if ("$(gitversion /showvariable PreReleaseTag)" -eq "") {
-             echo "is_prerelease=false" >> "$env:GITHUB_OUTPUT"
+             echo "is_prerelease=0" >> "$env:GITHUB_OUTPUT"
            } else {
-             echo "is_prerelease=true" >> "$env:GITHUB_OUTPUT"
+             echo "is_prerelease=1" >> "$env:GITHUB_OUTPUT"
            }
            get-content  "$env:GITHUB_OUTPUT"
     - name: Build
