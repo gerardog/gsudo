@@ -154,7 +154,7 @@ To elevate a commands or script block: **Wrap it in {curly braces}**.
    Get-ChildItem . | gsudo { $Input.CreationTime}
    ```
 
-Alternate syntaxes:
+Alternative syntaxes:
 <details>
   <summary>2. Invoke-gsudo wrapper function: (much slower)</summary>
 
@@ -201,16 +201,30 @@ Alternate syntaxes:
 
 #### PowerShell Module
 
-- <a name="gsudomodule"></a> Optional: Import module `gsudoModule.psd1` into your Profile:
+- <a name="gsudomodule"></a> Optional: Import module `gsudoModule.psd1` into your PowerShell Profile:
+  - Adds syntax auto-complete to gsudo in PowerShell. Plus, it suggests the 3 previous commands, making your workflow smoother than ever!
   - Enables `gsudo !!` on Powershell, to elevate the last executed command.
- 
+  - Adds Functions: 
+    - `Test-IsGsudoCacheAvailable` Returns true if a gsudo cache is active (meaning elevation with no UAC is possible).
+    - `Test-IsProcessElevated`: Returns true if the current process is elevated.
+    - `Test-IsAdminMember`: Returns true if the current user is member of the `Local Administrators` groups, which means it can elevate with.
+  
   ``` Powershell
   # Add the following line to your $PROFILE 
-  Import-Module (Get-Command 'gsudoModule.psd1').Source
+  Import-Module "$env:ProgramFiles\gsudo\Current\gsudoModule.psd1"
 
   # Or run:
   Get-Command gsudoModule.psd1 | % { Write-Output "`nImport-Module `"$($_.Source)`"" | Add-Content $PROFILE }
   ```
+
+  - If you haven't already customized your PowerShell prompt (for example by installing Oh-My-Posh), you can easily add a red `#` indicating that the current process is elevated:
+    ![gsudo prompt](docs/static/img/gsudo-powershell-prompt.gif)
+  
+  To do so add this line to your profile (after importing `gsudoModule`):
+  
+  ``` powershell
+  Set-Alias Prompt gsudoPrompt
+  ``` 
 ---
 
 ### Usage from WSL (Windows Subsystem for Linux)
