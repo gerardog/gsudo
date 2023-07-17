@@ -149,7 +149,7 @@ jobs:
     name: Push to Nuget
     if: github.repository == 'gerardog/gsudo'
     runs-on: windows-latest
-    needs: [publishChocoWinGet]
+    needs: [build, publishChocoWinGet]
     permissions:
       contents: write
     environment:
