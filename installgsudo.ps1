@@ -39,13 +39,14 @@ if ($process.ExitCode -ne 0)
 }
 else
 {
+	New-Item -Type Directory ($PROFILE | Split-Path) -ErrorAction SilentlyContinue
+
 	Write-Output "gsudo installed succesfully!"
 	Write-Output "Please restart your consoles to use gsudo!`n"
 	
 	"PowerShell users: To use enhanced gsudo and Invoke-Gsudo cmdlet, add the following line to your `$PROFILE"
 	"  Import-Module 'gsudoModule'"
 	"Or run: "
-	"  New-Item -Type Directory (`$PROFILE | Split-Path) -ErrorAction Ignore"
 	"  Write-Output `"``nImport-Module 'gsudoModule'`" | Add-Content `$PROFILE"
 	
 	Remove-Item $fileName 
