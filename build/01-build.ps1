@@ -1,4 +1,16 @@
 pushd $PSScriptRoot\..
+
+if ($env:version) {
+	"- Getting version from env:version"
+	$version = $env:version
+	$version_MajorMinorPatch=$env:version_MajorMinorPatch
+} else {
+	"- Getting version using GitVersion"
+	$env:version = $version = $(gitversion /showvariable LegacySemVer)
+	$env:version_MajorMinorPatch = $version_MajorMinorPatch=$(gitversion /showvariable MajorMinorPatch)
+}
+"- Using version number v$version / v$version_MajorMinorPatch"
+
 "-- Cleaning bin & obj folders"
 Get-Item ".\src\gsudo\bin\", ".\src\gsudo\obj\" -ErrorAction Ignore | Remove-Item -Recurse -Force 
 "-- Building net7.0 win-arm64"
@@ -23,5 +35,8 @@ cp .\src\gsudo.Wrappers\* .\artifacts\x86
 cp .\src\gsudo.Wrappers\* .\artifacts\x64
 cp .\src\gsudo.Wrappers\* .\artifacts\arm64
 cp .\src\gsudo.Wrappers\* .\artifacts\net46-AnyCpu
+
+# Set Module version number.
+Get-ChildItem .\artifacts\ -Filter gsudoModule.psd1 -Recurse | % { (Get-Content $_) -replace """0.1""", """$version_MajorMinorPatch""" | Set-Content $_.FullName }
 
 popd

@@ -164,10 +164,10 @@ gsudo -d dir C:\
   Add the following line to your $PROFILE (replace with full path)
 
   ``` powershell
-  Import-Module 'C:\FullPathTo\gsudoModule.psd1'
+  Import-Module 'gsudoModule.psd1'
 
   # Or let the following line do it for you run:
-  Get-Command gsudoModule.psd1 | % { Write-Output "`nImport-Module `"$($_.Source)`"" | Add-Content $PROFILE }
+  Write-Output "`nImport-Module `"gsudoModule`"" | Add-Content $PROFILE
   ```
 
 :::tip

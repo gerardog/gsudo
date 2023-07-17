@@ -211,10 +211,10 @@ Alternative syntaxes:
   
   ``` Powershell
   # Add the following line to your $PROFILE 
-  Import-Module "$env:ProgramFiles\gsudo\Current\gsudoModule.psd1"
+  Import-Module "gsudoModule"
 
   # Or run:
-  Get-Command gsudoModule.psd1 | % { Write-Output "`nImport-Module `"$($_.Source)`"" | Add-Content $PROFILE }
+  Write-Output "`nImport-Module `"gsudoModule`"" | Add-Content $PROFILE
   ```
 
   - If you haven't already customized your PowerShell prompt (for example by installing Oh-My-Posh), you can easily add a red `#` indicating that the current process is elevated:
