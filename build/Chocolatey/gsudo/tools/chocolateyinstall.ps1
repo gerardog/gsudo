@@ -30,7 +30,7 @@ Install-ChocolateyPath -PathToInstall $SymLinkDir -PathType 'Machine'
 cmd /c mklink "$TargetDir\sudo.exe" "$TargetDir\gsudo.exe" 2>$null
 
 # Copy gsudoModule to "$env:ProgramFiles\PowerShell\Modules\gsudoModule"
-$PSModulesTargetDir = "$env:ProgramFiles\PowerShell\Modules\gsudoModule"
+$PSModulesTargetDir = "$env:ProgramFiles\WindowsPowerShell\Modules\gsudoModule"
 md $PSModulesTargetDir -ErrorAction SilentlyContinue
 copy "$bin\*.ps*" $PSModulesTargetDir -Exclude *.ignore -Force
 
