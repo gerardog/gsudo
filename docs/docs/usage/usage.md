@@ -12,7 +12,7 @@ hide_title: true
 gsudo [options]                  # Elevates your current shell
 gsudo [options] {command} [args] # Runs {command} with elevated permissions
 gsudo cache [on | off | help]    # Starts/Stops an elevated cache session. (reduced UAC popups)
-gsudo status                     # Shows current user, cache and console status.
+gsudo status [--json | filter ]  # Shows current user, cache and console status.
 gsudo !!                         # Re-run last command as admin. (YMMV)
 ```
 
