@@ -43,7 +43,7 @@
       <Directory Id="INSTALLFOLDER" Name="gsudo">
         <Directory Id="VERSIONFOLDER" Name="$(env.version)"/>
       </Directory>
-      <Directory Id="POWERSHELLFOLDER" Name="PowerShell">
+      <Directory Id="POWERSHELLFOLDER" Name="WindowsPowerShell">
         <Directory Id="MODULESDIR" Name="Modules" >
 			<Directory Id="GSUDOMODULEDIR" Name="gsudoModule" />
 		</Directory>
