@@ -29,6 +29,11 @@ Install-ChocolateyPath -PathToInstall $SymLinkDir -PathType 'Machine'
 
 cmd /c mklink "$TargetDir\sudo.exe" "$TargetDir\gsudo.exe" 2>$null
 
+# Copy gsudoModule to "$env:ProgramFiles\PowerShell\Modules\gsudoModule"
+$PSModulesTargetDir = "$env:ProgramFiles\PowerShell\Modules\gsudoModule"
+md $PSModulesTargetDir -ErrorAction SilentlyContinue
+copy "$bin\*.ps*" $TargetDir -Exclude *.ignore -Force
+
 $OldCurrentDir = Get-Item $SymLinkDir -ErrorAction ignore
 if ($OldCurrentDir) 
 {
@@ -43,13 +48,13 @@ cmd /c mklink /d "$SymLinkDir" "$TargetDir\"
 Write-Output "gsudo successfully installed. Please restart your consoles to use gsudo.`n"
 
 if (Get-Module gsudoModule) {
-	"Please restart PowerShell to update PowerShell gsudo Module."
+	"Please restart all your PowerShell consoles to update PowerShell gsudo Module."
 } else {
 	& { 
-	"PowerShell users: To use enhanced gsudo and Invoke-Gsudo cmdlet, add the following line to your `$PROFILE"
-	"  Import-Module '$SymLinkDir\gsudoModule.psd1'"
+	"PowerShell users: Add auto-complete to  gsudo by adding the following line to your `$PROFILE"
+	"  Import-Module 'gsudoModule'"
 	"Or run: "
-	"  Write-Output `"``nImport-Module '$SymLinkDir\gsudoModule.psd1'`" | Add-Content `$PROFILE"
+	"  Write-Output `"``nImport-Module 'gsudoModule'`" | Add-Content `$PROFILE"
 
 	} 
 }

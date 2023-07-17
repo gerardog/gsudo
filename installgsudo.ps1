@@ -43,10 +43,10 @@ else
 	Write-Output "Please restart your consoles to use gsudo!`n"
 	
 	"PowerShell users: To use enhanced gsudo and Invoke-Gsudo cmdlet, add the following line to your `$PROFILE"
-	"  Import-Module '${Env:ProgramFiles}\gsudo\Current\gsudoModule.psd1'"
+	"  Import-Module 'gsudoModule'"
 	"Or run: "
 	"  New-Item -Type Directory (`$PROFILE | Split-Path) -ErrorAction Ignore"
-	"  Write-Output `"``nImport-Module '${Env:ProgramFiles}\gsudo\Current\gsudoModule.psd1'`" | Add-Content `$PROFILE"
+	"  Write-Output `"``nImport-Module 'gsudoModule'`" | Add-Content `$PROFILE"
 	
 	Remove-Item $fileName 
 }
