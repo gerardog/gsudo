@@ -50,10 +50,17 @@ namespace gsudo.Helpers
             var num = ConsoleApi.GetConsoleProcessList(processIds, 1);
             if (num == 0) throw new System.ComponentModel.Win32Exception();
 
-            processIds = new UInt32[num];
+            processIds = new uint[num];
 
-            num = ConsoleApi.GetConsoleProcessList(processIds, (uint)processIds.Length);
+            num = ConsoleApi.GetConsoleProcessList(processIds, num);
             if (num == 0) throw new System.ComponentModel.Win32Exception();
+
+            //** weird workaround for .net 7.0 NativeAOT + git-bash **
+            if (processIds[0] == 0)
+                num = ConsoleApi.GetConsoleProcessList(processIds, num);
+            if (processIds[0] == 0)
+                num = ConsoleApi.GetConsoleProcessList(processIds, num);
+            //**************************************************
             return processIds;
         }
 

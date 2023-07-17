@@ -214,7 +214,21 @@ namespace gsudo.Helpers
                 return new ConfigCommand() { key = args.FirstOrDefault(), value = args.Skip(1) };
 
             if (arg.In("status"))
-                return new StatusCommand();
+            {
+                var cmd = new StatusCommand();
+
+                while (args.Count>0)
+                {
+                    arg = DeQueueArg();
+                    if (arg.In("--json"))
+                        cmd.AsJson = true;
+                    else if(string.IsNullOrEmpty(cmd.Key))
+                        cmd.Key = arg;
+                    else throw new ApplicationException($"Invalid option: {arg}");
+                };
+
+                return cmd;
+            }
 
             if (arg.In("cache"))
             {
