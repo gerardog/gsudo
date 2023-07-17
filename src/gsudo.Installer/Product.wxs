@@ -43,6 +43,11 @@
       <Directory Id="INSTALLFOLDER" Name="gsudo">
         <Directory Id="VERSIONFOLDER" Name="$(env.version)"/>
       </Directory>
+      <Directory Id="POWERSHELLFOLDER" Name="PowerShell">
+        <Directory Id="MODULESDIR" Name="Modules" >
+			<Directory Id="GSUDOMODULEDIR" Name="gsudoModule" />
+		</Directory>
+      </Directory>
     </StandardDirectory>
   </Fragment>
 
@@ -60,10 +65,8 @@
       <?error Platform $(sys.BUILDARCH) is not supported?>
       <?endif?>
 
-      <ComponentRef Id="GSudoBash" />
-      <ComponentRef Id="GSudoPowerShell" />
+      <ComponentRef Id="GSudoExtensions" />
       <ComponentRef Id="GSudoModule" />
-      <ComponentRef Id="InvokeGSudo" />
     </ComponentGroup>
   </Fragment>
 
@@ -94,20 +97,17 @@
       <Environment Id="SET_ENV" Action="set" Name="PATH" Part="last" Permanent="no" System="yes" Value="[INSTALLFOLDER]Current" />
     </Component>
 
-    <Component Id="GSudoBash" Directory="VERSIONFOLDER">
+    <Component Id="GSudoExtensions" Directory="VERSIONFOLDER" Guid="923f225a-75cd-4fca-ad48-a4161187f7a5">
       <File Id="GSudoBash" Name="gsudo" Source="..\..\artifacts\x64\gsudo" />
-    </Component>
-
-    <Component Id="GSudoPowerShell" Directory="VERSIONFOLDER">
       <File Id="GSudoModuleDef" Name="gsudoModule.psd1" Source="..\..\artifacts\x64\gsudoModule.psd1" />
-    </Component>
-
-    <Component Id="GSudoModule" Directory="VERSIONFOLDER">
       <File Id="GSudoModule" Name="gsudoModule.psm1" Source="..\..\artifacts\x64\gsudoModule.psm1" />
+      <File Id="InvokeGSudo" Name="invoke-gsudo.ps1" Source="..\..\artifacts\x64\invoke-gsudo.ps1" />
     </Component>
 
-    <Component Id="InvokeGSudo" Directory="VERSIONFOLDER">
-      <File Id="InvokeGSudo" Name="invoke-gsudo.ps1" Source="..\..\artifacts\x64\invoke-gsudo.ps1" />
+    <Component Id="GSudoModule" Directory="GSUDOMODULEDIR" Guid="923f225a-75cd-4fca-ad48-a4161187f7a6">
+      <File Id="GSudoModulePsd1" Name="gsudoModule.psd1" Source="..\..\artifacts\x64\gsudoModule.psd1" />
+      <File Id="GSudoModulePsm1" Name="gsudoModule.psm1" Source="..\..\artifacts\x64\gsudoModule.psm1" />
+      <File Id="GSudoModuleFn" Name="invoke-gsudo.ps1" Source="..\..\artifacts\x64\invoke-gsudo.ps1" />
     </Component>
   </Fragment>
 
@@ -120,3 +120,4 @@
   </Fragment>
 
 </Wix>
+	
