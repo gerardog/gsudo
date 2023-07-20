@@ -28,7 +28,8 @@ namespace gsudo.Commands
 
             bool isAdmin = SecurityHelper.IsAdministrator();
             result["IsElevated"] = isAdmin;
-            result["IsAdminMember"] = SecurityHelper.IsMemberOfLocalAdmins();
+            bool isAdminMember = SecurityHelper.IsMemberOfLocalAdmins();
+            result["IsAdminMember"] = isAdminMember;
 
             var integrity = SecurityHelper.GetCurrentIntegrityLevel();
             var integrityString = string.Empty;
@@ -39,7 +40,8 @@ namespace gsudo.Commands
             result["IntegrityLevelNumeric"] = integrity;
             result["IntegrityLevel"] = integrityString;
             result["CacheMode"] = Settings.CacheMode.Value.ToString();
-            result["CacheAvailable"] = NamedPipeClient.IsServiceAvailable();
+            bool isCacheAvailable = NamedPipeClient.IsServiceAvailable();
+            result["CacheAvailable"] = isCacheAvailable;
 
             //            ---------
             var pipes = NamedPipeUtils.ListNamedPipes();
@@ -59,6 +61,24 @@ namespace gsudo.Commands
                     {
                         Console.WriteLine(GetJsonValue(val));
                     }
+
+                    switch (Key.ToLowerInvariant())
+                    {
+                        case "cacheavailable":
+                            if (!isCacheAvailable)
+                                return Task.FromResult(1);
+                            break;
+
+                        case "iselevated":
+                            if (!isAdmin)
+                                return Task.FromResult(1);
+                            break;
+
+                        case "isadminmember":
+                            if (!isAdminMember)
+                                return Task.FromResult(1);
+                            break;
+                    }
                 }
                 else
                 {
@@ -68,21 +88,18 @@ namespace gsudo.Commands
             else if (AsJson)
             {
                 Console.WriteLine("{");
-                bool first = true;
                 foreach (var kv in result.ToList())
                 {
-                    first = false;
-
                     Console.Write($" \"{kv.Key}\":{GetJsonValue(kv.Value)},\n");
                 }
                 Console.Write($" \"ConsoleProcesses\": [\n");
-                PrintConsoleProcessList(AsJson = true);
+                PrintConsoleProcessList();
                 Console.WriteLine("\n ]\n}");
             }
             else
             {
                 PrintToConsole(result);
-                PrintConsoleProcessList(AsJson=false);
+                PrintConsoleProcessList();
             }
 
             return Task.FromResult(0);
@@ -161,14 +178,14 @@ namespace gsudo.Commands
 
         }
 
-        private void PrintConsoleProcessList(bool asJson)
+        private void PrintConsoleProcessList()
         {
             var ownPid = ProcessApi.GetCurrentProcessId();
             var processIds = ConsoleHelper.GetConsoleAttachedPids();
             const string unknown = "(Unknown)";
 
-            if (!asJson)
-                Console.WriteLine($"{"PID".PadLeft(9)} {"PPID".PadLeft(9)} {"Integrity".PadRight(10)} {"UserName".PadRight(25)} {"Name"}");
+            if (!AsJson)
+                Console.WriteLine($"{"PID".PadLeft(9)} {"PPID".PadLeft(9)} {"Integrity".PadRight(20)} {"UserName".PadRight(25)} {"Name"}");
 
             bool first = true;
             foreach (var pid in processIds.Reverse())
@@ -176,6 +193,7 @@ namespace gsudo.Commands
                 Process p = null;
                 string name = unknown;
                 string integrity = unknown;
+                string integrityString = unknown;
                 string username = unknown;
                 int ppid = 0;
 
@@ -190,7 +208,7 @@ namespace gsudo.Commands
                         var i = ProcessHelper.GetProcessIntegrityLevel(p.Handle);
                         integrity = i.ToString(CultureInfo.InvariantCulture);
                         if (Enum.IsDefined(typeof(IntegrityLevel), i))
-                            integrity = ((IntegrityLevel)i).ToString();
+                            integrityString = ((IntegrityLevel)i).ToString();
                     }
                     catch
                     { }
@@ -205,12 +223,15 @@ namespace gsudo.Commands
                 catch
                 { }
 
-                if (!asJson)
-                    Console.WriteLine($"{pid.ToString(CultureInfo.InvariantCulture).PadLeft(9)} {ppid.ToString(CultureInfo.InvariantCulture).PadLeft(9)} {integrity.PadRight(10)} {username.PadRight(25)} {name}{((ownPid == pid) ? " (this gsudo status)" : null)}");
+                if (!AsJson)
+                {
+                    integrity = $"{integrityString} ({integrity})";
+                    Console.WriteLine($"{pid.ToString(CultureInfo.InvariantCulture).PadLeft(9)} {ppid.ToString(CultureInfo.InvariantCulture).PadLeft(9)} {integrity.PadRight(20)} {username.PadRight(25)} {name}{((ownPid == pid) ? " (this gsudo status)" : null)}");
+                }
                 else
                 {
                     if (!first) Console.WriteLine(",");
-                    Console.Write($"   {{\"Pid\":{pid}, \"Ppid\":{ppid}, \"Integrity\":\"{integrity}\", \"UserName\":{GetJsonValue(username)}, \"Executable\":{GetJsonValue(name)}}}");
+                    Console.Write($"   {{\"Pid\":{pid}, \"Ppid\":{ppid}, \"IntegrityLevelNumeric\":{integrity}, \"IntegrityLevel\":\"{integrityString}\", \"UserName\":{GetJsonValue(username)}, \"Executable\":{GetJsonValue(name)}}}");
                 }
                 first = false;
             }
