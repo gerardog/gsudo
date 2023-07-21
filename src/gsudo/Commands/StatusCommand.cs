@@ -1,4 +1,4 @@
-﻿using gsudo.Helpers;
+using gsudo.Helpers;
 using gsudo.Native;
 using gsudo.Rpc;
 using System;
@@ -56,13 +56,13 @@ namespace gsudo.Commands
                     if (val is string)
                         Console.WriteLine(val);
                     else
-                    {                        
+                    {
                         Console.WriteLine(GetJsonValue(val));
                     }
                 }
                 else
                 {
-                    throw new ApplicationException($"\"{Key}\" is not a valid Status Key. Valid keys are: {String.Join(", ", result.Keys.ToArray() )}");
+                    throw new ApplicationException($"\"{Key}\" is not a valid Status Key. Valid keys are: {String.Join(", ", result.Keys.ToArray())}");
                 }
             }
             else if (AsJson)
@@ -98,14 +98,14 @@ namespace gsudo.Commands
             {
                 var sb = new StringBuilder();
                 sb.Append($"[");
-                bool first=true;
+                bool first = true;
                 foreach (string s in Value as string[])
                 {
-                    if(!first)
+                    if (!first)
                         sb.Append(", ");
 
                     first = false;
-                    sb.Append(GetJsonValue(s)); 
+                    sb.Append(GetJsonValue(s));
                 }
                 sb.Append($"]");
                 return sb.ToString();
