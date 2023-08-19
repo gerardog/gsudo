@@ -16,19 +16,20 @@ namespace gsudo.Commands
     {
         public bool AsJson { get; set; }
         public string Key { get; set; }
+        public bool NoOutput { get; set; }
 
         public Task<int> Execute()
         {
-            var result = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-            result["CallerPid"] = ProcessHelper.GetCallerPid();
+            var status = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            status["CallerPid"] = ProcessHelper.GetCallerPid();
 
             var id = WindowsIdentity.GetCurrent();
-            result["UserName"] = id.Name;
-            result["UserSid"] = id.User.ToString();
+            status["UserName"] = id.Name;
+            status["UserSid"] = id.User.ToString();
 
             bool isAdmin = SecurityHelper.IsAdministrator();
-            result["IsElevated"] = isAdmin;
-            result["IsAdminMember"] = SecurityHelper.IsMemberOfLocalAdmins();
+            status["IsElevated"] = isAdmin;
+            status["IsAdminMember"] = SecurityHelper.IsMemberOfLocalAdmins();
 
             var integrity = SecurityHelper.GetCurrentIntegrityLevel();
             var integrityString = string.Empty;
@@ -36,53 +37,55 @@ namespace gsudo.Commands
             if (Enum.IsDefined(typeof(IntegrityLevel), integrity))
                 integrityString = ((IntegrityLevel)integrity).ToString();
 
-            result["IntegrityLevelNumeric"] = integrity;
-            result["IntegrityLevel"] = integrityString;
-            result["CacheMode"] = Settings.CacheMode.Value.ToString();
-            result["CacheAvailable"] = NamedPipeClient.IsServiceAvailable();
+            status["IntegrityLevelNumeric"] = integrity;
+            status["IntegrityLevel"] = integrityString;
+            status["CacheMode"] = Settings.CacheMode.Value.ToString();
+            status["CacheAvailable"] = NamedPipeClient.IsServiceAvailable();
 
             //            ---------
             var pipes = NamedPipeUtils.ListNamedPipes();
-            result["CacheSessionsCount"] = pipes.Count;
-            result["CacheSessions"] = pipes.ToArray();
+            status["CacheSessionsCount"] = pipes.Count;
+            status["CacheSessions"] = pipes.ToArray();
 
-            result["IsRedirected"] = Console.IsInputRedirected || Console.IsOutputRedirected || Console.IsErrorRedirected;
+            status["IsRedirected"] = Console.IsInputRedirected || Console.IsOutputRedirected || Console.IsErrorRedirected;
 
             if (!string.IsNullOrEmpty(Key))
             {
-                if (result.ContainsKey(Key))
+                if (status.ContainsKey(Key))
                 {
-                    var val = result[Key];
-                    if (val is string)
-                        Console.WriteLine(val);
-                    else
-                    {                        
-                        Console.WriteLine(GetJsonValue(val));
+                    var val = status[Key];
+
+                    if (!NoOutput)
+                    {
+                        if (val is string)
+                            Console.WriteLine(val);
+                        else
+                            Console.WriteLine(GetJsonValue(val));
                     }
+
+                    // If the value is true, process returns success (exitcode 0) 
+                    // If the value is false, process returns failure (exitcode 1)
+                    if (val is bool) 
+                        return Task.FromResult((bool)val ? 0 : 1);
                 }
                 else
-                {
-                    throw new ApplicationException($"\"{Key}\" is not a valid Status Key. Valid keys are: {String.Join(", ", result.Keys.ToArray() )}");
-                }
+                    throw new ApplicationException($"\"{Key}\" is not a valid Status Key. Valid keys are: {String.Join(", ", status.Keys.ToArray())}");
             }
             else if (AsJson)
             {
                 Console.WriteLine("{");
-                bool first = true;
-                foreach (var kv in result.ToList())
+                foreach (var kv in status.ToList())
                 {
-                    first = false;
-
                     Console.Write($" \"{kv.Key}\":{GetJsonValue(kv.Value)},\n");
                 }
                 Console.Write($" \"ConsoleProcesses\": [\n");
-                PrintConsoleProcessList(AsJson = true);
+                PrintConsoleProcessList();
                 Console.WriteLine("\n ]\n}");
             }
             else
             {
-                PrintToConsole(result);
-                PrintConsoleProcessList(AsJson=false);
+                PrintToConsole(status);
+                PrintConsoleProcessList();
             }
 
             return Task.FromResult(0);
@@ -98,14 +101,14 @@ namespace gsudo.Commands
             {
                 var sb = new StringBuilder();
                 sb.Append($"[");
-                bool first=true;
+                bool first = true;
                 foreach (string s in Value as string[])
                 {
-                    if(!first)
+                    if (!first)
                         sb.Append(", ");
 
                     first = false;
-                    sb.Append(GetJsonValue(s)); 
+                    sb.Append(GetJsonValue(s));
                 }
                 sb.Append($"]");
                 return sb.ToString();
@@ -156,18 +159,15 @@ namespace gsudo.Commands
                 Console.WriteLine($"\nProcesses attached to the current **REDIRECTED** console:");
             else
                 Console.WriteLine($"\nProcesses attached to the current console:");
-
-
-
         }
 
-        private void PrintConsoleProcessList(bool asJson)
+        private void PrintConsoleProcessList()
         {
             var ownPid = ProcessApi.GetCurrentProcessId();
             var processIds = ConsoleHelper.GetConsoleAttachedPids();
             const string unknown = "(Unknown)";
 
-            if (!asJson)
+            if (!AsJson)
                 Console.WriteLine($"{"PID".PadLeft(9)} {"PPID".PadLeft(9)} {"Integrity".PadRight(10)} {"UserName".PadRight(25)} {"Name"}");
 
             bool first = true;
@@ -175,7 +175,8 @@ namespace gsudo.Commands
             {
                 Process p = null;
                 string name = unknown;
-                string integrity = unknown;
+                string integrityString = unknown;
+                int integrity = 0;
                 string username = unknown;
                 int ppid = 0;
 
@@ -187,15 +188,15 @@ namespace gsudo.Commands
 
                     try
                     {
-                        var i = ProcessHelper.GetProcessIntegrityLevel(p.Handle);
-                        integrity = i.ToString(CultureInfo.InvariantCulture);
-                        if (Enum.IsDefined(typeof(IntegrityLevel), i))
-                            integrity = ((IntegrityLevel)i).ToString();
+                        integrity = ProcessHelper.GetProcessIntegrityLevel(p.Handle);
+                        integrityString = integrity.ToString(CultureInfo.InvariantCulture);
+                        if (Enum.IsDefined(typeof(IntegrityLevel), integrity))
+                            integrityString = ((IntegrityLevel)integrity).ToString();
                     }
                     catch
                     { }
 
-                    try
+                    try 
                     {
                         username = p.GetProcessUser()?.Name ?? unknown;
                     }
@@ -205,13 +206,14 @@ namespace gsudo.Commands
                 catch
                 { }
 
-                if (!asJson)
-                    Console.WriteLine($"{pid.ToString(CultureInfo.InvariantCulture).PadLeft(9)} {ppid.ToString(CultureInfo.InvariantCulture).PadLeft(9)} {integrity.PadRight(10)} {username.PadRight(25)} {name}{((ownPid == pid) ? " (this gsudo status)" : null)}");
+                if (!AsJson)
+                    Console.WriteLine($"{pid.ToString(CultureInfo.InvariantCulture).PadLeft(9)} {ppid.ToString(CultureInfo.InvariantCulture).PadLeft(9)} {integrityString.PadRight(10)} {username.PadRight(25)} {name}{((ownPid == pid) ? " (this gsudo status)" : null)}");
                 else
                 {
                     if (!first) Console.WriteLine(",");
-                    Console.Write($"   {{\"Pid\":{pid}, \"Ppid\":{ppid}, \"Integrity\":\"{integrity}\", \"UserName\":{GetJsonValue(username)}, \"Executable\":{GetJsonValue(name)}}}");
+                    Console.Write($"   {{\"Pid\":{pid}, \"Ppid\":{ppid}, \"IntegrityLevel\":\"{integrityString}\", \"IntegrityLevelNumeric\":{integrity}, \"UserName\":{GetJsonValue(username)}, \"Executable\":{GetJsonValue(name)}}}");
                 }
+
                 first = false;
             }
         }

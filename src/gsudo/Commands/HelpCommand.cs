@@ -37,7 +37,8 @@ Usage:
  gsudo [options]\t\t\tElevates your current shell
  gsudo [options] {command} [args]\tRuns {command} with elevated permissions
  gsudo cache [on | off | help] \t\tStarts/Stops an elevated cache session. (reduced UAC popups)
- gsudo status [key] [--json]\t\tShows current user, cache and console status. Can be filtered by [key].
+ gsudo status [--json]\t\t\tShows current user, cache and console status. 
+ gsudo status {key} [--no-output]\tShows status filtered by json {key}. Boolean keys also returned as exit codes.
  gsudo !!\t\t\t\tRe-run last command as admin. (YMMV)
 
 New Window options:

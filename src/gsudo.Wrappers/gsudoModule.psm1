@@ -82,7 +82,7 @@ https://github.com/gerardog/gsudo
 }
 
 function Test-IsGsudoCacheAvailable {
-    [bool]((& 'gsudo.exe' status) -like "*Available for this process: True*")
+    return ('true' -eq (gsudo status CacheAvailable))
 }
 
 function Test-IsProcessElevated {
@@ -146,7 +146,7 @@ if ($gsudoAutoComplete) {
         'CopyNetworkShares'           = $TrueFalseReset;
         'PowerShellLoadProfile'       = $TrueFalseReset;
         'SecurityEnforceUacIsolation' = $TrueFalseReset;
-		'Status'                      = @('--json', 'CallerPid', 'UserName', 'UserSid', 'IsElevated', 'IsAdminMember', 'IntegrityLevelNumeric', 'IntegrityLevel', 'CacheMode', 'CacheAvailable', 'CacheSessionsCount', 'CacheSessions', 'IsRedirected')
+		'Status'                      = @('--json', 'CallerPid', 'UserName', 'UserSid', 'IsElevated', 'IsAdminMember', 'IntegrityLevelNumeric', 'IntegrityLevel', 'CacheMode', 'CacheAvailable', 'CacheSessionsCount', 'CacheSessions', 'IsRedirected', '--no-output')
         '--user'                      = @("$env:USERDOMAIN\$env:USERNAME");
         '-u'                          = @("$env:USERDOMAIN\$env:USERNAME")
     }

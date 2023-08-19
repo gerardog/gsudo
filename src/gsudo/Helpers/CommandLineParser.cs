@@ -222,6 +222,8 @@ namespace gsudo.Helpers
                     arg = DeQueueArg();
                     if (arg.In("--json"))
                         cmd.AsJson = true;
+                    else if (arg.In("--no-output"))
+                        cmd.NoOutput = true;
                     else if(string.IsNullOrEmpty(cmd.Key))
                         cmd.Key = arg;
                     else throw new ApplicationException($"Invalid option: {arg}");
