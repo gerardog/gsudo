@@ -57,17 +57,18 @@ It detects your current shell and elevates your command as native shell commands
 
 ## Installation
 
-Note: `gsudo` is portable. No windows service is required or system change is done, except adding it to the Path.
-
 - Using [Scoop](https://scoop.sh): `scoop install gsudo`
-- Using [WinGet](https://github.com/microsoft/winget-cli/releases) `winget install gerardog.gsudo`
+- Using [WinGet](https://github.com/microsoft/winget-cli/releases): `winget install gerardog.gsudo`
 - Using [Chocolatey](https://chocolatey.org/install):  `choco install gsudo`
-- Or manually: Unzip the latest release, and add to the path.
+- Manually: Unzip the latest release, and add to the path.
 - Or running:
-  
-``` PowerShell
-PowerShell -Command "Set-ExecutionPolicy RemoteSigned -scope Process; [Net.ServicePointManager]::SecurityProtocol = 'Tls12'; iwr -useb https://raw.githubusercontent.com/gerardog/gsudo/master/installgsudo.ps1 | iex"
-```
+  ``` PowerShell
+  PowerShell -Command "Set-ExecutionPolicy RemoteSigned -scope Process; [Net.ServicePointManager]::SecurityProtocol = 'Tls12'; iwr -useb https://raw.githubusercontent.com/gerardog/gsudo/master/installgsudo.ps1 | iex"
+  ```
+
+**Please restart all your console windows** after installing to ensure that the `PATH` environment variable is refreshed.
+
+Note: `gsudo.exe` is portable. No windows service is required or system change is done, except adding it to the Path.
 
 ## Usage
 
