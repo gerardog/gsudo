@@ -64,7 +64,7 @@ namespace gsudo.Commands
                     if (InputArguments.Debug) commandToRun.Add("--debug");
 
                     commandToRun.AddRange(new[]
-                        {"cache", "on", "--pid", AllowedPid.ToString()});
+                        {"--loglevel", Settings.LogLevel.ToString() ,"cache", "on", "--pid", AllowedPid.ToString(), "--duration", Settings.TimeSpanWithInfiniteToString(CacheDuration ?? Settings.CacheDuration)});
 
                     InputArguments.Wait = true;
                     InputArguments.Direct = true;
@@ -117,15 +117,15 @@ An active credentials cache session, is a running elevated instance of gsudo tha
             Console.WriteLine($@"
 Usage:
 ------
-gsudo cache {{on | off}} [-p {{pid}}] [-d {{time}}]   Start/stop a gsudo cache session.
-  -p | --pid {{pid}}            Specify which process can use the cache. (Use 0 for any, Default=caller pid)
-  -d | --duration {{hh:mm:ss}}  Max time the cache can stay idle before closing. 
-                              Use '-1' to keep open until logoff (or `cache off`, or `-k`).
-                              Current idle duration is: {Settings.CacheDuration.GetStringValue()}
+gsudo cache {{on | off}} [-p {{pid}}] [-d {{time}}]	Start/stop a gsudo cache session.
+ -p, --pid {{pid}}			Specify which process can use the cache. (Use 0 for any, Default=caller pid)
+ -d, --duration {{hh | hh:mm | hh:mm:ss}}	Sets the maximum idle time for the cache before termination. 
+					Use '-1' to keep open until logoff (or `cache off`, or `-k`).
+					Current idle duration is: {Settings.CacheDuration.GetStringValue()}
 
-gsudo -k                       Stops all active cache sessions.
-gsudo status                   Shows info regarding the user, elevation, and cache status
-gsudo config CacheMode {{mode}}  Change the cache mode. 
+gsudo -k			Stops all active cache sessions.
+gsudo status			Shows info regarding the user, elevation, and cache status
+gsudo config CacheMode {{mode}}	Change the cache mode. 
 
 Available Cache Modes:
   * Disabled: Every elevation shows a UAC popup. 
