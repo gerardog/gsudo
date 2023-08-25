@@ -28,7 +28,7 @@ namespace gsudo.Rpc
                     int retryLefts = 3;
                     do
                     {
-                        if (ProcessApi.WaitForSingleObject(serviceProcessHandle.DangerousGetHandle(), 1) == 0) // original service process is dead, but may have started an elevated service that we don't have handle.
+                        if (serviceProcessHandle!=null && ProcessApi.WaitForSingleObject(serviceProcessHandle.DangerousGetHandle(), 1) == 0) // original service process is dead, but may have started an elevated service that we don't have handle.
                             retryLefts--;
 
                         pipeName = FindService(user, clientPid.Value, out isHighIntegrity);
