@@ -122,11 +122,11 @@ namespace gsudo.Helpers
             return pass;
         }
 
-        internal static void SetPrompt(ElevationRequest elevationRequest, bool isElevated)
+        internal static void SetPrompt(ElevationRequest elevationRequest)
         {
             if (!string.IsNullOrEmpty(elevationRequest.Prompt))
             {
-                if (!isElevated)
+                if (elevationRequest.IntegrityLevel < IntegrityLevel.High)
                     Environment.SetEnvironmentVariable("PROMPT", Environment.GetEnvironmentVariable("PROMPT", EnvironmentVariableTarget.User) ?? Environment.GetEnvironmentVariable("PROMPT", EnvironmentVariableTarget.Machine) ?? "$P$G");
                 else
                     Environment.SetEnvironmentVariable("PROMPT", Environment.ExpandEnvironmentVariables(elevationRequest.Prompt));

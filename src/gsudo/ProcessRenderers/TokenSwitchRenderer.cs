@@ -30,7 +30,7 @@ namespace gsudo.ProcessRenderers
 
             _connection = connection;
             _elevationRequest = elevationRequest;
-            ConsoleHelper.SetPrompt(elevationRequest, connection.IsHighIntegrity);
+            ConsoleHelper.SetPrompt(elevationRequest);
 
             ProcessApi.CreateProcessFlags dwCreationFlags = ProcessApi.CreateProcessFlags.CREATE_SUSPENDED;
 

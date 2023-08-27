@@ -98,18 +98,28 @@ namespace gsudo.Commands
             try
             {
                 var callingPid = ProcessHelper.GetCallerPid();
-
                 Logger.Instance.Log($"Caller PID: {callingPid}", LogLevel.Debug);
 
-                connection = await ServiceHelper.Connect().ConfigureAwait(false);
+                var serviceLocation = await ServiceHelper.FindAnyServiceFast().ConfigureAwait(false);
+                if (serviceLocation == null)
+                {
+                    var serviceHandle = ServiceHelper.StartService(callingPid, singleUse: InputArguments.KillCache);
+                    serviceLocation = await ServiceHelper.WaitForNewService(callingPid).ConfigureAwait(false);
+                }
 
+                if (!InputArguments.IntegrityLevel.HasValue)
+                {
+                    // This is the edge case where user does `gsudo -u SomeOne` and we dont know if SomeOne can elevate or not.
+                    elevationRequest.IntegrityLevel = serviceLocation.IsHighIntegrity ? IntegrityLevel.High : IntegrityLevel.Medium;
+                }
+
+                if (serviceLocation==null)
+                    throw new ApplicationException("Unable to connect to the elevated service.");
+
+                connection = await ServiceHelper.Connect(serviceLocation).ConfigureAwait(false);
                 if (connection == null) // service is not running or listening.
                 {
-                    var service = ServiceHelper.StartService(callingPid, singleUse: InputArguments.KillCache);
-                    connection = await ServiceHelper.Connect(callingPid, service).ConfigureAwait(false);
-
-                    if (connection == null) // still not listening.
-                        throw new ApplicationException("Unable to connect to the elevated service.");
+                    throw new ApplicationException("Unable to connect to the elevated service.");
                 }
 
                 var renderer = GetRenderer(connection, elevationRequest);
@@ -133,7 +143,7 @@ namespace gsudo.Commands
             // No need to escalate. Run in-process
             Native.ConsoleApi.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, true);
 
-            ConsoleHelper.SetPrompt(elevationRequest, InputArguments.GetIntegrityLevel() >= IntegrityLevel.High);
+            ConsoleHelper.SetPrompt(elevationRequest);
 
             if (sameIntegrity)
             {

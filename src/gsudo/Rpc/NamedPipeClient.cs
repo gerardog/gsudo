@@ -10,67 +10,24 @@ namespace gsudo.Rpc
 {
     class NamedPipeClient : IRpcClient
     {
-        public async Task<Connection> Connect(int? clientPid, SafeProcessHandle serviceProcessHandle)
+        public async Task<Connection> Connect(ServiceLocation service)
         {
-            int timeoutMilliseconds;
             var server = ".";
-
-            string pipeName = null;
-            bool isHighIntegrity;
-            string user = System.Security.Principal.WindowsIdentity.GetCurrent().User.Value;
             NamedPipeClientStream dataPipe = null;
             NamedPipeClientStream controlPipe = null;
+            var timeoutMilliseconds = 10000;
 
             try
-            {
-                if (clientPid.HasValue)
-                {
-                    int retryLefts = 3;
-                    do
-                    {
-                        if (ProcessApi.WaitForSingleObject(serviceProcessHandle.DangerousGetHandle(), 1) == 0) // original service process is dead, but may have started an elevated service that we don't have handle.
-                            retryLefts--;
-
-                        pipeName = FindService(user, clientPid.Value, out isHighIntegrity);
-
-                        if (pipeName == null)
-                            await Task.Delay(50).ConfigureAwait(false);
-                    }
-                    while (pipeName == null && retryLefts>0);
-
-                    timeoutMilliseconds = 5000; // service just started. Larger Timeout 
-                }
-                else
-                {
-                    isHighIntegrity = false;
-                    timeoutMilliseconds = 300;
-                    var callerProcessId = Process.GetCurrentProcess().Id;
-                    int maxRecursion = 20;
-                    while (callerProcessId > 0 && maxRecursion-- > 0)
-                    {
-                        callerProcessId = ProcessHelper.GetParentProcessId(callerProcessId);
-
-                        // Search for Credentials Cache
-
-                        //Try Admin
-                        pipeName = FindService(user, callerProcessId, out isHighIntegrity);
-
-                        if (pipeName!=null)
-                            break;
-                    }
-                }
-
-                if (pipeName == null) return null;
-
-                dataPipe = new NamedPipeClientStream(server, pipeName, PipeDirection.InOut, PipeOptions.Asynchronous, System.Security.Principal.TokenImpersonationLevel.Identification, HandleInheritability.None);
+            { 
+                dataPipe = new NamedPipeClientStream(server, service.PipeName, PipeDirection.InOut, PipeOptions.Asynchronous, System.Security.Principal.TokenImpersonationLevel.Identification, HandleInheritability.None);
                 await dataPipe.ConnectAsync(timeoutMilliseconds).ConfigureAwait(false);
 
-                controlPipe = new NamedPipeClientStream(server, pipeName + "_control", PipeDirection.InOut, PipeOptions.Asynchronous, System.Security.Principal.TokenImpersonationLevel.Identification, HandleInheritability.None);
+                controlPipe = new NamedPipeClientStream(server, service.PipeName + "_control", PipeDirection.InOut, PipeOptions.Asynchronous, System.Security.Principal.TokenImpersonationLevel.Identification, HandleInheritability.None);
                 await controlPipe.ConnectAsync(timeoutMilliseconds).ConfigureAwait(false);
 
-                Logger.Instance.Log($"Connected via Named Pipe {pipeName}.", LogLevel.Debug);
+                Logger.Instance.Log($"Connected via Named Pipe {service.PipeName}.", LogLevel.Debug);
 
-                var conn = new Connection(controlPipe, dataPipe, isHighIntegrity);
+                var conn = new Connection(controlPipe, dataPipe);
                 return conn;
             }
             catch (System.TimeoutException)
@@ -87,37 +44,34 @@ namespace gsudo.Rpc
             }
         }
 
-        public static string FindService(string allowedSid, int allowedPid, out bool isHighIntegrity, string targetUserSid = null)
+        /// <summary>
+        /// Checks if a service pipe exists based on the security identifier (SID) and process ID (PID).
+        /// </summary>
+        /// <param name="allowedSid">The SID of the requesting user.</param>
+        /// <param name="allowedPid">The PID of the requesting process.</param>
+        /// <param name="isHighIntegrity">Indicating whether the pipe is high integrity.</param>
+        /// <param name="targetUserSid">Optional SID that the new process will impersonate.</param>
+        /// <returns>The name of the pipe if found, otherwise null.</returns>
+        public static string TryGetServicePipe(string allowedSid, int allowedPid, bool isHighIntegrity, string targetUserSid = null)
         {
             targetUserSid = targetUserSid ?? InputArguments.UserSid;
             string pipeName;
 
-            if (!InputArguments.IntegrityLevel.HasValue || InputArguments.IntegrityLevel.Value >= IntegrityLevel.High)
+            pipeName = NamedPipeNameFactory.GetPipeName(allowedSid, allowedPid, targetUserSid, isHighIntegrity);
+            if (NamedPipeUtils.ExistsNamedPipe(pipeName))
             {
-                pipeName = NamedPipeNameFactory.GetPipeName(allowedSid, allowedPid, targetUserSid, true);
-                if (NamedPipeUtils.ExistsNamedPipe(pipeName))
-                {
-                    isHighIntegrity = true;
-                    InputArguments.IntegrityLevel = InputArguments.IntegrityLevel ?? IntegrityLevel.High;
-                    return pipeName;
-                }
+                return pipeName;
             }
-
-            if (!InputArguments.IntegrityLevel.HasValue || InputArguments.IntegrityLevel.Value < IntegrityLevel.High)
-            {
-                pipeName = NamedPipeNameFactory.GetPipeName(allowedSid, allowedPid, targetUserSid, false);
-                if (NamedPipeUtils.ExistsNamedPipe(pipeName))
-                {
-                    isHighIntegrity = false;
-                    InputArguments.IntegrityLevel = InputArguments.IntegrityLevel ?? IntegrityLevel.Low;
-                    return pipeName;
-                }
-            }
-
-            isHighIntegrity = false;
-            return null;                
+            return null;
         }
 
+        /// <summary>
+        /// Checks if a service is available for default elevation or the optional specified PID and SID.
+        /// </summary>
+        /// <param name="allowedPid">Optional requester PID that needs a service.</param>
+        /// <param name="allowedSid">Optional requester SID that needs a service.</param>
+        /// <param name="targetSid">Optional SID that the new process will impersonate.</param>
+        /// <returns>True if a cache service is available, otherwise false.</returns>
         public static bool IsServiceAvailable(int? allowedPid = null, string allowedSid = null, string targetSid = null)
         {
             string pipeName = null;
@@ -126,15 +80,20 @@ namespace gsudo.Rpc
             allowedSid = allowedSid ?? System.Security.Principal.WindowsIdentity.GetCurrent().User.Value;
             targetSid = targetSid ?? InputArguments.UserSid;
 
-            if (NamedPipeClient.FindService(allowedSid, 0, out _, targetSid) != null)
+            // Try cache for any process
+            if (NamedPipeClient.TryGetServicePipe(allowedSid, 0, true, targetSid) != null)
                 return true;
+            //if (NamedPipeClient.TryGetServicePipe(allowedSid, 0, false, targetSid) != null)
+            //    return true;
 
-            int maxIterations = 20;
+            // Loop to search for a cache for the current process or its ancestors
+            int maxIterations = 20; // To avoid potential PID tree loops where an ancestor process has the same PID. (gerardog/gsudo#155)
             while (allowedPid.Value > 0 && maxIterations-- > 0)
             {
-                pipeName = NamedPipeClient.FindService(allowedSid, allowedPid.Value, out _, targetSid);
-                if (pipeName != null)
-                    break;
+                if (NamedPipeClient.TryGetServicePipe(allowedSid, allowedPid.Value, true, targetSid) != null)
+                    return true;
+                //if (NamedPipeClient.TryGetServicePipe(allowedSid, allowedPid.Value, false, targetSid) != null)
+                //    return true;
 
                 allowedPid = ProcessHelper.GetParentProcessId(allowedPid.Value);
             }
