@@ -9,6 +9,12 @@ using System.Threading.Tasks;
 
 namespace gsudo.Helpers
 {
+    class ServiceLocation
+    {
+        public string PipeName { get; set; }
+        public bool IsHighIntegrity { get; set; }
+    }
+
     internal static class ServiceHelper
     {
         internal static IRpcClient GetRpcClient()
@@ -17,20 +23,95 @@ namespace gsudo.Helpers
             return new NamedPipeClient();
         }
 
-        internal static async Task<Connection> Connect(int? callingPid = null)
+        /// <summary>
+        /// Establishes a connection to a named pipe server.
+        /// </summary>
+        /// <param name="clientPid">Optional client process ID.</param>
+        /// <returns>A <see cref="Connection"/> object representing the connected named pipe, or null if connection fails.</returns>
+        public static async Task<ServiceLocation> WaitForNewService(int clientPid)
+        {
+            int timeoutMilliseconds = 10000;
+            ServiceLocation service;
+
+            string user = WindowsIdentity.GetCurrent().User.Value;
+            do
+            {
+                service = FindServiceByIntegrity(clientPid, user);
+                if (service != null)
+                    return service;
+
+                // Retry until service has started.
+                await Task.Delay(50).ConfigureAwait(false);
+                timeoutMilliseconds -= 50;
+            }
+            while (service == null && timeoutMilliseconds > 0);
+
+            return service;
+        }
+
+        public static async Task<ServiceLocation> FindAnyServiceFast()
+        {
+            string user = WindowsIdentity.GetCurrent().User.Value;
+            var callerProcessId = Process.GetCurrentProcess().Id;
+            // Loop to search for a cache for the current process or its ancestors
+            int maxIterations = 20; // To avoid potential PID tree loops where an ancestor process has the same PID. (gerardog/gsudo#155)
+            while (callerProcessId > 0 && maxIterations-- > 0)
+            {
+                callerProcessId = ProcessHelper.GetParentProcessId(callerProcessId);
+
+                var service = FindServiceByIntegrity(callerProcessId, user);
+                if (service != null)
+                    return service;
+            }
+            return null;
+        }
+
+        private static ServiceLocation FindServiceByIntegrity(int? clientPid, string user)
+        {
+            var anyIntegrity = InputArguments.UserName != null;
+            var tryHighIntegrity = !InputArguments.IntegrityLevel.HasValue || InputArguments.IntegrityLevel.Value >= IntegrityLevel.High;
+            var tryLowIntegrity = !InputArguments.IntegrityLevel.HasValue || InputArguments.IntegrityLevel.Value < IntegrityLevel.High;
+            if (tryHighIntegrity)
+            {
+                var pipeName = NamedPipeClient.TryGetServicePipe(user, clientPid.Value, true);
+                if (pipeName != null)
+                {
+                    return new ServiceLocation
+                    {
+                        PipeName = pipeName,
+                        IsHighIntegrity = true
+                    };
+                }
+            }
+
+            if (tryLowIntegrity)
+            {
+                var pipeName = NamedPipeClient.TryGetServicePipe(user, clientPid.Value, false);
+                if (pipeName != null)
+                {
+                    return new ServiceLocation
+                    {
+                        PipeName = pipeName,
+                        IsHighIntegrity = false
+                    };
+                }
+            }
+            return null;
+        }
+
+        internal static async Task<Connection> Connect(ServiceLocation service)
         {
             IRpcClient rpcClient = GetRpcClient();
 
             try
             {
-                return await rpcClient.Connect(callingPid).ConfigureAwait(false);
+                return await rpcClient.Connect(service).ConfigureAwait(false);
             }
             catch (System.IO.IOException) { }
             catch (TimeoutException) { }
             catch (Exception ex)
             {
-                if (callingPid.HasValue)
-                    Logger.Instance.Log(ex.ToString(), LogLevel.Warning);
+                Logger.Instance.Log(ex.ToString(), LogLevel.Warning);
             }
 
             return null;
@@ -98,7 +179,7 @@ namespace gsudo.Helpers
             }
             else
             {
-                ret = ProcessFactory.StartElevatedDetached(ownExe, commandLine, !InputArguments.Debug).GetSafeProcessHandle();                
+                ret = ProcessFactory.StartElevatedDetached(ownExe, commandLine, !InputArguments.Debug).GetSafeProcessHandle();
             }
 
             Logger.Instance.Log("Service process started.", LogLevel.Debug);
@@ -140,3 +221,4 @@ namespace gsudo.Helpers
         }
     }
 }
+

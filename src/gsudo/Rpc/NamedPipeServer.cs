@@ -118,7 +118,7 @@ namespace gsudo.Rpc
 
                         if (dataPipe.IsConnected && controlPipe.IsConnected && !_cancellationTokenSource.IsCancellationRequested)
                         {
-                            var connection = new Connection(controlPipe, dataPipe, isHighIntegrity);
+                            var connection = new Connection(controlPipe, dataPipe);
 
                             ConnectionKeepAliveThread.Start(connection);
 
