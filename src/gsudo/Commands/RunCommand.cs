@@ -106,7 +106,7 @@ namespace gsudo.Commands
                 if (connection == null) // service is not running or listening.
                 {
                     var service = ServiceHelper.StartService(callingPid, singleUse: InputArguments.KillCache);
-                    connection = await ServiceHelper.Connect(callingPid, service).ConfigureAwait(false);
+                    connection = await ServiceHelper.Connect(callingPid).ConfigureAwait(false);
 
                     if (connection == null) // still not listening.
                         throw new ApplicationException("Unable to connect to the elevated service.");

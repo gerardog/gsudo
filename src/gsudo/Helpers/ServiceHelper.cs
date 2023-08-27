@@ -17,13 +17,13 @@ namespace gsudo.Helpers
             return new NamedPipeClient();
         }
 
-        internal static async Task<Connection> Connect(int? callingPid = null, SafeProcessHandle serviceHandle = null)
+        internal static async Task<Connection> Connect(int? callingPid = null)
         {
             IRpcClient rpcClient = GetRpcClient();
 
             try
             {
-                return await rpcClient.Connect(callingPid, serviceHandle).ConfigureAwait(false);
+                return await rpcClient.Connect(callingPid).ConfigureAwait(false);
             }
             catch (System.IO.IOException) { }
             catch (TimeoutException) { }
