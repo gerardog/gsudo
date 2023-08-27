@@ -31,54 +31,67 @@ namespace gsudo.Commands
                 InputArguments.RunAsSystem = true;
             }
 
-            bool isRunningAsDesiredUser = IsRunningAsDesiredUser();
-            bool isElevationRequired = IsElevationRequired();
-            bool isShellElevation = !UserCommand.Any(); // are we auto elevating the current shell?
-
-            if (isElevationRequired & SecurityHelper.GetCurrentIntegrityLevel() < (int)IntegrityLevel.Medium)
-                throw new ApplicationException("Sorry, gsudo doesn't allow to elevate from low integrity level."); // This message is not a security feature, but a nicer error message. It would have failed anyway since the named pipe's ACL restricts it.
-
-            if (isRunningAsDesiredUser && isShellElevation && !InputArguments.NewWindow)
-                throw new ApplicationException("Already running as the specified user/permission-level (and no command specified). Exiting...");
-            
-            var elevationMode = GetElevationMode();
-
-            if (!isRunningAsDesiredUser)
-                commandBuilder.AddCopyEnvironment(elevationMode);
-
-            commandBuilder.Build();
-
-            int consoleHeight, consoleWidth;
-            ConsoleHelper.GetConsoleInfo(out consoleWidth, out consoleHeight, out _, out _);
-
-            var elevationRequest = new ElevationRequest()
+            string originalWindowTitle = Console.Title;
+            try
             {
-                FileName = commandBuilder.GetExeName(),
-                Arguments = commandBuilder.GetArgumentsAsString(),
-                StartFolder = Environment.CurrentDirectory,
-                NewWindow = InputArguments.NewWindow,
-                Wait = (!commandBuilder.IsWindowsApp && !InputArguments.NewWindow) || InputArguments.Wait,
-                Mode = elevationMode,
-                ConsoleProcessId = Process.GetCurrentProcess().Id,
-                IntegrityLevel = InputArguments.GetIntegrityLevel(),
-                ConsoleWidth = consoleWidth,
-                ConsoleHeight = consoleHeight,
-                IsInputRedirected = Console.IsInputRedirected
-            };
+                bool isRunningAsDesiredUser = IsRunningAsDesiredUser();
+                bool isElevationRequired = IsElevationRequired();
+                bool isShellElevation = !UserCommand.Any(); // are we auto elevating the current shell?
 
-            if (isElevationRequired && Settings.SecurityEnforceUacIsolation)
-                AdjustUacIsolationRequest(elevationRequest, isShellElevation);
+                if (isElevationRequired & SecurityHelper.GetCurrentIntegrityLevel() < (int)IntegrityLevel.Medium)
+                    throw new ApplicationException("Sorry, gsudo doesn't allow to elevate from low integrity level."); // This message is not a security feature, but a nicer error message. It would have failed anyway since the named pipe's ACL restricts it.
 
-            SetRequestPrompt(elevationRequest);
+                if (isRunningAsDesiredUser && isShellElevation && !InputArguments.NewWindow)
+                    throw new ApplicationException("Already running as the specified user/permission-level (and no command specified). Exiting...");
 
-            Logger.Instance.Log($"Command to run: {elevationRequest.FileName} {elevationRequest.Arguments}", LogLevel.Debug);
+                var elevationMode = GetElevationMode();
 
-            if (isRunningAsDesiredUser || !isElevationRequired) // already elevated or running as correct user. No service needed.
-            {
-                return RunWithoutService(elevationRequest);
+                if (!isRunningAsDesiredUser)
+                    commandBuilder.AddCopyEnvironment(elevationMode);
+
+                commandBuilder.Build();
+
+                int consoleHeight, consoleWidth;
+                ConsoleHelper.GetConsoleInfo(out consoleWidth, out consoleHeight, out _, out _);
+
+                var elevationRequest = new ElevationRequest()
+                {
+                    FileName = commandBuilder.GetExeName(),
+                    Arguments = commandBuilder.GetArgumentsAsString(),
+                    StartFolder = Environment.CurrentDirectory,
+                    NewWindow = InputArguments.NewWindow,
+                    Wait = (!commandBuilder.IsWindowsApp && !InputArguments.NewWindow) || InputArguments.Wait,
+                    Mode = elevationMode,
+                    ConsoleProcessId = Process.GetCurrentProcess().Id,
+                    IntegrityLevel = InputArguments.GetIntegrityLevel(),
+                    ConsoleWidth = consoleWidth,
+                    ConsoleHeight = consoleHeight,
+                    IsInputRedirected = Console.IsInputRedirected
+                };
+
+                if (isElevationRequired && Settings.SecurityEnforceUacIsolation)
+                    AdjustUacIsolationRequest(elevationRequest, isShellElevation);
+
+                SetRequestPrompt(elevationRequest);
+
+                Logger.Instance.Log($"Command to run: {elevationRequest.FileName} {elevationRequest.Arguments}", LogLevel.Debug);
+
+                if (isRunningAsDesiredUser || !isElevationRequired) // already elevated or running as correct user. No service needed.
+                {
+                    return RunWithoutService(elevationRequest);
+                }
+
+                return await RunUsingService(elevationRequest).ConfigureAwait(false);
             }
-
-            return await RunUsingService(elevationRequest).ConfigureAwait(false);
+            finally
+            {
+                try 
+                { 
+                    Console.Title = originalWindowTitle; 
+                } 
+                catch 
+                { }
+            }
         }
 
         private static void SetRequestPrompt(ElevationRequest elevationRequest)
