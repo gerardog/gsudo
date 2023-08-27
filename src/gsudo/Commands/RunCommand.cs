@@ -85,7 +85,12 @@ namespace gsudo.Commands
             }
             finally
             {
-                Console.Title = originalWindowTitle;
+                try 
+                { 
+                    Console.Title = originalWindowTitle; 
+                } 
+                catch 
+                { }
             }
         }
 
