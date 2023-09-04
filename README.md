@@ -60,7 +60,10 @@ It detects your current shell and elevates your command as native shell commands
 - Using [Scoop](https://scoop.sh): `scoop install gsudo`
 - Using [WinGet](https://github.com/microsoft/winget-cli/releases): `winget install gerardog.gsudo`
 - Using [Chocolatey](https://chocolatey.org/install):  `choco install gsudo`
-- Manually: Unzip the latest release, and add to the path.
+- Manually: 
+  - Unzip `gsudo.portable.zip` from the latest release
+  - Copy the `gsudo.exe` for your architecture (most people will use `x64/gsudo.exe`) to an appropriate directory on your machine
+  - If necessary, add that directory to the system path if it's not already there
 - Or running:
   ``` PowerShell
   PowerShell -Command "Set-ExecutionPolicy RemoteSigned -scope Process; [Net.ServicePointManager]::SecurityProtocol = 'Tls12'; iwr -useb https://raw.githubusercontent.com/gerardog/gsudo/master/installgsudo.ps1 | iex"
