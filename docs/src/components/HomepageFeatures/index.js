@@ -33,7 +33,7 @@ const FeatureList = [
     description: (
       <>
         Detects your shell and elevates your command as a native shell command.
-        Currently supports <code>CMD</code>, <code>PowerShell</code>, <code>WSL</code>, <code>MinGW/Git-Bash</code>, <code>MSYS2</code>, <code>Cygwin</code>,<code>Yori</code> and <code>Take Command</code>.
+        Currently supports <code>CMD</code>, <code>PowerShell</code>, <code>WSL</code>, <code>MinGW/Git-Bash</code>, <code>MSYS2</code>, <code>Cygwin</code>, <code>Nushell</code>, <code>Yori</code> and <code>Take Command</code>.
       </>
     ),
   },  {
