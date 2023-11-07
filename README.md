@@ -64,8 +64,9 @@ It detects your current shell and elevates your command as native shell commands
   ``` PowerShell
   PowerShell -Command "Set-ExecutionPolicy RemoteSigned -scope Process; [Net.ServicePointManager]::SecurityProtocol = 'Tls12'; iwr -useb https://raw.githubusercontent.com/gerardog/gsudo/master/installgsudo.ps1 | iex"
   ```
+- Setup package: download and run the proper MSI file for you system from the [latest release](https://github.com/gerardog/gsudo/releases/latest).
 - Portable: 
-  1. Download `gsudo.portable.zip` from the [latest release](https://github.com/gerardog/gsudo/releases/latest)
+  1. Download `gsudo.portable.zip` from the [latest release](https://github.com/gerardog/gsudo/releases/latest).
   2. Extract the folder corresponding to your processor architecture (x64, x86, or arm64) from the zip file to a suitable directory on your computer.
   3. Optionally, add that directory to your system's PATH environment variable if it's not already accessible.
   
