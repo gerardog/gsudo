@@ -71,9 +71,12 @@ namespace gsudo.Helpers
             var anyIntegrity = InputArguments.UserName != null;
             var tryHighIntegrity = !InputArguments.IntegrityLevel.HasValue || InputArguments.IntegrityLevel.Value >= IntegrityLevel.High;
             var tryLowIntegrity = !InputArguments.IntegrityLevel.HasValue || InputArguments.IntegrityLevel.Value < IntegrityLevel.High;
+
+            var targetUserSid = InputArguments.RunAsSystem ? "S-1-5-18" : InputArguments.UserSid;
+
             if (tryHighIntegrity)
             {
-                var pipeName = NamedPipeClient.TryGetServicePipe(user, clientPid.Value, true);
+                var pipeName = NamedPipeClient.TryGetServicePipe(user, clientPid.Value, true, null);
                 if (pipeName != null)
                 {
                     return new ServiceLocation
