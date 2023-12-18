@@ -13,9 +13,10 @@ namespace gsudo.Rpc
             if (allowedPid < 0) allowedPid = 0;
 
             var ti = InputArguments.TrustedInstaller ? "_TI" : string.Empty;
+            var s = InputArguments.RunAsSystem ? "_S" : string.Empty;
             var admin = !isAdmin ? "_NonAdmin" : string.Empty;
 
-            var data = $"{allowedSid}_{targetSid}_{allowedPid}_{ti}{admin}";
+            var data = $"allowedSid-{allowedSid}_targetSid-{targetSid}{allowedPid}{s}{ti}{admin}";
 #if !DEBUG
             data = GetHash(data);
 #endif
