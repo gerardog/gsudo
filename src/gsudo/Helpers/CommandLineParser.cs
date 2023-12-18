@@ -274,9 +274,6 @@ namespace gsudo.Helpers
             if (arg.In("run"))
                 return new RunCommand(commandToRun: args.ToArray());
 
-            if (arg.In("AttachRun"))
-                return new AttachRunCommand(commandToRun: args.ToArray());
-
             args.AddFirst(arg);
 
             if (arg == "!!" || arg.StartsWith("!", StringComparison.InvariantCulture))

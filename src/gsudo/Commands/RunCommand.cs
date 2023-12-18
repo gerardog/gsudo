@@ -120,14 +120,14 @@ namespace gsudo.Commands
                     serviceLocation = await ServiceHelper.WaitForNewService(callingPid).ConfigureAwait(false);
                 }
 
+                if (serviceLocation==null)
+                    throw new ApplicationException("Unable to connect to the elevated service.");
+
                 if (!InputArguments.IntegrityLevel.HasValue)
                 {
                     // This is the edge case where user does `gsudo -u SomeOne` and we dont know if SomeOne can elevate or not.
                     elevationRequest.IntegrityLevel = serviceLocation.IsHighIntegrity ? IntegrityLevel.High : IntegrityLevel.Medium;
                 }
-
-                if (serviceLocation==null)
-                    throw new ApplicationException("Unable to connect to the elevated service.");
 
                 connection = await ServiceHelper.Connect(serviceLocation).ConfigureAwait(false);
                 if (connection == null) // service is not running or listening.
