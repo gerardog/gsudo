@@ -79,6 +79,7 @@ namespace gsudo.Helpers
                     if (c != null)
                         return c;
                 }
+                else if (arg.In("-noninteractive")) { } // ignore due to gerardog/gsudo#305
                 else if (arg.StartsWith("-", StringComparison.OrdinalIgnoreCase)
                             && arg.NotIn("-encodedCommand")) // -encodedCommand is not posix compliant, but is what powershell sends on: gsudo { script block }
                                                              // So treat -encodedCommand as part of the CommandToRun, for gerardog/gsudo#160
