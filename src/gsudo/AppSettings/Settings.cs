@@ -82,7 +82,7 @@ namespace gsudo
 
         public static RegistrySetting<string> ExceptionList { get; } =
             new RegistrySetting<string>(nameof(ExceptionList),
-                defaultValue: "notepad.exe;powershell.exe;",
+                defaultValue: "notepad.exe;powershell.exe;whoami.exe;",
                 deserializer: (string s)=>s,
                 scope: RegistrySettingScope.GlobalOnly);
 
