@@ -50,7 +50,8 @@ Disappointingly, Microsoft's sudo does not leverage new OS features to enhance s
 | Run in new window | Yes | Yes |
 | Option to keep new window open until a key is pressed | [Yes](tips/elevation-in-new-window.md) | No |
 | Option to keep new window's shell open | [Yes](tips/elevation-in-new-window.md) | No |
-| Run with Input Disabled | [Yes](https://gerardog.github.io/gsudo/docs/security#what-are-the-risks-of-running-gsudo) | No | | Yes |
+| Run with Input Disabled | [Yes](https://gerardog.github.io/gsudo/docs/security#what-are-the-risks-of-running-gsudo) | No |
+| Elevate last command with `sudo !!` | Yes | No |
 
 ### PowerShell
 
