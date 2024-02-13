@@ -1,8 +1,10 @@
 ---
 sidebar_position: 7
-title: Comparison betweeh gsudo and Windows sudo
+title: Comparison with Microsoft sudo
 #hide_title: true
 ---
+
+# Comparison between gsudo and Microsoft sudo
 
 `gsudo` was born in 2019 as a productivity tool and is open-source. It has been downloaded over 700k times so far and has enjoyed a warm reception from users.
 
@@ -61,6 +63,6 @@ Disappointingly, Microsoft's sudo does not leverage new OS features to enhance s
 
 ## What if I install both?
 
-If you have both Microsoft's `Sudo for Windows` and `gsudo` installed, they both should work independently.
+If you have both Microsoft Sudo and `gsudo` installed, they both should work independently.
 
 The `sudo` keyword will run Microsoft's sudo instead of `gsudo` because the typical install of `Sudo for Windows` (which is via a Windows Insider build) puts it in `c:\Windows\System32\sudo.exe`. This folder appears first in the `PATH` environment variable, therefore when running `sudo`, the Microsoft `sudo.exe` will take precedence over gsudo's `sudo` alias.
