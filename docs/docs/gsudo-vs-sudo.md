@@ -10,9 +10,9 @@ title: Comparison with Microsoft sudo
 
 Microsoft initially declined to create a similar tool, citing security concerns. However `gsudo`'s documentation [challenged this view](security.md) arguing that absolute security is unattainable without altering Windows itself, and that the default same-desktop UAC is not completely secure either.
 
-In February 2024, Microsoft reversed its stance (possibly influenced by gsudo's popularity, though this is speculative) and released [Sudo for Windows](https://devblogs.microsoft.com/commandline/introducing-sudo-for-windows/).
+In February 2024, Microsoft reversed its stance and released [Sudo for Windows](https://devblogs.microsoft.com/commandline/introducing-sudo-for-windows/).
 
-Disappointingly, Microsoft's sudo does not leverage new OS features to enhance security. Its mechanisms are akin to `gsudo`, making their security models comparable. The question of which one is more secure depends on which version of each are you comparing, and how many open bugs it has. The initial release of Microsoft's sudo presented some [critical issues](https://www.tiraniddo.dev/2024/02/sudo-on-windows-quick-rundown.html) that they will hopefully address very soon. `gsudo` has fixed similar issues in the past and may in the future.
+Surprisingly, Microsoft's sudo does not leverage new OS features to enhance security. Its mechanisms are akin to `gsudo`, making their security models comparable. The question of which one is more secure depends on which version of each are you comparing, and how many open bugs it has. The initial release of Microsoft's sudo presented some [critical issues](https://www.tiraniddo.dev/2024/02/sudo-on-windows-quick-rundown.html) that they will hopefully address very soon. `gsudo` has fixed similar issues in the past and may in the future.
 
 ## Sudo Tools Feature Comparison
 
