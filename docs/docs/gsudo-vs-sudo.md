@@ -40,7 +40,8 @@ Surprisingly, Microsoft's sudo does not leverage new OS features to enhance secu
 | ------- | ------- | ------------------ |
 | Easy to install and update | Yes (winget, choco, scoop) | No (Windows Insider build required) |
 | See less UAC Pop-ups | Yes ([Credentials Cache](credentials-cache.md)) | No |
-| Shell Detection (elevates shell commands) | Yes | No |
+| Elevate current shell | Yes | No |
+| Elevate commands using current shell | Yes | No |
 | Red # indicator for elevation on CMD | Yes | No |
 
 ### Additional Features
