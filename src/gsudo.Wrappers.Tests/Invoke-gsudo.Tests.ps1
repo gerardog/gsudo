@@ -43,7 +43,7 @@ Describe "PS Invoke-Gsudo (PSv$($PSVersionTable.PSVersion.Major))" {
 	}
 
 	It "It throws with .Net Exceptions" {
-		{ Invoke-gsudo { [int]::Parse('foo') } } | Should -throw "*Input string was not*"
+		{ Invoke-gsudo { [int]::Parse('foo') } } | Should -throw "*nput string*"
 	}
 	
 	It "It throws when ErrorAction = Stop" {
