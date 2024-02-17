@@ -122,6 +122,9 @@ namespace gsudo.Native
         [DllImport("kernel32.dll", SetLastError = true)]
         internal static extern bool CloseHandle(IntPtr hObject);
 
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern IntPtr LocalFree(IntPtr hMem);
+
         [DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto, SetLastError = true)]
         internal static extern bool GetExitCodeProcess(Microsoft.Win32.SafeHandles.SafeProcessHandle processHandle, out int exitCode);
 
@@ -190,6 +193,8 @@ namespace gsudo.Native
         #region Query Process Info
         public const UInt32 PROCESS_QUERY_INFORMATION = 0x0400;
         public const UInt32 PROCESS_SET_INFORMATION = 0x0200;
+        public const UInt32 READ_CONTROL = 0x00020000;
+        public const UInt32 WRITE_DAC = 0x40000;
 
         [DllImport("kernel32.dll", SetLastError = true)]
         internal static extern IntPtr OpenProcess(UInt32 dwDesiredAccess, Boolean bInheritHandle, UInt32 dwProcessId);
@@ -225,7 +230,7 @@ namespace gsudo.Native
         internal static extern bool CreatePipe(out SafeFileHandle hReadPipe, out SafeFileHandle hWritePipe, SECURITY_ATTRIBUTES lpPipeAttributes, int nSize);
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        internal static extern uint ResumeThread(IntPtr hThread);
+        internal static extern int ResumeThread(IntPtr hThread);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -233,5 +238,16 @@ namespace gsudo.Native
 
         [DllImport("kernel32.dll", SetLastError = true)]
         internal static extern UInt32 WaitForSingleObject(IntPtr hHandle, UInt32 dwMilliseconds);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool DuplicateHandle(
+            IntPtr hSourceProcessHandle,
+            IntPtr hSourceHandle,
+            IntPtr hTargetProcessHandle,
+            out IntPtr lpTargetHandle,
+            uint dwDesiredAccess,
+            [MarshalAs(UnmanagedType.Bool)] bool bInheritHandle,
+            uint dwOptions);
     }
 }
