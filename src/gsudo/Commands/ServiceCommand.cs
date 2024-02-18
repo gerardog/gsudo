@@ -55,7 +55,7 @@ namespace gsudo.Commands
                 || (InputArguments.RunAsSystem && !System.Security.Principal.WindowsIdentity.GetCurrent().IsSystem)
                 || (InputArguments.UserName != null && !SecurityHelper.IsAdministrator() && SecurityHelper.IsMemberOfLocalAdmins()) 
                 )*/
-            if (!RunCommand.IsRunningAsDesiredUser())
+            if (!RunCommand.IsRunningAsDesiredUser(allowHigherIntegrity: true))
             {
                 Logger.Instance.Log("This service is not running with desired credentials. Starting a new service instance.", LogLevel.Info);
 #if DEBUG
