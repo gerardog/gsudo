@@ -28,6 +28,8 @@ namespace gsudo.Commands
 
         void EnableTimer()
         {
+            if (CacheDuration > TimeSpan.FromDays(24)) CacheDuration = TimeSpan.FromDays(24);
+
             if (CacheDuration != TimeSpan.MaxValue) 
                 ShutdownTimer.Change((int)CacheDuration.TotalMilliseconds, Timeout.Infinite);
         }

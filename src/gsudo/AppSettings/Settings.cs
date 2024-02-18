@@ -127,8 +127,14 @@ namespace gsudo
         {
             if (value.In("-1", "Infinite"))
                 return TimeSpan.MaxValue;
-            else
-                return TimeSpan.Parse(value, CultureInfo.InvariantCulture);
+
+            var timeSpan = TimeSpan.Parse(value, CultureInfo.InvariantCulture);
+
+            // Cap at 24 days.
+            if (timeSpan.TotalDays > 24)
+                return TimeSpan.MaxValue;
+
+            return timeSpan;
         }
 
         internal static string TimeSpanWithInfiniteToString(TimeSpan value)
