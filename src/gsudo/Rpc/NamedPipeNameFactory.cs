@@ -16,7 +16,8 @@ namespace gsudo.Rpc
             var s = InputArguments.RunAsSystem ? "_S" : string.Empty;
             var admin = !isAdmin ? "_NonAdmin" : string.Empty;
 
-            var data = $"allowedSid-{allowedSid}_targetSid-{targetSid}{allowedPid}{s}{ti}{admin}";
+            var ownExe = GetHash(ProcessHelper.GetOwnExeName());
+            var data = $"allowedSid-{allowedSid}_targetSid-{targetSid}{allowedPid}{s}{ti}{admin}_{ownExe}";
 #if !DEBUG
             data = GetHash(data);
 #endif

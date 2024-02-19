@@ -231,7 +231,7 @@ namespace gsudo.Commands
             }
         }
 
-        internal static bool IsRunningAsDesiredUser()
+        internal static bool IsRunningAsDesiredUser(bool allowHigherIntegrity = false)
         {
             if (InputArguments.TrustedInstaller && !WindowsIdentity.GetCurrent().Claims.Any(c => c.Value == Constants.TI_SID))
                 return false;
@@ -239,7 +239,10 @@ namespace gsudo.Commands
             if (InputArguments.RunAsSystem && !WindowsIdentity.GetCurrent().IsSystem)
                 return false;
 
-            if ((int)InputArguments.GetIntegrityLevel() != SecurityHelper.GetCurrentIntegrityLevel())
+            if ((int)InputArguments.GetIntegrityLevel() != SecurityHelper.GetCurrentIntegrityLevel() && !allowHigherIntegrity)
+                return false;
+
+            if ((int)InputArguments.GetIntegrityLevel() > SecurityHelper.GetCurrentIntegrityLevel())
                 return false;
 
             if (InputArguments.UserName != null && InputArguments.UserName != WindowsIdentity.GetCurrent().Name)
