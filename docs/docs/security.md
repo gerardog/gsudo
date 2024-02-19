@@ -4,17 +4,17 @@ title: Security Considerations
 hide_title: true
 ---
 
-## Why Windows doesn't have a `sudo` command? Should it have one?
+## Why doesn't Windows have a `sudo` command? Should it have one?
 
 To answer this question, we first have to take a look back at the history.
 
 In August 2002, Chris Paget released a white paper describing a form of attack against event-driven systems that he termed Shatter Attack. It allowed processes in the same session to bypass security restrictions by abusing Windows Message loop.
 
-Microsoft response was to add "User Interface Privilege Isolation" (UIPI) and the "User Access Control" (UAC) popup to the next major release: Windows Vista. Privileged processes would then run "elevated" at high integrity level, out of reach of processes at lower, non-admin, levels.
+Microsoft's response was to add "User Interface Privilege Isolation" (UIPI) and the "User Access Control" (UAC) popup to the next major release: Windows Vista. Privileged processes would then run "elevated" at high integrity level, out of reach of processes at lower, non-admin, levels.
 
-I assume that at this point Microsoft decided not to make a `sudo` tool for windows. It would be an unwanted bridge between two worlds that intended to isolate.
+I assume that at this point, Microsoft decided not to make a `sudo` tool for windows. It would be an unwanted bridge between two worlds that intended to isolate.
 
-But that insulation quickly proved weak. Let me [quote Raymond Chen from Microsoft](https://devblogs.microsoft.com/oldnewthing/20160816-00/?p=94105):
+However, that insulation quickly proved to be weak. Let me [quote Raymond Chen from Microsoft](https://devblogs.microsoft.com/oldnewthing/20160816-00/?p=94105):
 
 > There’s a setting that lets you specify how often you want to be prompted by UAC. You can set any of four levels:
 >
@@ -28,9 +28,9 @@ But that insulation quickly proved weak. Let me [quote Raymond Chen from Microso
 > - Always notify
 > - Meh
 >
-> The reason why all the other options collapse into Meh is that the `Notify only when apps try to change settings` option can be subverted by any app simply by injecting a thread into (...)
+> The reason why all the other options collapse into Meh is that the `Notify only when apps try to change settings` option can be subverted by any app simply by injecting a thread (... a hacking technique explained ...)
 
-And, up to this day, Windows 10 & 11, defaults to "Meh". Microsoft default is: user convenience at the expense of lesser security.
+And, up to this day, Windows 10 & 11, defaults corresponds to that "Meh". Microsoft's default stance is user convenience at the expense of lesser security.
 
 ---
 ![Vista UAC](../static/img/Vista-UAC.png)
@@ -38,22 +38,26 @@ And, up to this day, Windows 10 & 11, defaults to "Meh". Microsoft default is: u
 
 ---
 
-Over time, no less than a hundred UAC-bypass techniques were disclosed. Many of them still work in an updated Windows 11. Windows Defender, or your antivirus of choice, will stop them (hopefully). But if you disable your AV, UAC bypass is easy.
+Over time, more than a hundred UAC-bypass techniques have been disclosed. Many of them still work in an updated Windows 11. It is Windows Defender, or your antivirus of choice, who may stop them (hopefully). But if you disable your AV, UAC bypass is easy.
 
-Microsoft did not patch them. Instead, they assumed publicly that `UAC/UIPI` in default mode is not a security boundary. I will [quote Microsoft documentation](https://docs.microsoft.com/en-us/troubleshoot/windows-server/windows-security/disable-user-account-control#:~:text=More%20important%2C%20Same%2Ddesktop%20Elevation,be%20considered%20a%20convenience%20feature.) :
+And Microsoft can't just patch them all without loosing 'convenience' features. They instead, they assumed publicly that `UAC/UIPI` in default mode is not a security boundary. I will [quote Microsoft documentation](https://docs.microsoft.com/en-us/troubleshoot/windows-server/windows-security/disable-user-account-control#:~:text=More%20important%2C%20Same%2Ddesktop%20Elevation,be%20considered%20a%20convenience%20feature.) :
 
 > Same-desktop Elevation in UAC isn't a security boundary. It can be hijacked by unprivileged software that runs on the same desktop. Same-desktop Elevation should be considered a convenience feature.
 
-Which means: <b>UAC does not protect you from threats. It's a convenience tool that protects you from shooting yourself in the foot. </b>
+Which to me, it means: <b>UAC is a convenience tool. It does not protect you from threats, it works as a warning that protects you from shooting yourself in the foot.</b>
 
-And, in my opinion, it's not doing the best possible job:
+And if UAC is a convenience tool, in my opinion it's not doing the best possible job:
 
 - You waste important time by switching between elevated and unelevated windows. You must manually carry your command and context to the elevated window, each time, back and forth.
 - ... or you suffer from "elevation fatigue". For example, you elevate a whole console beforehand, and you do all your stuff there, likely running non-admin or untrusted stuff as admin.
 
-**In conclusion:** 
+**In conclusion:**
 
-- Same-desktop UAC is a vulnerable convenience feature, and so is `gsudo`. In any case, **the only thing that protects you from malware is you and your Antivirus.**.
+- Same-desktop UAC is a vulnerable convenience feature.
+- `gsudo` is also a vulnerable convenience feature.
+- Whether you use `gsudo` or not, **the only thing that protects you from malware is not UAC, it is you and your Antivirus.**.
+
+So, if you decide to use `gsudo`, here are the risks:
 
 ## What are the risks of running gsudo?
 
@@ -61,7 +65,7 @@ gsudo could be used as an attack vector for escalation of privileges. Using anti
 
 - **Abusing an elevation made with gsudo:**
   
-  A medium integrity process could drive the gsudo-elevated process. 
+  A medium integrity process could drive the gsudo-elevated process.
   
   When gsudo elevates **in the same console**, it creates a connection between a medium and a high integrity process. A malicious process (at medium integrity) can then drive the medium integrity console: sending keystrokes to the high integrity app, or scrapping its screen.
   

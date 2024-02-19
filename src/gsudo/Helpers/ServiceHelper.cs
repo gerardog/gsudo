@@ -69,8 +69,8 @@ namespace gsudo.Helpers
         private static ServiceLocation FindServiceByIntegrity(int? clientPid, string user)
         {
             var anyIntegrity = InputArguments.UserName != null;
-            var tryHighIntegrity = !InputArguments.IntegrityLevel.HasValue || InputArguments.IntegrityLevel.Value >= IntegrityLevel.High;
-            var tryLowIntegrity = !InputArguments.IntegrityLevel.HasValue || InputArguments.IntegrityLevel.Value < IntegrityLevel.High;
+            var tryHighIntegrity = !InputArguments.IntegrityLevel.HasValue || InputArguments.IntegrityLevel.Value > IntegrityLevel.Medium;
+            var tryLowIntegrity = !InputArguments.IntegrityLevel.HasValue || InputArguments.IntegrityLevel.Value <= IntegrityLevel.Medium;
 
             var targetUserSid = InputArguments.RunAsSystem ? "S-1-5-18" : InputArguments.UserSid;
 

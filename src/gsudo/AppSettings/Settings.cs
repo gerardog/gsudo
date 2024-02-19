@@ -82,7 +82,7 @@ namespace gsudo
 
         public static RegistrySetting<string> ExceptionList { get; } =
             new RegistrySetting<string>(nameof(ExceptionList),
-                defaultValue: "notepad.exe;powershell.exe;whoami.exe;",
+                defaultValue: "notepad.exe;powershell.exe;whoami.exe;vim.exe;nano.exe;",
                 deserializer: (string s)=>s,
                 scope: RegistrySettingScope.GlobalOnly);
 
@@ -127,8 +127,14 @@ namespace gsudo
         {
             if (value.In("-1", "Infinite"))
                 return TimeSpan.MaxValue;
-            else
-                return TimeSpan.Parse(value, CultureInfo.InvariantCulture);
+
+            var timeSpan = TimeSpan.Parse(value, CultureInfo.InvariantCulture);
+
+            // Cap at 24 days.
+            if (timeSpan.TotalDays > 24)
+                return TimeSpan.MaxValue;
+
+            return timeSpan;
         }
 
         internal static string TimeSpanWithInfiniteToString(TimeSpan value)
