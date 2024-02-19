@@ -1,11 +1,10 @@
-﻿using gsudo.Native;
-using System;
+﻿using System;
 using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using static gsudo.Native.TokensApi;
 
-namespace gsudo.Tokens
+namespace gsudo.Native
 {
     internal static partial class NativeMethods
     {
@@ -21,19 +20,19 @@ namespace gsudo.Tokens
         internal const int SE_PRIVILEGE_DISABLED = 0x00000000;
         internal const int ERROR_NOT_ALL_ASSIGNED = 0x00000514;
 
-        internal const UInt32 STANDARD_RIGHTS_REQUIRED = 0x000F0000;
-        internal const UInt32 STANDARD_RIGHTS_READ = 0x00020000;
-        internal const UInt32 TOKEN_ASSIGN_PRIMARY = 0x0001;
-        internal const UInt32 TOKEN_DUPLICATE = 0x0002;
-        internal const UInt32 TOKEN_IMPERSONATE = 0x0004;
-        internal const UInt32 TOKEN_QUERY = 0x0008;
-        internal const UInt32 TOKEN_QUERY_SOURCE = 0x0010;
-        internal const UInt32 TOKEN_ADJUST_PRIVILEGES = 0x0020;
-        internal const UInt32 TOKEN_ADJUST_GROUPS = 0x0040;
-        internal const UInt32 TOKEN_ADJUST_DEFAULT = 0x0080;
-        internal const UInt32 TOKEN_ADJUST_SESSIONID = 0x0100;
-        internal const UInt32 TOKEN_READ = (STANDARD_RIGHTS_READ | TOKEN_QUERY);
-        internal const UInt32 TOKEN_ALL_ACCESS = (STANDARD_RIGHTS_REQUIRED |
+        internal const uint STANDARD_RIGHTS_REQUIRED = 0x000F0000;
+        internal const uint STANDARD_RIGHTS_READ = 0x00020000;
+        internal const uint TOKEN_ASSIGN_PRIMARY = 0x0001;
+        internal const uint TOKEN_DUPLICATE = 0x0002;
+        internal const uint TOKEN_IMPERSONATE = 0x0004;
+        internal const uint TOKEN_QUERY = 0x0008;
+        internal const uint TOKEN_QUERY_SOURCE = 0x0010;
+        internal const uint TOKEN_ADJUST_PRIVILEGES = 0x0020;
+        internal const uint TOKEN_ADJUST_GROUPS = 0x0040;
+        internal const uint TOKEN_ADJUST_DEFAULT = 0x0080;
+        internal const uint TOKEN_ADJUST_SESSIONID = 0x0100;
+        internal const uint TOKEN_READ = STANDARD_RIGHTS_READ | TOKEN_QUERY;
+        internal const uint TOKEN_ALL_ACCESS = STANDARD_RIGHTS_REQUIRED |
                             TOKEN_ASSIGN_PRIMARY |
                             TOKEN_DUPLICATE |
                             TOKEN_IMPERSONATE |
@@ -42,7 +41,7 @@ namespace gsudo.Tokens
                             TOKEN_ADJUST_PRIVILEGES |
                             TOKEN_ADJUST_GROUPS |
                             TOKEN_ADJUST_DEFAULT |
-                            TOKEN_ADJUST_SESSIONID);
+                            TOKEN_ADJUST_SESSIONID;
 
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         internal static extern IntPtr GetCurrentProcess();
@@ -65,7 +64,13 @@ namespace gsudo.Tokens
 
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern Boolean CloseHandle(IntPtr hObject);
+        internal static extern bool CloseHandle(IntPtr hObject);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        internal static extern bool GetKernelObjectSecurity(IntPtr Handle, uint securityInformation, IntPtr pSecurityDescriptor, uint nLength, out uint lpnLengthNeeded);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        internal static extern bool SetKernelObjectSecurity(IntPtr Handle, uint securityInformation, IntPtr pSecurityDescriptor);
 
         [StructLayout(LayoutKind.Sequential)]
         public struct LUID
@@ -100,5 +105,20 @@ namespace gsudo.Tokens
 
             public LUID_AND_ATTRIBUTES[] Privileges { get => privileges; set => privileges = value; }
         }
+
     }
+
+    [Flags]
+    internal enum SECURITY_INFORMATION : uint
+    {
+        OWNER_SECURITY_INFORMATION = 0x00000001,
+        GROUP_SECURITY_INFORMATION = 0x00000002,
+        DACL_SECURITY_INFORMATION = 0x00000004,
+        SACL_SECURITY_INFORMATION = 0x00000008,
+        UNPROTECTED_SACL_SECURITY_INFORMATION = 0x10000000,
+        UNPROTECTED_DACL_SECURITY_INFORMATION = 0x20000000,
+        PROTECTED_SACL_SECURITY_INFORMATION = 0x40000000,
+        PROTECTED_DACL_SECURITY_INFORMATION = 0x80000000
+    }
+
 }

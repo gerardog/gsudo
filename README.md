@@ -282,7 +282,7 @@ Here are the `Credentials Cache` Modes:
   - This is the default mode. (Use `gsudo config CacheMode Explicit` to revert to this value).
 - `Auto:` Similar to unix-sudo. The first elevation shows a UAC popup and **starts a cache session automatically**.
   - Run `gsudo config CacheMode Auto` to use this mode.
-- `Disabled:` Every elevation shows a UAC popup, and tryoing to start a cache session will throw an error..
+- `Disabled:` Every elevation shows a UAC popup, and trying to start a cache session will throw an error..
   - Run `gsudo config CacheMode Disabled` to use this mode.
 
 In any case, you can stop all cache sessions with `gsudo -k`.

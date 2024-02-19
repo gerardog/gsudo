@@ -6,7 +6,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'gsudo (sudo for windows)',
+  title: 'gsudo Documentation',
   tagline: 'The missing piece in Windows. Cherry-pick which commands to elevate with just one keyword.',
   url: 'https://gerardog.github.io',
   baseUrl: '/gsudo/',

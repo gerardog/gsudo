@@ -28,6 +28,6 @@ Before creating one, please search  https://github.com/gerardog/gsudo/issues?q=
 ## Context:
   - Windows version:
 <!-- To get Windows version, press Win+R, type `winver` and press enter.
-     For example:   Win11 21H2 - Spanish  -> 
+     For example:   Win11 21H2 - Spanish  --> 
   - gsudo version:      
 <!-- Run `gsudo -v` to get gsudo version -->
