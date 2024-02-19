@@ -1525,7 +1525,7 @@
     "@docusaurus/utils-validation" "2.4.1"
     tslib "^2.4.0"
 
-"@docusaurus/plugin-google-gtag@2.4.1", "@docusaurus/plugin-google-gtag@^2.4.1":
+"@docusaurus/plugin-google-gtag@2.4.1":
   version "2.4.1"
   resolved "https://registry.yarnpkg.com/@docusaurus/plugin-google-gtag/-/plugin-google-gtag-2.4.1.tgz#6a3eb91022714735e625c7ca70ef5188fa7bd0dc"
   integrity sha512-mKIefK+2kGTQBYvloNEKtDmnRD7bxHLsBcxgnbt4oZwzi2nxCGjPX6+9SQO2KCN5HZbNrYmGo5GJfMgoRvy6uA==
@@ -1533,6 +1533,16 @@
     "@docusaurus/core" "2.4.1"
     "@docusaurus/types" "2.4.1"
     "@docusaurus/utils-validation" "2.4.1"
+    tslib "^2.4.0"
+
+"@docusaurus/plugin-google-gtag@^2.4.3":
+  version "2.4.3"
+  resolved "https://registry.yarnpkg.com/@docusaurus/plugin-google-gtag/-/plugin-google-gtag-2.4.3.tgz#e1a80b0696771b488562e5b60eff21c9932d9e1c"
+  integrity sha512-5FMg0rT7sDy4i9AGsvJC71MQrqQZwgLNdDetLEGDHLfSHLvJhQbTCUGbGXknUgWXQJckcV/AILYeJy+HhxeIFA==
+  dependencies:
+    "@docusaurus/core" "2.4.3"
+    "@docusaurus/types" "2.4.3"
+    "@docusaurus/utils-validation" "2.4.3"
     tslib "^2.4.0"
 
 "@docusaurus/plugin-google-tag-manager@2.4.1":
