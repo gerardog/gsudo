@@ -6,7 +6,6 @@
 [![GitHub Downloads](https://img.shields.io/github/downloads/gerardog/gsudo/total?label=GitHub%20Downloads)](https://github.com/gerardog/gsudo/releases/latest)
 
 **gsudo** is a `sudo` equivalent for Windows, with a similar user-experience as the original Unix/Linux sudo.
-Allows you to run a command with elevated permissions, or to elevate the current shell, in the current console window or a new one.
 Allows you to run a command (or re-launch your current shell) with elevated permissions, in the current console window or a new one.
  
 Just [prepend `gsudo`](#usage) (or the `sudo` alias) to your command and it will run elevated. For PowerShell use this [syntax](#usage-from-powershell--powershell-core): `gsudo { ScriptBlock }`
