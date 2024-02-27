@@ -356,9 +356,6 @@ namespace gsudo.Tokens
                 if (throwOnFailure)
                     throw new Win32Exception();
 
-            if (throwOnFailure && ConsoleApi.GetLastError() != 0)
-                    throw new Win32Exception(); //throw new Exception("The token does not have the specified privilege. \n");
-
             return this;
         }
 

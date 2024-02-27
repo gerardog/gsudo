@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Security.Principal;
 using System.Threading.Tasks;
+using Windows.Win32;
 
 namespace gsudo.Commands
 {
@@ -62,7 +63,7 @@ namespace gsudo.Commands
                     NewWindow = InputArguments.NewWindow,
                     Wait = (!commandBuilder.IsWindowsApp && !InputArguments.NewWindow) || InputArguments.Wait,
                     Mode = elevationMode,
-                    ConsoleProcessId = Process.GetCurrentProcess().Id,
+                    ConsoleProcessId = (uint) Process.GetCurrentProcess().Id,
                     IntegrityLevel = InputArguments.GetIntegrityLevel(),
                     ConsoleWidth = consoleWidth,
                     ConsoleHeight = consoleHeight,
@@ -154,7 +155,7 @@ namespace gsudo.Commands
         {
             var sameIntegrity = (int)InputArguments.GetIntegrityLevel() == SecurityHelper.GetCurrentIntegrityLevel();
             // No need to escalate. Run in-process
-            Native.ConsoleApi.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, true);
+            PInvoke.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, true);
 
             ConsoleHelper.SetPrompt(elevationRequest);
 

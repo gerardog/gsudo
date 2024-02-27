@@ -18,11 +18,6 @@ namespace gsudo.PseudoConsole
             this.Handle = handle;
         }
 
-        public bool SetCursorPosition(int X, int Y)
-        {
-            return Native.ConsoleApi.SetConsoleCursorPosition(Handle, new COORD { X = (short)X, Y = (short)Y });
-        }
-
         internal static PseudoConsole Create(SafeFileHandle inputReadSide, SafeFileHandle outputWriteSide, int width, int height)
         {
             bool InheritCursor = true;

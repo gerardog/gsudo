@@ -2,6 +2,7 @@
 using System;
 using System.Globalization;
 using System.Threading.Tasks;
+using Windows.Win32;
 using static gsudo.Native.ConsoleApi;
 
 namespace gsudo.Commands
@@ -9,22 +10,22 @@ namespace gsudo.Commands
     // Required for sending Ctrl-C / Ctrl-Break to the elevated process on VT & piped Mode.
     class CtrlCCommand : ICommand
     {
-        public int Pid { get; set; }
+        public uint Pid { get; set; }
 
         public bool SendSigBreak { get; set; }
 
         public Task<int> Execute()
         {            
-            FreeConsole();
+            PInvoke.FreeConsole();
 
-            if (AttachConsole(Pid))
+            if (PInvoke.AttachConsole(Pid))
             {
                 if (SendSigBreak)
-                    GenerateConsoleCtrlEvent(CtrlTypes.CTRL_BREAK_EVENT, 0);
+                    PInvoke.GenerateConsoleCtrlEvent((uint)CtrlTypes.CTRL_BREAK_EVENT, 0);
                 else
-                    GenerateConsoleCtrlEvent(CtrlTypes.CTRL_C_EVENT, 0);
+                    PInvoke.GenerateConsoleCtrlEvent((uint)CtrlTypes.CTRL_C_EVENT, 0);
 
-                FreeConsole();
+                PInvoke.FreeConsole();
             }
             else
             {

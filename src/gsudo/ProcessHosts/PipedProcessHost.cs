@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.Win32;
 using static gsudo.Native.ConsoleApi;
 
 namespace gsudo.ProcessHosts
@@ -27,7 +28,7 @@ namespace gsudo.ProcessHosts
 
         public async Task Start(Connection connection, ElevationRequest request)
         {
-            Native.ConsoleApi.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, true);
+            PInvoke.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, true);
 
             _connection = connection;
             _request = request;
@@ -68,21 +69,13 @@ namespace gsudo.ProcessHosts
             }
             finally
             {
-                Native.ConsoleApi.SetConsoleCtrlHandler(HandleConsoleCancelKeyPress, false);
+                PInvoke.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, false);
                 if (process != null && !process.HasExited)
                 {
                     process?.Terminate();
                 }
                 process?.Dispose();
             }
-        }
-
-        private static bool HandleConsoleCancelKeyPress(CtrlTypes ctrlType)
-        {
-            if (ctrlType.In(CtrlTypes.CTRL_C_EVENT, CtrlTypes.CTRL_BREAK_EVENT))
-                return true;
-
-            return false;
         }
 
         private bool ShouldWait(StreamReader streamReader)
