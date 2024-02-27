@@ -4,27 +4,34 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Security;
 using static gsudo.Native.ConsoleApi;
+using Windows.Win32;
+using Windows.Win32.System.Console;
+using Microsoft.Win32.SafeHandles;
+using Windows.Win32.Foundation;
 
 namespace gsudo.Helpers
 {
     class ConsoleHelper
-    { 
+    {
+        const UInt32 ATTACH_PARENT_PROCESS = 0xFFFFFFFF;
+
         static ConsoleHelper()
         {
             IgnoreConsoleCancelKeyPress += IgnoreConsoleCancelKeyPressMethod; // ensure no garbage collection
         }
 
-        public static bool EnableVT()
+        public static unsafe bool EnableVT()
         {
-            var hStdOut = Native.ConsoleApi.GetStdHandle(Native.ConsoleApi.STD_OUTPUT_HANDLE);
-            if (!Native.ConsoleApi.GetConsoleMode(hStdOut, out uint outConsoleMode))
+            var hStdOut = PInvoke.GetStdHandle(STD_HANDLE.STD_OUTPUT_HANDLE);
+            CONSOLE_MODE outConsoleMode;
+            if (!PInvoke.GetConsoleMode(hStdOut, &outConsoleMode))
             {
                 Logger.Instance.Log("Could not get console mode", LogLevel.Debug);
                 return false;
             }
 
-            outConsoleMode |= Native.ConsoleApi.ENABLE_VIRTUAL_TERMINAL_PROCESSING;// | Native.ConsoleApi.DISABLE_NEWLINE_AUTO_RETURN;
-            if (!Native.ConsoleApi.SetConsoleMode(hStdOut, outConsoleMode))
+            outConsoleMode |= CONSOLE_MODE.ENABLE_VIRTUAL_TERMINAL_PROCESSING;// | CONSOLE_MODE.DISABLE_NEWLINE_AUTO_RETURN;
+            if (!PInvoke.SetConsoleMode(hStdOut, outConsoleMode))
             {
                 Logger.Instance.Log("Could not enable virtual terminal processing", LogLevel.Error);
                 return false;
@@ -34,11 +41,11 @@ namespace gsudo.Helpers
             return true;
         }
 
-        internal static SetConsoleCtrlEventHandler IgnoreConsoleCancelKeyPress;
+        internal static PHANDLER_ROUTINE IgnoreConsoleCancelKeyPress;
 
-        private static bool IgnoreConsoleCancelKeyPressMethod(CtrlTypes ctrlType)
+        private static BOOL IgnoreConsoleCancelKeyPressMethod(uint ctrlType)
         {
-            if (ctrlType.In(CtrlTypes.CTRL_C_EVENT, CtrlTypes.CTRL_BREAK_EVENT))
+            if (ctrlType == (uint)CtrlTypes.CTRL_C_EVENT || ctrlType == (uint)CtrlTypes.CTRL_BREAK_EVENT)
                 return true;
 
             return false;

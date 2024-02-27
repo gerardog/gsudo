@@ -35,7 +35,7 @@ namespace gsudo.ProcessHosts
             }
             finally
             {
-                Native.ConsoleApi.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, false);
+                Windows.Win32.PInvoke.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, false);
                 await connection.FlushAndCloseAll().ConfigureAwait(false);
             }
         }

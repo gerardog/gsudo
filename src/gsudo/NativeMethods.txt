@@ -1,0 +1,16 @@
+﻿// Console
+GetStdHandle
+SetConsoleMode
+GetConsoleMode
+
+AttachConsole
+FreeConsole
+#AllocConsole
+
+// Ctr-C Handling
+SetConsoleCtrlHandler
+GenerateConsoleCtrlEvent
+
+GetCommandLine
+// GetConsoleProcessList => Unable to migrate for net46
+
