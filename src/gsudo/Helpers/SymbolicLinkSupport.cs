@@ -5,6 +5,7 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+using Windows.Win32;
 
 namespace gsudo.Helpers
 {
@@ -48,33 +49,35 @@ namespace gsudo.Helpers
         }
         private static string GetFinalPathName(string path)
         {
-            var h = Native.FileApi.CreateFile(path,
+            using (var h = PInvoke.CreateFile(path,
                 Native.FileApi.FILE_READ_EA,
-                FileShare.ReadWrite | FileShare.Delete,
-                IntPtr.Zero,
-                FileMode.Open,
-                Native.FileApi.FILE_FLAG_BACKUP_SEMANTICS,
-                IntPtr.Zero);
-
-            if (h == Native.FileApi.INVALID_HANDLE_VALUE)
-                return path;
-
-            try
+                Windows.Win32.Storage.FileSystem.FILE_SHARE_MODE.FILE_SHARE_READ | Windows.Win32.Storage.FileSystem.FILE_SHARE_MODE.FILE_SHARE_WRITE | Windows.Win32.Storage.FileSystem.FILE_SHARE_MODE.FILE_SHARE_DELETE,
+                null,
+                Windows.Win32.Storage.FileSystem.FILE_CREATION_DISPOSITION.OPEN_EXISTING,
+                Windows.Win32.Storage.FileSystem.FILE_FLAGS_AND_ATTRIBUTES.FILE_FLAG_BACKUP_SEMANTICS,
+                null))
             {
-                var sb = new StringBuilder(1024);
-                var res = Native.FileApi.GetFinalPathNameByHandle(h, sb, 1024, 0);
+                if (h.IsInvalid)
+                    return path;
 
-                if (res == 0)
+                uint res;
+
+                Span<char> text = stackalloc char[1024]; // value gotten from GetWindowTextLength
+                unsafe
                 {
-                    Logger.Instance.Log($"{nameof(SymbolicLinkSupport)}.{nameof(GetFinalPathName)} failed with: {new Win32Exception()}", LogLevel.Debug);
-                    return path; // Sad workaround: do not resolve the symlink.
-                }
+                    fixed (char* pText = text)
+                    {
+                        res = PInvoke.GetFinalPathNameByHandle(h, pText, 1024, 0);
+                    }
 
-                return sb.ToString();
-            }
-            finally
-            {
-                Native.FileApi.CloseHandle(h);
+                    if (res == 0)
+                    {
+                        Logger.Instance.Log($"{nameof(SymbolicLinkSupport)}.{nameof(GetFinalPathName)} failed with: {new Win32Exception()}", LogLevel.Debug);
+                        return path; // Sad workaround: do not resolve the symlink.
+                    }
+
+                    return text.Slice(0, (int)res).ToString();
+                }
             }
         }
     }

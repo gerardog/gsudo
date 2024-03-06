@@ -53,38 +53,40 @@ namespace gsudo.Helpers
 
         public static uint[] GetConsoleAttachedPids()
         {
-            var processIds = new uint[1];
-            var num = ConsoleApi.GetConsoleProcessList(processIds, 1);
+            var processIds = new uint[1].AsSpan();
+            var num = PInvoke.GetConsoleProcessList(processIds);
             if (num == 0) throw new System.ComponentModel.Win32Exception();
 
-            processIds = new uint[num];
+            processIds = new uint[num].AsSpan();
 
-            num = ConsoleApi.GetConsoleProcessList(processIds, num);
+            num = PInvoke.GetConsoleProcessList(processIds);
             if (num == 0) throw new System.ComponentModel.Win32Exception();
 
             //** weird workaround for .net 7.0 NativeAOT + git-bash **
             if (processIds[0] == 0)
-                num = ConsoleApi.GetConsoleProcessList(processIds, num);
+                num = PInvoke.GetConsoleProcessList(processIds);
             if (processIds[0] == 0)
-                num = ConsoleApi.GetConsoleProcessList(processIds, num);
+                num = PInvoke.GetConsoleProcessList(processIds);
             //**************************************************
-            return processIds;
+            return processIds.ToArray();
         }
 
         public static void GetConsoleInfo(out int width, out int height, out int cursorLeftPos, out int cursorTopPos)
         {
             if (Console.IsOutputRedirected && Console.IsErrorRedirected)
             {
-                var hConsole = Native.FileApi.CreateFile("CONOUT$",
-                    FileApi.GENERIC_READ, 0, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
+                var hConsole = PInvoke.CreateFile("CONOUT$", FileApi.GENERIC_READ,
+                    Windows.Win32.Storage.FileSystem.FILE_SHARE_MODE.FILE_SHARE_NONE, null,
+                    Windows.Win32.Storage.FileSystem.FILE_CREATION_DISPOSITION.OPEN_EXISTING,
+                    0, null);
 
-                if (hConsole == Native.FileApi.INVALID_HANDLE_VALUE)
+                if (hConsole.IsInvalid)
                     throw new System.ComponentModel.Win32Exception();
 
-                var consoleScreenBufferInfoEx = new CONSOLE_SCREEN_BUFFER_INFO_EX();
-                consoleScreenBufferInfoEx.cbSize = Marshal.SizeOf<CONSOLE_SCREEN_BUFFER_INFO_EX>();
+                var consoleScreenBufferInfoEx = new CONSOLE_SCREEN_BUFFER_INFOEX();
+                consoleScreenBufferInfoEx.cbSize = (uint)Marshal.SizeOf<CONSOLE_SCREEN_BUFFER_INFOEX>();
 
-                if (!GetConsoleScreenBufferInfoEx(hConsole, ref consoleScreenBufferInfoEx))
+                if (!PInvoke.GetConsoleScreenBufferInfoEx(hConsole, ref consoleScreenBufferInfoEx))
                     throw new System.ComponentModel.Win32Exception();
 
                 width = consoleScreenBufferInfoEx.srWindow.Right - consoleScreenBufferInfoEx.srWindow.Left + 1;
@@ -92,7 +94,7 @@ namespace gsudo.Helpers
                 cursorLeftPos = consoleScreenBufferInfoEx.dwCursorPosition.X;
                 cursorTopPos = consoleScreenBufferInfoEx.dwCursorPosition.Y;
 
-                FileApi.CloseHandle(hConsole);
+                hConsole.Close();
             }
             else
             {

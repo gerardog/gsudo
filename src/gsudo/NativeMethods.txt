@@ -5,12 +5,19 @@ GetConsoleMode
 
 AttachConsole
 FreeConsole
-#AllocConsole
+AllocConsole
 
 // Ctr-C Handling
 SetConsoleCtrlHandler
 GenerateConsoleCtrlEvent
 
 GetCommandLine
-// GetConsoleProcessList => Unable to migrate for net46
+GetConsoleProcessList
+GetConsoleScreenBufferInfoEx
 
+GetShellWindow
+GetWindowThreadProcessId
+
+CreateFile
+GetFinalPathNameByHandle
+GetWindowText

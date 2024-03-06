@@ -43,32 +43,6 @@ namespace gsudo.Native
                             TOKEN_ADJUST_DEFAULT |
                             TOKEN_ADJUST_SESSIONID;
 
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        internal static extern IntPtr GetCurrentProcess();
-
-        [DllImport("Advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern bool OpenProcessToken(IntPtr processHandle,
-                            uint desiredAccesss,
-                            out IntPtr tokenHandle);
-
-        [DllImport("Advapi32.dll", SetLastError = true)]
-        internal static extern bool OpenThreadToken(IntPtr ThreadToken, TokenAccessLevels DesiredAccess, bool OpenAsSelf, out SafeTokenHandle TokenHandle);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        internal static extern IntPtr GetCurrentThread();
-
-        [DllImport("Advapi32.dll", SetLastError = true)]
-        public static extern bool SetThreadToken(IntPtr Thread, SafeTokenHandle Token);
-
-
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern bool CloseHandle(IntPtr hObject);
-
-        [DllImport("advapi32.dll", SetLastError = true)]
-        internal static extern bool GetKernelObjectSecurity(IntPtr Handle, uint securityInformation, IntPtr pSecurityDescriptor, uint nLength, out uint lpnLengthNeeded);
-
         [DllImport("advapi32.dll", SetLastError = true)]
         internal static extern bool SetKernelObjectSecurity(IntPtr Handle, uint securityInformation, IntPtr pSecurityDescriptor);
 

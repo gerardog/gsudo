@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Security.Principal;
 using gsudo.Helpers;
+using Windows.Win32;
 
 namespace gsudo.Tokens
 {
@@ -204,7 +205,7 @@ namespace gsudo.Tokens
             return this;
         }
 
-        internal static TokenProvider CreateUnelevated(IntegrityLevel level)
+        internal static unsafe TokenProvider CreateUnelevated(IntegrityLevel level)
         {
             if (SecurityHelper.IsAdministrator())
             {
@@ -231,8 +232,9 @@ namespace gsudo.Tokens
                 }
                 else
                 {
-                    IntPtr hwnd = ConsoleApi.GetShellWindow();
-                    _ = ConsoleApi.GetWindowThreadProcessId(hwnd, out uint pid);
+                    var hwnd = PInvoke.GetShellWindow();
+                    uint pid;
+                    _ = PInvoke.GetWindowThreadProcessId(hwnd, &pid);
                     return TokenProvider.CreateFromProcessToken((int) pid);
                 }
             }

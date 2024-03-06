@@ -16,7 +16,7 @@ namespace gsudo.ProcessHosts
     // This mode is not enabled unless you use --attached.
     class AttachedConsoleHost : IProcessHost
     {
-        public bool SupportsSimultaneousElevations { get; } = false;
+        public bool SupportsSimultaneousElevations { get; } = true;
 
         public async Task Start(Connection connection, ElevationRequest elevationRequest)
         {
@@ -45,6 +45,9 @@ namespace gsudo.ProcessHosts
                         }
 
                         var process = Helpers.ProcessFactory.StartAttached(elevationRequest.FileName, elevationRequest.Arguments);
+
+                        PInvoke.FreeConsole();
+                        PInvoke.AllocConsole();
 
                         WaitHandle.WaitAny(new WaitHandle[] { process.GetProcessWaitHandle(), connection.DisconnectedWaitHandle });
                         if (process.HasExited)
@@ -81,7 +84,7 @@ namespace gsudo.ProcessHosts
             finally
             {
                 PInvoke.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, false);
-                PInvoke.FreeConsole();
+                //PInvoke.FreeConsole();
                 await connection.FlushAndCloseAll().ConfigureAwait(false);
             }
         }
