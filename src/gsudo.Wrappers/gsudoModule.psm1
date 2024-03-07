@@ -151,6 +151,59 @@ if ($gsudoAutoComplete) {
         '-u'                          = @("$env:USERDOMAIN\$env:USERNAME")
     }
 
+    function Convert-CommandForGsudo {
+        param([string]$commandLine)
+
+        # Regex to match PowerShell variables (simplified pattern for demonstration)
+        $variableRegex = '(\$[a-zA-Z_]\w*)'
+        $script:variables = @()
+        $i = 0
+
+        # Replace variables with $args[i] and collect variable names
+        $newCommand = [regex]::Replace($commandLine, $variableRegex, {
+            param($match)
+            $variableName = $match.Groups[1].Value
+            $script:variables += $variableName
+            "`$args[$(($i++))]"
+        })
+
+        # Construct the gsudo command with args
+        $argsList = $script:variables -join ','
+        
+        "$newCommand -args $argsList"
+    }
+
+    function Convert-CommandForGsudoUsingAst {
+        param([string]$commandLine)
+
+        $variables = @()
+        $i = 0
+
+        # Parse the command into AST
+        $errors = $null
+        $ast = [System.Management.Automation.Language.Parser]::ParseInput($commandLine, [ref]$errors, [ref]$null)
+
+        # Find all variable expressions in the AST
+        $variableNodes = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.VariableExpressionAst] }, $true)
+
+        # Replace variables in the command with `$args[i]` and collect original variable names
+        $newCommand = $commandLine
+        foreach ($node in $variableNodes) {
+            $variableName = $node.VariablePath.UserPath
+            $newCommand = $newCommand.Replace($node.Extent.Text, "`$args[$i]")
+            $variables += "`$$variableName"
+            $i++
+        }
+
+        # Construct the gsudo command with args
+        $argsList = $variables -join ','
+        if ($variables.Length -gt 0) {
+            "$newCommand -args $argsList"
+        } else {
+            "$newCommand"
+        }
+    }
+
     $autoCompleter = {
         param($wordToComplete, $commandAst, $cursorPosition)
     
@@ -207,11 +260,11 @@ if ($gsudoAutoComplete) {
                 
                     if ($lastCommands -is [System.Array]) {
                         # Last one first.
-                        $lastCommands[($lastCommands.Length - 1)..0] | % { $_ };
+                        $lastCommands[($lastCommands.Length - 1)..0] | % { Convert-CommandForGsudoUsingAst $_ };
                     }
                     elseif ($lastCommands) {
                         # Only one command.
-                        $lastCommands;
+                        Convert-CommandForGsudoUsingAst $lastCommands;
                     }
                 }
             }
