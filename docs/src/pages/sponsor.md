@@ -11,7 +11,7 @@ Through sponsorship, you can help sustain the ongoing development of 'gsudo', in
 
 `gsudo` is delivered as a signed application. This ensures the UAC popup doesn't show "Untrusted Publisher", and protects end users detect that gsudo binaries hadn´t been altered.
 
-On Nov 2022, [Parag Mehta @parag_c_mehta](https://twitter.com/gerardo_gr/status/1595817336405168134) gifted me a code signing certificate which expires in Nov 2025. We have some months left to collect $632 for another [3 year renewal]([url](https://signmycode.com/code-signing-certificates)).
+On Nov 2022, [Parag Mehta @parag_c_mehta](https://twitter.com/gerardo_gr/status/1595817336405168134) gifted me a code signing certificate which expires in Nov 2025. We have some months left to collect $632 for another [3 year renewal](https://signmycode.com/code-signing-certificates).
 
 How to donate:
 
