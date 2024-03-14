@@ -25,7 +25,7 @@ const config = {
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
-          editUrl: 'https://github.com/gerardog/gsudo/blob/docs/docs/',
+          editUrl: 'https://github.com/gerardog/gsudo/tree/master/docs/docs/',
         },
         blog: {
           showReadingTime: true,
