@@ -6,7 +6,7 @@ title: Comparison with Microsoft sudo
 
 # Comparison between gsudo and Microsoft sudo
 
-`gsudo` was born in 2019 as a productivity tool and is open-source. It has been downloaded over 700k times so far and has enjoyed a warm reception from users.
+`gsudo` was born in 2019 as a productivity tool and is open-source. It has been downloaded over 700k times so far and has enjoyed a warm reception from users. It is very easy to install and works from Windows 7 SP1 up to Windows 11.
 
 Microsoft initially declined to create a similar tool, citing security concerns. However `gsudo`'s documentation [challenged this view](security.md) arguing that absolute security is unattainable without altering Windows itself, and that the default same-desktop UAC is not completely secure either.
 
@@ -21,8 +21,9 @@ Surprisingly, Microsoft's sudo does not leverage new OS features to enhance secu
 | ------- | ------- | ------------------ |
 | Executes command with elevated permissions | Yes | Yes |
 | Supports output redirection (`sudo dir > file.txt`) | Yes | Yes |
-| Supports input redirection (`echo md folder \| sudo cmd`) | Yes | Partial (Only with output redirection) |
-| Returns the command exit code | Yes | No |
+| Supports input redirection (`echo md folder \| sudo cmd`) | Yes | Yes (fixed in v1.0.0, Windows insider build 26080) |
+| Returns the command exit code | Yes | Yes (fixed in v1.0.0, Windows insider build 26080) |
+| Preserves the current directory | Yes | [It depends](microsoft/sudo#63) |
 | Source code available | [Yes](https://github.com/gerardog/gsudo) | Not for `sudo.exe`, but [promised](https://github.com/microsoft/sudo/blob/f8f1d05/README.md#contributing) |
 
 ### Security Impersonation Features
@@ -58,7 +59,7 @@ Surprisingly, Microsoft's sudo does not leverage new OS features to enhance secu
 
 | Feature | `gsudo` | Sudo for Windows |
 | ------- | ------- | ------------------ |
-| Elevation syntax | `gsudo { Script } -args $a,$b` [syntax](usage/powershell.md#using-gsudo-scriptblock-syntax) | Unknown, possibly: `sudo pwsh { script }` |
+| Elevation syntax | `gsudo { scriptblock } -args $a,$b` [syntax](usage/powershell.md#using-gsudo-scriptblock-syntax) | Unknown, possibly: `sudo pwsh { scriptblock } -args $a,$b` |
 | Auto-complete of last 3 commands | Yes (with [gsudoModule](usage/powershell.md#gsudo-powershell-module)) | No |
 | Auto-complete of options | Yes (with [gsudoModule](usage/powershell.md#gsudo-powershell-module)) | No |
 | Red # indicator for elevation | Yes (with [gsudoModule](usage/powershell.md#gsudo-powershell-module)) | No |
