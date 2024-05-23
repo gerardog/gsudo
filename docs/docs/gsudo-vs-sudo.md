@@ -24,7 +24,7 @@ Surprisingly, Microsoft's sudo does not leverage new OS features to enhance secu
 | Supports input redirection (`echo md SomeFolder | sudo cmd`) | Yes | Requires v1.0.0 / Windows insider build 26080 |
 | Returns the command exit code | Yes | Requires v1.0.0 / Windows insider build 26080 |
 | Preserves the current directory | Yes | [It depends](https://github.com/microsoft/sudo/issues/63) |
-| Source code available | [Yes](https://github.com/gerardog/gsudo) | Not for `sudo.exe`, but [promised](https://github.com/microsoft/sudo/blob/f8f1d05/README.md#contributing) |
+| Source code available | [Yes](https://github.com/gerardog/gsudo) | [Yes](https://github.com/microsoft/sudo) |
 
 ### Security Impersonation Features
 
