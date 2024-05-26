@@ -76,7 +76,7 @@ Note: `gsudo.exe` is portable. No windows service is required or system change i
 ## Usage
 
 ``` powershell
-gsudo [options]                  # Elevates your current shell
+gsudo [options]                  # Starts your current shell elevated
 gsudo [options] {command} [args] # Runs {command} with elevated permissions
 gsudo cache [on | off | help]    # Starts/Stops a credentials cache session. (less UAC popups)
 gsudo status [--json | filter ]  # Shows current user, cache and console status.
@@ -106,6 +106,7 @@ Other options:
  --debug               # Enable debug mode.
  --copyns              # Connect network drives to the elevated user. Warning: Verbose, interactive asks for credentials
  --copyev              # (deprecated) Copy environment variables to the elevated process. (not needed on default console mode)
+ --chdir {dir}         # Change the current directory to {dir} before running the command.
 ```
 
 **Note:** You can use anywhere **the `sudo` alias** created by the installers.

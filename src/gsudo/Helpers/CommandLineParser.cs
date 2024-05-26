@@ -151,7 +151,14 @@ namespace gsudo.Helpers
             else if (match(null, "--preserve-env")) { Settings.CopyEnvironmentVariables.Value = true; }
             else if (match(null, "--new-window")) { InputArguments.NewWindow = true; }
             else if (argChar == "D" && argWord == "-D" && FileApi.PathExists(args.FirstOrDefault())) { InputArguments.StartingDirectory = DeQueueArg(); }
-            else if (match(null, "--chdir")) { InputArguments.StartingDirectory = DeQueueArg(); }
+            else if (match(null, "--chdir")) 
+            {
+                InputArguments.StartingDirectory = DeQueueArg();
+                if (!FileApi.PathExists(InputArguments.StartingDirectory))
+                {
+                    throw new ApplicationException($"Invalid directory: {InputArguments.StartingDirectory}");
+                }                
+            }
             else if (match(null, "--inline")) { InputArguments.NewWindow = false; }
 
             // rest
