@@ -28,9 +28,8 @@ namespace gsudo.ProcessRenderers
 
         internal TokenSwitchRenderer(Connection connection, ElevationRequest elevationRequest)
         {
-            if (Settings.SecurityEnforceUacIsolation && !elevationRequest.NewWindow)
-                throw new Exception("TokenSwitch mode not supported when SecurityEnforceUacIsolation is set.");
-
+            bool disableInput = elevationRequest.DisableInput;
+            
             _connection = connection;
             _elevationRequest = elevationRequest;
             ConsoleHelper.SetPrompt(elevationRequest);
@@ -67,7 +66,7 @@ namespace gsudo.ProcessRenderers
                 throw new ApplicationException($"User \"{WindowsIdentity.GetCurrent().Name}\" can not access directory \"{elevationRequest.StartFolder}\"");
             }
 
-            ProcessFactory.CreateProcessForTokenReplacement(exeName, args, dwCreationFlags, out _processHandle, out _threadHandle, out int processId);
+            ProcessFactory.CreateProcessForTokenReplacement(exeName, args, dwCreationFlags, out _processHandle, out _threadHandle, out int processId, disableInput);
 
             elevationRequest.TargetProcessId = processId;
             if (!elevationRequest.NewWindow)

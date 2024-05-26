@@ -44,6 +44,7 @@ namespace gsudo
 
         // Starting Directory for the new process
         public static string StartingDirectory { get; internal set; }
+        public static bool DisableInput { get; internal set; }
 
         public static IntegrityLevel GetIntegrityLevel() => (RunAsSystem ? gsudo.IntegrityLevel.System : IntegrityLevel ?? gsudo.IntegrityLevel.High);
 

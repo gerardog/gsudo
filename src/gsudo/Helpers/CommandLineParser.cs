@@ -150,6 +150,7 @@ namespace gsudo.Helpers
             // ms-sudo compat:
             else if (match(null, "--preserve-env")) { Settings.CopyEnvironmentVariables.Value = true; }
             else if (match(null, "--new-window")) { InputArguments.NewWindow = true; }
+            // case sensitive -D {dir}
             else if (argChar == "D" && argWord == "-D" && FileApi.PathExists(args.FirstOrDefault())) { InputArguments.StartingDirectory = DeQueueArg(); }
             else if (match(null, "--chdir")) 
             {
@@ -160,6 +161,7 @@ namespace gsudo.Helpers
                 }                
             }
             else if (match(null, "--inline")) { InputArguments.NewWindow = false; }
+            else if (argWord.In("--disable-input", "--disableInput")) { InputArguments.DisableInput = true; }
 
             // rest
             else if (match("d", "--direct")) { InputArguments.Direct = true; }

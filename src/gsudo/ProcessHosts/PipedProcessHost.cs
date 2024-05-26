@@ -43,7 +43,7 @@ namespace gsudo.ProcessHosts
                 var t3 = new StreamReader(connection.DataStream, Settings.Encoding).ConsumeOutput((s) => WriteToProcessStdIn(s, process));
                 var t4 = new StreamReader(connection.ControlStream, Settings.Encoding).ConsumeOutput((s) => HandleControl(s, process));
 
-                if (Settings.SecurityEnforceUacIsolation)
+                if (Settings.SecurityEnforceUacIsolation || request.DisableInput)
                     process.StandardInput.Close();
 
                 WaitHandle.WaitAny(new WaitHandle[] { process.GetProcessWaitHandle(), connection.DisconnectedWaitHandle });
@@ -104,7 +104,7 @@ namespace gsudo.ProcessHosts
             else
                 lastInboundMessage += s;
 
-            if (!Settings.SecurityEnforceUacIsolation)
+            if (!Settings.SecurityEnforceUacIsolation && !_request.DisableInput)
             {
                 await process.StandardInput.WriteAsync(s).ConfigureAwait(false);
             }

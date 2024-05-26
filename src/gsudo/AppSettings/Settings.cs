@@ -97,7 +97,7 @@ namespace gsudo
                 defaultValue: false, 
                 deserializer: bool.Parse,
                 scope: RegistrySettingScope.GlobalOnly,
-                description: "Elevates but with the input handle closed. More secure, less convenient. To be implemented soon also as --disableInput"
+                description: "Elevates but with the input handle closed. More secure, but less convenient. Same as --disableInput"
                 );
 
         public static RegistrySetting<string> ExceptionList { get; } =

@@ -69,7 +69,7 @@ namespace gsudo.Commands
                     IsInputRedirected = Console.IsInputRedirected
                 };
 
-                if (isElevationRequired && Settings.SecurityEnforceUacIsolation)
+                if (isElevationRequired && (Settings.SecurityEnforceUacIsolation || InputArguments.DisableInput))
                     AdjustUacIsolationRequest(elevationRequest, isShellElevation);
 
                 SetRequestPrompt(elevationRequest);
@@ -223,9 +223,8 @@ namespace gsudo.Commands
                     }
                     else
                     {
-                        // force raw mode (that disables user input with SecurityEnforceUacIsolation)
-                        elevationRequest.Mode = ElevationRequest.ConsoleMode.Piped;
-                        Logger.Instance.Log("User Input disabled because of SecurityEnforceUacIsolation. Press Ctrl-C three times to abort. Or use -n argument to elevate in new window.", LogLevel.Info);
+                        // Disables user input with SecurityEnforceUacIsolation
+                        elevationRequest.DisableInput = true;
                     }
                 }
             }
