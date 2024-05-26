@@ -152,6 +152,7 @@ namespace gsudo.Helpers
             else if (match(null, "--new-window")) { InputArguments.NewWindow = true; }
             else if (argChar == "D" && argWord == "-D" && FileApi.PathExists(args.FirstOrDefault())) { InputArguments.StartingDirectory = DeQueueArg(); }
             else if (match(null, "--chdir")) { InputArguments.StartingDirectory = DeQueueArg(); }
+            else if (match(null, "--inline")) { InputArguments.NewWindow = false; }
 
             // rest
             else if (match("d", "--direct")) { InputArguments.Direct = true; }
