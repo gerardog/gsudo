@@ -98,6 +98,8 @@ namespace gsudo
                 deserializer: ExtensionMethods.ParseEnum<CloseBehaviour>,
                 scope: RegistrySettingScope.Any);
 
+        public static RegistrySetting<bool> PathOverrideSetting = new PathPrecedenceSetting();
+
         public static IDictionary<string, RegistrySetting> AllKeys =>
             new Dictionary<string, RegistrySetting>(StringComparer.OrdinalIgnoreCase)
                 .Add(
@@ -120,7 +122,8 @@ namespace gsudo
 
                     PowerShellLoadProfile,
                     SecurityEnforceUacIsolation,
-                    ExceptionList
+                    ExceptionList,
+                    PathOverrideSetting
                 );
 
         internal static TimeSpan TimeSpanParseWithInfinite(string value)
