@@ -13,7 +13,8 @@ namespace gsudo.AppSettings
     internal class PathPrecedenceSetting : RegistrySetting<bool>
     {
         public  PathPrecedenceSetting():
-            base("PathPrecedence", false, bool.Parse, RegistrySettingScope.GlobalOnly)
+            base("PathPrecedence", false, bool.Parse, RegistrySettingScope.GlobalOnly, 
+                description: "Prioritize gsudo over Microsoft Sudo in the PATH environment variable.")
         {
 
         }
