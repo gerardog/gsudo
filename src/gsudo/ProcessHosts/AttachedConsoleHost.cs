@@ -40,7 +40,7 @@ namespace gsudo.ProcessHosts
                         }
                         catch (UnauthorizedAccessException ex)
                         {
-                            throw new ApplicationException($"User \"{WindowsIdentity.GetCurrent().Name}\" can not access current directory \"{elevationRequest.StartFolder}\"");
+                            throw new ApplicationException($"User \"{WindowsIdentity.GetCurrent().Name}\" can not access directory \"{elevationRequest.StartFolder}\"");
                         }
 
                         var process = Helpers.ProcessFactory.StartAttached(elevationRequest.FileName, elevationRequest.Arguments);

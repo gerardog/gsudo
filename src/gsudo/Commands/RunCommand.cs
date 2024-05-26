@@ -41,7 +41,7 @@ namespace gsudo.Commands
                 if (isElevationRequired & SecurityHelper.GetCurrentIntegrityLevel() < (int)IntegrityLevel.Medium)
                     throw new ApplicationException("Sorry, gsudo doesn't allow to elevate from low integrity level."); // This message is not a security feature, but a nicer error message. It would have failed anyway since the named pipe's ACL restricts it.
 
-                if (isRunningAsDesiredUser && isShellElevation && !InputArguments.NewWindow)
+                if (isRunningAsDesiredUser && isShellElevation && !InputArguments.NewWindow && !InputArguments.Direct && InputArguments.StartingDirectory == null)
                     throw new ApplicationException("Already running as the specified user/permission-level (and no command specified). Exiting...");
 
                 var elevationMode = GetElevationMode();
@@ -58,7 +58,7 @@ namespace gsudo.Commands
                 {
                     FileName = commandBuilder.GetExeName(),
                     Arguments = commandBuilder.GetArgumentsAsString(),
-                    StartFolder = Environment.CurrentDirectory,
+                    StartFolder = InputArguments.StartingDirectory ?? Environment.CurrentDirectory,
                     NewWindow = InputArguments.NewWindow,
                     Wait = (!commandBuilder.IsWindowsApp && !InputArguments.NewWindow) || InputArguments.Wait,
                     Mode = elevationMode,

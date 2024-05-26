@@ -8,6 +8,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -55,6 +56,15 @@ namespace gsudo.ProcessRenderers
                 // Hack not needed if we are already calling CMD
                 exeName = elevationRequest.FileName;
                 args = elevationRequest.Arguments;
+            }
+
+            try
+            {
+                System.Environment.CurrentDirectory = elevationRequest.StartFolder;
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                throw new ApplicationException($"User \"{WindowsIdentity.GetCurrent().Name}\" can not access directory \"{elevationRequest.StartFolder}\"");
             }
 
             ProcessFactory.CreateProcessForTokenReplacement(exeName, args, dwCreationFlags, out _processHandle, out _threadHandle, out int processId);
