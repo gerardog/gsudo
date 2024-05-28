@@ -19,7 +19,7 @@ namespace gsudo
             = new RegistrySetting<CacheMode>(nameof(CacheMode), CredentialsCache.CacheMode.Explicit,
                 deserializer: ExtensionMethods.ParseEnum< CacheMode>, 
                 scope: RegistrySettingScope.GlobalOnly,
-                description: "Defines how gsudo credentials cache works: Auto, Explicit (Manual), Disabled" );
+                description: "Defines how gsudo credentials cache works: Auto, Explicit (default), Disabled" );
 
         public static RegistrySetting<TimeSpan> CacheDuration { get; }
             = new RegistrySetting<TimeSpan>(nameof(CacheDuration), 
@@ -33,14 +33,14 @@ namespace gsudo
             = new RegistrySetting<string>(nameof(PipedPrompt), 
                 defaultValue: DefaultAsciiPrompt, 
                 deserializer: (s) => s,
-                description: "Prompt to be used when gsudo uses piped mode."                
+                description: "CMD Prompt to be used when gsudo uses piped mode" 
                 );
 
         public static RegistrySetting<string> Prompt { get; }
             = new RegistrySetting<string>(nameof(Prompt),
                 defaultValue: GetPromptDefaultValue, 
                 deserializer: (s) => s,
-                description: "Prompt to be used when gsudo uses standard mode."
+                description: "CMD Prompt to be used when gsudo uses standard mode"
                 );
 
         public static RegistrySetting<LogLevel> LogLevel { get; }
@@ -54,7 +54,7 @@ namespace gsudo
             = new RegistrySetting<bool>(nameof(ForcePipedConsole), 
                 defaultValue: false, 
                 deserializer: bool.Parse,
-                description: "Forces gsudo to use legacy piped mode. Not recommended."
+                description: "Forces gsudo to use legacy piped mode. Not recommended"
                 );
 
         public static RegistrySetting<bool> ForceAttachedConsole { get; }
@@ -113,14 +113,14 @@ namespace gsudo
                 defaultValue: false,
                 deserializer: bool.Parse,
                 scope: RegistrySettingScope.Any,
-                description: "Always elevate in new window. Same as --new");
+                description: "Always elevate in new window. (Equivalent to --new)");
 
         public static RegistrySetting<CloseBehaviour> NewWindow_CloseBehaviour { get; } =
             new RegistrySetting<CloseBehaviour>(nameof(NewWindow_CloseBehaviour),
                 defaultValue: CloseBehaviour.OsDefault,
                 deserializer: ExtensionMethods.ParseEnum<CloseBehaviour>,
                 scope: RegistrySettingScope.Any,
-                description: "When elevating in new window, let the window auto-close (OsDefault), KeepShellOpen or PressKeyToClose"
+                description: "When elevating in a new window, defines what happens when the process ends: OsDefault (let the window auto-close), KeepShellOpen or PressKeyToClose"
                 );
 
         public static RegistrySetting<bool> PathOverrideSetting = new PathPrecedenceSetting();
