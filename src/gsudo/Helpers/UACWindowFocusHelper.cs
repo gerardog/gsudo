@@ -1,6 +1,7 @@
 ﻿using gsudo.Native;
 using System;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace gsudo.Helpers
 {
@@ -8,6 +9,13 @@ namespace gsudo.Helpers
     {
         [DllImport("user32.dll", SetLastError = true)]
         private static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+
+        internal static void StartBackgroundThreadToFocusUacWindow()
+        {
+            var focusThread = new Thread(UACWindowFocusHelper.FocusUacWindow);
+            focusThread.IsBackground = true;
+            focusThread.Start();
+        }
 
         internal static void FocusUacWindow()
         {

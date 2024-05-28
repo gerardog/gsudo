@@ -178,19 +178,19 @@ namespace gsudo.Helpers
                     if (SecurityHelper.IsMemberOfLocalAdmins() && InputArguments.GetIntegrityLevel() >= IntegrityLevel.High)
                     {
                         // UAC Popup doesnt always have focus, so we try to bring it to the front.
-                        new Thread(UACWindowFocusHelper.FocusUacWindow).Start();
-
+                        UACWindowFocusHelper.StartBackgroundThreadToFocusUacWindow();
                         ret = ProcessFactory.StartElevatedDetached(ownExe, commandLine, !InputArguments.Debug).GetSafeProcessHandle();
                     }
                     else
+                    {
                         ret = ProcessFactory.StartDetached(ownExe, commandLine, null, !InputArguments.Debug).GetSafeProcessHandle();
+                    }
                 }
             }
             else
             {
                 // UAC Popup doesnt always have focus, so we try to bring it to the front.
-                new Thread(UACWindowFocusHelper.FocusUacWindow).Start();
-                
+                UACWindowFocusHelper.StartBackgroundThreadToFocusUacWindow();
                 ret = ProcessFactory.StartElevatedDetached(ownExe, commandLine, !InputArguments.Debug).GetSafeProcessHandle();
             }
 
