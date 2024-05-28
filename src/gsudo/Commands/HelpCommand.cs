@@ -63,6 +63,7 @@ Other options:
  --debug                Enable debug mode.
  --copyns               Connect network drives to the elevated user. Warning: Interactive asks for credentials
  --copyev               (deprecated) Copy all environment variables to the elevated process.
+ --chdir {dir}          Change the current directory to {dir} before running the command.
 
 Configuration:
  gsudo config\t\t\t\tShow current config settings & values.
