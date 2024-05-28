@@ -227,7 +227,7 @@ namespace gsudo.Helpers
                 SafeWaitHandle = new SafeWaitHandle(processHandle, ownsHandle: false)
             };
 
-        public static SafeProcessHandle GetSafeProcessHandle(this Process p) => new SafeProcessHandle(p.Handle, true);
+        public static SafeProcessHandle GetSafeProcessHandle(this Process p) => p.SafeHandle;
 
         public static AutoResetEvent GetProcessWaitHandle(this SafeProcessHandle processHandle) =>
             new AutoResetEvent(false)

@@ -4,27 +4,34 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Security;
 using static gsudo.Native.ConsoleApi;
+using Windows.Win32;
+using Windows.Win32.System.Console;
+using Microsoft.Win32.SafeHandles;
+using Windows.Win32.Foundation;
 
 namespace gsudo.Helpers
 {
     class ConsoleHelper
-    { 
+    {
+        const UInt32 ATTACH_PARENT_PROCESS = 0xFFFFFFFF;
+
         static ConsoleHelper()
         {
             IgnoreConsoleCancelKeyPress += IgnoreConsoleCancelKeyPressMethod; // ensure no garbage collection
         }
 
-        public static bool EnableVT()
+        public static unsafe bool EnableVT()
         {
-            var hStdOut = Native.ConsoleApi.GetStdHandle(Native.ConsoleApi.STD_OUTPUT_HANDLE);
-            if (!Native.ConsoleApi.GetConsoleMode(hStdOut, out uint outConsoleMode))
+            var hStdOut = PInvoke.GetStdHandle(STD_HANDLE.STD_OUTPUT_HANDLE);
+            CONSOLE_MODE outConsoleMode;
+            if (!PInvoke.GetConsoleMode(hStdOut, &outConsoleMode))
             {
                 Logger.Instance.Log("Could not get console mode", LogLevel.Debug);
                 return false;
             }
 
-            outConsoleMode |= Native.ConsoleApi.ENABLE_VIRTUAL_TERMINAL_PROCESSING;// | Native.ConsoleApi.DISABLE_NEWLINE_AUTO_RETURN;
-            if (!Native.ConsoleApi.SetConsoleMode(hStdOut, outConsoleMode))
+            outConsoleMode |= CONSOLE_MODE.ENABLE_VIRTUAL_TERMINAL_PROCESSING;// | CONSOLE_MODE.DISABLE_NEWLINE_AUTO_RETURN;
+            if (!PInvoke.SetConsoleMode(hStdOut, outConsoleMode))
             {
                 Logger.Instance.Log("Could not enable virtual terminal processing", LogLevel.Error);
                 return false;
@@ -34,11 +41,11 @@ namespace gsudo.Helpers
             return true;
         }
 
-        internal static SetConsoleCtrlEventHandler IgnoreConsoleCancelKeyPress;
+        internal static PHANDLER_ROUTINE IgnoreConsoleCancelKeyPress;
 
-        private static bool IgnoreConsoleCancelKeyPressMethod(CtrlTypes ctrlType)
+        private static BOOL IgnoreConsoleCancelKeyPressMethod(uint ctrlType)
         {
-            if (ctrlType.In(CtrlTypes.CTRL_C_EVENT, CtrlTypes.CTRL_BREAK_EVENT))
+            if (ctrlType == (uint)CtrlTypes.CTRL_C_EVENT || ctrlType == (uint)CtrlTypes.CTRL_BREAK_EVENT)
                 return true;
 
             return false;
@@ -46,38 +53,40 @@ namespace gsudo.Helpers
 
         public static uint[] GetConsoleAttachedPids()
         {
-            var processIds = new uint[1];
-            var num = ConsoleApi.GetConsoleProcessList(processIds, 1);
+            var processIds = new uint[1].AsSpan();
+            var num = PInvoke.GetConsoleProcessList(processIds);
             if (num == 0) throw new System.ComponentModel.Win32Exception();
 
-            processIds = new uint[num];
+            processIds = new uint[num].AsSpan();
 
-            num = ConsoleApi.GetConsoleProcessList(processIds, num);
+            num = PInvoke.GetConsoleProcessList(processIds);
             if (num == 0) throw new System.ComponentModel.Win32Exception();
 
             //** weird workaround for .net 7.0 NativeAOT + git-bash **
             if (processIds[0] == 0)
-                num = ConsoleApi.GetConsoleProcessList(processIds, num);
+                num = PInvoke.GetConsoleProcessList(processIds);
             if (processIds[0] == 0)
-                num = ConsoleApi.GetConsoleProcessList(processIds, num);
+                num = PInvoke.GetConsoleProcessList(processIds);
             //**************************************************
-            return processIds;
+            return processIds.ToArray();
         }
 
         public static void GetConsoleInfo(out int width, out int height, out int cursorLeftPos, out int cursorTopPos)
         {
             if (Console.IsOutputRedirected && Console.IsErrorRedirected)
             {
-                var hConsole = Native.FileApi.CreateFile("CONOUT$",
-                    FileApi.GENERIC_READ, 0, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
+                var hConsole = PInvoke.CreateFile("CONOUT$", FileApi.GENERIC_READ,
+                    Windows.Win32.Storage.FileSystem.FILE_SHARE_MODE.FILE_SHARE_NONE, null,
+                    Windows.Win32.Storage.FileSystem.FILE_CREATION_DISPOSITION.OPEN_EXISTING,
+                    0, null);
 
-                if (hConsole == Native.FileApi.INVALID_HANDLE_VALUE)
+                if (hConsole.IsInvalid)
                     throw new System.ComponentModel.Win32Exception();
 
-                var consoleScreenBufferInfoEx = new CONSOLE_SCREEN_BUFFER_INFO_EX();
-                consoleScreenBufferInfoEx.cbSize = Marshal.SizeOf<CONSOLE_SCREEN_BUFFER_INFO_EX>();
+                var consoleScreenBufferInfoEx = new CONSOLE_SCREEN_BUFFER_INFOEX();
+                consoleScreenBufferInfoEx.cbSize = (uint)Marshal.SizeOf<CONSOLE_SCREEN_BUFFER_INFOEX>();
 
-                if (!GetConsoleScreenBufferInfoEx(hConsole, ref consoleScreenBufferInfoEx))
+                if (!PInvoke.GetConsoleScreenBufferInfoEx(hConsole, ref consoleScreenBufferInfoEx))
                     throw new System.ComponentModel.Win32Exception();
 
                 width = consoleScreenBufferInfoEx.srWindow.Right - consoleScreenBufferInfoEx.srWindow.Left + 1;
@@ -85,7 +94,7 @@ namespace gsudo.Helpers
                 cursorLeftPos = consoleScreenBufferInfoEx.dwCursorPosition.X;
                 cursorTopPos = consoleScreenBufferInfoEx.dwCursorPosition.Y;
 
-                FileApi.CloseHandle(hConsole);
+                hConsole.Close();
             }
             else
             {

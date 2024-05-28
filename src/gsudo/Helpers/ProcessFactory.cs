@@ -9,6 +9,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security;
+using Windows.Win32;
+using Windows.Win32.System.Console;
 using static gsudo.Native.ProcessApi;
 using static gsudo.Native.TokensApi;
 
@@ -319,9 +321,9 @@ namespace gsudo.Helpers
             if (Console.IsErrorRedirected | Console.IsInputRedirected | Console.IsOutputRedirected)
             {
                 startupInfo.dwFlags |= STARTF_USESTDHANDLES;
-                startupInfo.hStdOutput = ConsoleApi.GetStdHandle(ConsoleApi.STD_OUTPUT_HANDLE);
-                startupInfo.hStdInput = ConsoleApi.GetStdHandle(ConsoleApi.STD_INPUT_HANDLE);
-                startupInfo.hStdError = ConsoleApi.GetStdHandle(ConsoleApi.STD_ERROR_HANDLE);
+                startupInfo.hStdOutput = PInvoke.GetStdHandle(STD_HANDLE.STD_OUTPUT_HANDLE);
+                startupInfo.hStdInput = PInvoke.GetStdHandle(STD_HANDLE.STD_INPUT_HANDLE);
+                startupInfo.hStdError = PInvoke.GetStdHandle(STD_HANDLE.STD_ERROR_HANDLE);
             }
 
             PROCESS_INFORMATION processInformation;
@@ -360,7 +362,7 @@ namespace gsudo.Helpers
             Logger.Instance.Log($"Creating target process: {lpApplicationName} {args}", LogLevel.Debug);
             if (!ProcessApi.CreateProcess(null, command, ref pSec, ref tSec, false, dwCreationFlags, IntPtr.Zero, null, ref sInfoEx, out pInfo))
             {
-                throw new Win32Exception((int)ConsoleApi.GetLastError());
+                throw new Win32Exception();
             }
 
             var currentProcessHandle = ProcessApi.GetCurrentProcess();

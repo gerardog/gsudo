@@ -10,6 +10,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.Win32;
 
 namespace gsudo.ProcessRenderers
 {
@@ -61,7 +62,7 @@ namespace gsudo.ProcessRenderers
 
             elevationRequest.TargetProcessId = processId;
             if (!elevationRequest.NewWindow)
-                ConsoleApi.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, true);
+                PInvoke.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, true);
         }
 
         public Task<int> Start()
@@ -109,7 +110,7 @@ namespace gsudo.ProcessRenderers
             {
                 _processHandle?.Close();
                 _threadHandle?.Close();
-                ConsoleApi.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, false);
+                PInvoke.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, false);
             }
         }
 

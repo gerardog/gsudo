@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using gsudo.Helpers;
 using gsudo.Rpc;
+using Windows.Win32;
 using static gsudo.Native.ConsoleApi;
 
 namespace gsudo.ProcessHosts
@@ -26,11 +27,11 @@ namespace gsudo.ProcessHosts
 
             try
             {
-                Native.ConsoleApi.FreeConsole();
-                int pid = elevationRequest.ConsoleProcessId;
-                if (Native.ConsoleApi.AttachConsole(pid))
+                PInvoke.FreeConsole();
+                uint pid = elevationRequest.ConsoleProcessId;
+                if (PInvoke.AttachConsole(pid))
                 {
-                    Native.ConsoleApi.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, true);
+                    PInvoke.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, true);
 
                     try
                     {
@@ -79,8 +80,8 @@ namespace gsudo.ProcessHosts
             }
             finally
             {
-                Native.ConsoleApi.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, false);
-                Native.ConsoleApi.FreeConsole();
+                PInvoke.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, false);
+                PInvoke.FreeConsole();
                 await connection.FlushAndCloseAll().ConfigureAwait(false);
             }
         }

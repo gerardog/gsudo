@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Windows.Win32;
 
 namespace gsudo.Helpers
 {
@@ -40,8 +41,7 @@ namespace gsudo.Helpers
 
         internal static string GetRealCommandLine()
         {
-            System.IntPtr ptr = ConsoleApi.GetCommandLine();
-            string commandLine = Marshal.PtrToStringAuto(ptr).TrimStart();
+            string commandLine = PInvoke.GetCommandLine().ToString().TrimStart();
 
             if (commandLine[0] == '"')
                 return commandLine.Substring(commandLine.IndexOf('"', 1) + 1).TrimStart(' ');

@@ -207,7 +207,7 @@ namespace gsudo.Helpers
             if (arg.In("gsudoctrlc"))
                 return new CtrlCCommand()
                 {
-                    Pid = int.Parse(DeQueueArg(), CultureInfo.InvariantCulture),
+                    Pid = uint.Parse(DeQueueArg(), CultureInfo.InvariantCulture),
                     SendSigBreak = bool.Parse(DeQueueArg())
                 };
 

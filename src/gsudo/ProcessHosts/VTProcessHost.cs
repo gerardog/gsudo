@@ -174,9 +174,9 @@ namespace gsudo.ProcessHosts
         /// </summary>
         private static void OnClose(Action handler)
         {
-            Native.ConsoleApi.SetConsoleCtrlHandler(eventType =>
+            Windows.Win32.PInvoke.SetConsoleCtrlHandler(eventType =>
             {
-                if (eventType == Native.ConsoleApi.CtrlTypes.CTRL_CLOSE_EVENT)
+                if (eventType == (uint) Native.ConsoleApi.CtrlTypes.CTRL_CLOSE_EVENT)
                 {
                     handler();
                 }
