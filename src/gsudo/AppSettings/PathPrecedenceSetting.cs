@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace gsudo.AppSettings
 {
@@ -53,16 +54,14 @@ namespace gsudo.AppSettings
             Logger.Instance.Log("Please restart all your consoles to ensure the change makes effect.", LogLevel.Warning);
 
             // Notify the system of the change
-            SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, IntPtr.Zero, "Environment", SMTO_NORMAL, 100, out var _);
+            SendNotifyMessage(HWND_BROADCAST, WM_SETTINGCHANGE, UIntPtr.Zero, "Environment");
         }
 
-        [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true, CharSet = System.Runtime.InteropServices.CharSet.Auto)]
-        public static extern IntPtr SendMessageTimeout(IntPtr hWnd, uint Msg, IntPtr wParam, 
-            [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPTStr)] string lParam, 
-            uint fuFlags, uint uTimeout, out IntPtr lpdwResult);
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        private static extern bool SendNotifyMessage(
+            IntPtr hWnd, uint Msg, UIntPtr wParam, string lParam);
 
-        private static readonly IntPtr HWND_BROADCAST = new IntPtr(0xFFFF);
         private const uint WM_SETTINGCHANGE = 0x001A;
-        private const uint SMTO_NORMAL = 0x0000;
+        private static readonly IntPtr HWND_BROADCAST = new IntPtr(0xFFFF);
     }
 }
