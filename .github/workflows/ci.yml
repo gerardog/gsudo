@@ -28,15 +28,15 @@ jobs:
     permissions:
       id-token: write
       contents: read
-      checks: write    
+      checks: write
     steps:
     - uses: actions/setup-dotnet@v2
       with:
-        dotnet-version: '7.0.x'
-        include-prerelease: true 
+        dotnet-version: '8.0.x'
+        include-prerelease: true
     - uses: actions/checkout@v2
-      with: 
-        fetch-depth: 0    
+      with:
+        fetch-depth: 0
     - name: Run Tests
       id: tests
       run: ./build/02-test.ps1
@@ -45,7 +45,7 @@ jobs:
       if: success() || failure()
       with:
         name: TestsResults (dotnet)
-        path: "**/TestResults*.trx"                            
+        path: "**/TestResults*.trx"
         reporter: dotnet-trx
         fail-on-error: true
     - name: Test Report PowerShell v5
@@ -70,10 +70,10 @@ jobs:
     steps:
     - uses: actions/setup-dotnet@v2
       with:
-        dotnet-version: '7.0.x'
-        include-prerelease: true 
-    - uses: actions/checkout@v2   
-      with: 
+        dotnet-version: '8.0.x'
+        include-prerelease: true
+    - uses: actions/checkout@v2
+      with:
         fetch-depth: 0
     - name: Install dependencies
       run: choco install GitVersion.Portable --version 5.6.11 --confirm --no-progress; choco install il-repack --confirm --no-progress
