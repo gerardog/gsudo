@@ -18,6 +18,14 @@ namespace gsudo
         {
             ICommand cmd = null;
 
+            bool PassingIntegrity = IntegrityHelpers.VerifyCallerProcess();
+
+            if (!PassingIntegrity)
+            {
+                Logger.Instance.Log("The Elevator was not called from a verifiable process", LogLevel.Error); // one liner errors.
+                return -1;
+            }
+            
             var commandLine = ArgumentsHelper.GetRealCommandLine();
             var args = ArgumentsHelper.SplitArgs(commandLine);
 

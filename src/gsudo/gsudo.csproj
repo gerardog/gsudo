@@ -18,12 +18,13 @@
     <RepositoryUrl>https://github.com/gerardog/gsudo</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>sudo for windows</PackageTags>
-    <AssemblyName>gsudo</AssemblyName>
+    <AssemblyName>UniGetUI Elevator</AssemblyName>
     <Deterministic>true</Deterministic>
     <PathMap>$(MSBuildProjectDirectory)=C:\</PathMap>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
 	<NoWarn>1701;1702;CA1303;CA1707;CA1028;CA1001;CA1031;CA1416</NoWarn>
+	<ApplicationIcon>icon.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)'=='net7.0'">
     <AutoGenerateBindingRedirects>False</AutoGenerateBindingRedirects>
