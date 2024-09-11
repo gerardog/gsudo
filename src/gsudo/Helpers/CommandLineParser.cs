@@ -3,9 +3,11 @@ using gsudo.Commands;
 using gsudo.Native;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Security.Authentication;
 using System.Security.Principal;
 
 namespace gsudo.Helpers
@@ -268,15 +270,10 @@ namespace gsudo.Helpers
                         cmd.Action = CacheCommandAction.Help;
                     else if (IsOptionMatchWithArgument(arg, "p", "--pid", out string v))
                     {
-                        cmd.AllowedPid = int.Parse(v, CultureInfo.InvariantCulture);
-                    }
-                    else if (IsOptionMatchWithArgument(arg, "s", "--sid", out v))
-                    {
-                        cmd.AllowedSid = v;
-                    }
-                    else if (IsOptionMatchWithArgument(arg, "u", "--user", out v))
-                    {
-                        InputArguments.SetUserName(v);
+                        int suppliedId = int.Parse(v, CultureInfo.InvariantCulture);
+                        int parentId = IntegrityHelpers.GetParentProcess()?.Id ?? -1;
+                        Logger.Instance.Log($"Using parent process PID ({parentId}) instead of supplied PID ({suppliedId})", LogLevel.Warning);
+                        cmd.AllowedPid = parentId;
                     }
                     else if (IsOptionMatchWithArgument(arg, "d", "--duration", out v))
                     {
@@ -288,6 +285,13 @@ namespace gsudo.Helpers
                         throw new ApplicationException($"Unknown argument: {arg}");
                 }
 
+                if (cmd.AllowedPid is null)
+                {
+                    int parentId = IntegrityHelpers.GetParentProcess()?.Id ?? -1;
+                    Logger.Instance.Log($"Using parent process PID ({parentId}) as no PID was supplied", LogLevel.Warning);
+                    cmd.AllowedPid = parentId;
+                }
+                
                 return cmd;
             }
 

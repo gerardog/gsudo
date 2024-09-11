@@ -9,10 +9,8 @@ namespace gsudo
 {
     public static class IntegrityHelpers
     {
-        private static readonly string[] RECOGNIZED_FILE_NAMES = new[]
-        {
-            "UniGetUI Elevator"
-        };
+        public const string ASSEMBLY_NAME = "UniGetUI Elevator";
+
         
         private static readonly string[] RECOGNIZED_PARENT_FILE_NAMES = new[]
         {
@@ -72,15 +70,20 @@ namespace gsudo
         
         private static bool CheckProcessName()
         {
-            var process = Process.GetCurrentProcess();
-            
-            return RECOGNIZED_FILE_NAMES.Contains(process.ProcessName);
+
+            if (Process.GetCurrentProcess().ProcessName != ASSEMBLY_NAME)
+            {
+                Logger.Instance.Log($"The process name must be set to {ASSEMBLY_NAME}, otherwhise some features will not work", LogLevel.Warning);
+                return false;
+            }
+
+            return true;
         }
         
         
         private static bool CheckParentProcessName()
         {
-            var parentProcess = Process.GetCurrentProcess().GetParentProcess();
+            var parentProcess = GetParentProcess();
 
             if (parentProcess is null)
             {
@@ -94,7 +97,7 @@ namespace gsudo
         
         public static bool VerifyParentProcessSignature()
         {
-            var parentProcess = Process.GetCurrentProcess().GetParentProcess();
+            var parentProcess = GetParentProcess();
             if (parentProcess is null)
             {
                 Logger.Instance.Log("W_NULL_PARENT_PROCESS", LogLevel.Warning);
@@ -110,7 +113,7 @@ namespace gsudo
                         "System32\\windowspowershell\\v1.0\\powershell.exe"
                     ),
                     Arguments = "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass " +
-                                $"-Command echo (Get-AuthenticodeSignature -FilePath \"{parentProcess.GetExeName()}\").SignerCertificate.Thumbprint",
+                                $"-Command \"echo (Get-AuthenticodeSignature -FilePath '{parentProcess.GetExeName()}').SignerCertificate.Thumbprint\"",
                     RedirectStandardOutput = true,
                     StandardOutputEncoding = Encoding.UTF8,
                     UseShellExecute = false
@@ -119,10 +122,23 @@ namespace gsudo
             p.Start();
 
             string THUMBPRINT = p.StandardOutput.ReadToEnd().Trim();
+
+            if (!RECOGNIZED_PARENT_SIGNATURES.Contains(THUMBPRINT))
+            {
+                Logger.Instance.Log($"Thumbprint {THUMBPRINT} is not recognized", LogLevel.Error);
+                return false;
+            }
             
-            Console.WriteLine($"\"{THUMBPRINT}\"");
-            
-            return RECOGNIZED_PARENT_SIGNATURES.Contains(THUMBPRINT);
+            return true;
+        }
+
+        public static Process GetParentProcess()
+        {
+            var parentProcess = Process.GetCurrentProcess();
+            while (parentProcess?.ProcessName == ASSEMBLY_NAME)
+                parentProcess = parentProcess.GetParentProcess();
+
+            return parentProcess;
         }
     }
 }

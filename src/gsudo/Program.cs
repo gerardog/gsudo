@@ -22,7 +22,7 @@ namespace gsudo
 
             if (!PassingIntegrity)
             {
-                Logger.Instance.Log("The Elevator was not called from a verifiable process", LogLevel.Error); // one liner errors.
+                Logger.Instance.Log("The Elevator was not called from a trusted process", LogLevel.Error); // one liner errors.
                 return -1;
             }
             
