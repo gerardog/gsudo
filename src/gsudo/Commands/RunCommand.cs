@@ -41,7 +41,7 @@ namespace gsudo.Commands
                 if (isElevationRequired & SecurityHelper.GetCurrentIntegrityLevel() < (int)IntegrityLevel.Medium)
                     throw new ApplicationException("Sorry, gsudo doesn't allow to elevate from low integrity level."); // This message is not a security feature, but a nicer error message. It would have failed anyway since the named pipe's ACL restricts it.
 
-                if (isRunningAsDesiredUser && isShellElevation && !InputArguments.NewWindow && !InputArguments.Direct && InputArguments.StartingDirectory == null)
+                if (isRunningAsDesiredUser && isShellElevation && !InputArguments.NewWindow)
                     throw new ApplicationException("Already running as the specified user/permission-level (and no command specified). Exiting...");
 
                 var elevationMode = GetElevationMode();
@@ -58,7 +58,7 @@ namespace gsudo.Commands
                 {
                     FileName = commandBuilder.GetExeName(),
                     Arguments = commandBuilder.GetArgumentsAsString(),
-                    StartFolder = InputArguments.StartingDirectory ?? Environment.CurrentDirectory,
+                    StartFolder = Environment.CurrentDirectory,
                     NewWindow = InputArguments.NewWindow,
                     Wait = (!commandBuilder.IsWindowsApp && !InputArguments.NewWindow) || InputArguments.Wait,
                     Mode = elevationMode,
@@ -69,7 +69,7 @@ namespace gsudo.Commands
                     IsInputRedirected = Console.IsInputRedirected
                 };
 
-                if (isElevationRequired && (Settings.SecurityEnforceUacIsolation || InputArguments.DisableInput))
+                if (isElevationRequired && Settings.SecurityEnforceUacIsolation)
                     AdjustUacIsolationRequest(elevationRequest, isShellElevation);
 
                 SetRequestPrompt(elevationRequest);
@@ -223,14 +223,15 @@ namespace gsudo.Commands
                     }
                     else
                     {
-                        // Disables user input with SecurityEnforceUacIsolation
-                        elevationRequest.DisableInput = true;
+                        // force raw mode (that disables user input with SecurityEnforceUacIsolation)
+                        elevationRequest.Mode = ElevationRequest.ConsoleMode.Piped;
+                        Logger.Instance.Log("User Input disabled because of SecurityEnforceUacIsolation. Press Ctrl-C three times to abort. Or use -n argument to elevate in new window.", LogLevel.Info);
                     }
                 }
             }
         }
 
-        internal static bool IsRunningAsDesiredUser(bool allowHigherIntegrity = false)
+        internal static bool IsRunningAsDesiredUser()
         {
             if (InputArguments.TrustedInstaller && !WindowsIdentity.GetCurrent().Claims.Any(c => c.Value == Constants.TI_SID))
                 return false;
@@ -238,10 +239,7 @@ namespace gsudo.Commands
             if (InputArguments.RunAsSystem && !WindowsIdentity.GetCurrent().IsSystem)
                 return false;
 
-            if ((int)InputArguments.GetIntegrityLevel() != SecurityHelper.GetCurrentIntegrityLevel() && !allowHigherIntegrity)
-                return false;
-
-            if ((int)InputArguments.GetIntegrityLevel() > SecurityHelper.GetCurrentIntegrityLevel())
+            if ((int)InputArguments.GetIntegrityLevel() != SecurityHelper.GetCurrentIntegrityLevel())
                 return false;
 
             if (InputArguments.UserName != null && InputArguments.UserName != WindowsIdentity.GetCurrent().Name)

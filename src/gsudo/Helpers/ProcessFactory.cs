@@ -65,26 +65,16 @@ namespace gsudo.Helpers
             return process;
         }
 
-        public static Process StartAttached(string filename, string arguments, bool disableInput = false)
+        public static Process StartAttached(string filename, string arguments)
         {
-            Logger.Instance.Log($"Process Start: {filename} {arguments}", LogLevel.Debug);
+            Logger.Instance.Log($"Process Start: {filename} {arguments}", LogLevel.Debug    );
             var process = new Process();
             process.StartInfo = new ProcessStartInfo(filename)
             {
                 Arguments = arguments,
                 UseShellExecute = false,
             };
-
-            if (disableInput)
-            {
-                process.StartInfo.RedirectStandardInput = true;
-            }
-
             process.Start();
-
-            if (disableInput)
-                process.StandardInput.Close();
-                
             return process;
         }
 
@@ -138,7 +128,7 @@ namespace gsudo.Helpers
                     CreateNoWindow = !InputArguments.Debug,
                 });
             }
-            catch (Win32Exception ex)
+            catch(Win32Exception ex)
             {
                 if (ex.NativeErrorCode == 1326)
                     throw new ApplicationException("The user name or password is incorrect.");
@@ -342,10 +332,8 @@ namespace gsudo.Helpers
             return new SafeProcessHandle(processInformation.hProcess, true);
         }
 
-        internal static void CreateProcessForTokenReplacement(string lpApplicationName, string args, ProcessApi.CreateProcessFlags dwCreationFlags, out SafeProcessHandle processHandle, out SafeHandle threadHandle, out int processId, bool bDisableInput)
+        internal static SafeProcessHandle CreateProcessAsUserWithFlags(string lpApplicationName, string args, ProcessApi.CreateProcessFlags dwCreationFlags, out PROCESS_INFORMATION pInfo)
         {
-            var currentProcessHandle = ProcessApi.GetCurrentProcess();
-
             var sInfoEx = new ProcessApi.STARTUPINFOEX();
             sInfoEx.StartupInfo.cb = Marshal.SizeOf(sInfoEx);
 
@@ -354,59 +342,7 @@ namespace gsudo.Helpers
             pSec.nLength = Marshal.SizeOf(pSec);
             tSec.nLength = Marshal.SizeOf(tSec);
 
-            if (bDisableInput)
-            {
-                dwCreationFlags |= CreateProcessFlags.EXTENDED_STARTUPINFO_PRESENT;
-                var STARTF_USESTDHANDLES = 0x00000100;
-                
-                sInfoEx.StartupInfo.dwFlags = STARTF_USESTDHANDLES;
-
-                uint DUPLICATE_SAME_ACCESS = 0x00000002;
-
-                if (!DuplicateHandle(
-                    currentProcessHandle,   // Source process handle is the current process
-                    ConsoleApi.GetStdHandle(ConsoleApi.STD_INPUT_HANDLE),         // The handle to duplicate
-                    currentProcessHandle,   // Target process handle is also the current process
-                    out var inputHandle,     // The duplicated handle with desired access rights
-                    DUPLICATE_SAME_ACCESS,       // Desired access: PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE | PROCESS_TERMINATE
-                    true,                  // The handle is not inheritable
-                    0))                     // dwOptions: auto close pInfo.hProcess.
-                {
-                    throw new Win32Exception(Marshal.GetLastWin32Error());
-                }
-
-                if (!DuplicateHandle(
-                    currentProcessHandle,   // Source process handle is the current process
-                    ConsoleApi.GetStdHandle(ConsoleApi.STD_OUTPUT_HANDLE),         // The handle to duplicate
-                    currentProcessHandle,   // Target process handle is also the current process
-                    out var outputHandle,     // The duplicated handle with desired access rights
-                    DUPLICATE_SAME_ACCESS,       // Desired access: PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE | PROCESS_TERMINATE
-                    true,                  // The handle is not inheritable
-                    0))                     // dwOptions: auto close pInfo.hProcess.
-                {
-                    throw new Win32Exception(Marshal.GetLastWin32Error());
-                }
-
-                if (!DuplicateHandle(
-                    currentProcessHandle,   // Source process handle is the current process
-                    ConsoleApi.GetStdHandle(ConsoleApi.STD_ERROR_HANDLE),         // The handle to duplicate
-                    currentProcessHandle,   // Target process handle is also the current process
-                    out var errorHandle,     // The duplicated handle with desired access rights
-                    DUPLICATE_SAME_ACCESS,       // Desired access: PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE | PROCESS_TERMINATE
-                    true,                  // The handle is not inheritable
-                    0))                     // dwOptions: auto close pInfo.hProcess.
-                {
-                    throw new Win32Exception(Marshal.GetLastWin32Error());
-                }
-
-                sInfoEx.StartupInfo.hStdInput = IntPtr.Zero;
-                sInfoEx.StartupInfo.hStdOutput = outputHandle;
-                sInfoEx.StartupInfo.hStdError = errorHandle;
-            }
-
-            // Set a more restrictive Security Descriptor:
-            // - This code runs at medium integrity, so we dont have permissions to change the SDACL to High integrity level.
-            // - We will do that in TokenSwitcher.ReplaceProcessToken.
+            // Set more restrictive Security Descriptor
             string sddl = "D:(D;;GAFAWD;;;S-1-1-0)"; // Deny Generic-All, File-All, and Write-Dac to everyone.
 
             IntPtr sd_ptr = new IntPtr();
@@ -418,41 +354,15 @@ namespace gsudo.Helpers
 
             var command = $"{lpApplicationName} {args}";
 
-            PROCESS_INFORMATION pInfo;
-            Logger.Instance.Log($"Creating target process: {lpApplicationName} {args}", LogLevel.Debug);
-            if (!ProcessApi.CreateProcess(null, command, ref pSec, ref tSec, true, dwCreationFlags, IntPtr.Zero, null, ref sInfoEx, out pInfo))
+            Logger.Instance.Log($"{nameof(CreateProcessAsUserWithFlags)}: {lpApplicationName} {args}", LogLevel.Debug);
+            if (!ProcessApi.CreateProcess(null, command, ref pSec, ref tSec, false, dwCreationFlags, IntPtr.Zero, null, ref sInfoEx, out pInfo))
             {
                 throw new Win32Exception((int)ConsoleApi.GetLastError());
             }
 
-            if (!DuplicateHandle(
-                currentProcessHandle,   // Source process handle is the current process
-                pInfo.hProcess,         // The handle to duplicate
-                currentProcessHandle,   // Target process handle is also the current process
-                out var restrictedProcessHandle,     // The duplicated handle with desired access rights
-                0x1000 | 0x00100000 | 0x0001,       // Desired access: PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE | PROCESS_TERMINATE
-                false,                  // The handle is not inheritable
-                1))                     // dwOptions: auto close pInfo.hProcess.
-            {
-                throw new Win32Exception(Marshal.GetLastWin32Error());
-            }
-
-            if (!DuplicateHandle(
-                    currentProcessHandle,       // Source process handle is the current process
-                    pInfo.hThread,              // The thread handle to duplicate
-                    currentProcessHandle,       // Target process handle is also the current process
-                    out var restrictedThreadHandle, // The duplicated handle with desired access rights
-                    0x0002,                     // Desired access: THREAD_SUSPEND_RESUME
-                    false,                      // The handle is not inheritable
-                    1))                         // dwOptions: auto close pInfo.hThread.
-            {
-                throw new Win32Exception(Marshal.GetLastWin32Error());
-            }
-
-            processHandle = new SafeProcessHandle(restrictedProcessHandle, true);
-            threadHandle = new Native.SafeThreadHandle(restrictedThreadHandle);
-
-            processId = pInfo.dwProcessId;
+            return new SafeProcessHandle(pInfo.hProcess, true);
         }
+
     }
 }
+

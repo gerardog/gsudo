@@ -3,8 +3,7 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using static gsudo.Native.TokensApi;
-using static gsudo.Native.NativeMethods;
-using gsudo.Native;
+using static gsudo.Tokens.NativeMethods;
 
 namespace gsudo.Tokens
 {

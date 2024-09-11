@@ -78,9 +78,6 @@ namespace gsudo.Native
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool FindClose(IntPtr hFindFile);
 
-        [DllImport("shlwapi", EntryPoint = "PathFileExists", CharSet = CharSet.Unicode)]
-        public static extern bool PathExists(string path);
-
         #endregion
 
         #region Network Drives

@@ -21,7 +21,6 @@ namespace gsudo
         public IntegrityLevel IntegrityLevel { get; set; }
 
         public bool IsInputRedirected { get; set; }
-        public bool DisableInput { get; set; }
 
         [Serializable]
         internal enum ConsoleMode { 

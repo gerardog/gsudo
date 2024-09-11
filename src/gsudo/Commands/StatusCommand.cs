@@ -152,7 +152,7 @@ namespace gsudo.Commands
 
             foreach (string s in result["CacheSessions"] as string[])
             {
-                Console.WriteLine($"    {s}");
+                Console.WriteLine($"    {s},");
             }
 
             if ((bool)result["IsRedirected"])

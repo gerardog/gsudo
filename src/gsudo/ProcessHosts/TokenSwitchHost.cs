@@ -16,6 +16,9 @@ namespace gsudo.ProcessHosts
 
         public async Task Start(Connection connection, ElevationRequest elevationRequest)
         {
+            if (Settings.SecurityEnforceUacIsolation && !elevationRequest.NewWindow)
+                throw new Exception("TokenSwitch mode not supported when SecurityEnforceUacIsolation is set.");
+
             try
             {
                 TokenSwitcher.ReplaceProcessToken(elevationRequest);

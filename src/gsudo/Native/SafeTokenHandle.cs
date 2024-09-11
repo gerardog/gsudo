@@ -21,19 +21,4 @@ namespace gsudo.Native
             return Native.ProcessApi.CloseHandle(base.handle);
         }
     }
-
-    internal sealed class SafeThreadHandle : SafeHandleZeroOrMinusOneIsInvalid
-    {
-        internal SafeThreadHandle(IntPtr handle)
-            : base(true)
-        {
-            base.SetHandle(handle);
-        }
-
-        override protected bool ReleaseHandle()
-        {
-            return Native.ProcessApi.CloseHandle(handle);
-        }
-
-    }
 }

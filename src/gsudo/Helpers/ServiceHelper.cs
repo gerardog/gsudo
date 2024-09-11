@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Security;
 using System.Security.Principal;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace gsudo.Helpers
@@ -70,8 +69,8 @@ namespace gsudo.Helpers
         private static ServiceLocation FindServiceByIntegrity(int? clientPid, string user)
         {
             var anyIntegrity = InputArguments.UserName != null;
-            var tryHighIntegrity = !InputArguments.IntegrityLevel.HasValue || InputArguments.IntegrityLevel.Value > IntegrityLevel.Medium;
-            var tryLowIntegrity = !InputArguments.IntegrityLevel.HasValue || InputArguments.IntegrityLevel.Value <= IntegrityLevel.Medium;
+            var tryHighIntegrity = !InputArguments.IntegrityLevel.HasValue || InputArguments.IntegrityLevel.Value >= IntegrityLevel.High;
+            var tryLowIntegrity = !InputArguments.IntegrityLevel.HasValue || InputArguments.IntegrityLevel.Value < IntegrityLevel.High;
 
             var targetUserSid = InputArguments.RunAsSystem ? "S-1-5-18" : InputArguments.UserSid;
 
@@ -176,21 +175,13 @@ namespace gsudo.Helpers
                 else
                 {
                     if (SecurityHelper.IsMemberOfLocalAdmins() && InputArguments.GetIntegrityLevel() >= IntegrityLevel.High)
-                    {
-                        // UAC Popup doesnt always have focus, so we try to bring it to the front.
-                        UACWindowFocusHelper.StartBackgroundThreadToFocusUacWindow();
                         ret = ProcessFactory.StartElevatedDetached(ownExe, commandLine, !InputArguments.Debug).GetSafeProcessHandle();
-                    }
                     else
-                    {
                         ret = ProcessFactory.StartDetached(ownExe, commandLine, null, !InputArguments.Debug).GetSafeProcessHandle();
-                    }
                 }
             }
             else
             {
-                // UAC Popup doesnt always have focus, so we try to bring it to the front.
-                UACWindowFocusHelper.StartBackgroundThreadToFocusUacWindow();
                 ret = ProcessFactory.StartElevatedDetached(ownExe, commandLine, !InputArguments.Debug).GetSafeProcessHandle();
             }
 

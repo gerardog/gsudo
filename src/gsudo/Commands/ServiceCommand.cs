@@ -28,8 +28,6 @@ namespace gsudo.Commands
 
         void EnableTimer()
         {
-            if (CacheDuration > TimeSpan.FromDays(24)) CacheDuration = TimeSpan.FromDays(24);
-
             if (CacheDuration != TimeSpan.MaxValue) 
                 ShutdownTimer.Change((int)CacheDuration.TotalMilliseconds, Timeout.Infinite);
         }
@@ -57,7 +55,7 @@ namespace gsudo.Commands
                 || (InputArguments.RunAsSystem && !System.Security.Principal.WindowsIdentity.GetCurrent().IsSystem)
                 || (InputArguments.UserName != null && !SecurityHelper.IsAdministrator() && SecurityHelper.IsMemberOfLocalAdmins()) 
                 )*/
-            if (!RunCommand.IsRunningAsDesiredUser(allowHigherIntegrity: true))
+            if (!RunCommand.IsRunningAsDesiredUser())
             {
                 Logger.Instance.Log("This service is not running with desired credentials. Starting a new service instance.", LogLevel.Info);
 #if DEBUG

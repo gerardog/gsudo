@@ -33,7 +33,7 @@ namespace gsudo.ProcessRenderers
 
         public async Task<int> Start()
         {
-            if (Settings.SecurityEnforceUacIsolation || InputArguments.DisableInput)
+            if (Settings.SecurityEnforceUacIsolation)
                 throw new NotSupportedException("VT Mode not supported when SecurityEnforceUacIsolation=true");
 
             Console.OutputEncoding = System.Text.Encoding.UTF8;

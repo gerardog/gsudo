@@ -3,8 +3,6 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using gsudo.Helpers;
 using gsudo.Native;
-using static gsudo.Native.TokensApi;
-using static gsudo.Native.NativeMethods;
 
 namespace gsudo.Tokens
 {
@@ -30,42 +28,19 @@ namespace gsudo.Tokens
                     .EnablePrivilege(Privilege.SeIncreaseQuotaPrivilege, false)
                     .Impersonate(() =>
                     {
-                        IntPtr securityDescriptor = IntPtr.Zero;
-                        UIntPtr securityDescriptorSize = UIntPtr.Zero;
-                        IntPtr hProcess = IntPtr.Zero;
-                        try
-                        {
-                            hProcess = ProcessApi.OpenProcess(ProcessApi.PROCESS_SET_INFORMATION | ProcessApi.PROCESS_QUERY_INFORMATION | ProcessApi.READ_CONTROL | ProcessApi.WRITE_DAC, true,
-                                (uint)elevationRequest.TargetProcessId);
+                        IntPtr hProcess = ProcessApi.OpenProcess(ProcessApi.PROCESS_SET_INFORMATION, true,
+                            (uint)elevationRequest.TargetProcessId);
+                        NtDllApi.PROCESS_INFORMATION_CLASS processInformationClass =
+                            NtDllApi.PROCESS_INFORMATION_CLASS.ProcessAccessToken;
 
-                            // Tighten the security descriptor of the process to elevate, before elevating its process token
-                            string sddl = "D:(D;;GAFAWD;;;S-1-1-0)S:(ML;;NW;;;HI)"; // Deny all to everyone. SACL requires High Integrity.
-                            Native.TokensApi.ConvertStringSecurityDescriptorToSecurityDescriptor(sddl, StringSDRevision: 1, out securityDescriptor, out securityDescriptorSize);
+                        int res = NtDllApi.NativeMethods.NtSetInformationProcess(hProcess, processInformationClass,
+                            ref tokenInfo,
+                            Marshal.SizeOf<NtDllApi.PROCESS_ACCESS_TOKEN>());
+                        Logger.Instance.Log($"NtSetInformationProcess returned {res}", LogLevel.Debug);
+                        if (res < 0)
+                            throw new Win32Exception();
 
-                            // https://learn.microsoft.com/en-us/windows/win32/secauthz/low-level-security-descriptor-functions
-                            if (!SetKernelObjectSecurity(hProcess, (uint)SECURITY_INFORMATION.DACL_SECURITY_INFORMATION, securityDescriptor))
-                                throw new InvalidOperationException("Failed to tighten security descriptor.", new Win32Exception());
-
-                            // Replace the Process access token with an elevated one.
-                            var processInformationClass = NtDllApi.PROCESS_INFORMATION_CLASS.ProcessAccessToken;
-
-                            int res = NtDllApi.NativeMethods.NtSetInformationProcess(hProcess, processInformationClass,
-                                ref tokenInfo, Marshal.SizeOf<NtDllApi.PROCESS_ACCESS_TOKEN>());
-
-                            if (res < 0)
-                                throw new Win32Exception();
-
-                            Logger.Instance.Log($"Process token replaced", LogLevel.Debug);
-                        }
-                        finally
-                        {
-                            if (hProcess != IntPtr.Zero)
-                                ProcessApi.CloseHandle(hProcess);
-
-                            // Cleanup: Free the security descriptor pointer if it's not null
-                            if (securityDescriptor != IntPtr.Zero)
-                                ProcessApi.LocalFree(securityDescriptor);
-                        }
+                        ProcessApi.CloseHandle(hProcess);
                     });
             }
             finally

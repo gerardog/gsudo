@@ -32,24 +32,11 @@ namespace gsudo.Commands
 
             if (key == null)
             {
-                Console.ForegroundColor = ConsoleColor. Yellow;
-                // print all configs Descriptions
+                // print all configs
                 foreach (var k in Settings.AllKeys)
                 {                    
-                    if (Settings.LogLevel <= LogLevel.Info)
-                    {
-                        Console.WriteLine($"# {k.Value.Name}: {k.Value.Description}");
-                    }
-                }
-                Console.WriteLine();
-                Console.ResetColor();
-
-                // print all config values
-                foreach (var k in Settings.AllKeys)
-                {
-                    var scope = k.Value.HasGlobalValue() ? "(global)" :
+                    var scope = k.Value.HasGlobalValue() ? "(global)" : 
                                     (k.Value.HasLocalValue() ? "(user)" : "(default)");
-
                     Console.WriteLine($"{k.Value.Name} = \"{ k.Value.GetStringValue().ToString()}\" ".PadRight(50) + scope);
                 }
 

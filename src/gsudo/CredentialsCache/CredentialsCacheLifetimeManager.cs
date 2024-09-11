@@ -27,7 +27,7 @@ namespace gsudo.CredentialsCache
     // user NonAdmin and System, both desired actions.
     class CredentialsCacheLifetimeManager
     {
-        const string GLOBAL_WAIT_HANDLE_NAME = @"Global\UniGetUI.gsudo.CredentialsCache";
+        const string GLOBAL_WAIT_HANDLE_NAME = @"Global\gsudo.CredentialsCache";
 
         public delegate void CacheEventHandler();
         public event CacheEventHandler OnCacheClear;

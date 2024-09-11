@@ -414,19 +414,7 @@ namespace gsudo.Native
         #endregion
 
         [DllImport("Advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        internal static extern bool ConvertStringSecurityDescriptorToSecurityDescriptor(
-            string StringSecurityDescriptor, 
-            uint StringSDRevision, 
-            out IntPtr SecurityDescriptor, 
-            out UIntPtr SecurityDescriptorSize);
+        internal static extern bool ConvertStringSecurityDescriptorToSecurityDescriptor(string StringSecurityDescriptor, uint StringSDRevision, out IntPtr SecurityDescriptor, out UIntPtr SecurityDescriptorSize);
 
-        // Additional imports for DACL manipulation
-        [DllImport("advapi32.dll", SetLastError = true)]
-        internal static extern bool ConvertSecurityDescriptorToStringSecurityDescriptor(
-            IntPtr SecurityDescriptor,
-            uint StringSDRevision,
-            SECURITY_INFORMATION SecurityInformation,
-            out IntPtr StringSecurityDescriptor,
-            out uint StringSecurityDescriptorLen);
     }
 }
