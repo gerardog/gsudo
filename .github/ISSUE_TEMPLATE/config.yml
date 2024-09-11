@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:  
-  - name: Issues on marticliment/UniGetUI
+  - name: All issues should be on marticliment/UniGetUI
     url: https://github.com/marticliment/UniGetUI/issues/new/choose
     about: Issues on this repo will be ignored. Please post them on the UniGetUI Repo
