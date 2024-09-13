@@ -18,7 +18,7 @@ namespace gsudo.AppSettings
 
     abstract class RegistrySetting
     {
-        protected const string REGKEY = "SOFTWARE\\gsudo";
+        protected const string REGKEY = "SOFTWARE\\unigetui-gsudo";
         public RegistrySettingScope Scope { get; protected set; }
 
         public string Name { get; set; }
