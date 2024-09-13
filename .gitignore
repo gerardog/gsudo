@@ -332,3 +332,4 @@ ASALocalRun/
 .mfractor/
 *.bak
 src/global.json
+output/*
