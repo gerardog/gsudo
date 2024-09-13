@@ -212,10 +212,12 @@ namespace gsudo.Helpers
                 };
 
             if (arg.In("config"))
-                return new ConfigCommand() { key = args.FirstOrDefault(), value = args.Skip(1) };
+                return new HelpCommand();
+                //return new ConfigCommand() { key = args.FirstOrDefault(), value = args.Skip(1) };
 
             if (arg.In("status"))
-            {
+                return new HelpCommand();
+            /*{
                 var cmd = new StatusCommand();
 
                 while (args.Count>0)
@@ -231,7 +233,7 @@ namespace gsudo.Helpers
                 };
 
                 return cmd;
-            }
+            }*/
 
             if (arg.In("cache"))
             {

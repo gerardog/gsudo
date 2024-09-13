@@ -17,7 +17,7 @@ namespace gsudo.Commands
         {
             var assembly = Assembly.GetExecutingAssembly();
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine($"{assembly.GetName().Name} v{GitVersionInformation.FullSemVer} ({GitVersionInformation.FullBuildMetaData})");
+            Console.WriteLine($"{assembly.GetName().Name}");
 
             Console.ResetColor();
             if (verbose) Console.WriteLine("Copyright(c) 2019-2022 Gerardo Grignoli and GitHub contributors");
@@ -34,12 +34,8 @@ namespace gsudo.Commands
 
             Console.WriteLine(@"
 Usage:
- gsudo [options]\t\t\tElevates your current shell
  gsudo [options] {command} [args]\tRuns {command} with elevated permissions
  gsudo cache [on | off | help] \t\tStarts/Stops an elevated cache session. (reduced UAC popups)
- gsudo status [--json]\t\t\tShows current user, cache and console status. 
- gsudo status {key} [--no-output]\tShows status filtered by json {key}. Boolean keys also returned as exit codes.
- gsudo !!\t\t\t\tRe-run last command as admin. (YMMV)
 
 New Window options:
  -n | --new             Starts the command in a new console (and returns immediately).
@@ -63,17 +59,6 @@ Other options:
  --debug                Enable debug mode.
  --copyns               Connect network drives to the elevated user. Warning: Interactive asks for credentials
  --copyev               (deprecated) Copy all environment variables to the elevated process.
-
-Configuration:
- gsudo config\t\t\t\tShow current config settings & values.
- gsudo config {key} [--global] [value] \tRead or write a user setting
- gsudo config {key} [--global] --reset \tReset config to default value
- --global\t\t\t\tAffects all users (overrides user settings)
-
-From PowerShell: 
- gsudo [options] [--loadProfile] { ScriptBlock } [-args $argument1 [..., $argumentN]]
-    { ScriptBlock }\tMust be wrapped in { curly brackets }
-    --loadProfile\tWhen elevating PowerShell commands, load user profile.
 
 Learn more about security considerations of using gsudo at: https://gerardog.github.io/gsudo/docs/security
 "
