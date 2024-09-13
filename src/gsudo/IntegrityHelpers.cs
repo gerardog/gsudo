@@ -44,7 +44,7 @@ namespace gsudo
             if (!CheckProcessName())
             {
                 Logger.Instance.Log("W_UNRECOGNIZED_ASSEMBLY_NAME", LogLevel.Warning);
-                //return false;
+                return false;
             }
             
             // We don't want the parent process name to be different from UniGetUI
@@ -53,7 +53,7 @@ namespace gsudo
             if (!CheckParentProcessName())
             {
                 Logger.Instance.Log("W_UNRECOGNIZED_PARENT_ASSEMBLY_NAME", LogLevel.Warning);
-                //return false;
+                return false;
             }
 
             // Since the check above is easily circumventable, let's check if the caller signature is
