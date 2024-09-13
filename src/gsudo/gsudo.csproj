@@ -12,13 +12,11 @@
     <PackageProjectUrl>https://github.com/marticliment/gsudo-for-UniGetUI</PackageProjectUrl>
     <RepositoryUrl>https://github.com/marticliment/gsudo-for-UniGetUI</RepositoryUrl>
     <ApplicationIcon>icon.ico</ApplicationIcon>
-	
     
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <NoWarn>1701;1702;CA1303;CA1707;CA1028;CA1001;CA1031;CA1416</NoWarn>
     <OutputPath>bin\</OutputPath>
-	
     
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>

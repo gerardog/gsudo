@@ -15,17 +15,12 @@ namespace gsudo
         private static readonly string[] RECOGNIZED_PARENT_FILE_NAMES = new[]
         {
             "UniGetUI",
-#if DEBUG
-            "cmd",
-#endif            
+            "WingetUI",
         };
         
         private static readonly string[] RECOGNIZED_PARENT_SUBJECTS = new[]
         {
             "CN=Marti Climent, O=Marti Climent, L=Barcelona, C=ES",
-#if DEBUG
-            "command-prompt", // Command Prompt signature
-#endif            
         };
         
         
