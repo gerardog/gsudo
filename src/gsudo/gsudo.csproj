@@ -1,47 +1,53 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-	<TargetFrameworks>net7.0;net48</TargetFrameworks>
-    <SignAssembly>false</SignAssembly>
-    <AssemblyOriginatorKeyFile>StrongName.snk</AssemblyOriginatorKeyFile>
-    <Authors>Gerardo Grignoli</Authors>
-    <Description>gsudo is a sudo for Windows, allows to run commands with elevated permissions in the current console.</Description>
-    <DelaySign>false</DelaySign>
-    <OutputPath>bin\</OutputPath>
-    <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
-    <Version>1.0.0-prerelease</Version>
-    <Copyright>2021 Gerardo Grignoli</Copyright>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/gerardog/gsudo</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/gerardog/gsudo</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <PackageTags>sudo for windows</PackageTags>
-    <AssemblyName>UniGetUI Elevator</AssemblyName>
-    <Deterministic>true</Deterministic>
-    <PathMap>$(MSBuildProjectDirectory)=C:\</PathMap>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
-	<NoWarn>1701;1702;CA1303;CA1707;CA1028;CA1001;CA1031;CA1416</NoWarn>
-	<ApplicationIcon>icon.ico</ApplicationIcon>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetFramework)'=='net7.0'">
+    <Version>1.0.0.0</Version>
+    <Deterministic>true</Deterministic>
+    <AssemblyName>UniGetUI Elevator</AssemblyName>
+    <Authors>Gerardo Grignoli, Martí Climent</Authors>
+    <Description>A tweaked version of GSudo designed to be used by UniGetUI</Description>
+    <Copyright>2021 Gerardo Grignoli for GSudo, 2024 Martí Climent for the modifications</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/marticliment/gsudo-for-UniGetUI</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/marticliment/gsudo-for-UniGetUI</RepositoryUrl>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+	
+    
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <NoWarn>1701;1702;CA1303;CA1707;CA1028;CA1001;CA1031;CA1416</NoWarn>
+    <OutputPath>bin\</OutputPath>
+	
+    
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <SdkVersion>8.0.401</SdkVersion>
+    <SelfContained>false</SelfContained>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishAot>true</PublishAot>
+    
     <AutoGenerateBindingRedirects>False</AutoGenerateBindingRedirects>
-	<PublishTrimmed>true</PublishTrimmed>
-	<InvariantGlobalization>true</InvariantGlobalization> 
-	<IlcOptimizationPreference>Size</IlcOptimizationPreference>
+    <PublishTrimmed>true</PublishTrimmed>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <IlcOptimizationPreference>Size</IlcOptimizationPreference>
+    
+    
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>DEBUG</DefineConstants>
-    <DebugType>pdbonly</DebugType>
-    <DebugSymbols>true</DebugSymbols>    
-  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Security.Extensions" Version="1.3.0" />
+    <PackageReference Include="System.Security.Principal.Windows" Version="5.0.0" />
+    <PackageReference Include="System.Threading.AccessControl" Version="6.0.0" />
+  </ItemGroup>
+    
   <ItemGroup>
     <Compile Remove="bin\**" />
     <EmbeddedResource Remove="bin\**" />
     <None Remove="bin\**" />
   </ItemGroup>
+  
   <ItemGroup>
     <PackageReference Include="GitVersion.MsBuild" Version="5.6.11">
       <PrivateAssets>all</PrivateAssets>
@@ -52,24 +58,5 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)'=='net7.0'">
-    <PackageReference Include="Microsoft.Security.Extensions" Version="1.3.0" />
-    <PackageReference Include="System.Security.Principal.Windows" Version="5.0.0" />
-    <PackageReference Include="System.Threading.AccessControl" Version="6.0.0" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)'=='net48'">
-    <PackageReference Include="Microsoft.Security.Extensions" Version="1.3.0" />
-	<PackageReference Include="System.Security.Principal.Windows" Version="4.6.0" />
-  </ItemGroup>
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="IF NOT DEFINED nokill echo Killing running gsudo commands.&#xD;&#xA;IF NOT DEFINED nokill gsudo -k 2&gt;nul&#xD;&#xA;IF NOT DEFINED nokill %25windir%25\sysnative\tskill gsudo&#xD;&#xA;exit 0" />
-  </Target>
-  <Target Name="PostBuildMacros">
-    <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
-      <Output TaskParameter="Assemblies" ItemName="Targets" />
-    </GetAssemblyIdentity>
-    <ItemGroup>
-      <VersionNumber Include="$([System.Text.RegularExpressions.Regex]::Replace(&quot;%(Targets.Version)&quot;, &quot;^(.*?)(\.0)*$&quot;, &quot;$1&quot;))" />
-    </ItemGroup>
-  </Target>
+
 </Project>
