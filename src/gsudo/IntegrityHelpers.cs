@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using gsudo.Helpers;
-
+using Microsoft.Security.Extensions;
 namespace gsudo
 {
     public static class IntegrityHelpers
@@ -20,11 +20,11 @@ namespace gsudo
 #endif            
         };
         
-        private static readonly string[] RECOGNIZED_PARENT_SIGNATURES = new[]
+        private static readonly string[] RECOGNIZED_PARENT_SUBJECTS = new[]
         {
-            "unigetui-certificate-signature",
+            "CN=Marti Climent, O=Marti Climent, L=Barcelona, C=ES",
 #if DEBUG
-            "D8FB0CC66A08061B42D46D03546F0D42CBC49B7C", // Command Prompt signature
+            "command-prompt", // Command Prompt signature
 #endif            
         };
         
@@ -44,7 +44,7 @@ namespace gsudo
             if (!CheckProcessName())
             {
                 Logger.Instance.Log("W_UNRECOGNIZED_ASSEMBLY_NAME", LogLevel.Warning);
-                return false;
+                //return false;
             }
             
             // We don't want the parent process name to be different from UniGetUI
@@ -53,7 +53,7 @@ namespace gsudo
             if (!CheckParentProcessName())
             {
                 Logger.Instance.Log("W_UNRECOGNIZED_PARENT_ASSEMBLY_NAME", LogLevel.Warning);
-                return false;
+                //return false;
             }
 
             // Since the check above is easily circumventable, let's check if the caller signature is
@@ -103,30 +103,21 @@ namespace gsudo
                 Logger.Instance.Log("W_NULL_PARENT_PROCESS", LogLevel.Warning);
                 return false;
             }
-            
-            Process p = new Process()
+
+            using (FileStream fs = File.OpenRead(parentProcess.GetExeName()))
             {
-                StartInfo = new ProcessStartInfo()
+                FileSignatureInfo sigInfo = FileSignatureInfo.GetFromFileStream(fs);
+                if (sigInfo.State != SignatureState.SignedAndTrusted)
                 {
-                    FileName = Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.Windows),
-                        "System32\\windowspowershell\\v1.0\\powershell.exe"
-                    ),
-                    Arguments = "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass " +
-                                $"-Command \"echo (Get-AuthenticodeSignature -FilePath '{parentProcess.GetExeName()}').SignerCertificate.Thumbprint\"",
-                    RedirectStandardOutput = true,
-                    StandardOutputEncoding = Encoding.UTF8,
-                    UseShellExecute = false
-                },
-            };
-            p.Start();
-
-            string THUMBPRINT = p.StandardOutput.ReadToEnd().Trim();
-
-            if (!RECOGNIZED_PARENT_SIGNATURES.Contains(THUMBPRINT))
-            {
-                Logger.Instance.Log($"Thumbprint {THUMBPRINT} is not recognized", LogLevel.Error);
-                return false;
+                    Logger.Instance.Log($"Parent process signature is not SignedAndTrusted: {sigInfo.State}", LogLevel.Error);
+                    return false;
+                }
+                
+                if (!RECOGNIZED_PARENT_SUBJECTS.Contains(sigInfo.SigningCertificate.Subject))
+                {
+                    Logger.Instance.Log($"Subject {sigInfo.SigningCertificate.Subject} is not recognized", LogLevel.Error);
+                    return false;
+                }
             }
             
             return true;
