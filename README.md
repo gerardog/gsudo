@@ -2,4 +2,4 @@
 
 This project is a modified version of [gerardog/gsudo](https://github.com/gerardog/gsudo) so it can only be executed by UniGetUI.
 
-This modified version will quit unless the parent process is signed and its signature thumbprint is whitelisted in code. Therefore, when a UAC prompt is shown, it can be guaranteed that the process was launched by a trusted executable.
+This modified version will only work if the parent process is verified through a valid, recognized file signature.
