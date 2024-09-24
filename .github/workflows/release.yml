@@ -138,7 +138,7 @@ jobs:
         name: Binaries
         path: ./artifacts
     - name: WinGet Releaser
-      uses: vedantmgoyal2009/winget-releaser@v2
+      uses: vedantmgoyal9/winget-releaser@main
       if: ${{ env.is_prerelease == 0 }}
       with: 
         token: ${{ secrets.WINGET_RELEASER_TOKEN }}
