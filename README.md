@@ -16,3 +16,8 @@ Furthermore, the elevator process will check the following before launching a UA
    -   Parent process digital signature subject (Only executables signed by me should allow the elevator to launch)
 
 Should one of this fields fail verification, the execution will be immediately aborted, and no UAC prompt will be shown.
+
+## User experience (GSudo <-- --> UniGetUI Elevator)
+
+![image](https://github.com/user-attachments/assets/0fc29449-bb74-4f0d-85de-262fc3c58609)
+![image](https://github.com/user-attachments/assets/5903f38c-f237-444c-a8e4-29cf8bfbd6ae)
