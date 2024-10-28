@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using gsudo.Helpers;
 using Microsoft.Security.Extensions;
@@ -20,7 +21,7 @@ namespace gsudo
         
         private static readonly string[] RECOGNIZED_PARENT_SUBJECTS = new[]
         {
-            "CN=Marti Climent, O=Marti Climent, L=Barcelona, C=ES",
+            "CN=Marti Climent Lopez, O=Marti Climent Lopez, L=Barcelona, S=Barcelona, C=ES"
         };
         
         
@@ -39,6 +40,26 @@ namespace gsudo
             if (!CheckProcessName())
             {
                 Logger.Instance.Log("W_UNRECOGNIZED_ASSEMBLY_NAME", LogLevel.Warning);
+                return false;
+            }
+
+            var currentDirectory = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule?.FileName);
+            var helperDll = Path.Join(currentDirectory, "getfilesiginforedist.dll");
+            if (!File.Exists(helperDll))
+            {
+                Logger.Instance.Log("W_HELPER_DLL_NOT_FOUND", LogLevel.Warning);
+                return false;
+            }
+
+            byte[] fileHash;
+            using (var sha256 = SHA256.Create())
+                using (var stream = File.OpenRead(helperDll))
+                    fileHash = sha256.ComputeHash(stream);
+
+            string fileHashString = BitConverter.ToString(fileHash).Replace("-", "").ToLowerInvariant();
+            if (fileHashString != "8ef9bdc46fbd185c0c0ee13cb39a8806e70991281993182d737d011f731526b9")
+            {
+                Logger.Instance.Log("W_HELPER_DLL_HASH_MISMATCH", LogLevel.Warning);
                 return false;
             }
             

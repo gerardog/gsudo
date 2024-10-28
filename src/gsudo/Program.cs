@@ -10,7 +10,6 @@ namespace gsudo
         async static Task<int> Main()
         {
             SymbolicLinkSupport.EnableAssemblyLoadFix();
-
             return await Start().ConfigureAwait(false);
         }
 
