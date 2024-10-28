@@ -1,5 +1,18 @@
 # A modified GSudo build for UniGetUI
 
-This project is a modified version of [gerardog/gsudo](https://github.com/gerardog/gsudo) so it can only be executed by UniGetUI.
+This project is a modified version of [gerardog/gsudo](https://github.com/gerardog/gsudo) so it can only be executed by a digitally-signed UniGetUI process.
 
-This modified version will only work if the parent process is verified through a valid, recognized file signature.
+> [!WARNING]  
+> Should you have security concerns or improvement ideas for/about `UniGetUI Elevator`, please let me know by opening an issue or contacting me directly via [this form](https://marticliment.com/contact/).
+
+
+## What this change means:
+The UAC prompts shown to the user will have the UniGetUI name and icon, instead of the generic gsudo.
+
+Furthermore, the elevator process will check the following before launching a UAC prompt, ensuring that an `UniGetUI Elevator` UAC prompt can only be spawned from UniGetUI.
+   -   Own process name (Prevent from executing disguised as another executable via renaming)
+   -   Parent process name (Allow only process with certain whitelisted names to execute the elevator)
+   -   Parent process digital signature vailidity (the signature must be trusted by the system)
+   -   Parent process digital signature subject (Only executables signed by me should allow the elevator to launch)
+
+Should one of this fields fail verification, the execution will be immediately aborted, and no UAC prompt will be shown.
