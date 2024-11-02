@@ -66,7 +66,7 @@ namespace gsudo.Commands
                     commandToRun.AddRange(new[]
                         {"--loglevel", Settings.LogLevel.ToString() ,"cache", "on", "--pid", AllowedPid.ToString(), "--duration", Settings.TimeSpanWithInfiniteToString(CacheDuration ?? Settings.CacheDuration)});
 
-                    // InputArguments.Wait = true;
+                    InputArguments.Wait = true;
                     InputArguments.Direct = true;
                     return await new RunCommand(commandToRun)
                         .Execute().ConfigureAwait(false);

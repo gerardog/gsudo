@@ -6,21 +6,21 @@ namespace gsudo
     public static class InputArguments
     {
         // Show debug info
-        public const bool Debug = false;
+        public static bool Debug { get; internal set; }
 
         // Open in new window
-        public const bool NewWindow = false;
+        public static bool NewWindow { get; internal set; }
         
         // When elevating a command, keep the elevated shell open afterwards.
-        public const bool KeepShellOpen = false;
-        public const bool KeepWindowOpen = false;
-        public const bool CloseNewWindow = true;
+        public static bool KeepShellOpen { get; internal set; }
+        public static bool KeepWindowOpen { get; internal set; }
+        public static bool CloseNewWindow { get; internal set; }
 
         // Wait for new process to end
-        public const bool Wait = true;
+        public static bool Wait { get; internal set; }
 
         // In `gsudo --global config Key Value` --global means save as machine setting. 
-        public const bool Global = false;
+        public static bool Global { get; internal set; }
 
         // Kill credentials cache after running.
         public static bool KillCache { get; internal set; }
@@ -29,38 +29,40 @@ namespace gsudo
         public static bool Direct { get; internal set; }
 
         // Target Integrity Level
-        public const IntegrityLevel IntegrityLevel = gsudo.IntegrityLevel.High;
+        public static IntegrityLevel? IntegrityLevel { get; internal set; }
 
         // Elevate as "NT Authority\System" 
-        public const bool RunAsSystem = false;
+        public static bool RunAsSystem { get; internal set; }
 
         // Elevate as "NT Authority\System" but member of "NT SERVICE\TrustedInstaller" group (run whoami /groups)
-        public const bool TrustedInstaller = false;
+        public static bool TrustedInstaller { get; internal set; }
 
         // User to Impersonate
-        public const string UserName = null;
+        public static string UserName { get; private set; }
         // SID of User to Impersonate
-        public const string UserSid = null;
+        public static string UserSid { get; private set; }
 
-        public static IntegrityLevel GetIntegrityLevel() => IntegrityLevel;
+        public static IntegrityLevel GetIntegrityLevel() => (RunAsSystem ? gsudo.IntegrityLevel.System : IntegrityLevel ?? gsudo.IntegrityLevel.High);
 
         internal static void Clear() // added for tests repeatability
         {
-            // Wait = false;
-            // RunAsSystem = false;
-            // Global = false;
+            Debug = false;
+            NewWindow = false;
+            Wait = false;
+            RunAsSystem = false; 
+            Global = false;
             KillCache = false;
             Direct = false; 
-            // TrustedInstaller = false;
-            // IntegrityLevel = null;
-            // UserName = null;
-            // UserSid = null;
+            TrustedInstaller = false;
+            IntegrityLevel = null;
+            UserName = null;
+            UserSid = null;
         }
 
         internal static void SetUserName(string username)
         {
-            // UserName = LoginHelper.ValidateUserName(username);
-            // UserSid = LoginHelper.GetSidFromUserName(UserName);
+            UserName = LoginHelper.ValidateUserName(username);
+            UserSid = LoginHelper.GetSidFromUserName(UserName);
         }
     }
 }
