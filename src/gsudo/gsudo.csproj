@@ -30,7 +30,8 @@
     <PublishTrimmed>true</PublishTrimmed>
     <InvariantGlobalization>true</InvariantGlobalization>
     <IlcOptimizationPreference>Size</IlcOptimizationPreference>
-    
+
+    <DefineConstants>$(IntegrityOption)</DefineConstants>
     
   </PropertyGroup>
   
