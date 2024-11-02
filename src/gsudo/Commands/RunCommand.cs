@@ -25,11 +25,11 @@ namespace gsudo.Commands
 
         public async Task<int> Execute()
         {
-            if (InputArguments.IntegrityLevel == IntegrityLevel.System && !InputArguments.RunAsSystem)
+            /*if (InputArguments.IntegrityLevel == IntegrityLevel.System && !InputArguments.RunAsSystem)
             {
                 Logger.Instance.Log($"Elevating as System because of IntegrityLevel=System parameter.", LogLevel.Warning);
                 InputArguments.RunAsSystem = true;
-            }
+            }*/
 
             string originalWindowTitle = Console.Title;
             try
@@ -123,11 +123,11 @@ namespace gsudo.Commands
                 if (serviceLocation==null)
                     throw new ApplicationException("Unable to connect to the elevated service.");
 
-                if (!InputArguments.IntegrityLevel.HasValue)
+                /*if (!InputArguments.IntegrityLevel.HasValue)
                 {
                     // This is the edge case where user does `gsudo -u SomeOne` and we dont know if SomeOne can elevate or not.
                     elevationRequest.IntegrityLevel = serviceLocation.IsHighIntegrity ? IntegrityLevel.High : IntegrityLevel.Medium;
-                }
+                }*/
 
                 connection = await ServiceHelper.Connect(serviceLocation).ConfigureAwait(false);
                 if (connection == null) // service is not running or listening.

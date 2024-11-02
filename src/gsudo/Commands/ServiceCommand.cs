@@ -38,17 +38,10 @@ namespace gsudo.Commands
         {
             // service mode
             if (LogLvl.HasValue) Settings.LogLevel.Value = LogLvl.Value;
-            if (!SecurityHelper.IsMemberOfLocalAdmins()) InputArguments.IntegrityLevel = IntegrityLevel.Medium;
+            // if (!SecurityHelper.IsMemberOfLocalAdmins()) InputArguments.IntegrityLevel = IntegrityLevel.Medium;
 
             Console.Title = "gsudo Service";
-
-            Commands.HelpCommand.ShowVersion();
             Console.WriteLine();
-            if (InputArguments.Debug)
-            {
-                await new StatusCommand().Execute().ConfigureAwait(false);
-                Console.WriteLine();
-            }
 
             /*
             if ((InputArguments.TrustedInstaller && !System.Security.Principal.WindowsIdentity.GetCurrent().Claims.Any(c => c.Value == Constants.TI_SID))
