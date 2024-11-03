@@ -116,33 +116,33 @@ namespace gsudo.Helpers
             }
             else if (IsOptionMatchWithArgument(argWord, "i", "--integrity", out optionArg))
             {
-                InputArguments.IntegrityLevel = ExtensionMethods.ParseEnum<IntegrityLevel>(optionArg);
+                // InputArguments.IntegrityLevel = ExtensionMethods.ParseEnum<IntegrityLevel>(optionArg);
                 skipRemainingChars = true;
             }
             else if (IsOptionMatchWithArgument(argWord, "u", "--user", out optionArg))
             {
-                InputArguments.SetUserName(optionArg);
+                // InputArguments.SetUserName(optionArg);
                 skipRemainingChars = true;
             }
             else if (match("n", "--new")) { InputArguments.NewWindow = true; }
             else if (match("w", "--wait")) { InputArguments.Wait = true; }
 
-            else if (match(null, "--keepshell")) { InputArguments.KeepShellOpen = true; InputArguments.KeepWindowOpen = false; }
-            else if (match(null, "--keepwindow")) { InputArguments.KeepWindowOpen = true; InputArguments.KeepShellOpen = false; }
-            else if (match(null, "--close")) { InputArguments.CloseNewWindow = true; InputArguments.KeepWindowOpen = false; InputArguments.KeepShellOpen = false; }
+            // else if (match(null, "--keepshell")) { InputArguments.KeepShellOpen = true; InputArguments.KeepWindowOpen = false; }
+            // else if (match(null, "--keepwindow")) { InputArguments.KeepWindowOpen = true; InputArguments.KeepShellOpen = false; }
+            // else if (match(null, "--close")) { InputArguments.CloseNewWindow = true; InputArguments.KeepWindowOpen = false; InputArguments.KeepShellOpen = false; }
 
-            else if (match("s", "--system")) { InputArguments.RunAsSystem = true; }
-            else if (match("d", "--direct")) { InputArguments.Direct = true; }
+            // else if (match("s", "--system")) { InputArguments.RunAsSystem = true; }
+            // else if (match("d", "--direct")) { InputArguments.Direct = true; }
             else if (match("k", "--reset-timestamp")) { InputArguments.KillCache = true; }
-            else if (match(null, "--global")) { InputArguments.Global = true; }
-            else if (match(null, "--ti")) { InputArguments.TrustedInstaller = InputArguments.RunAsSystem = true; }
+            // else if (match(null, "--global")) { InputArguments.Global = true; }
+            // else if (match(null, "--ti")) { InputArguments.TrustedInstaller = InputArguments.RunAsSystem = true; }
             else if (match(null, "--loadProfile")) { Settings.PowerShellLoadProfile.Value = true; }
-            else if (match(null, "--piped")) { Settings.ForcePipedConsole.Value = true; }
-            else if (match(null, "--attached")) { Settings.ForceAttachedConsole.Value = true; }
-            else if (match(null, "--vt")) { Settings.ForceVTConsole.Value = true; }
-            else if (match(null, "--copyEV")) { Settings.CopyEnvironmentVariables.Value = true; }
-            else if (match(null, "--copyNS")) { Settings.CopyNetworkShares.Value = true; }
-            else if (match(null, "--debug")) { Settings.LogLevel.Value = LogLevel.All; InputArguments.Debug = true; }
+            // else if (match(null, "--piped")) { Settings.ForcePipedConsole.Value = true; }
+            // else if (match(null, "--attached")) { Settings.ForceAttachedConsole.Value = true; }
+            // else if (match(null, "--vt")) { Settings.ForceVTConsole.Value = true; }
+            // else if (match(null, "--copyEV")) { Settings.CopyEnvironmentVariables.Value = true; }
+            // else if (match(null, "--copyNS")) { Settings.CopyNetworkShares.Value = true; }
+            else if (match(null, "--debug")) { Settings.LogLevel.Value = LogLevel.All; /*InputArguments.Debug = true;*/ }
             else if (match("v", "--version")) { return new ShowVersionHelpCommand(); }
             else if (match("h", "--help")) return new HelpCommand();
             else if (argWord.StartsWith("-", StringComparison.Ordinal))

@@ -25,11 +25,11 @@ namespace gsudo.Commands
 
         public async Task<int> Execute()
         {
-            if (InputArguments.IntegrityLevel == IntegrityLevel.System && !InputArguments.RunAsSystem)
+            /*if (InputArguments.IntegrityLevel == IntegrityLevel.System && !InputArguments.RunAsSystem)
             {
                 Logger.Instance.Log($"Elevating as System because of IntegrityLevel=System parameter.", LogLevel.Warning);
                 InputArguments.RunAsSystem = true;
-            }
+            }*/
 
             string originalWindowTitle = Console.Title;
             try
@@ -63,7 +63,7 @@ namespace gsudo.Commands
                     Wait = (!commandBuilder.IsWindowsApp && !InputArguments.NewWindow) || InputArguments.Wait,
                     Mode = elevationMode,
                     ConsoleProcessId = Process.GetCurrentProcess().Id,
-                    IntegrityLevel = InputArguments.GetIntegrityLevel(),
+                    IntegrityLevel = InputArguments.IntegrityLevel,
                     ConsoleWidth = consoleWidth,
                     ConsoleHeight = consoleHeight,
                     IsInputRedirected = Console.IsInputRedirected
@@ -123,7 +123,7 @@ namespace gsudo.Commands
                 if (serviceLocation==null)
                     throw new ApplicationException("Unable to connect to the elevated service.");
 
-                if (!InputArguments.IntegrityLevel.HasValue)
+                if (false)
                 {
                     // This is the edge case where user does `gsudo -u SomeOne` and we dont know if SomeOne can elevate or not.
                     elevationRequest.IntegrityLevel = serviceLocation.IsHighIntegrity ? IntegrityLevel.High : IntegrityLevel.Medium;
@@ -152,7 +152,7 @@ namespace gsudo.Commands
 
         private static int RunWithoutService(ElevationRequest elevationRequest)
         {
-            var sameIntegrity = (int)InputArguments.GetIntegrityLevel() == SecurityHelper.GetCurrentIntegrityLevel();
+            var sameIntegrity = (int)InputArguments.IntegrityLevel == SecurityHelper.GetCurrentIntegrityLevel();
             // No need to escalate. Run in-process
             Native.ConsoleApi.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, true);
 
@@ -190,7 +190,7 @@ namespace gsudo.Commands
                 if (elevationRequest.IntegrityLevel < IntegrityLevel.High && !elevationRequest.NewWindow)
                     RemoveAdminPrefixFromConsoleTitle();
 
-                var p = ProcessFactory.StartAttachedWithIntegrity(InputArguments.GetIntegrityLevel(), elevationRequest.FileName, elevationRequest.Arguments, elevationRequest.StartFolder, InputArguments.NewWindow, !InputArguments.NewWindow);
+                var p = ProcessFactory.StartAttachedWithIntegrity(InputArguments.IntegrityLevel, elevationRequest.FileName, elevationRequest.Arguments, elevationRequest.StartFolder, InputArguments.NewWindow, !InputArguments.NewWindow);
                 if (p == null || p.IsInvalid)
                     return Constants.GSUDO_ERROR_EXITCODE;
 
@@ -209,7 +209,7 @@ namespace gsudo.Commands
         // Enforce SecurityEnforceUacIsolation
         private void AdjustUacIsolationRequest(ElevationRequest elevationRequest, bool isShellElevation)
         {
-            if ((int)(InputArguments.GetIntegrityLevel()) >= SecurityHelper.GetCurrentIntegrityLevel())
+            if ((int)(InputArguments.IntegrityLevel) >= SecurityHelper.GetCurrentIntegrityLevel())
             {
                 if (!elevationRequest.NewWindow)
                 {
@@ -239,7 +239,7 @@ namespace gsudo.Commands
             if (InputArguments.RunAsSystem && !WindowsIdentity.GetCurrent().IsSystem)
                 return false;
 
-            if ((int)InputArguments.GetIntegrityLevel() != SecurityHelper.GetCurrentIntegrityLevel())
+            if ((int)InputArguments.IntegrityLevel != SecurityHelper.GetCurrentIntegrityLevel())
                 return false;
 
             if (InputArguments.UserName != null && InputArguments.UserName != WindowsIdentity.GetCurrent().Name)
@@ -256,7 +256,7 @@ namespace gsudo.Commands
             if (InputArguments.RunAsSystem && !WindowsIdentity.GetCurrent().IsSystem)
                 return true;
 
-            var integrityLevel = InputArguments.GetIntegrityLevel();
+            var integrityLevel = InputArguments.IntegrityLevel;
 
             if (integrityLevel == IntegrityLevel.MediumRestricted)
                 return true;

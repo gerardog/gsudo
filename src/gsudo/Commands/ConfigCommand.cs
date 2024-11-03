@@ -50,11 +50,11 @@ namespace gsudo.Commands
 
             if (value != null && value.Any()) // Write Setting
             {
-                if (value.Any(v => v.In("--global")))
+                /*if (value.Any(v => v.In("--global")))
                 {
                     InputArguments.Global = true;
                     value = value.Where(v => !v.In("--global"));
-                }
+                }*/
 
                 if (value.FirstOrDefault() == "=")
                     value = value.Skip(1);
@@ -72,7 +72,7 @@ namespace gsudo.Commands
                 if (!InputArguments.Global && setting.Scope == RegistrySettingScope.GlobalOnly)
                 {
                     Logger.Instance.Log($"Config Setting for '{setting.Name}' will be set as global system setting.", LogLevel.Info);
-                    InputArguments.Global = true;
+                    // InputArguments.Global = true;
                 }
 
                 if (InputArguments.Global && !SecurityHelper.IsAdministrator())

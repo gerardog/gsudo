@@ -4,6 +4,12 @@ pushd src\gsudo
 rmdir /q /s bin
 dotnet clean
 dotnet build --nologo -c Debug -p:IntegrityOption=DISABLE_INTEGRITY
+
+if %errorlevel% neq 0 (
+    echo Build failed.
+    pause
+    goto end
+)
 popd
 
 set ELEVATOREXE="%cd%\src\gsudo\bin\net8.0\win-x64\UniGetUI Elevator.exe" >nul 2>&1
@@ -70,11 +76,10 @@ echo Testing cache for other processes. This will test that cache cannot be shar
 echo but that killing cache does affect ALL cache instances. You should see 
 echo  - ONE non-elevated print
 echo  - ONE uac prompt
-echo  - ONE elevated prints
-echo You will then be asked to run the following command on a different command prompt:
-echo %ELEVATOREXE% %ELEVATIONTEST%
-echo %ELEVATOREXE% -k
-echo You should see a UAC prompt followed by an elevated print. When finished, return here and press enter. Then, you should see
+echo  - ONE elevated print
+echo FIRST EXTERNAL COMMAND EXECUTION, with ONE uac
+echo  - NO uac prompt
+echo SECOND EXTERNAL COMMAND EXECUTION, without uac
 echo  - ONE uac prompt
 echo  - ONE elevated print
 pause
@@ -83,9 +88,15 @@ pause
 %ELEVATIONTEST%
 %ELEVATOREXE% cache on
 %ELEVATOREXE% %ELEVATIONTEST%
-echo Now run the commands below on a separate prompt
+echo Now run the command below on a separate prompt. You should see a UAC prompt
 echo %ELEVATOREXE% %ELEVATIONTEST%
+echo After pressing enter here, you should see NO UAC prompt
+pause
+%ELEVATOREXE% %ELEVATIONTEST%
+
+echo Now run the commands below on a separate prompt.
 echo %ELEVATOREXE% -k
+echo After pressing enter here, you should see ONE UAC prompt
 pause
 %ELEVATOREXE% %ELEVATIONTEST%
 %ELEVATOREXE% -k
@@ -95,3 +106,5 @@ pause
 cls
 echo The tests have concluded.
 pause
+
+:end

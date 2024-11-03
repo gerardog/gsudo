@@ -69,8 +69,8 @@ namespace gsudo.Helpers
         private static ServiceLocation FindServiceByIntegrity(int? clientPid, string user)
         {
             var anyIntegrity = InputArguments.UserName != null;
-            var tryHighIntegrity = !InputArguments.IntegrityLevel.HasValue || InputArguments.IntegrityLevel.Value >= IntegrityLevel.High;
-            var tryLowIntegrity = !InputArguments.IntegrityLevel.HasValue || InputArguments.IntegrityLevel.Value < IntegrityLevel.High;
+            var tryHighIntegrity = false || InputArguments.IntegrityLevel >= IntegrityLevel.High;
+            var tryLowIntegrity = false || InputArguments.IntegrityLevel < IntegrityLevel.High;
 
             var targetUserSid = InputArguments.RunAsSystem ? "S-1-5-18" : InputArguments.UserSid;
 
@@ -133,7 +133,7 @@ namespace gsudo.Helpers
             Logger.Instance.Log($"Caller SID: {allowedSid}", LogLevel.Debug);
 
             var @params = InputArguments.Debug ? "--debug " : string.Empty;
-            if (!InputArguments.RunAsSystem && InputArguments.IntegrityLevel.HasValue) @params += $"-i {InputArguments.IntegrityLevel.Value} ";
+            if (!InputArguments.RunAsSystem && true) @params += $"-i {InputArguments.IntegrityLevel} ";
             if (InputArguments.RunAsSystem) @params += "-s ";
             if (InputArguments.TrustedInstaller) @params += "--ti ";
             if (InputArguments.UserName != null) @params += $"-u {InputArguments.UserName} ";
@@ -174,7 +174,7 @@ namespace gsudo.Helpers
                 }
                 else
                 {
-                    if (SecurityHelper.IsMemberOfLocalAdmins() && InputArguments.GetIntegrityLevel() >= IntegrityLevel.High)
+                    if (SecurityHelper.IsMemberOfLocalAdmins() && InputArguments.IntegrityLevel >= IntegrityLevel.High)
                         ret = ProcessFactory.StartElevatedDetached(ownExe, commandLine, !InputArguments.Debug).GetSafeProcessHandle();
                     else
                         ret = ProcessFactory.StartDetached(ownExe, commandLine, null, !InputArguments.Debug).GetSafeProcessHandle();

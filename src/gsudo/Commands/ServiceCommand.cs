@@ -42,7 +42,6 @@ namespace gsudo.Commands
 
             Console.Title = "gsudo Service";
 
-            Commands.HelpCommand.ShowVersion();
             Console.WriteLine();
             if (InputArguments.Debug)
             {
