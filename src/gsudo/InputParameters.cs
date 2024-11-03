@@ -29,7 +29,8 @@ namespace gsudo
         public static bool Direct { get; internal set; }
 
         // Target Integrity Level
-        public static IntegrityLevel IntegrityLevel { get; internal set; } = gsudo.IntegrityLevel.High;
+        public const IntegrityLevel IntegrityLevel = gsudo.IntegrityLevel.High;
+        // public static IntegrityLevel IntegrityLevel { get; internal set; } = gsudo.IntegrityLevel.High;
 
         // Elevate as "NT Authority\System" 
         public const bool RunAsSystem = false;
@@ -50,7 +51,7 @@ namespace gsudo
             Wait = false;
             KillCache = false;
             Direct = false;
-            IntegrityLevel = IntegrityLevel.High;
+            // IntegrityLevel = IntegrityLevel.High;
         }
     }
 }

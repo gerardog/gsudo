@@ -125,7 +125,7 @@ namespace gsudo.Helpers
             var currentSid = WindowsIdentity.GetCurrent().User.Value;
 
             allowedPid = allowedPid ?? Process.GetCurrentProcess().GetCacheableRootProcessId();
-            allowedSid = allowedSid ?? Process.GetProcessById(allowedPid.Value)?.GetProcessUser()?.User.Value ?? currentSid;
+            allowedSid = allowedSid ?? Process.GetProcessById(allowedPid.Value)?.GetProcessUser()?.User?.Value ?? currentSid;
 
             string verb;
             SafeProcessHandle ret;

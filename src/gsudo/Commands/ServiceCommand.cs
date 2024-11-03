@@ -38,7 +38,7 @@ namespace gsudo.Commands
         {
             // service mode
             if (LogLvl.HasValue) Settings.LogLevel.Value = LogLvl.Value;
-            if (!SecurityHelper.IsMemberOfLocalAdmins()) InputArguments.IntegrityLevel = IntegrityLevel.Medium;
+            // if (!SecurityHelper.IsMemberOfLocalAdmins()) InputArguments.IntegrityLevel = IntegrityLevel.Medium;
 
             Console.Title = "gsudo Service";
 
