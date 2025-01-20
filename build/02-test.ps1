@@ -14,7 +14,7 @@ dotnet build .\src\gsudo.sln || $(exit $LASTEXITCODE)
 
 $originalPath = $env:path
 
-$env:path=(Get-Item .\src\gsudo.Tests\bin\Debug\net7.0\).FullName+";" + [String]::Join(";", (($ENV:Path).Split(";") -notlike "*gsudo*" | % {$_ -replace "\\$" }))
+$env:path=(Get-Item .\src\gsudo.Tests\bin\Debug\net8.0\).FullName+";" + [String]::Join(";", (($ENV:Path).Split(";") -notlike "*gsudo*" | % {$_ -replace "\\$" }))
 
 gsudo -k
 gsudo --debug cache on -p 0 -d 1
@@ -27,17 +27,17 @@ if ($failure) { exit 1 } # fail fast
 $script  = {
 	$ProgressPreference = "SilentlyContinue";
 	if ((Get-InstalledModule Pester -ErrorAction SilentlyContinue).Version -lt "5.0.0") { Install-Module Pester -Force -SkipPublisherCheck }
-	Import-Module Pester 
-	
+	Import-Module Pester
+
 	$configuration = New-PesterConfiguration;
 	$configuration.Run.Path = "src"
 	$configuration.TestResult.Enabled = $true
 	$configuration.TestResult.OutputPath = "TestResults_PS$($PSVersionTable.PSVersion.Major).xml"
 	$configuration.TestResult.OutputFormat = "JUnitXml"
 #	$configuration.Should.ErrorAction = 'Continue'
-#	$configuration.CodeCoverage.Enabled = $true  
-	
-    Invoke-Pester -Configuration $configuration 
+#	$configuration.CodeCoverage.Enabled = $true
+
+    Invoke-Pester -Configuration $configuration
 }
 
 gsudo --debug cache on -p 0 -d 1
