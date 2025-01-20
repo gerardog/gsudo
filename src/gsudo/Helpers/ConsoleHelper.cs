@@ -1,8 +1,10 @@
 ﻿using gsudo.Native;
 using System;
 using System.IO;
+using System.IO.Pipes;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Text;
 using static gsudo.Native.ConsoleApi;
 
 namespace gsudo.Helpers
@@ -120,6 +122,37 @@ namespace gsudo.Helpers
             } while (key != ConsoleKey.Enter);
             Console.Error.Write("\n");
             return pass;
+        }
+
+        internal static SecureString ReadPasswordFromNamedPipe(string pipeName)
+        {
+            string pipePath = @"\\.\pipe\" + pipeName;
+
+            try
+            {
+                using (var pipeClient = new NamedPipeClientStream(".", pipePath, PipeDirection.In))
+                {
+                    pipeClient.Connect();
+
+                    using (var reader = new StreamReader(pipeClient, Encoding.UTF8))
+                    {
+                        string data = reader.ReadToEnd();
+                        data = data.TrimEnd('\r', '\n');
+
+                        SecureString securePassword = new SecureString();
+                        foreach (char c in data)
+                        {
+                            securePassword.AppendChar(c);
+                        }
+
+                        return securePassword;
+                    }
+                }
+            }
+            catch (IOException)
+            {
+                return null;
+            }
         }
 
         internal static void SetPrompt(ElevationRequest elevationRequest)
