@@ -25,12 +25,16 @@
     <FileVersion>1.0.0.0</FileVersion>
 	<NoWarn>1701;1702;CA1303;CA1707;CA1028;CA1001;CA1031;CA1416</NoWarn>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetFramework)'=='net8.0'">
+  <PropertyGroup Condition="'$(Platform)' == 'x64'">
+    <PublishAot>true</PublishAot>
     <AutoGenerateBindingRedirects>False</AutoGenerateBindingRedirects>
-	<PublishTrimmed>true</PublishTrimmed>
-	<InvariantGlobalization>true</InvariantGlobalization>
-	<IlcOptimizationPreference>Size</IlcOptimizationPreference>
-  </PropertyGroup>
+    <PublishTrimmed>true</PublishTrimmed>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <IlcOptimizationPreference>Size</IlcOptimizationPreference>
+  </PropertyGroup>	  
+  <PropertyGroup Condition="'$(Platform)' == 'x86'">
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>	
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>DEBUG</DefineConstants>
     <DebugType>pdbonly</DebugType>
@@ -57,7 +61,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)'=='net8.0'">
+  <ItemGroup Condition="'$(TargetFramework)'!='net46'">
     <PackageReference Include="System.Security.Principal.Windows" Version="5.0.0" />
     <PackageReference Include="System.Threading.AccessControl" Version="6.0.0" />
   </ItemGroup>
