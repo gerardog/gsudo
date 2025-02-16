@@ -91,7 +91,7 @@ jobs:
     - name: Build
       run: ./build/01-build.ps1
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Binaries
         path: ./artifacts
