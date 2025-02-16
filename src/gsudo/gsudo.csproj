@@ -26,7 +26,7 @@
 	<NoWarn>1701;1702;CA1303;CA1707;CA1028;CA1001;CA1031;CA1416</NoWarn>
 	<ApplicationIcon>icon\gsudo.ico</ApplicationIcon>
   </PropertyGroup>
-  <PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)'=='net9.0'">
     <PublishAot>true</PublishAot>
     <AutoGenerateBindingRedirects>False</AutoGenerateBindingRedirects>
     <PublishTrimmed>true</PublishTrimmed>
