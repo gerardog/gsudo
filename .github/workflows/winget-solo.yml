@@ -14,7 +14,7 @@ jobs:
       name: release-chocolatey
     steps:
     - name: WinGet Releaser
-      uses: vedantmgoyal2009/winget-releaser@v2
+      uses: vedantmgoyal9/winget-releaser@main
       with: 
         token: ${{ secrets.WINGET_RELEASER_TOKEN }}
         identifier: gerardog.gsudo

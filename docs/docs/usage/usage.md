@@ -39,6 +39,7 @@ Other options:
  --debug               # Enable debug mode.
  --copyns              # Connect network drives to the elevated user. Warning: Verbose, interactive asks for credentials
  --copyev              # (deprecated) Copy environment variables to the elevated process. (not needed on default console mode)
+ --chdir {dir}         # Change the current directory to {dir} before running the command. 
 
 ```
 

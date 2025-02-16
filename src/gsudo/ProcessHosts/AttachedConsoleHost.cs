@@ -21,9 +21,6 @@ namespace gsudo.ProcessHosts
         {
             var exitCode = 0;
 
-            if (Settings.SecurityEnforceUacIsolation)
-                throw new Exception("Attached mode not supported when SecurityEnforceUacIsolation is set.");
-
             try
             {
                 Native.ConsoleApi.FreeConsole();
@@ -40,10 +37,10 @@ namespace gsudo.ProcessHosts
                         }
                         catch (UnauthorizedAccessException ex)
                         {
-                            throw new ApplicationException($"User \"{WindowsIdentity.GetCurrent().Name}\" can not access current directory \"{elevationRequest.StartFolder}\"");
+                            throw new ApplicationException($"User \"{WindowsIdentity.GetCurrent().Name}\" can not access directory \"{elevationRequest.StartFolder}\"");
                         }
 
-                        var process = Helpers.ProcessFactory.StartAttached(elevationRequest.FileName, elevationRequest.Arguments);
+                        var process = Helpers.ProcessFactory.StartAttached(elevationRequest.FileName, elevationRequest.Arguments, elevationRequest.DisableInput);
 
                         WaitHandle.WaitAny(new WaitHandle[] { process.GetProcessWaitHandle(), connection.DisconnectedWaitHandle });
                         if (process.HasExited)

@@ -35,7 +35,7 @@ jobs:
     - uses: actions/checkout@v2
       with: 
         fetch-depth: 0
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: Binaries
         path: ./artifacts
@@ -48,7 +48,7 @@ jobs:
     - name: Code Sign
       run: ./build/03-sign.ps1
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Binaries
         path: ./artifacts       
@@ -57,7 +57,7 @@ jobs:
     - name: Remove the pfx
       run: Remove-Item -path $env:cert_path
     - name: Upload installer artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Installer
         path: ./artifacts/*.msi
@@ -124,7 +124,7 @@ jobs:
     - uses: actions/checkout@v2
       with: 
         fetch-depth: 0
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: Binaries
         path: ./artifacts
@@ -133,12 +133,12 @@ jobs:
     - name: Build Package for Chocolatey & Upload
       run: ./build/05-release-Chocolatey.ps1
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Binaries
         path: ./artifacts
     - name: WinGet Releaser
-      uses: vedantmgoyal2009/winget-releaser@v2
+      uses: vedantmgoyal9/winget-releaser@main
       if: ${{ env.is_prerelease == 0 }}
       with: 
         token: ${{ secrets.WINGET_RELEASER_TOKEN }}
@@ -161,7 +161,7 @@ jobs:
     - uses: actions/checkout@v2
       with: 
         fetch-depth: 0
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: Binaries
         path: ./artifacts

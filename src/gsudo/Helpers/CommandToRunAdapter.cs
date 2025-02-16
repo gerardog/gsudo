@@ -403,14 +403,15 @@ namespace gsudo.Helpers
                 postCommands.Add("exit /b !errl!");
             }
 
-            bool bNetworkfolder = Environment.CurrentDirectory.StartsWith(@"\\", StringComparison.Ordinal);
+            string startupFolder = InputArguments.StartingDirectory ?? Environment.CurrentDirectory;
+            bool bNetworkfolder = startupFolder.StartsWith(@"\\", StringComparison.Ordinal);
             bool bIsCmdExe = ArgumentsHelper.UnQuote(command.First()).EndsWith("cmd.exe", StringComparison.OrdinalIgnoreCase);
 
             if (bNetworkfolder && (bIsCmdExe || mustWrap))
             {
-	            Logger.Instance.Log($"The current directory '{Environment.CurrentDirectory}' is a network folder. Mapping as a network drive.", LogLevel.Debug);
+	            Logger.Instance.Log($"The path '{startupFolder}' is a network folder. Mapping as a network drive.", LogLevel.Debug);
 	            // Prepending PUSHD command. It maps network folders magically!
-	            preCommands.Insert(0, $"pushd \"{Environment.CurrentDirectory}\"");
+	            preCommands.Insert(0, $"pushd \"{startupFolder}\"");
 	            postCommands.Add("popd");
 	            // And set current directory to local folder to avoid CMD warning message
 	            Environment.CurrentDirectory = Environment.GetEnvironmentVariable("SystemRoot");

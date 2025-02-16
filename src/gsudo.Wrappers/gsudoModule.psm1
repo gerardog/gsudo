@@ -134,7 +134,7 @@ if ($gsudoAutoComplete) {
         '--integrity'                 = $integrityOptions;
         '-i'                          = $integrityOptions;
         'cache'                       = @('on', 'off', 'help');
-        'config'                      = @('CacheMode', 'CacheDuration', 'LogLevel', 'NewWindow.Force', 'NewWindow.CloseBehaviour', 'Prompt', 'PipedPrompt', 'ForceAttachedConsole', 'ForcePipedConsole', 'ForceVTConsole', 'CopyEnvironmentVariables', 'CopyNetworkShares', 'PowerShellLoadProfile', 'SecurityEnforceUacIsolation', 'ExceptionList');		
+        'config'                      = @('--reset-all', 'CacheMode', 'CacheDuration', 'LogLevel', 'NewWindow.Force', 'NewWindow.CloseBehaviour', 'Prompt', 'PipedPrompt', 'PathPrecedence', 'ForceAttachedConsole', 'ForcePipedConsole', 'ForceVTConsole', 'CopyEnvironmentVariables', 'CopyNetworkShares', 'PowerShellLoadProfile', 'SecurityEnforceUacIsolation', 'ExceptionList');
         'cachemode'                   = @('Auto', 'Disabled', 'Explicit', '--reset');
         'loglevel'                    = @('All', 'Debug', 'Info', 'Warning', 'Error', 'None', '--reset');
         'NewWindow.CloseBehaviour'    = @('KeepShellOpen', 'PressKeyToClose', 'OsDefault', '--reset');
@@ -146,7 +146,8 @@ if ($gsudoAutoComplete) {
         'CopyNetworkShares'           = $TrueFalseReset;
         'PowerShellLoadProfile'       = $TrueFalseReset;
         'SecurityEnforceUacIsolation' = $TrueFalseReset;
-		'Status'                      = @('--json', 'CallerPid', 'UserName', 'UserSid', 'IsElevated', 'IsAdminMember', 'IntegrityLevelNumeric', 'IntegrityLevel', 'CacheMode', 'CacheAvailable', 'CacheSessionsCount', 'CacheSessions', 'IsRedirected', '--no-output')
+        'PathPrecedence'              = $TrueFalseReset;		
+		'Status'                      = @('--json', 'CallerPi 	d', 'UserName', 'UserSid', 'IsElevated', 'IsAdminMember', 'IntegrityLevelNumeric', 'IntegrityLevel', 'CacheMode', 'CacheAvailable', 'CacheSessionsCount', 'CacheSessions', 'IsRedirected', '--no-output')
         '--user'                      = @("$env:USERDOMAIN\$env:USERNAME");
         '-u'                          = @("$env:USERDOMAIN\$env:USERNAME")
     }

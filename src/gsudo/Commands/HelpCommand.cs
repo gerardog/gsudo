@@ -50,31 +50,38 @@ New Window options:
 
 Security options:
  -i | --integrity {v}   Run with integrity level: Untrusted, Low, Medium, MediumPlus, High (default), System
- -u | --user {username} Run as the specified user. Asks for password. For local admins shows UAC unless '-i Medium'
+ -u | --user {username} Run as the specified user. Asks for password. For local admins shows UAC unless '-i Medium'.
  -s | --system          Run as Local System account (NT AUTHORITY\SYSTEM).
- --ti                   Run as member of NT SERVICE\TrustedInstaller group
+ --ti                   Run as member of NT SERVICE\TrustedInstaller group.
  -k | --reset-timestamp Kills all cached credentials. The next time gsudo is run a UAC popup will be appear.
 
 Shell related options:
  -d | --direct          Skip Shell detection. Assume CMD shell or CMD {command}.
 
 Other options:
- --loglevel {val}       Set minimum log level to display: All, Debug, Info, Warning, Error, None
+ --loglevel {val}       Set minimum log level to display: All, Debug, Info, Warning, Error, None.
  --debug                Enable debug mode.
- --copyns               Connect network drives to the elevated user. Warning: Interactive asks for credentials
+ --copyns               Connect network drives to the elevated user. Warning: Interactive asks for credentials.
  --copyev               (deprecated) Copy all environment variables to the elevated process.
+ --chdir {dir}          Change the current directory to {dir} before running the command.
 
 Configuration:
- gsudo config\t\t\t\tShow current config settings & values.
- gsudo config {key} [--global] [value] \tRead or write a user setting
- gsudo config {key} [--global] --reset \tReset config to default value
- --global\t\t\t\tAffects all users (overrides user settings)
+ gsudo config\t\t\t\tShow current configuration settings & values.
+ gsudo config {key} [--global] [value] \tRead or write a configuration setting.
+ gsudo config {key} [--global] --reset \tReset a specific setting to its default value.
+ gsudo config --reset-all \t\tReset all user and global settings to their default values.
+ --global\t\t\t\tApplies to all users (overrides user-specific settings)
 
-From PowerShell: 
+ (Note: User settings are stored at HKCU\Software\gsudo and globals at HKLM\Software\gsudo)
+
+Usage from PowerShell: 
  gsudo [options] [--loadProfile] { ScriptBlock } [-args $argument1 [..., $argumentN]]
-    { ScriptBlock }\tMust be wrapped in { curly brackets }
-    --loadProfile\tWhen elevating PowerShell commands, load user profile.
-
+  { ScriptBlock }\t\tMust be wrapped in { curly brackets }
+  --loadProfile\t\tWhen elevating PowerShell commands, load user profile.
+ 
+ Example: gsudo { Write-Output ""Hello World"" } -args
+ Tip: Add `Import-Module gsudoModule` to your $PROFILE for  tab auto-complete.
+    
 Learn more about security considerations of using gsudo at: https://gerardog.github.io/gsudo/docs/security
 "
 

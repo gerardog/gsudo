@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Security;
 using System.Security.Principal;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace gsudo.Helpers
@@ -169,19 +170,39 @@ namespace gsudo.Helpers
             {
                 if (InputArguments.UserName != WindowsIdentity.GetCurrent().Name)
                 {
-                    var password = ConsoleHelper.ReadConsolePassword(InputArguments.UserName);
+                    SecureString password;
+
+                    string pipeName = Environment.GetEnvironmentVariable("GSUDO_ASKPASS_NAMED_PIPE");
+
+                    if (!string.IsNullOrEmpty(pipeName))
+                    {
+                        password = ConsoleHelper.ReadPasswordFromNamedPipe(pipeName);
+                    }
+                    else
+                    {
+                        password = ConsoleHelper.ReadConsolePassword(InputArguments.UserName);
+                    }
+
                     ret = ProcessFactory.StartWithCredentials(ownExe, commandLine, InputArguments.UserName, password).GetSafeProcessHandle();
                 }
                 else
                 {
                     if (SecurityHelper.IsMemberOfLocalAdmins() && InputArguments.GetIntegrityLevel() >= IntegrityLevel.High)
+                    {
+                        // UAC Popup doesnt always have focus, so we try to bring it to the front.
+                        UACWindowFocusHelper.StartBackgroundThreadToFocusUacWindow();
                         ret = ProcessFactory.StartElevatedDetached(ownExe, commandLine, !InputArguments.Debug).GetSafeProcessHandle();
+                    }
                     else
+                    {
                         ret = ProcessFactory.StartDetached(ownExe, commandLine, null, !InputArguments.Debug).GetSafeProcessHandle();
+                    }
                 }
             }
             else
             {
+                // UAC Popup doesnt always have focus, so we try to bring it to the front.
+                UACWindowFocusHelper.StartBackgroundThreadToFocusUacWindow();
                 ret = ProcessFactory.StartElevatedDetached(ownExe, commandLine, !InputArguments.Debug).GetSafeProcessHandle();
             }
 
