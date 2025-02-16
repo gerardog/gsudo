@@ -52,6 +52,7 @@ jobs:
       with:
         name: Binaries
         path: ./artifacts       
+        overwrite: true
     - name: Build Installer
       run: ./build/04-build-installer.ps1
     - name: Remove the pfx
