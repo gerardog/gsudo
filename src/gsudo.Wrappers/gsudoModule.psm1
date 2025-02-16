@@ -146,7 +146,8 @@ if ($gsudoAutoComplete) {
         'CopyNetworkShares'           = $TrueFalseReset;
         'PowerShellLoadProfile'       = $TrueFalseReset;
         'SecurityEnforceUacIsolation' = $TrueFalseReset;
-		'Status'                      = @('--json', 'CallerPid', 'UserName', 'UserSid', 'IsElevated', 'IsAdminMember', 'IntegrityLevelNumeric', 'IntegrityLevel', 'CacheMode', 'CacheAvailable', 'CacheSessionsCount', 'CacheSessions', 'IsRedirected', '--no-output')
+        'PathPrecedence'              = $TrueFalseReset;		
+		'Status'                      = @('--json', 'CallerPi 	d', 'UserName', 'UserSid', 'IsElevated', 'IsAdminMember', 'IntegrityLevelNumeric', 'IntegrityLevel', 'CacheMode', 'CacheAvailable', 'CacheSessionsCount', 'CacheSessions', 'IsRedirected', '--no-output')
         '--user'                      = @("$env:USERDOMAIN\$env:USERNAME");
         '-u'                          = @("$env:USERDOMAIN\$env:USERNAME")
     }
