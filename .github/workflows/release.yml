@@ -30,6 +30,10 @@ jobs:
     permissions:
       contents: write      
     steps:
+    - uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: '7.0.x'
+        include-prerelease: true
     - name: Install dependencies
       run: choco install GitVersion.Portable --version 5.6.11 --confirm --no-progress; choco install NuGet.CommandLine GitVersion.Portable wixtoolset --confirm --no-progress
     - uses: actions/checkout@v2
@@ -52,6 +56,7 @@ jobs:
       with:
         name: Binaries
         path: ./artifacts       
+        overwrite: true
     - name: Build Installer
       run: ./build/04-build-installer.ps1
     - name: Remove the pfx
