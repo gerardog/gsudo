@@ -21,6 +21,39 @@ namespace gsudo.Commands
             {
                 return new HelpCommand().Execute();
             }
+             
+            if (key.In("--reset"))
+            {
+                throw new ApplicationException("Invalid argument '--reset'. Use `gsudo config {setting} --reset` to reset a specific setting or `gsudo config --reset-all` to reset all settings to their defaults.");
+            }
+
+            if (key.In("--reset-all"))
+            {
+                if (Settings.AllKeys.Any(s => s.Value.HasGlobalValue()))
+                {
+                    if (SecurityHelper.IsAdministrator())
+                    {
+                        Logger.Instance.Log($"Resetting global-settings to default values.", LogLevel.Info);
+                        Settings.AllKeys.ToList().ForEach(key => key.Value.Reset(global: true));
+                    }
+                    else
+                    {
+                        Logger.Instance.Log($"Global system settings requires elevation. Elevating...", LogLevel.Info);
+                        InputArguments.Direct = true;
+                        return new RunCommand(commandToRun: new string[]
+                                { $"\"{ProcessHelper.GetOwnExeName()}\"", "config", "--reset-all"}
+                        ).Execute();
+                    }
+                }
+
+                if (Settings.AllKeys.Any(s => s.Value.HasLocalValue()))
+                {
+                    Logger.Instance.Log($"Resetting user-settings to default values.", LogLevel.Info);
+                    Settings.AllKeys.ToList().ForEach(key => key.Value.Reset(global: false));
+                }
+
+                return Task.FromResult(0);
+            }
 
             if (key != null && key.Contains('=', StringComparison.Ordinal))
             {
