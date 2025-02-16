@@ -7,12 +7,12 @@
 
 **gsudo** is a `sudo` equivalent for Windows, with a similar user-experience as the original Unix/Linux sudo.
 Allows you to run a command (or re-launch your current shell) with elevated permissions, in the current console window or a new one.
- 
+
 Just [prepend `gsudo`](#usage) (or the `sudo` alias) to your command and it will run elevated. For PowerShell use this [syntax](#usage-from-powershell--powershell-core): `gsudo { ScriptBlock }`
 
 One UAC popup will appear each time. You can see less popups if you enable [gsudo cache](#credentials-cache).
 
-It detects your current shell and elevates your command as native shell commands. (Supports `Cmd`, `PowerShell`, `WSL`, `git-bash`, `MinGW`, `Cygwin`, `Yori`, `Take Command`, `BusyBox` & `NuShell`.) 
+It detects your current shell and elevates your command as native shell commands. (Supports `Cmd`, `PowerShell`, `WSL`, `git-bash`, `MinGW`, `Cygwin`, `Yori`, `Take Command`, `BusyBox` & `NuShell`.)
 
 ## Table of contents
 
@@ -52,7 +52,7 @@ It detects your current shell and elevates your command as native shell commands
 - Supports being used on scripts:
   - Outputs StdOut/StdErr can be piped or captured (e.g. `gsudo dir | findstr /c:"bytes free" > FreeSpace.txt`) and exit codes too (`%errorlevel%`). If `gsudo` fails to elevate, the exit code will be 999.
   - If `gsudo` is invoked from an already elevated console, it will just run the command (it won't fail). So, you don't have to worry if you run `gsudo` or a script that uses `gsudo` from an already elevated console. (The UAC popup will not appear, as no elevation is required)
-  
+
 - `gsudo !!` elevates the last executed command. Works on CMD, Git-Bash, MinGW, Cygwin (and PowerShell with [gsudo module](#gsudomodule) only)
 
 ## Installation
@@ -64,11 +64,11 @@ It detects your current shell and elevates your command as native shell commands
   ``` PowerShell
   PowerShell -Command "Set-ExecutionPolicy RemoteSigned -scope Process; [Net.ServicePointManager]::SecurityProtocol = 'Tls12'; iwr -useb https://raw.githubusercontent.com/gerardog/gsudo/master/installgsudo.ps1 | iex"
   ```
-- Portable: 
+- Portable:
   1. Download `gsudo.portable.zip` from the [latest release](https://github.com/gerardog/gsudo/releases/latest)
   2. Extract the folder corresponding to your processor architecture (x64, x86, or arm64) from the zip file to a suitable directory on your computer.
   3. Optionally, add that directory to your system's PATH environment variable if it's not already accessible.
-  
+
 **Please restart all your console windows** after installing to ensure that the `PATH` environment variable is refreshed.
 
 Note: `gsudo.exe` is portable. No windows service is required or system change is done, except adding it to the Path.
@@ -149,10 +149,10 @@ To elevate a commands or script block: **Wrap it in {curly braces}**.
 
    # Pass arguments with -args
    $MyString = "Hello World"
-   gsudo { Write-Output $args[0] } -args $MyString  
+   gsudo { Write-Output $args[0] } -args $MyString
 
    # Output is serialized as PSObjects with properties.
-   $services = gsudo { Get-Service 'WSearch', 'Winmgmt'} 
+   $services = gsudo { Get-Service 'WSearch', 'Winmgmt'}
    Write-Output $services.DisplayName
 
    # Inputs too: Example elevated iteration of a list.
@@ -167,18 +167,18 @@ Alternative syntaxes:
    # Pass values (not variables by reference) by prefixing `$using:`. I.E.
 
    $MyString = "Hello World"
-   Invoke-Gsudo { Write-Output $using:MyString }  
+   Invoke-Gsudo { Write-Output $using:MyString }
 
    # Syntax:
-   Invoke-Gsudo [-ScriptBlock] <ScriptBlock> 
-                [[-ArgumentList] <Object[]>] 
-                [-InputObject <PSObject>] 
-                [-LoadProfile | -NoProfile] 
+   Invoke-Gsudo [-ScriptBlock] <ScriptBlock>
+                [[-ArgumentList] <Object[]>]
+                [-InputObject <PSObject>]
+                [-LoadProfile | -NoProfile]
                 [-Credential <PSCredential>]
    ```
 
     - PowerShell function.
-    - Performs auto serialization of inputs & outputs. 
+    - Performs auto serialization of inputs & outputs.
     - You can prefix variables with the `$using:` scope modifier (like `$using:variableName`) and their serialized value is applied.
     - Use `-LoadProfile` or `-NoProfile` to override profile loading or not.
     - Use `-Credential` option for Run As User (same as `-u` but for `Get-Credentials`).
@@ -187,16 +187,16 @@ Alternative syntaxes:
 
 <details>
   <summary>3. Manual string interpolation. (not recommended) </summary>
-  I don't recommend this approach as it is really hard to do proper escape all special characters. 
+  I don't recommend this approach as it is really hard to do proper escape all special characters.
 
    ``` PowerShell
    Usage: gsudo 'string literal'
 
    # Variable substitutions example:
-   $file='C:\My Secret.txt'; 
+   $file='C:\My Secret.txt';
    $algorithm='md5';
    $hash = gsudo "(Get-FileHash '$file' -Algorithm $algorithm).Hash"
-   # or 
+   # or
    $hash = gsudo "(Get-FileHash ""$file"" -Algorithm $algorithm).Hash"
    ```
 
@@ -209,13 +209,13 @@ Alternative syntaxes:
 - <a name="gsudomodule"></a> Optional: Import module `gsudoModule.psd1` into your PowerShell Profile:
   - Adds syntax auto-complete to gsudo in PowerShell. Plus, it suggests the 3 previous commands, making your workflow smoother than ever!
   - Enables `gsudo !!` on Powershell, to elevate the last executed command.
-  - Adds Functions: 
+  - Adds Functions:
     - `Test-IsGsudoCacheAvailable` Returns true if a gsudo cache is active (meaning elevation with no UAC is possible).
     - `Test-IsProcessElevated`: Returns true if the current process is elevated.
     - `Test-IsAdminMember`: Returns true if the current user is member of the `Local Administrators` groups, which means it can elevate with.
-  
+
   ``` Powershell
-  # Add the following line to your $PROFILE 
+  # Add the following line to your $PROFILE
   Import-Module "gsudoModule"
 
   # Or run:
@@ -224,12 +224,12 @@ Alternative syntaxes:
 
   - If you haven't already customized your PowerShell prompt (for example by installing Oh-My-Posh), you can easily add a red `#` indicating that the current process is elevated:
     ![gsudo prompt](docs/static/img/gsudo-powershell-prompt.gif)
-  
+
   To do so add this line to your profile (after importing `gsudoModule`):
-  
+
   ``` powershell
   Set-Alias Prompt gsudoPrompt
-  ``` 
+  ```
 ---
 
 ### Usage from WSL (Windows Subsystem for Linux)
@@ -240,7 +240,7 @@ On WSL bash, prepend `gsudo` to elevate **WSL commands** or `gsudo -d` for **CMD
 
 ``` bash
 # elevate default shell
-PC:~$ gsudo 
+PC:~$ gsudo
 
 # run elevated WSL command
 PC:~$ gsudo mkdir /mnt/c/Windows/MyFolder
@@ -304,9 +304,9 @@ In any case, you can stop all cache sessions with `gsudo -k`.
 
   When I created `gsudo`, there were other `sudo` packages on most Windows popular package managers such as `Chocolatey` and `Scoop`, so I had no other choice to pick another name. `gsudo` installers create an alias for `sudo`, so feel free to use `sudo` on your command line to invoke `gsudo`.
 
-- Why did you migrated from `.Net Framework 4.6` to `.Net Core 7.0`?
+- Why did you migrated from `.Net Framework 4.6` to `.Net 8.0`?
 
-  Starting from v1.4.0, it is built using `.Net 7.0` NativeAOT. It loads faster and uses less memory, and runs on machines without any .Net runtime installed. Prior versions `<v1.3.0` used .Net 4.6, because it was included in every Windows 10/11 installation.
+  Starting from v1.4.0, it is built using NativeAOT. It loads faster and uses less memory, and runs on machines without any .Net runtime installed. Prior versions `<= v1.3.0` used .Net 4.6, because it was included in every Windows 10/11 installation.
 
 - Is `gsudo` a port of `*nix sudo`?
 
