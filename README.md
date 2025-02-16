@@ -306,7 +306,7 @@ In any case, you can stop all cache sessions with `gsudo -k`.
 
 - Why did you migrated from `.Net Framework 4.6` to `.Net 8.0`?
 
-  Starting from v1.4.0, it is built using `.Net 8.0` NativeAOT. It loads faster and uses less memory, and runs on machines without any .Net runtime installed. Prior versions `<v1.3.0` used .Net 4.6, because it was included in every Windows 10/11 installation.
+  Starting from v1.4.0, it is built using NativeAOT. It loads faster and uses less memory, and runs on machines without any .Net runtime installed. Prior versions `<= v1.3.0` used .Net 4.6, because it was included in every Windows 10/11 installation.
 
 - Is `gsudo` a port of `*nix sudo`?
 
