@@ -154,7 +154,7 @@ namespace gsudo.Helpers
             else if (argChar == "D" && argWord == "-D" && FileApi.PathExists(args.FirstOrDefault())) { InputArguments.StartingDirectory = DeQueueArg(); }
             else if (match(null, "--chdir")) 
             {
-                InputArguments.StartingDirectory = DeQueueArg();
+                InputArguments.StartingDirectory = DeQueueArg().UnQuote();
                 if (!FileApi.PathExists(InputArguments.StartingDirectory))
                 {
                     throw new ApplicationException($"Invalid directory: {InputArguments.StartingDirectory}");

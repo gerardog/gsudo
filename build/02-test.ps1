@@ -14,7 +14,7 @@ dotnet build .\src\gsudo.sln || $(exit $LASTEXITCODE)
 
 $originalPath = $env:path
 
-$env:path=(Get-Item .\src\gsudo.Tests\bin\Debug\net8.0\).FullName+";" + [String]::Join(";", (($ENV:Path).Split(";") -notlike "*gsudo*" | % {$_ -replace "\\$" }))
+$env:path=(Get-Item .\src\gsudo.Tests\bin\Debug\net9.0\).FullName+";" + [String]::Join(";", (($ENV:Path).Split(";") -notlike "*gsudo*" | % {$_ -replace "\\$" }))
 
 gsudo -k
 gsudo --debug cache on -p 0 -d 1

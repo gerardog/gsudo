@@ -2,18 +2,20 @@
 using System;
 using System.ComponentModel;
 using System.Linq;
+using System.Diagnostics.CodeAnalysis;
 
 namespace gsudo.AppSettings
 {
-    public enum RegistrySettingScope { 
+    public enum RegistrySettingScope
+    {
         /// <summary>
         /// System-wide setting. Affects all users. Admin Privilege required to write it.
         /// </summary>
-        GlobalOnly, 
+        GlobalOnly,
         /// <summary>
         /// Can be set for the current user, or system-wide.
         /// </summary>
-        Any 
+        Any
     }
 
     abstract class RegistrySetting
@@ -40,11 +42,15 @@ namespace gsudo.AppSettings
         private readonly Func<string, T> deserializer;
         private readonly Func<T, string> serializer;
 
-        public RegistrySetting(string name, T defaultValue, Func<string, T> deserializer, RegistrySettingScope scope = RegistrySettingScope.Any, Func<T, string> serializer = null, string description = null)
+        public RegistrySetting(string name, T defaultValue, Func<string, T> deserializer,
+                               RegistrySettingScope scope = RegistrySettingScope.Any,
+                               Func<T, string> serializer = null, string description = null)
             : this(name, () => defaultValue, deserializer, scope, serializer, description)
         { }
 
-        public RegistrySetting(string name, Func<T> defaultValue, Func<string, T> deserializer, RegistrySettingScope scope = RegistrySettingScope.Any, Func<T,string> serializer = null, string description = null)
+        public RegistrySetting(string name, Func<T> defaultValue, Func<string, T> deserializer,
+                               RegistrySettingScope scope = RegistrySettingScope.Any,
+                               Func<T, string> serializer = null, string description = null)
         {
             Name = name.Replace('_', '.');
             this.defaultValue = defaultValue;
@@ -94,27 +100,18 @@ namespace gsudo.AppSettings
         {
             using (var subkey = Registry.CurrentUser.OpenSubKey(REGKEY, false))
             {
-                if (subkey != null)
-                {
-                    return subkey.GetValue(Name, null) != null;
-                }
+                return subkey?.GetValue(Name, null) != null;
             }
-
-            return false;
         }
 
         public override bool HasGlobalValue()
         {
             using (var subkey = Registry.LocalMachine.OpenSubKey(REGKEY, false))
             {
-                if (subkey != null)
-                {
-                    return subkey.GetValue(Name, null) != null;
-                }
+                return subkey?.GetValue(Name, null) != null;
             }
-
-            return false;
         }
+
         public override object GetStringValue() => serializer != null ? serializer(Value) : Value.ToString();
 
         public override void Save(string newValue, bool global)
@@ -127,17 +124,8 @@ namespace gsudo.AppSettings
             if (!global && HasGlobalValue())
                 Logger.Instance.Log($"A global value exists and it overrides the user value. \r\nUse 'gsudo config {Name} --global --reset' to clear it.", LogLevel.Warning);
 
-            RegistryKey key;
-
-            if (global)
-                key = Registry.LocalMachine;
-            else
-                key = Registry.CurrentUser;
-
-            var subkey = key.OpenSubKey(REGKEY, true);
-            if (subkey == null)
-                subkey = key.CreateSubKey(REGKEY, true);
-
+            RegistryKey key = global ? Registry.LocalMachine : Registry.CurrentUser;
+            var subkey = key.OpenSubKey(REGKEY, true) ?? key.CreateSubKey(REGKEY, true);
             subkey.SetValue(Name, GetStringValue());
             subkey.Dispose();
         }
@@ -146,35 +134,35 @@ namespace gsudo.AppSettings
         {
             Value = defaultValue();
 
-            RegistryKey key;
-            if (global)
-                key = Registry.LocalMachine;
-            else
-                key = Registry.CurrentUser;
-
+            RegistryKey key = global ? Registry.LocalMachine : Registry.CurrentUser;
             using (var subkey = key.OpenSubKey(REGKEY, true))
             {
                 if (subkey.GetValue(Name) != null)
                     subkey.DeleteValue(Name);
             }
         }
-        public override string ToString()
-        {
-            return Value.ToString();
-        }
+
+        public override string ToString() => Value.ToString();
 
         public static implicit operator T(RegistrySetting<T> t) => t.Value;
 
         public override void ClearRunningValue() => hasValue = false;
         public override object Parse(string serialized) => deserializer(serialized);
 
+#if NET5_0_OR_GREATER
+        [UnconditionalSuppressMessage("Trimming", "IL2075", Justification = "Enum type is assumed to have its public members preserved.")]
+#endif
         public static TAttributte GetAttributeOfType<TAttributte>(T enumVal) where TAttributte : System.Attribute
         {
-            var type = enumVal.GetType();
-            var memInfo = type.GetMember(enumVal.ToString());
-            if ((memInfo?.Any() ?? false) == false) return null;
-            var attributes = memInfo[0].GetCustomAttributes(typeof(TAttributte), false);
-            return (attributes.Length > 0) ? (TAttributte)attributes[0] : null;
+            var memberInfo = enumVal.GetType().GetMember(enumVal.ToString());
+            if (memberInfo?.Length > 0)
+            {
+                return memberInfo[0]
+                    .GetCustomAttributes(typeof(TAttributte), false)
+                    .OfType<TAttributte>()
+                    .FirstOrDefault();
+            }
+            return null;
         }
     }
 }

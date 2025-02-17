@@ -305,9 +305,13 @@ In any case, you can stop all cache sessions with `gsudo -k`.
 
   When I created `gsudo`, there were other `sudo` packages on most Windows popular package managers such as `Chocolatey` and `Scoop`, so I had no other choice to pick another name. `gsudo` installers create an alias for `sudo`, so feel free to use `sudo` on your command line to invoke `gsudo`.
 
-- Why did you migrated from `.Net Framework 4.6` to `.Net 8.0`?
+- Which dotnet version is built with?
 
-  Starting from v1.4.0, it is built using NativeAOT. It loads faster and uses less memory, and runs on machines without any .Net runtime installed. Prior versions `<= v1.3.0` used .Net 4.6, because it was included in every Windows 10/11 installation.
+  Versions prior to v1.3.0 used .NET 4.6 because it was included in every Windows 10/11 installation.
+
+  From v1.4.0 up to v2.5.1, gsudo has been built using .net7.0 NativeAOT. This approach offers faster load times, reduced memory usage, and allows the tool to run on machines without any .NET runtime installed.
+
+  Starting with v2.6.0, we've migrated to net9.0 due to the end-of-life of net7.0.
 
 - Is `gsudo` a port of `*nix sudo`?
 
