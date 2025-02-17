@@ -1,8 +1,10 @@
 ﻿using gsudo.AppSettings;
 using gsudo.Commands;
+using gsudo.Native;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Security.Principal;
 
@@ -79,6 +81,7 @@ namespace gsudo.Helpers
                     if (c != null)
                         return c;
                 }
+                else if (arg.In("-noninteractive")) { } // ignore due to gerardog/gsudo#305
                 else if (arg.StartsWith("-", StringComparison.OrdinalIgnoreCase)
                             && arg.NotIn("-encodedCommand")) // -encodedCommand is not posix compliant, but is what powershell sends on: gsudo { script block }
                                                              // So treat -encodedCommand as part of the CommandToRun, for gerardog/gsudo#160
@@ -131,7 +134,6 @@ namespace gsudo.Helpers
             else if (match(null, "--close")) { InputArguments.CloseNewWindow = true; InputArguments.KeepWindowOpen = false; InputArguments.KeepShellOpen = false; }
 
             else if (match("s", "--system")) { InputArguments.RunAsSystem = true; }
-            else if (match("d", "--direct")) { InputArguments.Direct = true; }
             else if (match("k", "--reset-timestamp")) { InputArguments.KillCache = true; }
             else if (match(null, "--global")) { InputArguments.Global = true; }
             else if (match(null, "--ti")) { InputArguments.TrustedInstaller = InputArguments.RunAsSystem = true; }
@@ -144,6 +146,25 @@ namespace gsudo.Helpers
             else if (match(null, "--debug")) { Settings.LogLevel.Value = LogLevel.All; InputArguments.Debug = true; }
             else if (match("v", "--version")) { return new ShowVersionHelpCommand(); }
             else if (match("h", "--help")) return new HelpCommand();
+
+            // ms-sudo compat:
+            else if (match(null, "--preserve-env")) { Settings.CopyEnvironmentVariables.Value = true; }
+            else if (match(null, "--new-window")) { InputArguments.NewWindow = true; }
+            // case sensitive -D {dir}
+            else if (argChar == "D" && argWord == "-D" && FileApi.PathExists(args.FirstOrDefault())) { InputArguments.StartingDirectory = DeQueueArg(); }
+            else if (match(null, "--chdir")) 
+            {
+                InputArguments.StartingDirectory = DeQueueArg();
+                if (!FileApi.PathExists(InputArguments.StartingDirectory))
+                {
+                    throw new ApplicationException($"Invalid directory: {InputArguments.StartingDirectory}");
+                }                
+            }
+            else if (match(null, "--inline")) { InputArguments.NewWindow = false; }
+            else if (argWord.In("--disable-input", "--disableInput")) { InputArguments.DisableInput = true; }
+
+            // rest
+            else if (match("d", "--direct")) { InputArguments.Direct = true; }
             else if (argWord.StartsWith("-", StringComparison.Ordinal))
             {
                 if (argChar != null)
@@ -272,9 +293,6 @@ namespace gsudo.Helpers
 
             if (arg.In("run"))
                 return new RunCommand(commandToRun: args.ToArray());
-
-            if (arg.In("AttachRun"))
-                return new AttachRunCommand(commandToRun: args.ToArray());
 
             args.AddFirst(arg);
 

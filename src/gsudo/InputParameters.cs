@@ -42,6 +42,10 @@ namespace gsudo
         // SID of User to Impersonate
         public static string UserSid { get; private set; }
 
+        // Starting Directory for the new process
+        public static string StartingDirectory { get; internal set; }
+        public static bool DisableInput { get; internal set; }
+
         public static IntegrityLevel GetIntegrityLevel() => (RunAsSystem ? gsudo.IntegrityLevel.System : IntegrityLevel ?? gsudo.IntegrityLevel.High);
 
         internal static void Clear() // added for tests repeatability

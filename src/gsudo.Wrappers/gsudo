@@ -8,4 +8,5 @@
 # For better experience (fix credentials cache) in git-bash/MinGw create this wrapper can be added as function in .bashrc:
 # 		gsudo() { WSLENV=WSL_DISTRO_NAME:USER:$WSLENV MSYS_NO_PATHCONV=1 gsudo.exe "$@"; }
 
-WSLENV=WSL_DISTRO_NAME:USER:$WSLENV MSYS_NO_PATHCONV=1 "$( dirname -- "$0")/gsudo.exe" "$@"
+thisdir="$(dirname "$(readlink -f "$0")")"
+WSLENV=WSL_DISTRO_NAME:USER:$WSLENV MSYS_NO_PATHCONV=1 "${thisdir}/gsudo.exe" "$@"

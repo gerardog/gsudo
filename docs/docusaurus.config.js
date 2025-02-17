@@ -6,7 +6,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'gsudo (sudo for windows)',
+  title: 'gsudo Documentation',
   tagline: 'The missing piece in Windows. Cherry-pick which commands to elevate with just one keyword.',
   url: 'https://gerardog.github.io',
   baseUrl: '/gsudo/',
@@ -25,13 +25,13 @@ const config = {
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
-          editUrl: 'https://github.com/gerardog/gsudo/blob/docs/docs/',
+          editUrl: 'https://github.com/gerardog/gsudo/tree/master/docs/',
         },
         blog: {
           showReadingTime: true,
           // Please change this to your repo.
           editUrl:
-            'https://github.com/gerardog/gsudo/tree/master/docs/blog/',
+            'https://github.com/gerardog/gsudo/tree/master/docs/',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),

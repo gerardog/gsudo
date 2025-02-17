@@ -22,7 +22,8 @@ When the current shell is `PowerShell`, gsudo can be used in the following ways:
   3. [`gsudo 'string command'`](#using-gsudo-command-syntax) => Old, legacy syntax.
 
 - You can [add `gsudo` PowerShell Module](#powershell-profile-config) to your `$PROFILE`
-  - This enables to use `gsudo !!` to elevate last command.
+  - This allows tab-key auto-completition. For example, write 'gsudo` then `space` and then `tab` and your last executed command will be suggested.
+  - Also enables to use `gsudo !!` to elevate last command.
   
 - In a pipeline of commands, `gsudo` only elevates one command.
   

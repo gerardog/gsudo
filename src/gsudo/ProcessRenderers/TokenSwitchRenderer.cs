@@ -4,8 +4,11 @@ using gsudo.Rpc;
 using Microsoft.Win32.SafeHandles;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,15 +22,14 @@ namespace gsudo.ProcessRenderers
     {
         private readonly Connection _connection;
         private readonly ElevationRequest _elevationRequest;
-        private readonly SafeProcessHandle _process;
-        private readonly ProcessApi.PROCESS_INFORMATION _processInformation;
+        private readonly SafeProcessHandle _processHandle;
+        private readonly SafeHandle _threadHandle;
         private readonly ManualResetEventSlim tokenSwitchSuccessEvent = new ManualResetEventSlim(false);
 
         internal TokenSwitchRenderer(Connection connection, ElevationRequest elevationRequest)
         {
-            if (Settings.SecurityEnforceUacIsolation && !elevationRequest.NewWindow)
-                throw new Exception("TokenSwitch mode not supported when SecurityEnforceUacIsolation is set.");
-
+            bool disableInput = elevationRequest.DisableInput;
+            
             _connection = connection;
             _elevationRequest = elevationRequest;
             ConsoleHelper.SetPrompt(elevationRequest);
@@ -55,9 +57,18 @@ namespace gsudo.ProcessRenderers
                 args = elevationRequest.Arguments;
             }
 
-            _process = ProcessFactory.CreateProcessAsUserWithFlags(exeName, args, dwCreationFlags, out _processInformation);
+            try
+            {
+                System.Environment.CurrentDirectory = elevationRequest.StartFolder;
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                throw new ApplicationException($"User \"{WindowsIdentity.GetCurrent().Name}\" can not access directory \"{elevationRequest.StartFolder}\"");
+            }
 
-            elevationRequest.TargetProcessId = _processInformation.dwProcessId;
+            ProcessFactory.CreateProcessForTokenReplacement(exeName, args, dwCreationFlags, out _processHandle, out _threadHandle, out int processId, disableInput);
+
+            elevationRequest.TargetProcessId = processId;
             if (!elevationRequest.NewWindow)
                 ConsoleApi.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, true);
         }
@@ -68,7 +79,7 @@ namespace gsudo.ProcessRenderers
             {
                 var t1 = new StreamReader(_connection.ControlStream).ConsumeOutput(HandleControlStream);
 
-                WaitHandle.WaitAny(new WaitHandle[] { tokenSwitchSuccessEvent.WaitHandle, _process.GetProcessWaitHandle(), _connection.DisconnectedWaitHandle });
+                WaitHandle.WaitAny(new WaitHandle[] { tokenSwitchSuccessEvent.WaitHandle, _processHandle.GetProcessWaitHandle(), _connection.DisconnectedWaitHandle });
 
                 if (!tokenSwitchSuccessEvent.IsSet)
                 {
@@ -87,43 +98,34 @@ namespace gsudo.ProcessRenderers
                 _connection.DataStream.Close();
                 _connection.ControlStream.Close();
 
-                return GetResult();
-            }
-            finally
-            {
-                ConsoleApi.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, false);
-            }
-        }
+                if (ProcessApi.ResumeThread(_threadHandle.DangerousGetHandle()) < 0)
+                    throw new Win32Exception();
 
-        public void TerminateProcess()
-        {
-            ProcessApi.TerminateProcess(_process.DangerousGetHandle(), 0);
-        }
-
-        public Task<int> GetResult()
-        {
-            try
-            {
-                _ = ProcessApi.ResumeThread(_processInformation.hThread);
-                Native.FileApi.CloseHandle(_processInformation.hThread);
+                _threadHandle.Close();
 
                 if (_elevationRequest.Wait)
                 {
-                    _process.GetProcessWaitHandle().WaitOne();
-                    if (ProcessApi.GetExitCodeProcess(_process, out int exitCode))
+                    _processHandle.GetProcessWaitHandle().WaitOne();
+                    if (ProcessApi.GetExitCodeProcess(_processHandle, out int exitCode))
                         return Task.FromResult(exitCode);
 
-                    Native.FileApi.CloseHandle(_processInformation.hProcess);
+                    _processHandle.Close();
                 }
 
                 return Task.FromResult(0);
             }
             finally
             {
+                _processHandle?.Close();
+                _threadHandle?.Close();
                 ConsoleApi.SetConsoleCtrlHandler(ConsoleHelper.IgnoreConsoleCancelKeyPress, false);
             }
         }
 
+        public void TerminateProcess()
+        {
+            ProcessApi.TerminateProcess(_processHandle.DangerousGetHandle(), 0);
+        }
 
         enum Mode { Normal, Error};
         Mode CurrentMode = Mode.Normal;

@@ -74,8 +74,8 @@ namespace gsudo
                     {
                         if (cmd.GetType() == typeof(ServiceCommand))
                         {
-                            Console.WriteLine("Service shutdown. This window will close in 15 seconds");
-                            System.Threading.Thread.Sleep(15000);
+                            Console.WriteLine("Service shutdown. This window will close in 10 seconds");
+                            System.Threading.Thread.Sleep(10000);
                         }
                     }
                 }
