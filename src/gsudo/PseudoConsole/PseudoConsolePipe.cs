@@ -18,8 +18,7 @@ namespace gsudo.PseudoConsole
 
         public PseudoConsolePipe()
         {
-            var sa = new SECURITY_ATTRIBUTES();
-            if (!CreatePipe(out ReadSide, out WriteSide, sa, 0))
+            if (!CreatePipe(out ReadSide, out WriteSide, IntPtr.Zero, 0))
             {
                 throw new InvalidOperationException("failed to create pipe");
             }
