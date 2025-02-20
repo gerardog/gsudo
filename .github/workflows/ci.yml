@@ -74,7 +74,7 @@ jobs:
       with:
         fetch-depth: 0
     - name: Install dependencies
-      run: choco install GitVersion.Portable --version 5.12.0 --confirm --no-progress; choco install il-repack --confirm --no-progress
+      run: choco install GitVersion.Portable --version 5.6.11 --confirm --no-progress; choco install il-repack --confirm --no-progress
     - name: Update project version
       run: gitversion /l console /output buildserver /updateAssemblyInfo /verbosity minimal
     - name: Get project version
