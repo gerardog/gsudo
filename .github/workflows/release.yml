@@ -55,7 +55,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Binaries
-        path: ./artifacts       
+        path: ./artifacts
         overwrite: true
     - name: Build Installer
       run: ./build/04-build-installer.ps1
