@@ -20,7 +20,7 @@ namespace gsudo.Commands
             Console.WriteLine($"{assembly.GetName().Name} v{GitVersionInformation.FullSemVer} ({GitVersionInformation.FullBuildMetaData})");
 
             Console.ResetColor();
-            if (verbose) Console.WriteLine("Copyright(c) 2019-2022 Gerardo Grignoli and GitHub contributors");
+            if (verbose) Console.WriteLine("Copyright(c) 2019-2025 Gerardo Grignoli and GitHub contributors");
         }
 
         internal static void ShowHelp()
