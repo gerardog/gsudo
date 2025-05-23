@@ -67,9 +67,13 @@ param
 	[switch]
 	$NoProfile = $false,
 	
-	[Parameter()]
-	[System.Management.Automation.PSCredential]
-	$Credential
+	[Parameter(ParameterSetName = 'ParamSetCredential')]
+	[ValidateScript({ $_.PSObject.BaseObject.Name -eq 'PSCredential' -or 'System.String' -in $_.PSObject.TypeNames })]
+	$Credential,
+
+	[Parameter(ParameterSetName = 'ParamSetTrustedInstaller')]
+	[switch]
+	$TrustedInstaller = $false 
 )
 
 # Replaces $using:variableName with the serialized value of $variableName.
@@ -153,18 +157,22 @@ $windowTitle = $host.ui.RawUI.WindowTitle;
 $arguments = "-d", "--LogLevel", "Error"
 
 if ($credential) {
+	if ($Credential -is [string]) {
+		$cred = Get-Credential -Credential $Credential -ErrorAction Stop
+	} else {
+		$cred = $Credential
+	}
 	$currentSid = ([System.Security.Principal.WindowsIdentity]::GetCurrent()).User.Value;
-	$user = "-u $($credential.UserName) "
-	$arguments += "-u", $credential.UserName
-	
-	# At the time of writing this, there is no way (considered secure) to send the password to gsudo. So instead of sending the password, lets start a credentials cache instance.	
-	Start-Process "gsudo.exe" -Args "$dbg -u $($credential.UserName) gsudoservice $PID $CurrentSid All 00:05:00" -credential $Credential -LoadUserProfile -WorkingDirectory "$env:windir" *> $null
+	$arguments += "-u", $cred.UserName
+
+	# At the time of writing this, there is no way (considered secure) to send the password to gsudo. So instead of sending the password, lets start a credentials cache instance.
+	[void](Start-Process "gsudo.exe" -Args "-u $($cred.UserName) gsudoservice $PID $CurrentSid All 00:05:00" -Credential $cred -LoadUserProfile -WorkingDirectory "$env:windir")
 	# This may fail with `The specified drive root "C:\Users\gerar\AppData\Local\Temp\" either does not exist, or it is not a folder.` https://github.com/PowerShell/PowerShell/issues/18333
-	
+
 	#$p.WaitForExit();
 	Start-Sleep -Seconds 1
-} else {
-	$user = "";
+} elseif ($TrustedInstaller) {
+	$arguments += "--ti"
 }
 
 if ($debug) { $arguments += "--debug"}
