@@ -157,7 +157,7 @@ namespace gsudo.Helpers
             return retval;
         }
 
-        public static string FindExecutableInPath(string input)
+        public static string FindExecutableInPath(string input, string searchPath = null)
         {
             input = Environment.ExpandEnvironmentVariables(input);
 
@@ -192,7 +192,7 @@ namespace gsudo.Helpers
                 else
                 {
                     pathsToSearch.Add(Environment.CurrentDirectory);
-                    pathsToSearch.AddRange((Environment.GetEnvironmentVariable("PATH") ?? "").Split(';'));
+                    pathsToSearch.AddRange((searchPath ?? Environment.GetEnvironmentVariable("PATH") ?? "").Split(';'));
                 }
 
                 foreach (string pathCandidate in pathsToSearch)
