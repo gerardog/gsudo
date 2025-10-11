@@ -397,10 +397,7 @@ namespace gsudo.Helpers
         
             if (keepWindowOpen && !IsWindowsApp)
             {
-                // Using "`& pause " makes cmd eat the exit code
-                postCommands.Add("set errl = !ErrorLevel!");
                 postCommands.Add("pause");
-                postCommands.Add("exit /b !errl!");
             }
 
             string startupFolder = InputArguments.StartingDirectory ?? Environment.CurrentDirectory;
@@ -419,6 +416,12 @@ namespace gsudo.Helpers
 
             if (mustWrap || preCommands.Any() || postCommands.Any())
             {
+				if (postCommands.Any())
+				{
+					// Any post command will eat the exit code, we need to mantain
+					postCommands.Insert(0, "set errl = !ErrorLevel!");
+					postCommands.Add("exit /b !errl!");
+				}
                 var all = preCommands
                             .Concat(new[] { string.Join(" ", command) })
                             .Concat(postCommands);
