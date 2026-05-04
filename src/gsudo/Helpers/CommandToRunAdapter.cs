@@ -162,9 +162,7 @@ namespace gsudo.Helpers
 
                             string pscommand = string.Join(" ", args);
 
-                            if (ShellHelper.GetInvokingShellVersion() < new Version(7, 3, 0))
-                                pscommand = pscommand.ReplaceOrdinal("\"", "\\\"");
-
+                            pscommand = EscapePowerShellCommandArgument(pscommand, ShellHelper.GetInvokingShellVersion());
                             pscommand = pscommand.Quote();
 
                             newArgs.Add(pscommand);
@@ -267,6 +265,19 @@ namespace gsudo.Helpers
                         ArgumentsHelper.Quote(ArgumentsHelper.UnQuote(string.Join(" ", args.ToArray()))) };
                 }
             }
+        }
+
+        /// <summary>
+        /// Escapes double quotes inside a PowerShell -Command argument string.
+        /// PowerShell versions before 7.3 require backslash-escaping (\"),
+        /// while 7.3 and later require doubling the quotes ("").
+        /// </summary>
+        internal static string EscapePowerShellCommandArgument(string pscommand, Version shellVersion)
+        {
+            if (shellVersion < new Version(7, 3, 0))
+                return pscommand.ReplaceOrdinal("\"", "\\\"");
+            else
+                return pscommand.ReplaceOrdinal("\"", "\"\"");
         }
 
         private void FixCommandExceptions()

@@ -119,5 +119,22 @@ exit
             p.WaitForExit();
             Assert.IsFalse(p.GetStdOut().Contains("internal error", StringComparison.OrdinalIgnoreCase));
         }
+
+        /// <summary>
+        /// Regression test for https://github.com/gerardog/gsudo/issues/408
+        /// Quoted arguments containing spaces must be preserved end-to-end.
+        /// </summary>
+        [TestMethod]
+        public void PS_EchoQuotedPathWithSpacesTest()
+        {
+            // Create a directory with a space in its name so the path exists,
+            // then echo its name through gsudo to verify quoting is preserved.
+            var p = new TestProcess(
+                $"./gsudo {GSUDO_ARGS}Write-Output \"hello world\"\r\nexit\r\n",
+                $"{PS_FILENAME} {PS_ARGS}");
+            p.WaitForExit();
+            p.GetStdOut().AssertHasLine("hello world");
+            Assert.AreEqual(0, p.ExitCode);
+        }
     }
 }
