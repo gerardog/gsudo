@@ -16,7 +16,14 @@ Specifies a ScriptBlock that will be run in an elevated PowerShell instance. '
 e.g. { Get-Process Notepad }
 
 .PARAMETER ArgumentList
-An list of elements that will be accesible inside the script as: $args[0] ... $args[n]
+A list of elements that will be accessible inside the script as: $args[0] ... $args[n]
+
+.PARAMETER InputObject
+Optional input object, accepted either via the pipeline or passed directly with -InputObject. The object is serialized and available inside the ScriptBlock as $Input.
+e.g. Get-Process SpoolSv | Invoke-gsudo { $Input | Stop-Process -Force }
+
+.PARAMETER Credential
+Optional PSCredential specifying an alternate user account under which the elevated ScriptBlock should run. When provided, gsudo will start a temporary credentials-cache service for that user before executing the ScriptBlock.
 
 .PARAMETER LoadProfile
 Load the user profile in the elevated powershell instance. (regardless of `gsudo config PowerShellLoadProfile`)
@@ -55,18 +62,23 @@ param
     [System.Object[]]
     $ArgumentList,
 
+    # Input object passed via pipeline or -InputObject. Serialized and available inside the ScriptBlock as $Input.
+    # e.g. Get-Process SpoolSv | Invoke-gsudo { $Input | Stop-Process -Force }
     [Parameter(ValueFromPipeline)]
     [pscustomobject]
     $InputObject,
 
+    # Load the current user's PowerShell profile in the elevated instance.
 	[Parameter()]
 	[switch]
 	$LoadProfile = $false,
 
+    # Do not load the PowerShell profile in the elevated instance.
 	[Parameter()]
 	[switch]
 	$NoProfile = $false,
 	
+    # Alternate credentials (user/password) under which the elevated ScriptBlock should run.
 	[Parameter()]
 	[System.Management.Automation.PSCredential]
 	$Credential
