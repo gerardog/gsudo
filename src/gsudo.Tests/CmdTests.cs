@@ -102,7 +102,7 @@ namespace gsudo.Tests
         public void Cmd_WindowsAppWaitTest()
         {
             bool stillWaiting = false;
-            var p = new TestProcess("gsudo -w \"c:\\Program Files (x86)\\Windows NT\\Accessories\\wordpad.exe\"");
+            var p = new TestProcess("gsudo -w \"c:\\Windows\\notepad.exe\"");
             try
             {
                 p.WaitForExit(3000);
@@ -113,21 +113,21 @@ namespace gsudo.Tests
             }
 
             Assert.IsTrue(stillWaiting);
-            Process.Start("gsudo", "taskkill.exe /IM Wordpad.exe").WaitForExit();
+            Process.Start("gsudo", "taskkill.exe /IM notepad.exe").WaitForExit();
             p.WaitForExit();
         }
 
         [TestMethod]
         public void Cmd_WindowsAppNoWaitTest()
         {
-            var p = new TestProcess("gsudo \"c:\\Program Files (x86)\\Windows NT\\Accessories\\wordpad.exe\"");
+            var p = new TestProcess("gsudo \"c:\\Windows\\notepad.exe\"");
             try
             {
                 p.WaitForExit();
             }
             finally
             {
-                Process.Start("gsudo", "taskkill.exe /IM Wordpad.exe").WaitForExit();
+                Process.Start("gsudo", "taskkill.exe /IM notepad.exe").WaitForExit();
             }
 
             p.WaitForExit();
@@ -136,7 +136,7 @@ namespace gsudo.Tests
         [TestMethod]
         public void Cmd_WindowsAppWithQuotesTest()
         {
-            var p = new TestProcess("gsudo \"c:\\Program Files (x86)\\Windows NT\\Accessories\\wordpad.exe\"");
+            var p = new TestProcess("gsudo \"c:\\Windows\\notepad.exe\"");
             try
             {
                 p.WaitForExit();
@@ -144,7 +144,7 @@ namespace gsudo.Tests
             }
             finally
             {
-                Process.Start("gsudo", "taskkill.exe /IM Wordpad.exe").WaitForExit();
+                Process.Start("gsudo", "taskkill.exe /IM notepad.exe").WaitForExit();
             }
         }
 
