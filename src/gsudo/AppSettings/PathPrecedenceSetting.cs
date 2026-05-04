@@ -58,9 +58,26 @@ namespace gsudo.AppSettings
                 var actualPath = Path.GetDirectoryName(ProcessFactory.FindExecutableInPath("sudo.exe", estimatedNewPath));
                 if (actualPath != ourPath)
                 {
-                    // Create the symbolic link
-                    Logger.Instance.Log($"A symbolic link \"sudo.exe\" will be created at \"{ourPath}\" to point to gsudo.exe.", LogLevel.Warning);
-                    File.CreateSymbolicLink(Path.Combine(ourPath, "sudo.exe"), Path.Combine(ourPath, "gsudo.exe"));
+                    var linkPath = Path.Combine(ourPath, "sudo.exe");
+                    var targetPath = Path.Combine(ourPath, "gsudo.exe");
+
+                    if (File.Exists(linkPath) || Directory.Exists(linkPath))
+                    {
+                        Logger.Instance.Log($"Skipping symbolic link creation because \"{linkPath}\" already exists.", LogLevel.Warning);
+                    }
+                    else
+                    {
+                        try
+                        {
+                            // Create the symbolic link
+                            Logger.Instance.Log($"A symbolic link \"sudo.exe\" will be created at \"{ourPath}\" to point to gsudo.exe.", LogLevel.Warning);
+                            File.CreateSymbolicLink(linkPath, targetPath);
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Instance.Log($"Unable to create symbolic link \"{linkPath}\" -> \"{targetPath}\": {ex.Message}", LogLevel.Warning);
+                        }
+                    }
                 }
 #endif
             }
