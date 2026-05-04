@@ -19,7 +19,8 @@ e.g. { Get-Process Notepad }
 A list of elements that will be accessible inside the script as: $args[0] ... $args[n]
 
 .PARAMETER InputObject
-Optional pipeline input object. Accepts any PSObject piped into Invoke-gsudo. The object is serialized and available inside the ScriptBlock as $Input.
+Optional input object, accepted either via the pipeline or passed directly with -InputObject. The object is serialized and available inside the ScriptBlock as $Input.
+e.g. Get-Process SpoolSv | Invoke-gsudo { $Input | Stop-Process -Force }
 
 .PARAMETER Credential
 Optional PSCredential specifying an alternate user account under which the elevated ScriptBlock should run. When provided, gsudo will start a temporary credentials-cache service for that user before executing the ScriptBlock.
@@ -61,7 +62,8 @@ param
     [System.Object[]]
     $ArgumentList,
 
-    # Optional pipeline input object that is serialized and passed to the elevated ScriptBlock as $Input.
+    # Input object passed via pipeline or -InputObject. Serialized and available inside the ScriptBlock as $Input.
+    # e.g. Get-Process SpoolSv | Invoke-gsudo { $Input | Stop-Process -Force }
     [Parameter(ValueFromPipeline)]
     [pscustomobject]
     $InputObject,
