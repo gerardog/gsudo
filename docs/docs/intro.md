@@ -38,7 +38,7 @@ It is designed so it is easy to install, easy to use, and feels familiar with ot
     - Take Command
     - NuShell
 - If no command is specified, it starts an elevated shell. 
-- [Credentials cache](#credentials-cache): `gsudo` can elevate many times showing only one UAC pop-up if the user opts-in to enable the cache.
+- [Credentials cache](credentials-cache): `gsudo` can elevate many times showing only one UAC pop-up if the user opts-in to enable the cache.
 - Supports being used on scripts:
   - Returns the command exit code (`%errorlevel%`). If `gsudo` fails to elevate, the exit code will be 999.
   - If `gsudo` is invoked from an already elevated console, it will run the command as-is (won't throw error). So, don't worry if you run `gsudo` or a script that uses `gsudo` when already elevated. (No elevation is required, no UAC popup)

@@ -6,7 +6,7 @@ if ($env:version) {
 	$version_MajorMinorPatch=$env:version_MajorMinorPatch
 } else {
 	"- Getting version using GitVersion"
-	$env:version = $version = $(gitversion /showvariable LegacySemVer)
+	$env:version = $version = $(gitversion /showvariable SemVer)
 	$env:version_MajorMinorPatch = $version_MajorMinorPatch=$(gitversion /showvariable MajorMinorPatch)
 }
 "- Using version number v$version / v$version_MajorMinorPatch"

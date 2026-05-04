@@ -23,7 +23,7 @@ Surprisingly, Microsoft's sudo does not leverage new OS features to enhance secu
 | Supports output redirection (`sudo dir > file.txt`) | Yes | Yes |
 | Supports input redirection (`echo md SomeFolder \| sudo cmd`) | Yes | Yes |
 | Returns the command exit code | Yes | Yes |
-| Preserves the current directory | Yes | Not in new-window mode! ⚠️ Be carefull!  [Learn More](https://github.com/microsoft/sudo/issues/63) |
+| Preserves the current directory | Yes | Yes, except in new-window mode! ⚠️ [Learn More](https://github.com/microsoft/sudo/issues/63) |
 | Source code available | [Yes](https://github.com/gerardog/gsudo) | [Yes](https://github.com/microsoft/sudo) |
 | Works with future Win11 [`Administration Protection`](https://techcommunity.microsoft.com/blog/microsoft-security-blog/evolving-the-windows-user-model-%E2%80%93-introducing-administrator-protection/4370453) | Yes | No |
 
@@ -40,7 +40,7 @@ Surprisingly, Microsoft's sudo does not leverage new OS features to enhance secu
 
 | Feature | `gsudo` | Sudo for Windows |
 | ------- | ------- | ------------------ |
-| Easy to install and update | Yes (winget, choco, scoop) | No (c required) |
+| Easy to install and update | Yes (winget, choco, scoop) | No (Windows Insider build required) |
 | See less UAC Pop-ups | Yes ([Credentials Cache](credentials-cache.md)) | No |
 | Elevate current shell | Yes | No |
 | Elevate commands using current shell | Yes | No |
@@ -61,9 +61,9 @@ Surprisingly, Microsoft's sudo does not leverage new OS features to enhance secu
 | Feature | `gsudo` | Sudo for Windows |
 | ------- | ------- | ------------------ |
 | Elevation syntax | `gsudo { scriptblock } -args $a,$b` [syntax](usage/powershell.md#using-gsudo-scriptblock-syntax) | `sudo pwsh { scriptblock } -args $a,$b` (Unofficial!) |
-| Auto-complete of last 3 commands | Yes (with [gsudoModule](usage/powershell.md#gsudo-powershell-module)) | No |
-| Auto-complete of command line arguments | Yes (with [gsudoModule](usage/powershell.md#gsudo-powershell-module)) | No |
-| Red # indicator for elevation | Yes (with [gsudoModule](usage/powershell.md#gsudo-powershell-module)) | No |
+| Auto-complete of last 3 commands | Yes (with [gsudoModule](usage/powershell.md#powershell-profile-config)) | No |
+| Auto-complete of command line arguments | Yes (with [gsudoModule](usage/powershell.md#powershell-profile-config)) | No |
+| Red # indicator for elevation | Yes (with [gsudoModule](usage/powershell.md#powershell-profile-config)) | No |
 
 ## What if I install both?
 
@@ -74,4 +74,4 @@ If you have both Microsoft Sudo and `gsudo` installed, they both should work ind
 **To change this behavior and make `sudo` point to `gsudo`** you can
 call `gsudo config PathPrecedence true` and restart all your consoles to apply the change. Setting it back to `false` will revert to the normal behavior.
 
-Additionally, gsudo now supports Microsoft sudo styled arguments such as `--inline`, `--disable-input`, `--preserve-env`, `--new-window`, and `-D / --chdir {directory}`, ensuring a smoother transition for users familiar with Microsoft sudo.
+Additionally, gsudo now supports Microsoft sudo styled arguments such as `--inline`, `--disable-input`, `--preserve-env`, `--new-window`, and `-D` / `--chdir {directory}`, ensuring a smoother transition for users familiar with Microsoft sudo.

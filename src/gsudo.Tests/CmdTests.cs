@@ -90,6 +90,21 @@ namespace gsudo.Tests
         }
 
         [TestMethod]
+        public void Cmd_ExitCodePreserved_WithNetworkFolderPushPopd()
+        {
+            // When the starting directory is a UNC network path, gsudo internally prepends
+            // "pushd <path>" and appends "popd" around the user's command. Without the fix,
+            // popd's exit code (0) would overwrite the user command's exit code.
+            const string uncPath = @"\\localhost\C$";
+            if (!System.IO.Directory.Exists(uncPath))
+                Assert.Inconclusive($@"Skipping: {uncPath} is not accessible on this machine.");
+
+            var p = new TestProcess($@"gsudo --chdir {uncPath} cmd /c exit 42");
+            p.WaitForExit();
+            Assert.AreEqual(42, p.ExitCode, $"Exit code was not preserved through the internally-added popd command. Output: {p.GetStdOut()}");
+        }
+
+        [TestMethod]
         public void Cmd_CommandLineAppNoWaitTest()
         {
             // ping should take 20 seconds
@@ -102,7 +117,7 @@ namespace gsudo.Tests
         public void Cmd_WindowsAppWaitTest()
         {
             bool stillWaiting = false;
-            var p = new TestProcess("gsudo -w \"c:\\Program Files (x86)\\Windows NT\\Accessories\\wordpad.exe\"");
+            var p = new TestProcess("gsudo -w \"c:\\Windows\\notepad.exe\"");
             try
             {
                 p.WaitForExit(3000);
@@ -113,21 +128,21 @@ namespace gsudo.Tests
             }
 
             Assert.IsTrue(stillWaiting);
-            Process.Start("gsudo", "taskkill.exe /IM Wordpad.exe").WaitForExit();
+            Process.Start("gsudo", "taskkill.exe /IM notepad.exe").WaitForExit();
             p.WaitForExit();
         }
 
         [TestMethod]
         public void Cmd_WindowsAppNoWaitTest()
         {
-            var p = new TestProcess("gsudo \"c:\\Program Files (x86)\\Windows NT\\Accessories\\wordpad.exe\"");
+            var p = new TestProcess("gsudo \"c:\\Windows\\notepad.exe\"");
             try
             {
                 p.WaitForExit();
             }
             finally
             {
-                Process.Start("gsudo", "taskkill.exe /IM Wordpad.exe").WaitForExit();
+                Process.Start("gsudo", "taskkill.exe /IM notepad.exe").WaitForExit();
             }
 
             p.WaitForExit();
@@ -136,7 +151,7 @@ namespace gsudo.Tests
         [TestMethod]
         public void Cmd_WindowsAppWithQuotesTest()
         {
-            var p = new TestProcess("gsudo \"c:\\Program Files (x86)\\Windows NT\\Accessories\\wordpad.exe\"");
+            var p = new TestProcess("gsudo \"c:\\Windows\\notepad.exe\"");
             try
             {
                 p.WaitForExit();
@@ -144,7 +159,7 @@ namespace gsudo.Tests
             }
             finally
             {
-                Process.Start("gsudo", "taskkill.exe /IM Wordpad.exe").WaitForExit();
+                Process.Start("gsudo", "taskkill.exe /IM notepad.exe").WaitForExit();
             }
         }
 
