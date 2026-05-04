@@ -418,8 +418,8 @@ namespace gsudo.Helpers
             {
 				if (postCommands.Any())
 				{
-					// Any post command will eat the exit code, we need to mantain
-					postCommands.Insert(0, "set errl = !ErrorLevel!");
+					// Any post command will eat the exit code, we need to maintain
+					postCommands.Insert(0, "set errl=!ErrorLevel!");
 					postCommands.Add("exit /b !errl!");
 				}
                 var all = preCommands
