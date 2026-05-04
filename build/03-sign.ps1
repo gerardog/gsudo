@@ -42,7 +42,7 @@ if ($args)
 	$files = $args -join " "
 }
 
-$cmd = "& ""$env:SignToolExe"" sign /f ""$env:cert_path"" /p $env:cert_key /fd SHA256 /t http://timestamp.digicert.com $files"
+$cmd = "& ""$env:SignToolExe"" sign /f ""$env:cert_path"" /p $env:cert_key /fd SHA256 /as $files"
 
 echo "`nInvoking SignTool.exe:`n"
 iex $cmd
