@@ -25,7 +25,7 @@ Surprisingly, Microsoft's sudo does not leverage new OS features to enhance secu
 | Returns the command exit code | Yes | Yes |
 | Preserves the current directory | Yes | Yes, except in new-window mode! ⚠️ [Learn More](https://github.com/microsoft/sudo/issues/63) |
 | Source code available | [Yes](https://github.com/gerardog/gsudo) | [Yes](https://github.com/microsoft/sudo) |
-| Works with future Win11 [`Administration Protection`](https://techcommunity.microsoft.com/blog/microsoft-security-blog/evolving-the-windows-user-model-%E2%80%93-introducing-administrator-protection/4370453) | Yes | No |
+| Works with Win11 [`Administration Protection`](https://techcommunity.microsoft.com/blog/microsoft-security-blog/evolving-the-windows-user-model-%E2%80%93-introducing-administrator-protection/4370453) | Yes | No |
 
 ### Security Impersonation Features
 
