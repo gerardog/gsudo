@@ -132,8 +132,8 @@ namespace gsudo.Tests
         }
 
         /// <summary>
-        /// When COMSPEC is absent the code must fall back to %SystemRoot%\System32\cmd.exe
-        /// rather than throwing a NullReferenceException.
+        /// When COMSPEC is absent the code must fall back to cmd.exe under
+        /// <see cref="Environment.SpecialFolder.System"/> rather than throwing a NullReferenceException.
         /// </summary>
         [TestMethod]
         public void InitializeInternal_WithoutComspec_FallsBackToCmdExe()
@@ -151,13 +151,14 @@ namespace gsudo.Tests
                 var expectedFallback = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe");
 
-                // The path must either be the known-parent-process exe OR the fallback cmd.exe.
-                // In a test-runner context the parent is typically not a recognised shell, so the
-                // fallback branch is taken and we assert the exact expected value.
-                if (path.Equals(expectedFallback, StringComparison.OrdinalIgnoreCase))
-                {
-                    Assert.IsTrue(File.Exists(path), $"Fallback path does not exist on disk: {path}");
-                }
+                // When COMSPEC is absent, this test is intended to verify that InitializeInternal
+                // falls back to the default system cmd.exe path.
+                Assert.AreEqual(
+                    expectedFallback,
+                    path,
+                    StringComparison.OrdinalIgnoreCase,
+                    $"Expected fallback shell path '{expectedFallback}' when COMSPEC is absent, but got '{path}'.");
+                Assert.IsTrue(File.Exists(path), $"Fallback path does not exist on disk: {path}");
             }
             finally
             {
