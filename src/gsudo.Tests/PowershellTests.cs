@@ -127,8 +127,8 @@ exit
         [TestMethod]
         public void PS_EchoQuotedPathWithSpacesTest()
         {
-            // Create a directory with a space in its name so the path exists,
-            // then echo its name through gsudo to verify quoting is preserved.
+            // Passes a double-quoted argument containing a space to gsudo and verifies
+            // the space is preserved (not split into two separate arguments).
             var p = new TestProcess(
                 $"./gsudo {GSUDO_ARGS}Write-Output \"hello world\"\r\nexit\r\n",
                 $"{PS_FILENAME} {PS_ARGS}");
