@@ -60,9 +60,9 @@ Surprisingly, Microsoft's sudo does not leverage new OS features to enhance secu
 | Feature | `gsudo` | Sudo for Windows |
 | ------- | ------- | ------------------ |
 | Elevation syntax | `gsudo { scriptblock } -args $a,$b` [syntax](usage/powershell.md#using-gsudo-scriptblock-syntax) | `sudo pwsh { scriptblock } -args $a,$b` (Unofficial!) |
-| Auto-complete of last 3 commands | Yes (with [gsudoModule](usage/powershell.md#gsudo-powershell-module)) | No |
-| Auto-complete of command line arguments | Yes (with [gsudoModule](usage/powershell.md#gsudo-powershell-module)) | No |
-| Red # indicator for elevation | Yes (with [gsudoModule](usage/powershell.md#gsudo-powershell-module)) | No |
+| Auto-complete of last 3 commands | Yes (with [gsudoModule](usage/powershell.md#powershell-profile-config)) | No |
+| Auto-complete of command line arguments | Yes (with [gsudoModule](usage/powershell.md#powershell-profile-config)) | No |
+| Red # indicator for elevation | Yes (with [gsudoModule](usage/powershell.md#powershell-profile-config)) | No |
 
 ## What if I install both?
 
@@ -72,4 +72,4 @@ The `sudo` keyword will run Microsoft's sudo instead of `gsudo` because the typi
 
 With the release of `gsudo` v2.5.0, a new configuration setting called `PathPrecedence` has been added. When set to true, it ensures gsudo appears first in the `PATH` variable, making the `sudo` keyword start `gsudo` instead of Microsoft's sudo. To activate, call `gsudo config PathPrecedence true` and restart all consoles to apply the change. Setting it back to `false` will revert to the normal behavior.
 
-Additionally, gsudo now supports Microsoft sudo styled arguments such as --inline, --disable-input, --preserve-env, --new-window, and -D / --chdir {directory}, ensuring a smoother transition for users familiar with Microsoft sudo.
+Additionally, gsudo now supports Microsoft sudo styled arguments such as --inline, --disable-input, --preserve-env, --new-window, and `-D` / `--chdir {directory}`, ensuring a smoother transition for users familiar with Microsoft sudo.
