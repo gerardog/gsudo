@@ -126,11 +126,10 @@ namespace gsudo.Helpers
 
         internal static SecureString ReadPasswordFromNamedPipe(string pipeName)
         {
-            string pipePath = @"\\.\pipe\" + pipeName;
-
             try
             {
-                using (var pipeClient = new NamedPipeClientStream(".", pipePath, PipeDirection.In))
+                // named pipe name should *not* include \\.\pipe\ path prefix
+                using (var pipeClient = new NamedPipeClientStream(".", pipeName, PipeDirection.In))
                 {
                     pipeClient.Connect();
 

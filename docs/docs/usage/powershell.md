@@ -158,7 +158,7 @@ Use `gsudo -d {command}` to tell gsudo that your command does not requires a new
 gsudo -d dir C:\ 
 ```
 
-## gsudo PowerShell Module
+## gsudo PowerShell Module {#powershell-profile-config}
 
   For an enhanced experience, import `gsudoModule.psd1`. This is optional and enables `gsudo !!`, and param auto-complete for `Invoke-Gsudo` command. 
   

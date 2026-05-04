@@ -21,13 +21,14 @@ namespace gsudo.AppSettings
         }
 
         /// <summary>
-        /// 
+        /// Configures PATH precedence so that the <c>sudo</c> alias resolves to gsudo instead of
+        /// Microsoft's Sudo for Windows, and creates a <c>sudo.exe</c> symlink when necessary.
         /// </summary>
         /// <param name="newValue"></param>
         /// <param name="global"></param>
         public override void Save(string newValue, bool global)
         {
-            bool shouldPrioritizeGsudo = bool.Parse(newValue); // true = Prioritize gsudo, false = xde-prioritize gsudo in favor of system32
+            bool shouldPrioritizeGsudo = bool.Parse(newValue); // true = Prioritize gsudo, false = de-prioritize gsudo in favor of system32
 
             var ourPath = Path.GetDirectoryName(ProcessFactory.FindExecutableInPath("gsudo.exe"))
                             ?? Path.GetDirectoryName(ProcessHelper.GetOwnExeName());
@@ -63,7 +64,7 @@ namespace gsudo.AppSettings
                 }
 #endif
             }
-            Logger.Instance.Log("Please restart all your consoles to ensure the change makes effect.", LogLevel.Warning);
+            Logger.Instance.Log("Please restart all your consoles to ensure the change takes effect.", LogLevel.Warning);
         }
 
         private static void AdjustPathOrder(bool shouldPrioritizeGsudo, string ourPath)
