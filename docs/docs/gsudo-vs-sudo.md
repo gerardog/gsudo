@@ -25,6 +25,7 @@ Surprisingly, Microsoft's sudo does not leverage new OS features to enhance secu
 | Returns the command exit code | Yes | Yes |
 | Preserves the current directory | Yes | Yes, except in new-window mode! ⚠️ [Learn More](https://github.com/microsoft/sudo/issues/63) |
 | Source code available | [Yes](https://github.com/gerardog/gsudo) | [Yes](https://github.com/microsoft/sudo) |
+| Works with Win11 [`Administration Protection`](https://techcommunity.microsoft.com/blog/microsoft-security-blog/evolving-the-windows-user-model-%E2%80%93-introducing-administrator-protection/4370453) | Yes | No |
 
 ### Security Impersonation Features
 
@@ -68,8 +69,9 @@ Surprisingly, Microsoft's sudo does not leverage new OS features to enhance secu
 
 If you have both Microsoft Sudo and `gsudo` installed, they both should work independently.
 
-The `sudo` keyword will run Microsoft's sudo instead of `gsudo` because the typical install of `Sudo for Windows` puts it in `c:\Windows\System32\sudo.exe`. This folder appears first in the `PATH` environment variable, therefore when running `sudo`, the Microsoft `sudo.exe` will take precedence over gsudo's `sudo` alias.
+**The `sudo` keyword will run Microsoft's sudo instead of `gsudo`** because the typical install of `Sudo for Windows` puts it in `c:\Windows\System32\sudo.exe`. This folder appears first in the `PATH` environment variable, therefore when running `sudo`, the Microsoft `sudo.exe` will take precedence over gsudo's `sudo` alias.
 
-With the release of `gsudo` v2.5.0, a new configuration setting called `PathPrecedence` has been added. When set to true, it ensures gsudo appears first in the `PATH` variable, making the `sudo` keyword start `gsudo` instead of Microsoft's sudo. To activate, call `gsudo config PathPrecedence true` and restart all consoles to apply the change. Setting it back to `false` will revert to the normal behavior.
+**To change this behavior and make `sudo` point to `gsudo`** you can
+call `gsudo config PathPrecedence true` and restart all your consoles to apply the change. Setting it back to `false` will revert to the normal behavior.
 
-Additionally, gsudo now supports Microsoft sudo styled arguments such as --inline, --disable-input, --preserve-env, --new-window, and `-D` / `--chdir {directory}`, ensuring a smoother transition for users familiar with Microsoft sudo.
+Additionally, gsudo now supports Microsoft sudo styled arguments such as `--inline`, `--disable-input`, `--preserve-env`, `--new-window`, and `-D` / `--chdir {directory}`, ensuring a smoother transition for users familiar with Microsoft sudo.
