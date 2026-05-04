@@ -153,10 +153,8 @@ namespace gsudo.Tests
 
                 // When COMSPEC is absent, this test is intended to verify that InitializeInternal
                 // falls back to the default system cmd.exe path.
-                Assert.AreEqual(
-                    expectedFallback,
-                    path,
-                    StringComparison.OrdinalIgnoreCase,
+                Assert.IsTrue(
+                    string.Equals(expectedFallback, path, StringComparison.OrdinalIgnoreCase),
                     $"Expected fallback shell path '{expectedFallback}' when COMSPEC is absent, but got '{path}'.");
                 Assert.IsTrue(File.Exists(path), $"Fallback path does not exist on disk: {path}");
             }
