@@ -85,7 +85,8 @@ namespace gsudo.Helpers
 
                 if (ProcessFactory.IsWindowsApp(invokingShellFullPath))
                 {
-                    invokingShellFullPath = Environment.GetEnvironmentVariable("COMSPEC");
+                    invokingShellFullPath = Environment.GetEnvironmentVariable("COMSPEC")
+                        ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe");
                     return Shell.WindowsApp; // Called from explorer.exe, task mgr, etc.
                 }
             }
@@ -93,7 +94,8 @@ namespace gsudo.Helpers
             // Unknown Shell. 
             // (We couldnt get info about caller process).
             // => Assume CMD.
-            invokingShellFullPath = Environment.GetEnvironmentVariable("COMSPEC");
+            invokingShellFullPath = Environment.GetEnvironmentVariable("COMSPEC")
+                ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe");
             return Shell.Cmd;
         }
     
