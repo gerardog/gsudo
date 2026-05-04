@@ -56,7 +56,7 @@ namespace gsudo.AppSettings
 #if NET9_0_OR_GREATER
                 string estimatedNewPath = $"{Environment.GetEnvironmentVariable("Path", EnvironmentVariableTarget.Machine)};{Environment.GetEnvironmentVariable("Path", EnvironmentVariableTarget.User)}";
                 var actualPath = Path.GetDirectoryName(ProcessFactory.FindExecutableInPath("sudo.exe", estimatedNewPath));
-                if (actualPath != ourPath)
+                if (actualPath == null || !string.Equals(Path.GetFullPath(actualPath), Path.GetFullPath(ourPath), StringComparison.OrdinalIgnoreCase))
                 {
                     var linkPath = Path.Combine(ourPath, "sudo.exe");
                     var targetPath = Path.Combine(ourPath, "gsudo.exe");
