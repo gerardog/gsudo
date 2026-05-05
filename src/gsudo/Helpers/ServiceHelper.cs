@@ -159,8 +159,17 @@ namespace gsudo.Helpers
             string ownExe = ProcessHelper.GetOwnExeName();
             if (InputArguments.TrustedInstaller && isAdmin && !WindowsIdentity.GetCurrent().Claims.Any(c => c.Value == Constants.TI_SID))
             {
-                StartTrustedInstallerService(commandLine, allowedPid.Value);
-                ret = null;
+                if (WindowsIdentity.GetCurrent().IsSystem)
+                {
+                    // Already SYSTEM: directly obtain the TrustedInstaller token and start the service with it.
+                    ret = ProcessFactory.StartAsTrustedInstaller(ownExe, commandLine, Environment.CurrentDirectory, !InputArguments.Debug);
+                }
+                else
+                {
+                    // Elevated admin (not yet SYSTEM): start as SYSTEM first.
+                    // The SYSTEM-level gsudo will detect it is not TrustedInstaller and call StartAsTrustedInstaller.
+                    ret = ProcessFactory.StartAsSystem(ownExe, commandLine, Environment.CurrentDirectory, !InputArguments.Debug);
+                }
             }
             else if (InputArguments.RunAsSystem && isAdmin)
             {
@@ -208,40 +217,6 @@ namespace gsudo.Helpers
 
             Logger.Instance.Log("Service process started.", LogLevel.Debug);
             return ret;
-        }
-
-        private static void StartTrustedInstallerService(string commandLine, int pid)
-        {
-            string name = $"gsudo TI Cache for PID {pid}";
-
-            string args = $"/Create /ru \"NT SERVICE\\TrustedInstaller\" /TN \"{name}\" /TR \"\\\"{ProcessHelper.GetOwnExeName()}\\\" {commandLine}\" /sc ONCE /st 00:00 /f\"";
-            Logger.Instance.Log($"Running: schtasks {args}", LogLevel.Debug);
-            Process p;
-
-            p = InputArguments.Debug
-                ? ProcessFactory.StartAttached("schtasks", args)
-                : ProcessFactory.StartRedirected("schtasks", args, null);
-
-            p.WaitForExit();
-            if (p.ExitCode != 0) throw new ApplicationException($"Error creating a scheduled task for TrustedInstaller: {p.ExitCode}");
-
-            try
-            {
-                args = $"/run /I /TN \"{name}\"";
-                p = InputArguments.Debug
-                    ? ProcessFactory.StartAttached("schtasks", args)
-                    : ProcessFactory.StartRedirected("schtasks", args, null);
-                p.WaitForExit();
-                if (p.ExitCode != 0) throw new ApplicationException($"Error starting scheduled task for TrustedInstaller: {p.ExitCode}");
-            }
-            finally
-            {
-                args = $"/delete /F /TN \"{name}\"";
-                p = InputArguments.Debug
-                    ? ProcessFactory.StartAttached("schtasks", args)
-                    : ProcessFactory.StartRedirected("schtasks", args, null);
-                p.WaitForExit();
-            }
         }
     }
 }
