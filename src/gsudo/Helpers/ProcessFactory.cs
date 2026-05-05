@@ -234,23 +234,27 @@ namespace gsudo.Helpers
         {
             Logger.Instance.Log($"{nameof(StartAsTrustedInstaller)}: {appToRun} {args}", LogLevel.Debug);
 
+            const int TIProcessWaitTimeoutMs = 10000;
+            const int TIProcessPollIntervalMs = 500;
+
             EnsureTrustedInstallerServiceIsRunning();
 
-            // Wait for TrustedInstaller.exe process to appear (up to 10 seconds)
+            // Wait for TrustedInstaller.exe process to appear (up to TIProcessWaitTimeoutMs)
             Process tiProcess = null;
-            int remaining = 10000;
+            int remaining = TIProcessWaitTimeoutMs;
             while (remaining > 0)
             {
                 tiProcess = Process.GetProcesses()
                     .FirstOrDefault(p => p.ProcessName.Equals("TrustedInstaller", StringComparison.OrdinalIgnoreCase));
                 if (tiProcess != null) break;
-                System.Threading.Thread.Sleep(100);
-                remaining -= 100;
+                System.Threading.Thread.Sleep(TIProcessPollIntervalMs);
+                remaining -= TIProcessPollIntervalMs;
             }
 
             if (tiProcess == null)
                 throw new InvalidOperationException("TrustedInstaller process not found after attempting to start the service.");
 
+            using (tiProcess)
             using (var tm = TokenProvider.CreateFromProcessToken(tiProcess.Id))
             {
                 using (var token = tm.GetToken())
@@ -262,21 +266,27 @@ namespace gsudo.Helpers
 
         private static void EnsureTrustedInstallerServiceIsRunning()
         {
+            const int ServiceStartTimeoutMs = 10000;
             try
             {
-                var tiProcess = Process.GetProcesses()
-                    .FirstOrDefault(p => p.ProcessName.Equals("TrustedInstaller", StringComparison.OrdinalIgnoreCase));
+                bool isAlreadyRunning = Process.GetProcesses()
+                    .Any(p => p.ProcessName.Equals("TrustedInstaller", StringComparison.OrdinalIgnoreCase));
 
-                if (tiProcess != null)
+                if (isAlreadyRunning)
                 {
                     Logger.Instance.Log("TrustedInstaller service is already running.", LogLevel.Debug);
                     return;
                 }
 
                 Logger.Instance.Log("Starting TrustedInstaller service.", LogLevel.Debug);
-                var sc = StartRedirected("sc", "start TrustedInstaller", null);
-                sc.WaitForExit(10000);
-                Logger.Instance.Log($"sc start TrustedInstaller exited with code {sc.ExitCode}.", LogLevel.Debug);
+                using (var sc = StartRedirected("sc", "start TrustedInstaller", null))
+                {
+                    bool exited = sc.WaitForExit(ServiceStartTimeoutMs);
+                    if (exited)
+                        Logger.Instance.Log($"sc start TrustedInstaller exited with code {sc.ExitCode}.", LogLevel.Debug);
+                    else
+                        Logger.Instance.Log("sc start TrustedInstaller timed out.", LogLevel.Debug);
+                }
             }
             catch (Exception ex)
             {
