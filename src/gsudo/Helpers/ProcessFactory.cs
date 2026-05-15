@@ -226,6 +226,75 @@ namespace gsudo.Helpers
         }
 
         /// <summary>
+        /// Starts a process with the TrustedInstaller token.
+        /// Must be called from a SYSTEM-level process (which has SeAssignPrimaryTokenPrivilege).
+        /// Starts the TrustedInstaller service if it is not already running.
+        /// </summary>
+        public static SafeProcessHandle StartAsTrustedInstaller(string appToRun, string args, string startupFolder, bool hidden)
+        {
+            Logger.Instance.Log($"{nameof(StartAsTrustedInstaller)}: {appToRun} {args}", LogLevel.Debug);
+
+            const int TIProcessWaitTimeoutMs = 10000;
+            const int TIProcessPollIntervalMs = 500;
+
+            EnsureTrustedInstallerServiceIsRunning();
+
+            // Wait for TrustedInstaller.exe process to appear (up to TIProcessWaitTimeoutMs)
+            Process tiProcess = null;
+            int remaining = TIProcessWaitTimeoutMs;
+            while (remaining > 0)
+            {
+                tiProcess = Process.GetProcesses()
+                    .FirstOrDefault(p => p.ProcessName.Equals("TrustedInstaller", StringComparison.OrdinalIgnoreCase));
+                if (tiProcess != null) break;
+                System.Threading.Thread.Sleep(TIProcessPollIntervalMs);
+                remaining -= TIProcessPollIntervalMs;
+            }
+
+            if (tiProcess == null)
+                throw new InvalidOperationException("TrustedInstaller process not found after attempting to start the service.");
+
+            using (tiProcess)
+            using (var tm = TokenProvider.CreateFromProcessToken(tiProcess.Id))
+            {
+                using (var token = tm.GetToken())
+                {
+                    return CreateProcessWithToken(token.DangerousGetHandle(), appToRun, args, startupFolder, hidden);
+                }
+            }
+        }
+
+        private static void EnsureTrustedInstallerServiceIsRunning()
+        {
+            const int ServiceStartTimeoutMs = 10000;
+            try
+            {
+                bool isAlreadyRunning = Process.GetProcesses()
+                    .Any(p => p.ProcessName.Equals("TrustedInstaller", StringComparison.OrdinalIgnoreCase));
+
+                if (isAlreadyRunning)
+                {
+                    Logger.Instance.Log("TrustedInstaller service is already running.", LogLevel.Debug);
+                    return;
+                }
+
+                Logger.Instance.Log("Starting TrustedInstaller service.", LogLevel.Debug);
+                using (var sc = StartRedirected("sc", "start TrustedInstaller", null))
+                {
+                    bool exited = sc.WaitForExit(ServiceStartTimeoutMs);
+                    if (exited)
+                        Logger.Instance.Log($"sc start TrustedInstaller exited with code {sc.ExitCode}.", LogLevel.Debug);
+                    else
+                        Logger.Instance.Log("sc start TrustedInstaller timed out.", LogLevel.Debug);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"Could not start TrustedInstaller service: {ex.Message}", LogLevel.Debug);
+            }
+        }
+
+        /// <summary>
         /// You can only call this if you are elevated.
         /// </summary>
         public static SafeProcessHandle StartAttachedWithIntegrity(IntegrityLevel integrityLevel, string appToRun, string args, string startupFolder, bool newWindow, bool hidden)
