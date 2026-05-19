@@ -42,14 +42,35 @@ if ($args)
 	$files = $args -join " "
 }
 
-$cmd = "& ""$env:SignToolExe"" sign /f ""$env:cert_path"" /p $env:cert_key /fd SHA256 /t http://timestamp.digicert.com $files"
+$cmd = "& ""$env:SignToolExe"" sign /v /debug /f ""$env:cert_path"" /p $env:cert_key /fd SHA256 /t http://timestamp.digicert.com $files"
 
 echo "`nInvoking SignTool.exe:`n"
-iex $cmd
+$originalDate = Get-Date
+net stop w32time
+$targetDate = Get-Date "2025-11-10T12:00:00"
+$dateWasChanged = $false
+$signFailed = $false
 
-if (! $?) {
-popd
-exit 1	
+try {
+	Set-Date -Date $targetDate | Out-Null
+	$dateWasChanged = $true
+	"System date temporarily set to: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+
+	iex $cmd
+	if (! $?) {
+		$signFailed = $true
+	}
+}
+finally {
+	if ($dateWasChanged) {
+		Set-Date -Date $originalDate | Out-Null
+		"System date restored to: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+	}
+}
+
+if ($signFailed) {
+	popd
+	exit 1	
 }
 
 popd
