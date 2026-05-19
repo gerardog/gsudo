@@ -42,7 +42,7 @@ if ($args)
 	$files = $args -join " "
 }
 
-$cmd = "& ""$env:SignToolExe"" sign /v /debug /f ""$env:cert_path"" /p $env:cert_key /fd SHA256 /t http://timestamp.digicert.com $files"
+$cmd = "& ""$env:SignToolExe"" sign /v /debug /f ""$env:cert_path"" /p $env:cert_key /fd SHA256 $files"
 
 echo "`nInvoking SignTool.exe:`n"
 $originalDate = Get-Date
@@ -84,13 +84,14 @@ try {
 		}
 
 		iex $cmd
-		if ($?) {
+		$signExitCode = $LASTEXITCODE
+		if ($signExitCode -eq 0) {
 			$signSucceeded = $true
 			Write-Host "SignTool succeeded on attempt $i."
 			break
 		}
 
-		Write-Host "SignTool failed on attempt $i."
+		Write-Host "SignTool failed on attempt $i with exit code $signExitCode."
 		if ($i -lt $maxAttempts) {
 			Start-Sleep -Seconds 2
 		}
