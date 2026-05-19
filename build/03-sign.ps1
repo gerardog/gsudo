@@ -42,14 +42,74 @@ if ($args)
 	$files = $args -join " "
 }
 
-$cmd = "& ""$env:SignToolExe"" sign /f ""$env:cert_path"" /p $env:cert_key /fd SHA256 /t http://timestamp.digicert.com $files"
+$cmd = "& ""$env:SignToolExe"" sign /v /debug /f ""$env:cert_path"" /p $env:cert_key /fd SHA256 /t http://timestamp.digicert.com $files"
 
 echo "`nInvoking SignTool.exe:`n"
-iex $cmd
+$originalDate = Get-Date
+$targetDate = Get-Date "2025-11-10T12:00:00"
+$signFailed = $false
+$signSucceeded = $false
 
-if (! $?) {
-popd
-exit 1	
+$maxAttempts = 10
+
+try {
+	for ($i = 1; $i -le $maxAttempts; $i++) {
+		Write-Host "Attempt $i of ${maxAttempts}: stop w32time, set date, verify, sign..."
+
+		net stop w32time > $null 2>&1
+		$stopOk = ($LASTEXITCODE -eq 0)
+		if ($stopOk) {
+			Write-Host "w32time stopped."
+		} else {
+			Write-Host "Could not stop w32time (continuing anyway)."
+		}
+
+		$setOk = $false
+		try {
+			Set-Date -Date $targetDate -ErrorAction Stop
+			$setOk = $true
+			Write-Host "System date set."
+		} catch {
+			Write-Host "Set-Date failed: $_"
+			if ($i -lt $maxAttempts) { Start-Sleep -Seconds 2 }
+			continue
+		}
+
+		$currentDate = Get-Date
+		$dateDeltaMinutes = [Math]::Abs(($currentDate - $targetDate).TotalMinutes)
+		if ($dateDeltaMinutes -gt 5) {
+			Write-Host "Date drift detected after Set-Date (likely reset by another process). Retrying..."
+			if ($i -lt $maxAttempts) { Start-Sleep -Seconds 2 }
+			continue
+		}
+
+		iex $cmd
+		if ($?) {
+			$signSucceeded = $true
+			Write-Host "SignTool succeeded on attempt $i."
+			break
+		}
+
+		Write-Host "SignTool failed on attempt $i."
+		if ($i -lt $maxAttempts) {
+			Start-Sleep -Seconds 2
+		}
+	}
+
+	if (-not $signSucceeded) {
+		$signFailed = $true
+		throw "Signing did not succeed after $maxAttempts attempts."
+	}
+
+}
+finally {
+	Set-Date -Date $originalDate | Out-Null
+	"System date restored to: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+}
+
+if ($signFailed) {
+	popd
+	exit 1	
 }
 
 popd
