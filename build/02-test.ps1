@@ -16,8 +16,48 @@ $originalPath = $env:path
 
 $env:path=(Get-Item .\src\gsudo.Tests\bin\Debug\net9.0\).FullName+";" + [String]::Join(";", (($ENV:Path).Split(";") -notlike "*gsudo*" | % {$_ -replace "\\$" }))
 
+function Get-CygwinBashPath {
+  @(
+    "C:\tools\cygwin\bin\bash.exe",
+    "C:\tools\cygwin64\bin\bash.exe",
+    "C:\cygwin64\bin\bash.exe"
+  ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+}
+
+function Invoke-CygwinElevationTests {
+  param([string]$gsudoExePath)
+
+  $bashExe = Get-CygwinBashPath
+  if (! $bashExe) {
+    choco install cygwin --confirm --no-progress --limit-output || $(exit $LASTEXITCODE)
+    $bashExe = Get-CygwinBashPath
+  }
+
+  if (! $bashExe) {
+    throw "Unable to find Cygwin bash.exe after installation."
+  }
+
+  $env:GSUDO_EXE_FOR_CYGWIN = $gsudoExePath
+
+  $wrapperOutput = & $bashExe -lc 'set -e; gsudo() { WSLENV=WSL_DISTRO_NAME:USER:$WSLENV MSYS_NO_PATHCONV=1 "$GSUDO_EXE_FOR_CYGWIN" "$@"; }; gsudo cmd /c echo CYGWIN_WRAPPER_ELEVATION_OK' 2>&1
+  $wrapperExitCode = $LASTEXITCODE
+  $wrapperText = [String]::Join("`n", @($wrapperOutput))
+  if ($wrapperExitCode -ne 0 -or $wrapperText -notmatch "CYGWIN_WRAPPER_ELEVATION_OK") {
+    throw "Cygwin wrapper elevation attempt failed. ExitCode=$wrapperExitCode Output:`n$wrapperText"
+  }
+
+  $directOutput = & $bashExe -lc 'set -e; WSLENV=WSL_DISTRO_NAME:USER:$WSLENV MSYS_NO_PATHCONV=1 "$GSUDO_EXE_FOR_CYGWIN" cmd /c echo CYGWIN_DIRECT_ELEVATION_OK' 2>&1
+  $directExitCode = $LASTEXITCODE
+  $directText = [String]::Join("`n", @($directOutput))
+  if ($directExitCode -ne 0 -or $directText -notmatch "CYGWIN_DIRECT_ELEVATION_OK") {
+    throw "Cygwin direct elevation attempt failed. ExitCode=$directExitCode Output:`n$directText"
+  }
+}
+
 gsudo -k
 gsudo --debug cache on -p 0 -d 1
+$gsudoExePath = (Get-Command gsudo.exe -ErrorAction Stop).Source
+Invoke-CygwinElevationTests $gsudoExePath
 $env:nokill=1
 gsudo -d --debug --integrity medium dotnet test .\src\gsudo.sln --no-build --logger "trx;LogFileName=$((gi .).FullName)\TestResults.trx" --logger:"console;verbosity=normal" -v quiet -p:WarningLevel=0
 
